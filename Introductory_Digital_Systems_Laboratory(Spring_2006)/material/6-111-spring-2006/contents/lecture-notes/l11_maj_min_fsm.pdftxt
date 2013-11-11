@@ -1,0 +1,493 @@
+L11: Major/Minor FSMs
+FSMs
+L11: Major/Minor 
+
+Acknowledgements:
+Materials in this lecture are courtesy of the following sources and are used with permission.
+Rex Min  
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+1
+
+QuizQuiz
+
+(cid:132) Quiz will be Closed Book Tuesday, March 21, 2006, 
+7:30pm-9:30pm in 32-155 Covers Problem Sets 1-3, 
+Lectures 1-10 (through Analog), Labs 1-3
+(cid:132) Some of the topics to be covered include
+(cid:134) Combinational Logic: Boolean Algebra, Karnaugh Maps, MSP, MPS, 
+dealing with don’t cares
+(cid:134) Latches and Edge Triggered Registers/Flip-flops
+(cid:122) Understand the difference between latches, registers and unclocked
+memory elements (e.g., SR-Flip Flop)
+(cid:122) Different memory types: SR, D, JK, T
+(cid:122) Understand setup/hold/propagation delay and how they are computed
+(cid:134) System Timing (minimum clock period and hold time constraint)
+(cid:122) Impact of Clock skew on timing
+(cid:134) Counters and simple FSMs (understand how the ‘163 and ‘393 work)
+(cid:134) FSM design (Mealy/Moore, dealing with glitches) 
+(cid:134) Combinational and sequential Verilog coding
+(cid:122) Continuous assignments, blocking vs. non-blocking, etc.
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+2
+
+Quiz (cont.)
+Quiz (cont.)
+
+(cid:134) Tri-states basics
+(cid:134) Dealing with glitches
+(cid:122) When are glitches OK?
+(cid:122) How do you deal with glitches in digital system design? (registered 
+outputs, appropriate techniques to gate a clock, etc.)
+(cid:134) Memory Basics
+(cid:122) Understand differences between DRAM vs. SRAM vs. EEPROM
+(cid:122) Understand timing and interfacing to the 6264
+(cid:134) Arithmetic
+(cid:122) Number representation: sign – magnitude, Ones complement, Twos 
+complement
+(cid:122) Adder Structures: Ripple carry, Carry Bypass Adder, Carry Lookahead
+Adder 
+(cid:122) False Paths and Delay Estimation
+(cid:122) Shift/add multiplier, Baugh-Wooley Multiplier (Twos complement 
+multiplication)
+(cid:134) Analog Design
+(cid:122) Basics of ADC and DAC, interfaces
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+3
+
+Toward FSM Modularity
+Toward FSM Modularity
+
+(cid:132) Consider the following abstract FSM:
+
+S0
+
+S1
+
+S2
+
+S3
+
+S4
+
+S5
+
+S6
+
+S7
+
+S8
+
+S9
+
+a1
+
+d1
+
+b1
+
+c1
+
+a2
+
+d2
+
+a3
+
+d3
+
+b2
+
+c2
+
+b3
+
+c3
+
+(cid:132) Suppose that each set of states ax...dx is a “sub-FSM” that 
+produces exactly the same outputs.
+(cid:132) Can we simplify the FSM by removing equivalent states?
+No!  The outputs may be the same, but the 
+next-state transitions are not.
+(cid:132) This situation closely resembles a procedure call or function call
+in software...how can we apply this concept to FSMs?
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+4
+
+The Major/Minor FSM Abstraction
+The Major/Minor FSM Abstraction
+
+Major FSM
+
+RESET
+
+CLK
+
+STARTA
+BUSYA
+
+STARTB
+BUSYB
+
+Minor FSM A
+
+Minor FSM B
+
+RESET
+
+CLK
+
+(cid:132) Subtasks are encapsulated in minor FSMs with common 
+reset and clock
+(cid:132) Simple communication abstraction:
+(cid:134) START:  tells the minor FSM to begin operation (the call)
+(cid:134) BUSY:  tells the major FSM whether the minor is done (the return)
+(cid:132) The major/minor abstraction is great for...
+(cid:134) Modular designs (always a good thing)
+(cid:134) Tasks that occur often but in different contexts
+(cid:134) Tasks that require a variable/unknown period of time
+(cid:134) Event-driven systems
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+5
+
+Inside the Major FSM
+Inside the Major FSM
+
+BUSY
+
+S1
+
+BUSY
+
+BUSY
+
+S2
+START
+
+BUSY
+
+BUSY
+
+S3
+
+BUSY
+
+S4
+
+...
+
+1. Wait until 
+the minor FSM 
+is ready
+
+2. Trigger the 
+minor FSM 
+(and make sure 
+it’s started)
+
+3. Wait until 
+the minor FSM 
+is done
+
+S1
+
+S2
+
+S2
+
+S3
+
+S3
+
+S3
+
+S4
+
+Major FSM 
+State
+START
+BUSY
+
+CLK
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+6
+
+Inside the Minor FSM
+Inside the Minor FSM
+
+1. Wait for a 
+trigger from the 
+major FSM
+
+START
+
+T1
+BUSY
+
+3. Signal to the 
+major FSM that 
+work is done
+
+START
+
+T2
+BUSY
+
+T3
+BUSY
+
+T4
+BUSY
+
+2. Do some useful work
+
+Major FSM 
+State
+START
+BUSY
+
+CLK
+Minor FSM 
+State
+
+S1
+
+S2
+
+S2
+
+S3
+
+S3
+
+S3
+
+S4
+
+can we 
+speed 
+this up?
+
+T1
+
+T1
+
+T2
+
+T3
+
+T4
+
+T1
+
+T1
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+7
+
+Optimizing the Minor FSM
+Optimizing the Minor FSM
+
+Good idea: de-assert BUSY one cycle early
+START
+
+START
+
+T1
+BUSY
+
+T2
+BUSY
+
+T3
+BUSY
+
+T4
+BUSY
+
+Bad idea #1:
+T4 may not immediately return to T1
+
+START
+
+T1
+BUSY
+
+START
+
+T2
+BUSY
+
+T3
+BUSY
+
+T4
+BUSY
+
+Bad idea #2:
+BUSY never asserts!
+
+START
+
+T1
+BUSY
+
+START
+
+T2
+BUSY
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+8
+
+A Four --FSM Example
+FSM Example
+A Four
+
+TICK
+
+Major FSM
+
+STARTA
+BUSYA
+STARTB
+BUSYB
+
+STARTC
+BUSYC
+
+Minor FSM A
+
+Minor FSM B
+
+Minor FSM C
+
+Operating Scenario:
+(cid:132) Major FSM is triggered by 
+TICK
+(cid:132) Minors A and B are started 
+simultaneously
+(cid:132) Minor C is started once both 
+A and B complete
+(cid:132) TICKs arriving before the 
+completion of C are ignored
+
+Assume that BUSYA and BUSYB
+both rise before either minor 
+FSM completes. Otherwise, we 
+loop forever!
+TICK
+
+TICK
+
+IDLE
+
+BUSYA+BUSYB
+
+BUSYA+BUSYB
+
+STAB
+STARTA
+STARTB
+
+BUSYABUSYB
+
+WTAB
+
+BUSYABUSYB
+
+BUSYC
+
+BUSYC
+
+WTC
+
+BUSYC
+
+STC
+STARTC
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+BUSYC
+
+9
+
+Four --FSM Sample Waveform
+FSM Sample Waveform
+Four
+
+TICK
+
+Major FSM
+
+STARTA
+BUSYA
+STARTB
+BUSYB
+
+STARTC
+BUSYC
+
+Minor FSM A
+
+Minor FSM B
+
+Minor FSM C
+
+IDLE IDLE STAB STAB WTAB WTABWTAB STC STC WTC WTC WTC IDLE IDLE STAB
+
+state
+
+tick
+
+STARTA
+
+BUSYA
+
+STARTB
+
+BUSYB
+
+STARTC
+
+BUSYC
+
+L11: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+10
+
+

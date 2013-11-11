@@ -1,0 +1,346 @@
+Section  17 
+
+Classiﬁcation  problem.  Boosting. 
+
+Suppose  that we  have  the  data  (X1 , Y1), . . . , (Xn , Yn)  that  consist  of pairs  (Xi , Yi)  such  that 
+Xi  belongs  to  some  set  X  and  Yi  belongs  to  a  set  Y  =  {+1, −1}.  We  will  think  of  Yi  as  a 
+label of Xi  so that all points  in the set X  are divided  into two classes corresponding  to labels 
+±1.  For  example,  Xi s  can  be  images  or  representations  of  images  and  Yi s  classify  whether 
+the  image  contains  a  human  face  or  not.  Given  this  data  we  would  like  to  ﬁnd  a  classiﬁer 
+f  : X  � Y 
+which  given  a  point X  → X  would  predict  its  label  Y . This  type  of  problem  is  called  classiﬁ­
+cation  problem.  In  general,  there  may  be more  than  two  classes  of  points  which  means  that 
+the  set  of  labels may  consist  of more  than  two points but,  for  simplicity, we will  consider  the 
+simplest  case  when  we  have  only  two  labels  ±1. 
+We  will  take  a  look  at  one  approach  to  this  problem  called  boosting  and,  in  particular, 
+prove  one  interesting  property  of  the  algorithm  called  AdaBoost. 
+Let  us  assume  that  we  have  a  family  of  classiﬁers 
+H = {h : X  � Y }. 
+Suppose that we can ﬁnd many classiﬁers in H that can predict labels Yi  better than ”tossing 
+a  coin”  which  means  that  they  predict  the  correct  label  at  least  half  of  the  time.  We  will 
+call H  a  family  of weak  classiﬁers  because  we  do  not  require  much  of  them,  for  example,  all 
+these  classiﬁers  can make  mistakes  on,  let’s  say,  30%  or  even  45%  of  the  sample. 
+The  idea  of  boosting  consists  in  trying  to  combine  these  weak  classiﬁers  so  that  the 
+combined classiﬁer predicts the label correctly most of the time. Let us consider one particular 
+algorithm  called  Adaboost. 
+Given  weights  w(1), . . . , w(n)  that  add  up  to  one  we  deﬁne  the  weighted  classiﬁcation 
+error  of  the  classiﬁer  h  by 
+
+w(1)I (h(X1 ) = Y1 ) + . . . + w(n)I (h(Xn) = Yn ).
+
+AdaBoost  algorithm. We  start  by  assigning  equal  weights  to  the  data  points: 
+1 
+. 
+n 
+
+w1 (1) =  . . . = w1 (n) = 
+
+123 
+
+
+≤
+≤
+Then  for  t = 1, . . . , T  we  repeat  the  following  cycle: 
+
+1.  Find  ht  → H  such  that  weighted  error 
+�t  = wt (1)I (ht (X1 ) = Y1 ) + . . . + wt (n)I (ht (Xn ) = Yn )
+
+is  as  small  as  possible. 
+
+1  log 1−�t 
+2.  Let  �t  =  2
+�t  and  update  the  weights: 
+
+e−�t Yiht (Xi ) 
+wt+1 (i) = wt (i) 
+Zt 
+
+,
+
+where 
+
+n 
+Zt  = �
+i=1 
+is  the  normalizing  factor  to  ensure  that  updated  weights  add  up  to  one. 
+
+ 
+wte−�t Yiht (Xi ) 
+
+After  we  repeat  this  cycle  T  times  we  output  the  function 
+
+f (X ) = �1h1 (X ) + . . . + �T hT (X ) 
+
+and  use  sign(f (X ))  as  the  prediction  of  label  Y . 
+First of all, we can assume  that the weighted error �t  at each step  t is  less than 0.5 since, 
+otherwise,  if  we  make  a  mistake  more  than  half  of  the  time  we  should  simply  predict  the 
+opposite  label.  For  �t  � 0.5  we  have, 
+�t  =
+
+log 
+
+1 − �t 
+�t  � 0. 
+
+1 
+2 
+
+ 
+
+Also,  we  have 
+
+�
+if  ht (Xi ) = Yi
++1 
+if  ht (Xi ) =≤ Yi . 
+−1 
+Therefore,  if  ht  makes  a  mistake  on  the  example  (Xi , Yi)  which  means  that  ht (Xi ) =  Yi  or,
+equivalently,  Yiht (Xi ) = −1  then 
+
+Yiht (Xi ) = 
+
+wt+1 (i) = 
+
+e−�tYiht (Xi ) 
+wt (i) = 
+Zt 
+
+�te
+Zt 
+
+wt (i). 
+
+On  the  other  hand,  if  ht  predicts  the  label  Yi  correctly  then  Yiht (Xi ) = 1  and 
+
+e−�t Yiht (Xi ) 
+e−�t 
+wt (i) = 
+Zt 
+Zt 
+Since  �t  �  0  this  means  that  we  increase  the  relative  weight  of  the  ith  example  if  we  made 
+a  mistake  on  this  example  and  decrease  the  relative  weight  if  we  predicted  the  label  Y i 
+
+wt+1 (i) = 
+
+wt (i). 
+
+124 
+
+
+≤
+≤
+≤
+correctly.  Therefore,  when  we  try  to  minimize  the  weighted  error  at  the  next  step  t + 1  we 
+will  pay  more  attention  to  the  examples  misclassiﬁed  at  the  previous  step. 
+Theorem: The proportion of mistakes made on the data by the output classiﬁer sign(f (X )) 
+is  bounded  by 
+
+1
+
+n
+
+
+ 
+I (sign(f (Xi ))) = Yi) �
+
+T 
+ 
+n
+�
+�
+�
+4�t (1 − �t ). 
+t=1 
+i=1 
+Remark:  If  the  weighted  errors  �t  will  be  strictly  less  than  0.5  at  each  step  meaning 
+that we  predict  the  labels  better  than  tossing  a  coin  then  the  error  of  the  combined  classifer 
+will  decrease  exponentially  fast  with  the  number  of  rounds  T .  For  example,  if  �t  � 0.4  then 
+4�t (1 − �t ) � 4(0.4)(0.6) = 0.96  and  the  error  will  decrease  as  fast  as  0.96T . 
+Proof.  Using  that  I (x �  0) �  e−x  as  shown  in  ﬁgure  17.1  we  can  bound  the  indicator 
+of making  an  error  by 
+I (sign(f (Xi ))  ≤= Yi ) = I (Yif (Xi ) � 0) � e−Yi f (Xi )  = e−Yi PT
+t=1 
+
+(17.0.1) 
+
+�tht (Xi )
+
+. 
+
+I(X) 
+
+−xe
+
+Figure  17.1:  Example. 
+
+Next,  using  the  step  2  of  AdaBoost  algorithm  which  describes  how  the  weights  are 
+updated we  can express  the weights  at each  step  in  terms  of the weights  at  the previous  step 
+and  we  can  write  the  following  equation: 
+
+wT +1 (i) = 
+
+= 
+
+e−�T YihT (Xi )  wT −1(i)e−�T −1 YihT −1 (Xi ) 
+wT (i)e−�T Yi hT (Xi ) 
+ZT 
+ZT 
+ZT −1 
+=  repeat  this  recursively  over  t 
+e−�T Yi hT (Xi )  e−�T −1 YihT −1 (Xi ) 
+ZT 
+ZT −1 
+
+e−�1 Yih1 (Xi ) 
+w1 (i) = 
+Z1 
+
+. . . 
+
+= 
+
+e−Yi f (Xi )  1 
+. 
+�T  Zt  n 
+t=1 
+
+This  implies  that 
+
+Combining  this  with  (17.0.1)  we  can  write 
+n 
+n 
+�
+�
+i=1 
+i=1 
+
+ 
+I (sign(f (Xi) =≤ Yi )) � 
+
+1
+
+n
+
+
+ 
+
+Zt . 
+
+T
+1 
+�
+e−Yi f (Xi )  = wT +1 (i) 
+n 
+t=1 
+ 
+Zt 
+
+1 
+e−Yi f (Xi )
+n
+
+
+=
+
+
+125 
+
+T
+�
+t=1 
+
+ 
+wT +1 (i) = 
+
+n
+�
+i=1 
+
+ 
+Zt . 
+
+T
+�
+t=1 
+
+(17.0.2) 
+
+
+
+
+
+≤
+Next  we  will  compute
+
+
+ 
+wt (i)e−�t Yiht (Xi ) . 
+
+ 
+wt (i)I (Yi  =≤ ht (Xi ))e �t 
+
+n 
+Zt  = �
+i=1 
+As  we  have  already  mentioned  above,  Yiht (Xi )  is  equal  to  −1  or  +1  depending  on  whether 
+ht  makes  a mistake  or  predicts  the  label  Yi  correctly.  Therefore,  we  can  write, 
+ 
+ 
+n 
+n 
+n
+wt (i)I (Yi  = ht (Xi ))e−�t  + �
+wt (i)e−�tYi ht (Xi )  = �
+Zt  =  �
+i=1 
+i=1 
+i=1 
+n 
+ 
+ 
+n
+wt (i)I (Yi  =≤ ht (Xi ))) + e �t �
+=  e−�t (1 − �
+wt (i)I (Yi  = ht (Xi )) 
+i=1 
+i=1 
+ 
+ 
+ 
+ 
+ 
+��
+��
+�
+�
+�
+�
+�t 
+�t
+
+=  e−�t (1 − �t ) + e �t �t .
+
+Up  to  this  point  all  computations  did  not  depend  on  the  choice  of  �t  but  since  we  bounded 
+the  error  by  �T
+t=1 Zt  we  would  like  to  make  each  Zt  as  small  as  possible  and,  therefore,  we 
+choose �t  that minimizes Zt . Simple calculus shows that we should take �t  =  1  log 1−�t 
+�t  which 
+2 
+is  precisely  the  choice  made  in  AdaBoost  algorithm.  For  this  choice  of  � t  we  get 
+ 
+�
+�
+�t 
+= �4�t (1 − �t )
+Zt  = (1 − �t ) 
++ �t 
+1 − �t 
+and  plugging  this  into  (17.0.2)  ﬁnishes  the  proof  of  the  bound. 
+
+1 − �t 
+�t 
+
+126 
+
+
+

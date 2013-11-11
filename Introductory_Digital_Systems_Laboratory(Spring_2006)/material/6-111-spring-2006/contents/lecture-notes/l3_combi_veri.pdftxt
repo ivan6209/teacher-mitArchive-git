@@ -1,0 +1,1395 @@
+L3: Introduction to Verilog
+Verilog
+L3: Introduction to 
+(Combinational Logic)
+(Combinational Logic)
+
+Acknowledgements:  
+Materials in this lecture are courtesy of the following sources and are used with
+permission.
+ 
+Rex Min
+Verilog References:
+• Samir Palnitkar, Verilog HDL, Pearson Education (2nd edition).
+• Donald Thomas, Philip Moorby, The Verilog Hardware Description Language, Fifth 
+Edition, Kluwer Academic Publishers. 
+• J. Bhasker, Verilog HDL Synthesis (A Practical Primer), Star Galaxy Publishing
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+Synthesis and HDLsHDLs
+Synthesis and 
+
+(cid:132) Hardware description language (HDL) is a convenient, device-
+independent representation of digital logic
+
+Verilog
+
+input a,b;
+output sum;
+assign sum <= {1b’0, a} + {1b’0, b};
+
+Compilation and 
+Synthesis
+Netlist
+g1 "and" n1 n2 n5
+g2 "and" n3 n4 n6
+g3 "or" n5 n6 n7
+
+Mapping
+
+FPGA
+
+(cid:132) HDL description is compiled 
+into a netlist
+(cid:132) Synthesis optimizes the logic
+
+(cid:132) Mapping targets a specific 
+hardware platform
+
+PAL
+
+ASIC
+(Custom ICs)
+
+L3: 6.111 Spring 200
+
+Introductory Digital Systems Laboratory
+
+5
+
+The FPGA: A Conceptual View
+The FPGA: A Conceptual View
+
+(cid:132) An FPGA is like an electronic breadboard that is wired together 
+by an automated synthesis tool
+(cid:132) Built-in components are called macros
+
+sel
+
+a
+b
+c
+d
+
+LUT
+
+F(a,b,c,d)
+G(a,b,c,d)
+
+32
+
+32
+
+32
+
+SUM
+
++
+
+D Q
+
+interconnect
+
+counter
+
+ADR
+R/W
+
+RAM
+
+DATA
+
+(for everything else)
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+6
+
+Synthesis and Mapping for FPGAs
+FPGAs
+Synthesis and Mapping for 
+
+(cid:132) Infer macros: choose the FPGA macros that efficiently 
+implement various parts of the HDL code
+
+...
+always @ (posedge clk)
+begin
+count <= count + 1;
+
+“This section of code looks 
+like a counter. My FPGA has 
+some of those...”
+
+counter
+
+end
+...
+
+Inferred Macro
+HDL Code
+(cid:132) Place-and-route: with area and/or speed in mind, choose 
+the needed macros by location and route the interconnect
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+M
+
+“This design only uses 10% of 
+the FPGA. Let’s use the macros 
+in one corner to minimize the 
+distance between blocks.”
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+7
+
+Verilog : The Module
+: The Module
+Verilog
+
+(cid:132) Verilog designs consist of 
+interconnected modules.
+(cid:132) A module can be an element or 
+collection of lower level design blocks.
+(cid:132) A simple module with combinational 
+logic might look like this:
+
+module mux_2_to_1(a, b, out, 
+
+outbar, sel);
+
+// This is 2:1 multiplexor
+
+input a, b, sel;
+
+output out, outbar;
+
+assign out = sel ? a : b;
+
+assign outbar = ~out;    
+
+endmodule
+
+a
+
+b
+
+1
+
+0
+
+out
+outbar
+
+sel
+Out = sel ● a + sel ● b
+2-to-1 multiplexer with inverted output
+
+Declare and name a module; list its 
+ports. Don’t forget that semicolon.
+Comment starts with //  
+Verilog skips from // to end of the line
+
+Specify each port as input, output, 
+or inout
+
+Express the module’s behavior. 
+Each statement executes in 
+parallel; order does not matter.
+
+Conclude the module code.
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+8
+
+Continuous (Dataflow) Assignment
+Continuous (Dataflow) Assignment
+
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+input a, b, sel;
+output out, outbar;
+
+assign out = sel ? a : b;
+assign outbar = ~out;    
+
+endmodule
+
+a
+
+b
+
+1
+
+0
+
+sel
+
+out
+outbar
+
+(cid:132) Continuous assignments use the assign keyword
+(cid:132) A simple and natural way to represent combinational logic
+(cid:132) Conceptually, the right-hand expression is continuously evaluated as a function of 
+arbitrarily-changing inputs…just like dataflow 
+(cid:132) The target of a continuous assignment is a net driven by combinational logic
+(cid:132) Left side of the assignment must be a scalar or vector net or a concatenation of scalar 
+and vector nets. It can’t be a scalar or vector register (discussed later). Right side can be 
+register or nets
+(cid:132) Dataflow operators are fairly low-level:
+(cid:134) Conditional assignment:  (conditional_expression) ? (value-if-true) : (value-if-false);
+(cid:134) Boolean logic:  ~, &, |
+(cid:134) Arithmetic: +, -, *
+(cid:132) Nested conditional operator (4:1 mux) 
+(cid:134) assign out = s1 ? (s0 ? i3 : i2) : (s0? i1 : i0);
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+9
+
+Gate Level Description
+Gate Level Description
+
+module muxgate (a, b, out, 
+outbar, sel);
+input a, b, sel;
+output out, outbar;
+wire out1, out2, selb;
+and a1 (out1, a, sel);
+not i1 (selb, sel);
+and a2 (out2, b , selb);
+or o1 (out, out1, out2);
+assign outbar = ~out;    
+endmodule
+
+a
+
+sel
+
+selb
+
+b
+
+out1
+
+out2
+
+out
+
+outbar
+
+(cid:132) Verilog supports basic logic gates as primitives
+(cid:134) and, nand, or, nor, xor, xnor, not, buf
+(cid:134) can be extended to multiple inputs: e.g., nand nand3in (out, in1, in2,in3);
+(cid:134) bufif1 and bufif0 are tri-state buffers
+(cid:132) Net represents connections between hardware elements. Nets are 
+declared with the keyword wire. 
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+10
+
+Procedural Assignment with always
+Procedural Assignment with 
+always
+
+(cid:132) Procedural assignment allows an alternative, often higher-level, behavioral 
+description of combinational logic
+(cid:132) Two structured procedure statements: initial and always
+(cid:132) Supports richer, C-like control structures such as if, for, while,case
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+Exactly the same as before.
+
+input a, b, sel;
+output out, outbar;
+
+reg out, outbar; 
+
+always @ (a or b or sel)
+
+begin
+if (sel) out = a;
+else out = b;
+
+outbar = ~out;
+
+end    
+
+endmodule
+
+Anything assigned in an always
+block must also be declared as 
+type reg (next slide)
+Conceptually, the always block 
+runs once whenever a signal in the 
+sensitivity list changes value
+
+Statements within the always
+block are executed sequentially. 
+Order matters!
+Surround multiple statements in a 
+single always block with begin/end.
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+11
+
+Verilog Registers
+Registers
+Verilog
+
+(cid:132) In digital design, registers represent memory elements (we 
+will study these in the next few lectures)
+(cid:132) Digital registers need a clock to operate and update their 
+state on certain phase or edge
+(cid:132) Registers in Verilog should not be confused with hardware 
+registers
+(cid:132) In Verilog, the term register (reg) simply means a variable 
+that can hold a value 
+(cid:132) Verilog registers don’t need a clock and don’t need to be 
+driven like a net.  Values of registers can be changed 
+anytime in a simulation by assuming a new value to the 
+register
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+12
+
+MixMix --andand --Match Assignments
+Match Assignments
+
+(cid:132) Procedural and continuous assignments can (and often do) co-exist 
+within a module
+(cid:132) Procedural assignments update the value of reg. The value will remain 
+unchanged till another procedural assignment updates the variable. 
+This is the main difference with continuous assignments in which the 
+right hand expression is constantly placed on the left-side
+
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+input a, b, sel;
+output out, outbar;
+reg out; 
+
+always @ (a or b or sel) 
+begin
+if (sel) out = a;
+else out = b;
+end    
+
+assign outbar = ~out;
+
+endmodule
+
+a
+
+b
+
+1
+
+0
+
+sel
+
+out
+outbar
+
+procedural 
+description
+continuous 
+description
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+13
+
+The The case
+Statement
+case Statement
+
+(cid:132) case and if may be used interchangeably to implement 
+conditional execution within always blocks
+(cid:132) case is easier to read than a long string of if...else statements
+
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+input a, b, sel;
+output out, outbar;
+reg out; 
+
+always @ (a or b or sel) 
+begin
+if (sel) out = a;
+else out = b;
+end    
+
+assign outbar = ~out;
+
+endmodule
+
+input a, b, sel;
+output out, outbar;
+reg out; 
+
+always @ (a or b or sel) 
+begin
+case (sel)
+1’b1: out = a;
+1’b0: out = b;
+endcase
+end    
+
+assign outbar = ~out;
+
+endmodule
+
+Note: Number specification notation: <size>’<base><number> 
+(4’b1010 if a 4-bit binary value, 16’h6cda is a 16 bit hex number, and 8’d40 is an 8-bit decimal value)
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+14
+
+Verilog : : nn --bit Signals
+The Power of Verilog
+bit Signals
+The Power of 
+
+(cid:132) Multi-bit signals and buses are easy in Verilog.
+(cid:132) 2-to-1 multiplexer with 8-bit operands:
+
+module mux_2_to_1(a, b, out, 
+outbar, sel);
+
+input[7:0] a, b;
+input sel;
+output[7:0] out, outbar;
+reg[7:0] out; 
+always @ (a or b or sel) 
+begin
+if (sel) out = a;
+else out = b;
+end    
+assign outbar = ~out;
+endmodule
+
+a
+
+b
+
+8
+
+8
+
+1
+
+0
+
+sel
+
+8
+
+8
+
+out
+outbar
+
+Concatenate signals using the { } operator
+assign {b[7:0],b[15:8]} = {a[15:8],a[7:0]};
+effects a byte swap
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+15
+
+The Power of Verilog
+Verilog : Integer Arithmetic
+: Integer Arithmetic
+The Power of 
+
+(cid:132) Verilog’s built-in arithmetic makes a 32-bit adder easy:
+
+module add32(a, b, sum);
+input[31:0] a,b;
+output[31:0] sum;
+assign sum = a + b;
+endmodule
+
+(cid:132) A 32-bit adder with carry-in and carry-out:
+
+module add32_carry(a, b, cin, sum, cout);
+input[31:0] a,b; 
+input cin;
+output[31:0] sum; 
+output cout;
+assign {cout, sum} = a + b + cin;
+endmodule
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+16
+
+Dangers of Verilog
+Verilog : Incomplete Specification
+: Incomplete Specification
+Dangers of 
+
+Goal:
+
+Proposed Verilog Code:
+
+out
+
+a
+b
+c
+
+00
+01
+10
+
+2
+sel
+
+3-to-1 MUX
+(‘11’ input is a don’t-care)
+
+module maybe_mux_3to1(a, b, c, 
+sel, out);
+
+input [1:0] sel;
+input a,b,c;
+output out;
+reg out;
+
+always @(a or b or c or sel)
+begin
+case (sel)
+2'b00: out = a;
+2'b01: out = b;
+2'b10: out = c;
+endcase
+end
+endmodule
+
+Is this a 3-to-1 multiplexer?
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+17
+
+Incomplete Specification Infers Latches
+Incomplete Specification Infers Latches
+
+module maybe_mux_3to1(a, b, c, 
+sel, out);
+
+input [1:0] sel;
+input a,b,c;
+output out;
+reg out;
+
+always @(a or b or c or sel)
+begin
+case (sel)
+2'b00: out = a;
+2'b01: out = b;
+2'b10: out = c;
+endcase
+end
+endmodule
+
+if out is not assigned 
+during any pass through 
+the always block, then the 
+previous value must be 
+retained!
+
+Synthesized Result:
+
+D Q
+
+out
+
+G
+
+a
+b
+c
+
+00
+01
+10
+
+2
+sel
+
+sel[1]
+sel[0]
+
+(cid:132) Latch memory “latches”
+old data when G=0 (we 
+will discuss latches later)
+(cid:132) In practice, we almost 
+never intend this
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+18
+
+Avoiding Incomplete Specification
+Avoiding Incomplete Specification
+
+(cid:132) Precede all conditionals 
+with a default assignment 
+for all signals assigned 
+within them…
+
+always @(a or b or c or sel)
+begin
+out = 1’bx;
+case (sel)
+2'b00: out = a;
+2'b01: out = b;
+2'b10: out = c;
+endcase
+end
+endmodule
+
+always @(a or b or c or sel)
+begin
+case (sel)
+2'b00: out = a;
+2'b01: out = b;
+2'b10: out = c;
+default: out = 1’bx;
+endcase
+end
+endmodule
+
+(cid:132) …or, fully specify all 
+branches of conditionals and
+assign all signals from all 
+branches
+(cid:134) For each if, include else
+(cid:134) For each case, include default
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+19
+
+Dangers of Verilog
+Verilog : Priority Logic
+: Priority Logic
+Dangers of 
+
+Goal:
+
+Proposed Verilog Code:
+
+4-to-2 Binary Encoder
+
+0
+1
+0
+0
+
+I3
+I2
+I1
+I0
+
+E1
+E0
+
+1
+0
+
+I3 I2 I1 I0
+0 0 0 1
+0 0 1 0
+0 1 0 0
+1 0 0 0
+all others
+
+E1 E0
+0 0
+0 1
+1 0
+1 1
+X X
+
+module binary_encoder(i, e);
+input [3:0] i;
+output [1:0] e;
+reg e;
+
+always @(i)
+begin
+if (i[0]) e = 2’b00;
+else if (i[1]) e = 2’b01;
+else if (i[2]) e = 2’b10;
+else if (i[3]) e = 2’b11;
+else e = 2’bxx;
+end
+endmodule
+
+What is the resulting circuit?
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+20
+
+Priority Logic
+Priority Logic
+
+Intent: if more than one input is 
+1, the result is a don’t-care.
+E1 E0
+I3 I2 I1 I0
+0 0 0 1
+0 0
+0 1
+0 0 1 0
+0 1 0 0
+1 0
+1 1
+1 0 0 0
+all others
+X X
+
+Code: if i[0] is 1, the result is 00 
+regardless of the other inputs. 
+i[0] takes the highest priority.
+
+if (i[0]) e = 2’b00;
+else if (i[1]) e = 2’b01;
+else if (i[2]) e = 2’b10;
+else if (i[3]) e = 2’b11;
+else e = 2’bxx;
+end
+
+Inferred 
+Result:
+
+2’b11
+2’bxx
+
+1
+0
+
+2’b10
+
+i[3]
+
+2’b01
+
+1
+0
+
+i[2]
+
+2’b00
+
+1
+0
+
+i[1]
+
+1
+0
+
+i[0]
+
+e[1:0]
+
+(cid:132) if-else and case statements are interpreted very literally! 
+Beware of unintended priority logic.
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+21
+
+Avoiding (Unintended) Priority Logic
+Avoiding (Unintended) Priority Logic
+
+(cid:132) Make sure that if-else and case statements are parallel
+(cid:134) If mutually exclusive conditions are chosen for each branch...
+(cid:134) ...then synthesis tool can generate a simpler circuit that evaluates 
+the branches in parallel
+
+Parallel Code:
+
+Minimized Result:
+
+module binary_encoder(i, e);
+input [3:0] i;
+output [1:0] e;
+reg e;
+
+always @(i)
+begin
+if (i == 4’b0001) e = 2’b00;
+else if (i == 4’b0010) e = 2’b01;
+else if (i == 4’b0100) e = 2’b10;
+else if (i == 4’b1000) e = 2’b11;
+else e = 2’bxx;
+end
+endmodule
+
+I3
+
+I1
+I0
+
+E0
+
+E1
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+22
+
+Interconnecting Modules
+Interconnecting Modules
+
+(cid:132) Modularity is essential to the success of large designs
+(cid:132) A Verilog module may contain submodules that are “wired together”
+(cid:132) High-level primitives enable direct synthesis of behavioral descriptions (functions such 
+as additions, subtractions, shifts (<< and >>), etc.
+
+Example: A 32-bit ALU
+
+Function Table
+
+A[31:0]
+
+B[31:0]
+
+32’d1
+0 1
+
+32’d1
+
+0 1
+
+F[0]
+
++
+
+-
+
+*
+
+F[2:0]
+
+F2 F1 F0
+0   0   0
+0   0   1
+0   1   0
+0   1   1
+1    0   X
+
+Function
+A + B
+A + 1
+A - B
+A - 1
+A * B
+
+00 01 10
+
+R[31:0]
+
+F[2:1]
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+23
+
+Module Definitions
+Module Definitions
+
+2-to-1 MUX
+
+module mux32two(i0,i1,sel,out);
+input [31:0] i0,i1;
+input sel;
+output [31:0] out;
+
+assign out = sel ? i1 : i0;
+
+endmodule
+
+3-to-1 MUX
+module mux32three(i0,i1,i2,sel,out);
+input [31:0] i0,i1,i2;
+input [1:0] sel;
+output [31:0] out;
+reg [31:0] out;
+always @ (i0 or i1 or i2 or sel)
+begin
+case (sel)
+2’b00: out = i0;
+2’b01: out = i1;
+2’b10: out = i2;
+default: out = 32’bx;
+endcase
+end
+endmodule
+
+32-bit Adder
+
+32-bit Subtracter
+
+module add32(i0,i1,sum);
+input [31:0] i0,i1;
+output [31:0] sum;
+
+module sub32(i0,i1,diff);
+input [31:0] i0,i1;
+output [31:0] diff;
+
+assign sum = i0 + i1;
+
+assign diff = i0 - i1;
+
+endmodule
+
+endmodule
+
+16-bit Multiplier
+module mul16(i0,i1,prod);
+input [15:0] i0,i1;
+output [31:0] prod;
+
+// this is a magnitude multiplier
+// signed arithmetic later
+assign prod = i0 * i1;
+
+endmodule
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+24
+
+TopTop --Level ALU Declaration
+Level ALU Declaration
+
+(cid:132) Given submodules:
+module mux32two(i0,i1,sel,out);
+module mux32three(i0,i1,i2,sel,out);
+module add32(i0,i1,sum);
+module sub32(i0,i1,diff);
+module mul16(i0,i1,prod);
+(cid:132) Declaration of the ALU Module:
+module alu(a, b, f, r);
+input [31:0] a, b;
+input [2:0] f;
+output [31:0] r;
+
+A[31:0]
+
+B[31:0]
+
+32’d1
+0 1
+
+32’d1
+
+0 1
+
+alu
+
+F[0]
+
++
+
+-
+
+*
+
+F[2:0]
+
+00 01 10
+
+R[31:0]
+
+F[2:1]
+
+wire [31:0] addmux_out, submux_out;
+wire [31:0] add_out, sub_out, mul_out;
+
+intermediate output nodes
+
+mux32two   adder_mux(b, 32'd1, f[0], addmux_out);
+mux32two   sub_mux(b, 32'd1, f[0], submux_out);
+add32      our_adder(a, addmux_out, add_out);
+sub32      our_subtracter(a, submux_out, sub_out);
+mul16      our_multiplier(a[15:0], b[15:0], mul_out);
+mux32three output_mux(add_out, sub_out, mul_out, f[2:1], r);
+
+endmodule
+
+module
+names
+
+(unique)
+instance
+names
+
+corresponding 
+wires/regs in 
+module alu
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+25
+
+ModelSim Output
+Output
+ModelSim
+
+addition
+multiplication
+subtraction
+Courtesy of Frank Honore and D. Milliner. Used with permission.
+
+(cid:132) ModelSim used for behavior level simulation (pre-synthesis) – no timing 
+information
+(cid:132) ModelSim can be run as a stand alone tool or from Xilinx ISE which allows 
+simulation at different levels including Behavioral and Post-Place-and-
+Route
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+26
+
+More on Module Interconnection
+More on Module Interconnection
+
+(cid:132) Explicit port naming allows port mappings in arbitrary 
+order: better scaling for large, evolving designs
+Given Submodule Declaration:
+module mux32three(i0,i1,i2,sel,out);
+Module Instantiation with Ordered Ports:
+mux32three output_mux(add_out, sub_out, mul_out, f[2:1], r);
+Module Instantiation with Named Ports:
+mux32three output_mux(.sel(f[2:1]), .out(r), .i0(add_out), 
+.i1(sub_out), .i2(mul_out));
+
+submodule’s
+port name
+
+corresponding
+wire/reg in
+outer module
+
+(cid:132) Built-in Verilog gate primitives may be instantiated as well
+(cid:134) Instantiations may omit instance name and must be ordered:    
+and(out, in1,in2,...inN);
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+27
+
+Useful Boolean Operators
+Useful Boolean Operators
+
+(cid:132) Bitwise operators perform bit-sliced operations on vectors
+(cid:134) ~(4’b0101) = {~0,~1,~0,~1} = 4’b1010
+(cid:134) 4’b0101 & 4’b0011 = 4’b0001
+(cid:132) Logical operators return one-bit (true/false) results
+(cid:134) !(4’b0101) = ~1 = 1’b0
+(cid:132) Reduction operators act on each bit of a single input vector
+(cid:134) &(4’b0101) = 0 & 1 & 0 & 1 = 1’b0
+(cid:132) Comparison operators perform a Boolean test on two arguments
+Comparison
+Reduction
+Logical
+Bitwise
+a < b
+&a
+AND
+~a
+NOT
+!a
+NOT
+a > b
+NAND
+~&
+AND
+a & b
+a && b AND
+a <= b
+a >= b
+OR
+|
+a | b
+OR
+OR
+a || b
+a == b
+~|
+NOR
+a != b
+a ^ b
+XOR
+XOR
+^
+a ~^ b XNOR
+
+Note distinction between ~a and !a
+
+a === b
+a !== b
+
+Relational
+
+[in]equality
+returns x when x 
+or z in bits. Else 
+returns 0 or 1
+case 
+[in]equality
+returns 0 or 1 
+based on bit by bit 
+comparison
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+28
+
+always @(a or b or cin)
+begin
+sum = a ^ b ^ cin;
+cout = (a & b) | (a & cin) | (b & cin);
+end
+Endmodule
+
+ModelSim Simulation
+
+// instantiate 1-bit adders
+full_adder FA0(a[0],b[0], cin, sum[0], c1);
+full_adder FA1(a[1],b[1], c1, sum[1], c2);
+full_adder FA2(a[2],b[2], c2, sum[2], c3);
+full_adder FA3(a[3],b[3], c3, sum[3], cout);
+endmodule
+
+ModelSim/Testbench Introduction:
+Introduction:
+ModelSim/Testbench
+Demo this week in Lab by TAs
+Demo this week in Lab by TAs
+Full Adder (4-bit)
+Full Adder (1-bit)
+module full_adder_4bit (a, b, cin, sum, 
+module full_adder (a, b, cin, 
+cout);
+sum, cout);
+input[3:0]    a, b;
+input    a, b, cin;
+output  sum, cout;
+input           cin;
+output [3:0] sum;
+sum, cout;
+reg
+output 
+cout;
+wire            c1, c2, c3;
+
+Testbench
+module test_adder;
+reg [3:0]  a, b;
+reg
+cin; 
+wire [3:0] sum;
+wire         cout;
+
+full_adder_4bit dut(a, b, cin,
+sum, cout);
+
+initial
+begin
+a = 4'b0000;
+b = 4'b0000;
+cin = 1'b0;
+#50;
+a = 4'b0101;
+b = 4'b1010;
+// sum = 1111, cout = 0
+#50;
+a = 4'b1111;
+b = 4'b0001;
+// sum = 0000, cout = 1
+
+#50;
+
+a = 4'b0000;
+b = 4'b1111;
+cin = 1'b1;
+// sum = 0000, cout = 1
+#50;
+a = 4'b0110;
+b = 4'b0001;
+// sum = 1000, cout = 0
+end // initial begin
+endmodule // test_adder
+
+L3: 6.111 Spring 2006
+
+Courtesy of Francis A. Honore. Used with permission.
+Courtesy of D. Milliner. Used with permission.
+Introductory Digital Systems Laboratory
+
+29
+
+Summary
+Summary
+
+(cid:132) Multiple levels of description: behavior, dataflow, logic and 
+switch (not used in 6.111)
+(cid:132) Gate level is typically not used as it requires working out 
+the interconnects
+(cid:132) Continuous assignment using assign allows specifying 
+dataflow structures
+(cid:132) Procedural Assignment using always allows efficient 
+behavioral description. Must carefully specify the 
+sensitivity list
+(cid:132) Incomplete specification of case or if statements can 
+result in non-combinational logic
+(cid:132) Verilog registers (reg) is not to be confused with a 
+hardware memory element
+(cid:132) Modular design approach to manage complexity
+
+L3: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+30
+
+

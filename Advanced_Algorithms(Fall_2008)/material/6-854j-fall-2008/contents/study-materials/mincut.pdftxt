@@ -1,0 +1,182 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854 Advanced Algorithms 
+Lecture  11 
+
+October  22,  1996 
+
+Lecturer:  Michel X.  Goemans 
+
+Scribe:  Roberto  De  Prisco 
+
+Minimum  Cuts 
+
+In   th i s   lecture  we  will  describe  a n   algorithm  t h a t   computes  the   minimum  cu t   (or 
+simply m incu t)   in  an  undirected  graph .   A  cu t   is  defined  as  follows. 
+
+Definition  1 Given  a  graph  G  = (V,E) and   a  subset S of  V,  the  cut  S (S )   induced 
+by  S is   the  subset  of  edges  ( i ,  j) E E such  that  1  { i , j) ilSI  = 1. 
+
+T h a t   is, 6 ( S )  consists  of  all those  edges with  exactly one  endpoint  in   S .  
+Given  a n   undirected  graph   G  = (V, E) and   for  each  edge  e  E  E  a  nonnegative 
+cost  (or  capacity)  ce ,  t h e   cost  of  a  cu t   6 ( S ) ,  is  t h e   sum  of  the   costs  of  t h e   edges  in 
+t h e  c u t ,  t h a t   is 
+
+The   minimum  cut problem  (or mincut  problem) is  t o  find  a  cu t   of  minimum cost. 
+If  all costs  are   1 then   t h e  problem  becomes  t h e   problem  of  finding a  cu t  with  a s  few 
+edges  a s  possible. 
+Cu t s   are   often  defined  in   a  different,  not  completely  equivalent,  way.  Define  a 
+cutset  t o   be   a  set  of  edges  whose  removal  disconnects  the   graph   in to   a t   least  two 
+connected  components.  Minimal  cu tse ts   ( a  minimal  cutset  C  is  a  cu tse t   such  t h a t  
+any proper subset of  C is not anymore a cu t se t )  can be  seen t o  correspond  t o  cu ts  6 ( S )  
+for  which  t h e   subgraphs  induced  by  S and   V - S a re  connected.  Observe  t h a t   only 
+minimal cu tse ts  can  be  of  minimum  cost  (among all cu tse ts)  and   t h a t   only  cu ts  S (S )  
+for  which  bo th   S  and   V - S induce  connected  components  can  be   of  minimum  cost 
+(among all cu ts)   since  t h e   costs  are   assumed  t o  be  nonnegative.  For  th i s  reason,  t h e  
+problem  of  finding  a  cu tse t   of  minimum  cost  is  equivalent  t o  the   problem  of  finding 
+a  cu t   6 ( S )  of  minimum cost, namely  t h e  mincut  problem.  From now  on ,  we  will only 
+look  a t  cu t s  6 ( S )  (and  not  cu tse ts) .  
+An  impo r tan t   variant  of  t h e   mincut  problem  is  often  considered.  Th i s   is  t h e  
+problem  of  finding  t h e  minimum  cost  cu t   separa t ing  two  given  two  vertices  s and   t .  
+A  cu t   6 ( S )  is  said  t o  separa te   s and   t  if  only one  of  them   belongs  t o  S .  We  refer  t o  
+t h i s  problem  a s  t h e  minimum  (s ,t ) -cu t   problem. 
+The  minimum ( s ,  t ) -cu t  problem has been  trad i t iona l ly  solved by  means of network 
+flow  algorithms.  Indeed  i t   can  be  reduced  t o   a  max   flow  problem.  Given  a  source  s 
+
+and   a  sink  t  of  t h e   graph  G ,  i t   is  known  t h a t 1  
+
+MAX   FLOW ( s ,  t )  =  min  c ( 6 ( S ) ) .
+S : s ~ s , t @ S  
+
+Notice t h a t  th i s  result  relates t h e  value of  t h e  maximum flow from s t o  t and  the  value 
+of  t h e  minimum  (s ,t)-cu t   I t   does  not  specify  any  relationship between  t h e  minimum 
+(s,t ) -cu t  itself  (meaning t h e  edges composing t h e  c u t )  and  the  way  the  maximum flow 
+can  be   pushed  in to   t h e   graph .   However,  given  a  maximum  flow,  i t   is  easy  t o  ob ta in  
+t h e   corresponding  (s,t)-m incu t .   If  you  look  a t   t h e   residual  graph   corresponding  t o  
+t h e   maximum  flow,  t h e   set  S of  vertices  reachable  from  S will  induce  a  minimum 
+cu t .   By  definition of  t h e  residual  graph   (and  properties  of  maximum  flows), t h e  cost 
+of  th i s   cu t   is  equal  t o   t h e   value  of  the   maximum  flow  and   thu s   i t   is  a  min  (s,t ) -
+cu t .   On   t h e   o ther   hand ,   t h e   knowledge  of  a  min  ( s ,  t ) -cu t   does  no t   help  in   finding 
+t h e   ac tua l   maximum  flow  (no t   just  i t s   value  b u t   the   flow  on  every  edge).  Indeed, 
+consider  t h e  following example.  Let  C* be  t h e  min  ( s ,  t ) -cu t  value  in  G = (V, E) and  
+let  us  consider  t h e   graph   G' = (V', El) where  V' = {s'}  u V  and   E' = {(s' ,  s ) )  U E 
+with  c(s', s) = C * .  Then   a  possible  minimum  (s',t)-cu t   is & ( i s ' ) ) .  However  th i s  does 
+not  give  any more  information on how  t h e  flow  can  be  pushed  from  s' t o  t  ( t h a n  just 
+i t s   value  C * ) .   So  far  no  algorithm  t h a t   finds  a  minimum  ( s ,  t ) -cu t   without  using  a 
+reduction  t o  t h e  max  flow  problem  has  been  discovered.  We  will  see  t h a t   for  general 
+mincuts  (o t  separa t ing  two  given  vertices), the   s i tua t ion   is  different. 
+How  can  we  find  a  minimum  cu t   in   a n   undirected  graph?   One  possibility  is  t o  
+choose a  vertex  s  and   compute  the  min  ( s ,  t ) -cu t s  for  every  t  E  V - { s ) ,   and   choose 
+t h e   cu t   of  minimum  cost  among  all  t h e   cu t s   obtained.  T h e   fastest  maximum  flow 
+algorithms currently take  slightly more  t h a n  O (m n )  t ime   (for example, Goldberg and  
+Tar jan's  a lgor i thm   [I] take  O ( m n  l o g ( n 2 /m ) )  t ime ) .   Since we  need  t o  use  i t   n  times, 
+we  can  find  a  mincut  in  O (m n 2  l o g ( n 2 /m ) )  t ime .   However,  these  n  - 1 maxflow 
+problem  a re  re la ted ,  and  Hao  and   Orlin  [2] have  shown  t h a t   i t   is  possible  t o  solve  all 
+of  them   in   O ( m n  l o g ( n 2 /m ) )  by  modifying  Goldberg  and   Tar jan's  algorithm.  Thu s  
+t h e  minimum cu t   problem  can  be  solved within  th i s  t ime  bound .  
+In   th i s   lecture,  we  will  derive  a n   algorithm  for  the   mincut  problem  which  is  not 
+based  on  network  flows, and  which  has   a  running  t ime   slightly  be t te r   t h a n  Hao  and  
+Orlin's.  T h e   algorithm  is  due   t o   Stoer  a n d  Wagner  [6],  and   is  a  simplification of  an  
+earlier  result  of  Nagamochi  and   Ibarak i   [5]. We  should  also  point  ou t   t h a t   there   is  a 
+randomized  algorithm due  t o  Karger and  Stein  [4] whose  runn ing  t ime  is O ( n 2  log3 n ) ,  
+and   a  subsequent  one due   t o  Karger  [3] t h a t   runs   in  O (m l o g 3  n ) .  
+We  first  need  a  definition.  Define, for  any  two  se ts  A, B of  nodes  of  t h e   graph ,  
+
+I t   is  clear  t h a t   th e   maximum  flow  cannot  be  larger  th an   th e   cost  of  any  cut.  This  result  says 
+t h a t   i t   is  as  large  as i t   can be,  i.e.  a s  large as t h e  cost  of  t h e  minimum  (s, t)-cut. 
+
+The  algorithm  is described  below.  In  words,  t h e  a lgor i thm  s t a r t s  with  any vertex, 
+and   build  a n   ordering  of  t h e   vertices  by  always  adding  t o   t h e   selected  vertices  t h e  
+vertex whose  t o t a l  cost  t o  t h e  previous vertices  is maximized.  T h e  cu t   induced by  t h e  
+last  vertex  in   the   ordering is  considered,  a s  well  a s  t h e   cu ts   obtained  by  recursively 
+applying  the   procedure  t o   t h e   graph  ob ta ined   by  shrinking  the   las t   two  vertices.  (If 
+there  a re  edges from  a vertex  v t o  these  las t  two vertices then  we  sub s t i tu te  those two 
+edges  with  only  one  edge  having  capacity  equal  t o   t h e   sum   of  t h e   capacities  of  t h e  
+two  edges.)  The   claim  is  t h a t   t h e  best  cu t   among  t h e   cu t s   considered  is  t h e   overall 
+m incu t .   The  formal description  is given  below. 
+
+Let  vl  be  any  vertex  of  G 
+
+for  i = 2  to  n 
+let  vi  t h e   node  of  V \ S s . t .  
+c ( S  : {v})  is maximized  (over all v  E  V \ S) 
+S := S U  {vi} 
+end for 
+if  n = 2  then re tu rn   t h e   cu t   S({v,}) 
+else 
+Let  G' be  obtained  from  G  by  shrinking v,-1  and   v, 
+Let  C  be  the   cu t   re turned   by  M INCUT (G ' )  
+Among  C  and   6({vn))  re turn   t h e   smaller  cu t   (in  te rm s   of 
+cost) 
+endif 
+
+Figure  1 illustrates  how  t h e   algorithm works  on  an   example. 
+The   analysis  is based  on  the   following crucial  claim. 
+
+(or  {vl, vz, ...,vnWl)) induces  a  min  (vnWl, v,)-cut  in  G .   (Notice  tha t  
+Claim 1 {v,) 
+we  do  not  know  in   advance  vn-l  and  v,.) 
+
+From  th i s ,   t h e   correctness  of  t h e   algorithm  follows easily.  Indeed,  t h e  mincut  is 
+either  a  ( v , - ~ ,  v,)-cut  or  no t .   If  i t   is, we  are   fine  thank s   t o   t h e   above  claim.  If  i t   is 
+no t ,  we  can  assume  by  induction  on t h e  size of  t h e  vertex  set  t h a t   i t  will be  returned 
+by  the   call M INCUT (G ' ) .  
+Let  v1, v2, ..., vi, ...,v j ,  ...,vn - l r  vn  be   t h e   sequence  of  nodes  chosen  by  t h e  
+Proof: 
+algorithm  and   let  us  denote  by  A i t h e   sequence  v l ,  vz, . . . ,vi-1.  We  are   interested  in 
+t h e  cu t s  t h a t   separa te  v,-1  and  v,.  Let  C be any set  such  t h a t  v,-1  E C a n d  v,  @  C. 
+Then  we  want  t o  prove  t h a t   t h e   cu t   induced  by  C  satisfies 
+
+F igure   1: I l lu s t ra t ion  of  t h e  m incu t   a lgor i thm .  
+
+Let  us  define  vertex  vi  t o  be   critical  w i th   respect  t o  C if  e i ther   vi  o r  vi-1  belongs 
+t o  C b u t   no t   bo th .   We  claim  t h a t   if  vi  is  cr i t ica l  t h e n  
+
+where  Ci = (Ai U {vi))  n C .  
+Notice  t h a t   th i s   implies  t h a t   c ( d (C ) )  2 @(A,))  because  v, 
+is  critical.  Now  le t  
+u s  prove  t h e  claim  by  induc t ion   on  t h e  sequence  of  cr i t ica l  vertices. 
+Let  vi  be  t h e   first  cr i t ica l  vertex.  T h e n  
+
+T h u s  t h e   base  of  t h e  induc t ion   is  t r u e .  
+For  t h e   inductive  s t e p ,  le t   t h e  assertion  be  t r u e  for  critical  ver tex  vi  a n d   let  v j  b e  
+t h e  nex t   (af ter  vi)  cr i t ica l  vertex.  T h e n  
+
+t h e  first  inequality  following from  t h e  definition  of  vi,  t h e  second  inequa l i ty  from t h e  
+induc t ive   hypothesis,  a n d   t h e   las t   from  t h e   fac t   t h a t   v j   is  t h e   nex t   cr i t ica l   vertex. 
+induces  t h e   c u t   {vl, vz , .  .  , v , - ~ )   : {v,). 
+T h e   proof  is  concluded  observing  t h a t   A, 
+
+The   running  t ime   depends  on  t h e   par t icu lar   implementation.  Using  Fibonacci 
+heaps  we  can  implement  each  i tera t ion   in  O (m+ n log n ) t ime   and   th i s  yields  a  t o t a l  
+runn ing  t ime  of  0 (mn+ n2log n ). 
+
+References 
+
+[I]  A.V.  Goldberg and   R.E.  Tar jan ,   "A  new  approach  t o  t h e  maximum  flow  prob- 
+lem",  Jou rna l   of  the  ACM,  35, 921-940,  1988. 
+
+[2]  X.  Hao  and   J.B.  Orlin,  "A  faster  algorithm  for  finding  t h e   minimum  cu t   in   a 
+graph" ,   Proc.  of  the  3rd  ACM-SIAM  Symposium  on  Discrete Algorithms,  165- 
+174, 1992. 
+
+[3]  D. Karger,  "Minimum  cu t s  in  near-linear  t ime" ,   Proc.  of  the  28th  STOC, 56-63, 
+1996. 
+
+[4]  D.  Karger  and   C.  S te in ,   "An  0 ( n 2 )a lgor i thm  for  minimum  cu ts" ,   Proc.  of  the 
+25th  STOC ,  757-765,  1993. 
+
+[5]  H. Nagamochi  and  T .  Ibarak i ,   "Computing edge-connectivity in  multigraphs and  
+capac i ta ted  graphs' , ,  SIAM  J o u r n a l  on  Discrete  Mathematics,  5, 54-66,  1992. 
+
+[6]  M .   S toer  and  F. Wagner,  "A  simple mincut  algorithm",  Proc.  of  ESA94, Lecture 
+Notes  in   Computer  Science, 855, 141-147,  1994. 
+
+

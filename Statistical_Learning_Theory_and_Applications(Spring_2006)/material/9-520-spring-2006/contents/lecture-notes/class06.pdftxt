@@ -1,0 +1,937 @@
+Manifold  Regularization
+
+9.520  Class   06,  27  February   2006
+
+
+Andrea  Caponnetto
+
+
+About  this  class
+
+
+Goal  To  analyze  the   limits  of  learning  from  examples  in 
+high  dimensional spaces.  To  introduce  the  semi-supervised 
+setting  and  the  use  of  unlabeled  data  to  learn  the  in(cid:173)
+trinsic  geometry  of  a  problem.  To  deﬁne  Riemannian 
+Manifolds,  Manifold  Laplacians,  Graph  Laplacians.  To 
+introduce   a  new  class  of  algorithms  based  on  Manifold 
+Regularization   (LapRLS,  LapSVM).  
+
+Unlabeled  data
+
+
+Why  using  unlabeled  data?  
+
+•	 labeling  is  often  an  “expensive” process
+
+
+•	 semi-supervised  learning   is   the  natural  setting   for   hu(cid:173)
+man   learning  
+
+Semi-supervised   setting
+
+
+u  i.i.d.  samples  drawn  on  X  from  the  marginal   distribution 
+p(x) 
+
+{x1,  x2, .   .  .   ,  xu}, 
+
+only   n  of  which  endowed  with  labels  drawn  from  the  con(cid:173)
+ditional  distributions  p(y |x) 
+
+{y1,  y2, .   .  .   ,  yn}. 
+
+The  extra  u  − n  unlabeled  samples  give  additional  informa(cid:173)
+tion  about  the  marginal  distribution  p(x). 
+
+The   importance  of  unlabeled  data
+
+
+Curse   of  dimensionality  and   p(x)
+
+
+is  the   D-dimensional   hypercube  [0,  1]D  .  The 
+Assume  X 
+worst  case  scenario  corresponds  to  uniform   marginal  dis(cid:173)
+tribution  p(x). 
+
+Two  perspectives  on   curse  of  dimensionality: 
+
+
+•	 As  d  increases,   local  techniques   (eg   nearest   neighbors)  
+become  rapidly  ineﬀective. 
+
+•	 Minimax  results  show  that   rates  of  convergence  of  em(cid:173)
+pirical estimators   to   optimal solutions  of  known  smooth(cid:173)
+ness,  depend  critically  on  D 
+
+Curse  of  dimensionality  and  k-NN
+
+
+•	 It  would  seem  that   with   a  reasonably   large  set  of  train(cid:173)
+ing  data,  we  could  always  approximate   the  conditional 
+expectation  by  k-nearest-neighbor   averaging.  
+
+•	 We  should  be   able  to  ﬁnd  a  fairly  large  set   of  observa(cid:173)
+tions   close  to  any   x  ∈  [0,  1]D  and  average   them. 
+
+•	 This   approach  and  our  intuition  breaks   down  in  high  
+dimensions. 
+
+Sparse  sampling  in  high  dimension
+
+
+Suppose  we  send  out   a  cubical  neighborhood  about  one  
+vertex  to  capture  a   fraction  r  of  the   observations.  Since  
+this  corresponds  to  a  fraction  r  of  the   unit  volume,  the 
+expected  edge  length  will   be 
+
+1 
+eD (r) =  r D . 
+
+is  to  
+in  ten  dimensions  e10(0.01)  = 0.63,  that 
+Already 
+capture  1%  of  the  data,  we  must  cover  63%  of   the  range 
+of  each  input  variable! 
+
+No  more  ”local”   neighborhoods! 
+
+
+Distance   vs  volume  in  high  dimensions 
+
+
+p=1 
+p=2 
+p=3 
+p=10 
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+ 
+e
+c
+n
+a
+t
+s
+i
+D
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+0.6 
+0.5 
+Fraction of Volume
+
+
+0.7 
+
+0.8 
+
+0.9 
+
+1
+
+
+Curse  of  dimensionality  and  smoothness
+
+
+Assuming  that  the  target  function  f 
+case) belongs  to  the  Sobolev  space 
+
+∗
+
+(in  the  squared  loss 
+
+2([0,  1]D ) =  {f  ∈  L2([0,  1]D )|
+Ws 
+
+�ω�2s|fˆ(ω)|2  <  +∞} 
+
+� 
+ω∈Z d 
+
+it  is  possible  to  show  that 
+
+∗
+
+s 
+IES (I [fS ] −  I [f  ∗ ])   >  C n  − D 
+
+sup 
+µ,f ∗∈W 2 
+s 
+
+More  smoothness  s  ⇒  faster   rate  of  convergence
+
+
+Higher  dimension  D  ⇒  slower  rate  of  convergence
+
+
+∗ A  Distribution-Free  Theory   of  Nonparametric  Regression,  Gyorﬁ 
+
+Intrinsic  dimensionality
+
+
+Raw  format  of  natural  data  is  often  high  dimensional,   but 
+in  many  cases  it  is  the   outcome  of  some  process  involving 
+only   few  degrees  of  freedom. 
+
+Examples: 
+
+•	 Acoustic  Phonetics  ⇒  vocal  tract  can  be  modelled  as  a  sequence 
+of  few  tubes. 
+
+•	 Facial  Expressions  ⇒  tonus  of  several  facial   muscles  control  facial  
+expression. 
+
+•	 Pose  Variations  ⇒  several  joint  angles  control   the   combined  pose 
+of  the  elbow-wrist-ﬁnger  system.  
+
+Smoothness  assumption:  y ’s  are   “smooth”  relative  to
+
+natural  degrees  of  freedom,  not  relative  to  the  raw   format. 
+
+
+Manifold  embedding
+
+
+Riemannian  Manifolds
+
+
+A	 d-dimensional  manifold 
+
+
+ 
+α 
+is  a  mathematical   object   that   generalized  domains  in  IRd . 
+
+M  = 
+
+Uα 
+
+Each  one  of  the  “patches”  Uα  which cover  M  is  endowed  with  a  system 
+of  coordinates 
+
+α  :  Uα  →  IRd . 
+
+If  two   patches  Uα  and  Uβ ,  overlap,  the  transition  functions 
+� 
+must  be  smooth  (eg.  inﬁnitely  diﬀerentiable). 
+
+β  ◦  α−1 :  α(Uα 
+
+Uβ )  →  IRd 
+
+•	 The  Riemannian  Manifold 
+local  system   of  co(cid:173)
+its 
+inherits  from 
+ordinates,  most  geometrical   notions  available  on  IRd:  metrics, 
+angles,  volumes,  etc. 
+
+Manifold’s  charts
+
+
+Diﬀerentiation  over  manifolds
+
+
+Since  each  point  x  over  M is  equipped  with  a  local  system 
+of  coordinates  in  IRd  (its  tangent  space),  all   diﬀerential  
+operators  deﬁned  on  functions  over  IRd,  can  be  extended 
+to  analogous  operators  on  functions  over  M. 
+
+∂
+Gradient:   �f (x)  = ( ∂x1 
+
+f (x), .  .   .  ,  ∂  f (x))   ⇒ �Mf (x)
+∂xd 
+
+Laplacian:  �f (x) =  − ∂ 2 
+∂x2 
+1 
+
+f (x) − · · ·  −  ∂ 2 
+∂x2 
+d 
+
+f (x)  ⇒ �Mf (x)
+
+Measuring   smoothness  over  M
+
+
+Given  f  :  M →   IR
+
+
+•	 �Mf (x)  represents  amplitude  and  direction  of  variation 
+around  x 
+
+•	 S (f ) =  M ��Mf �2 is  a   global  measure  of  smoothness 
+� 
+for  f 
+
+•	 Stokes’  theorem  (generalization  of  integration  by   parts)  
+links   gradient  and  Laplacian 
+�	
+M
+
+��Mf (x)�2 = 
+
+S (f ) = 
+
+� 
+M 
+
+f (x)�Mf (x) 
+
+Example:  the  circle  S 1
+
+
+M:  circle  with  angular  coordinate   θ  ∈  [0,  2π) 
+
+�Mf  = 
+
+∂
+
+∂ θ 
+
+f ,  �Mf  =  − 
+
+∂ 2 
+∂ θ2
+
+f 
+
+integration  by  parts:  �  2π 
+0 
+eigensystem  of   �M: 
+
+� 
+
+φk(θ)  =  sin  kθ,  cos  kθ, 
+
+∂ 2 
+∂ θ2 f (θ)dθ  
+
+∂ θ f (θ) �2 
+�  2π
+∂ 
+dθ  =  −  0  f (θ)
+�Mφk  =  λkφk 
+λk  =  k2 
+
+k  ∈  IN 
+
+Manifold  regularization
+
+
+∗
+
+
+A  new  class  of  techniques  which   extend   standard  Tikhonov  regu(cid:173)
+introducing  the  additional   regularizer  �f �2 
+I  = 
+larization  over  RKHS, 
+� 
+f (x)�Mf (x)  to  enforce  smoothness   of  solutions  relative  to  the  un-
+M 
+derlying  manifold 
+
+∗ f	 = arg min 
+f ∈H  n 
+
+1
+
+n	
+� 
+i=1	
+
+V  (f (xi),  yi) +  λA�f �2 
+K	 +  λI 
+
+� 
+M 
+
+f �Mf 
+
+•	 λI  controls   the   complexity of  the  solution  in  the  intrinsic  geometry 
+of  M. 
+
+•	 λA  controls   the  complexity  of  the  solution  in  the  ambient  space. 
+
+∗Belkin,  Niyogi,  Sindhwani,  04 
+
+Manifold   regularization  (cont.) 
+
+
+Other  natural  choices  of  �  · �2  exist 
+I 
+
+� 
+•  Iterated  Laplacians  M  f �s f  and  their  linear  combinations.   These  
+M
+smoothness penalties  are  related  to  Sobolev  spaces 
+� 
+� 
+f (x)�s 
+Mf (x)  ≈
+ω∈Z d 
+
+�ω�2s |fˆ(ω)|2 
+
+•  Frobenius  norm   of  the  Hessian  (the  matrix  of  second  derivatives 
+∗
+of  f ) 
+
+•  Diﬀusion  regularizers  M  f et�(f ).  The  semigroup  of  smoothing 
+� 
+operators  G  =  {e−t�M |t  >  0}  corresponds  to  the  process  of  diﬀu(cid:173)
+sion   (Brownian  motion)   on  the  manifold.  
+
+∗Hessian Eigenmaps;  Donoho,  Grimes  03 
+
+Laplacian  and  diﬀusion
+
+
+is  compact,  the  operator  �M  has  a  countable  
+•	 If  M 
+sequence  of  eigenvectors  φk  (with  non-negative   eigen(cid:173)
+values  λk),  which  is  a  complete  system  of   L2(M).  If  M 
+is  connected,  the  constant  function  is  the   only   eigen(cid:173)
+vector  corresponding  to  null  eigenvalue. 
+
+•	 The  function  of   operator  e−t�M , 
+eigensystem  (e−tλk ,  φk),  k  ∈  IN.  
+
+is  deﬁned  by  the  
+
+•	 the  diﬀusion  stabilizer  �f �2 =  M  f et�M (f )  is  the  squared 
+� 
+I 
+norm   of   RKHS  with  kernel   equal  to  Green’s  function 
+of  heat  equation 
+
+∂T  
+
+∂ t 
+
+=	 −�MT 
+
+Laplacian  and  diﬀusion  (cont.)
+
+
+1.  By  Taylor   expansion  of  T (x,  t)  around  t  = 0 
+
+∂ k 
+1 
+∂ 
+tk 
+T (x,  t) =  T (x,  0) +  t T (x,  0) +  ·  ·  ·  + 
+k ∂ tk 
+∂ t 
+� 
+T (x,  0)  =  Kt(x,  x  )T (x ,  0)dx�  =  LK T (x ,  0) 
+� 
+�
+�
+
+T (x,  0) +  .  .  . 
+
+−t�
+=  e
+
+2.  For  small  t  >  0,  the   Green’s  function  is  a  sharp   gaussian  
+Kt(x,  x �)  ≈  e − �x−x� �2 
+t 
+
+3.  Recalling  relation   of  integral  operator   LK  and  RKHS  norm,  we  get 
+� 
+� 
+
+f  L−1 
+K  (f ) =  �f �2 
+K 
+
+f  et�(f ) = 
+
+�f �2 
+I  = 
+
+An  empirical   proxy  of  the  manifold
+
+
+We  cannot  compute   the  intrinsic  smoothness  penalty
+
+� 
+M 
+because   we  don’t   know  the  manifold   M  and the  embedding
+
+
+f (x)�Mf (x) 
+
+�f �2 
+I  = 
+
+Φ :  M →   IRD . 
+
+But  we  assume  that  the  unlabeled  samples   are  drawn
+
+i.i.d.  from  the  uniform  probability  distribution   over  M
+
+and  then  mapped  into  IRD  by   Φ 
+
+Neighborhood  graph
+
+
+Our  proxy  of  the  manifold 
+is  a  weighted   neighborhood 
+graph  G  = (V ,  E ,  W ),  with  vertices  V  given  by   the  points 
+{x1,  x2, .  .  .  ,  xu},  edges  E  deﬁned  by  one  of  the   two  follow(cid:173)
+ing  adjacency  rules 
+
+•  connect  xi  to  its  k  nearest  neighborhoods 
+
+•  connect  xi  to  �-close  points 
+
+and  weights   Wij  associated  to  two  connected   vertices 
+
+Wij 
+
+− 
+=  e
+
+�xi−xj �2 
+�
+
+Note:   computational  complexity  O(u2)
+
+
+Neighborhood  graph  (cont.) 
+
+
+The  graph  Laplacian
+
+
+The  graph  Laplacian   over  the  weighted neighborhood  graph 
+(G,   E ,  W ) is  the   matrix 
+
+Lij  =  Dii  −  Wij , 
+
+� 
+Dii  =  Wij . 
+j 
+L  is   the   discrete  counterpart   of the   manifold  Laplacian  �M 
+n 
+� 
+� 
+M 
+i,j=1 
+
+Wij (fi  −  fj )2  ≈ 
+
+f T Lf  = 
+
+��f �2dp. 
+
+Analogous   properties  of the  eigensystem:  nonnegative  spec(cid:173)
+trum,  null   space 
+
+Looking  for   rigorous  convergence  results 
+
+
+A  convergence  theorem
+
+
+∗
+
+
+Operator  L:   “out-of-sample  extension”  of   the  graph  Lapla(cid:173)
+cian  L 
+
+�x−xi�2 
+�
+
+x ∈  X,  f  :  X  →  IR 
+
+L(f )(x) = (f (x) −  f (xi))e − 
+� 
+i 
+Theorem:  Let  the  u  data  points  {x1, . . . , xu}  be   sam(cid:173)
+pled  from  the  uniform   distribution  over   the   embedded  d(cid:173)
+1
+dimensional   manifold  M.   Put  � =  u−α,  with  0  < α <  2+d . 
+Then  for   all  f  ∈  C∞  and  x ∈  X ,  there  is  a  constant  C,  s.t. 
+in  probability,  
+
+lim  C 
+u→∞ 
+
+− d+2 
+�
+2 
+
+u 
+
+L(f )(x) =  �Mf (x). 
+
+Note:   also  stronger  forms  of convergence   have   been  proved.
+
+
+∗Belkin,  Niyogi,  05 
+
+Laplacian-based  regularization  algorithms
+
+
+∗
+
+
+Replacing  the   unknown  manifold  Laplacian  with  the   graph 
+I  =  1
+Laplacian  �f �2 
+2 f T Lf ,  where  f  is  the  vector  [f (x1), .  .  .  ,  f (xu)], 
+u
+we  get  the  minimization  problem 
+
+
+n 
+1 
+∗ 
+�
+
+f  = arg min 
+f ∈H  n i=1	
+
+V  (f (xi),  yi) +  λA�f �2 
+K  + 
+
+λI  f T Lf
+
+u2
+
+•	 λI  =  0:  standard  regularization  (RLS  and  SVM) 
+
+•	 λA  →  0:  out-of-sample  extension  for   Graph  Regular(cid:173)
+
+ization
+
+
+•	 n  = 0:  unsupervised  learning,  Spectral  Clustering
+
+
+∗Belkin,  Niyogi,  Sindhwani,  04 
+
+The  Representer  Theorem 
+
+
+Using  the  same  type  of  reasoning  used  in  Class  3,   a  Rep(cid:173)
+resenter   Theorem  can  be  easily  proved  for   the  solutions  of 
+Manifold  Regularization  algorithms. 
+
+The  expansion   range  over  all   the   supervised   and  unsu(cid:173)
+pervised  data  points 
+
+f (x) = 
+
+u 
+� 
+j=1 
+
+cjK (x,  xj ). 
+
+LapRLS
+
+
+Generalizes  the   usual  RLS algorithm   to   the  semi-supervised 
+setting. 
+
+Set  V (w, y)  = (w −  y)2 in  the  general  functional. 
+
+By  the  representer  theorem,   the  minimization   problem  can 
+be  restated  as  follows 
+
+(y − JKc)T (y − JKc)+ λAc T Kc + 
+
+1 
+λI  c T KLKc, 
+∗ 
+c  =  arg  min 
+u2
+c∈IRu n 
+is  the  u-dimensional  vector  (y1, . . . , yn, 0, . . . , 0), 
+where  y 
+and  J  is  the  u ×  u  matrix  diag(1, . . . , 1, 0, . . . , 0). 
+
+LapRLS  (cont.)
+
+
+The  functional  is  diﬀerentiable,   strictly   convex   and  coer(cid:173)
+
+cive.  The  derivative   of  the  object   function  vanishes  at  the 
+
+∗
+minimizer  c 
+
+1 
+
+n 
+
+KJ(y  −  JKc ∗ ) +  (λAK  + 
+
+λI n 
+u2 
+
+KLK)c ∗  =  0. 
+
+From  the  relation  above   and  noticing  that  due   to  the  pos(cid:173)
+itivity  of  λA,  the  matrix  M  deﬁned  below,  is  invertible,  we 
+get 
+
+where 
+
+c ∗  =  M−1 y, 
+
+M  =  JK  +  λAnI  + 
+
+λI n2 
+2u
+
+
+LK.
+
+LapSVM
+
+
+Generalizes  the  usual  SVM algorithm  to  the   semi-supervised 
+setting. 
+
+Set  V  (w,  y)  = (1  −  yw)+ in  the  general  functional  above. 
+
+Applying  the  representer  theorem,   introducing  slack  vari(cid:173)
+ables  and  adding  the   unpenalized  bias  term  b,  we  easily   get 
+the  primal  problem 
+
+λI
+1 
+∗ c  =  arg  min 
+n 
+=1  ξi  +  λAcT Kc   + 2 cT KLKc 
+�
+i
+c∈IRu ,ξ∈IRn n 
+u
+u
+subject  to  :  
+yi( 
+j=1  cjK (xi,  xj ) +  b)   ≥  1  −  ξi 
+�
+ξi  ≥  0 
+
+i  = 1, .  .  .  ,  n  
+
+i  = 1, .  .  .  ,  n  
+
+LapSVM:  forming  the  Lagrangian
+
+
+As  in  the  analysis  of  SVM,   we  derive  the  Wolfe  dual  quadratic  
+program  using  Lagrange   multiplier   techniques: 
+
+L(c,  ξ ,  b,  α,  ζ )  = 
+
+1 
+
+n 
+
+− 
+
+− 
+
+n 
+� 
+i=1 
+n 
+� 
+i=1 
+n 
+� 
+i=1 
+
+1 
+λI 
+� 
+�
+c T  2λAK  +  2  KLK   c 
+ξi  +
+u2
+2 
+⎫
+⎛ ⎧ 
+⎞
+u 
+⎬ 
+⎨ 
+� 
+cjK (xi,  xj ) +  b  −  1  +  ξi⎠ 
+αi  ⎝yi 
+⎭ 
+⎩
+j=1 
+ζiξi 
+
+We  want  to  minimize  L  with  respect  to  c,  b,  and  ξ ,  and 
+maximize  L  with  respect  to  α  and  ζ ,  subject  to  the   con(cid:173)
+straints  of the  primal   problem  and nonnegativity constraints  
+on  α  and  ζ . 
+
+LapSVM:  eliminating  b  and  ξ
+
+
+∂L 
+
+∂ b  
+
+∂L 
+∂ ξi 
+
+= 0  =⇒ 
+
+αiyi  = 0 
+
+n
+� 
+i=1  
+1 
+= 0  =⇒ −   αi  −  ζi  = 0 
+n 
+
+=⇒  0  ≤  αi  ≤ 
+
+1 
+
+n 
+
+We  write  a  reduced  Lagrangian  in  terms  of  the  remaining 
+variables: 
+
+1 
+2 
+
+LR(c,  α)  =
+
+n 
+λI 
+� 
+� 
+c T  2λAK  +  2  KLK  c  −  c T KJT Yα  + 
+� 
+u2
+i=1 
+where  J  is  the  n  ×  u  matrix  (I  0)  with  I  the  n  ×  n  identity 
+matrix  and  Y  =  diag(y). 
+
+αi, 
+
+LapSVM:  eliminating  c
+
+
+Assuming  the   K  matrix  is  invertible, 
+
+∂LR 
+∂ c 
+
+= 0  =⇒ 
+
+� 
+
+λI 
+�
+2λAK  +  2  KLK  c   −  KJT Yα  = 0 
+u2
+λI  LK �−1 
+� 
+=⇒  c  = 2λAI  +  2 
+2u
+
+JT Yα
+
+Note  that  the  relationship   between  c  and   α 
+longer  as  simple   as   in  the   SVM   algorithm.  
+
+is  no 
+
+LapSVM:  the  dual  program
+
+
+Substituting  in  our  expression  for   c,  we  are   left  with  the 
+following  “dual”  program: 
+
+∗ 
+α  =  arg  max 
+α∈IRn 
+subject  to  : 
+
+1αT Qα
+n 
+i=1   αi  −  2
+�
+n
+=  0
+
+�
+i=1   yiαi 
+0  ≤  αi  ≤  1 
+n 
+
+i  = 1, .  .  .  ,  n 
+
+Here,  Q  is  the  matrix  deﬁned  by 
+λI  LK �−1 
+� 
+Q  =  YJK  2λAI  +  2 
+2u
+One  can  use  a  standard  SVM  solver  with   the  matrix 
+Q  above,   hence   compute   c  solving  a  linear  system. 
+
+JT Y.
+
+Numerical   experiments 
+
+∗
+
+
+•  Two  Moons  Dataset  
+
+•  Handwritten  Digit  Recognition 
+
+•  Spoken  Letter  Recognition 
+
+∗http://manifold.cs.uchicago.edu/manifold  regularization 
+
+

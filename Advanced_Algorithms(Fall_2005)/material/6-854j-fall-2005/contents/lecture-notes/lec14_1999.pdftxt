@@ -1,0 +1,203 @@
+Lecture (cid:2) October (cid:5) 			
+
+Lecturer(cid:2) David Karger
+
+Scribes(cid:2) Brian Dean(cid:5) John Jannotti
+
+(cid:1) Advanced Algorithms
+
+(cid:2) Minimum Cost Flow Algorithms
+
+(cid:2)(cid:2) Shortest Augmenting Paths (cid:3)Unit(cid:4)Capacity Case(cid:5)
+
+The shortest augmenting path algorithm for solving the minimum cost max (cid:7)ow problem is the
+natural generalization of the shortest augmenting path algorithm for the max (cid:7)ow problem(cid:8) To
+simplify things at (cid:9)rst(cid:5) we(cid:10)ll make a few assumptions(cid:2)
+
+(cid:0) All arcs have unit capacity(cid:8) We(cid:10)ll show later how to scale the algorithm to work in a general
+network(cid:8)
+
+(cid:0) There are no negative(cid:11)cost cycles(cid:8) This means the minimum(cid:11)cost circulation will be zero(cid:5) but
+the minimum(cid:11)cost max (cid:7)ow is still interesting(cid:8)
+
+Rather than actual arc costs(cid:5) our algorithm will deal with reduced arc costs(cid:8) Given a price function
+p(cid:12)(cid:13) on the nodes(cid:5) recall that the reduced cost of an arc (cid:12)i(cid:0) j (cid:13) is cp (cid:12)i(cid:0) j (cid:13) (cid:14) c(cid:12)i(cid:0) j (cid:13) (cid:15) p(cid:12)i(cid:13) (cid:1) p(cid:12)j (cid:13)(cid:8)
+Furthermore(cid:5) we have seen that if the price function is chosen as the distance from the source node
+s(cid:5) then all reduced costs will be non(cid:11)negative and the reduced costs of shortest paths from s will
+be zero(cid:8) When computing shortest paths through the network(cid:5) it makes no di(cid:16)erence if we use the
+original arc costs or the reduced arc costs(cid:8)
+
+To initially compute reduced arc costs(cid:5) we(cid:10)ll need to run a single(cid:11)source shortest path algorithm
+from s to compute the initial node prices(cid:8) Since there may be initially be negative(cid:11)cost arcs (cid:12)but
+fortunately no negative cost cycles(cid:13)(cid:5) we need to use a shortest path algorithm which accomodates
+these(cid:5) such as(cid:2)
+
+(cid:0) The O(cid:12)mn(cid:13) Bellman(cid:11)Ford algorithm(cid:5) or
+(cid:0) A scaling algorithm by Goldberg that runs in O(cid:12)mpn log C (cid:13) time(cid:8)
+
+After this initial computation(cid:5) all reduced arc costs will be non(cid:11)negative(cid:8) Therefore(cid:5) subsequent
+shortest path computations can be performed more e(cid:17)ciently with Dijkstra(cid:10)s algorithm(cid:8)
+
+The shortest augmenting path algorithm is then to repeatedly compute shortest paths from s and to
+augment along a shortest path from s to t(cid:8) Each shortest path calculation using Dijkstra(cid:10)s algorithm
+takes O(cid:12)m log n(cid:13) time(cid:5) and since the network is unit capacity there will be at most n augmentations(cid:8)
+The total running time is therefore O(cid:12)mn log n(cid:13)(cid:8) If there happen to be parallel arcs in the network(cid:5)
+
+(cid:11)
+
+Lecture (cid:2) October (cid:5) 			
+
+(cid:11)
+
+then each shortest path computation will require O(cid:12)m log n(cid:13) time and there will be potentially
+O(cid:12)m(cid:13) augmentations(cid:5) for a running time of O(cid:12)m log n(cid:13)(cid:8)
+
+Claim(cid:2) The shortest augmenting path algorithm computes a minimum cost max (cid:7)ow from s to t(cid:8)
+
+Proof(cid:5) We maintain as an invariant the fact that there will never be a negative reduced(cid:11)cost arc in
+the residual network(cid:8) Initially(cid:5) we got rid of all negative reduced(cid:11)cost arcs by computing shortest
+paths from s(cid:8) The shortest augmenting path algorithm then performs two types of operations(cid:2)
+recomputing shortest paths in the residual network from s(cid:5) which doesn(cid:10)t introduce negative reduced(cid:11)
+cost arcs(cid:5) and augmenting along shortest paths from s to t(cid:8) However(cid:5) since all arcs in a shortest
+path from s to t have zero reduced cost(cid:5) all new residual arcs introduced by this augmentation
+will also have zero reduced cost(cid:8) The only way to introduce a negative reduced(cid:11)cost arc into the
+residual network is to augment along a positive reduced(cid:11)cost arc(cid:5) which is never done(cid:8) Therefore
+no negative reduced cost arcs(cid:5) and therefore no negative reduced(cid:11)cost cycles(cid:5) will ever appear in
+the residual network(cid:8) When we reach a state when no augmenting path exists(cid:5) we know that we(cid:10)ve
+found a max (cid:7)ow(cid:5) and since there will be no negative(cid:11)cost residual cycles(cid:5) we know this (cid:7)ow will be
+a minimum(cid:11)cost (cid:7)ow(cid:8)
+
+As an extra bonus(cid:5) the shortest augmenting path algorithm actually computes a minimum(cid:11)cost (cid:7)ow
+for every single (cid:7)ow value up to the max (cid:7)ow value(cid:8)
+
+(cid:2)(cid:2) Finding a Minimum(cid:4)Cost Circulation
+
+In order to use the previous shortest augmenting path algorithm to (cid:9)nd a minimum(cid:11)cost circulation(cid:5)
+we need to satisfy our assumption that there are no negative(cid:11)cost cycles(cid:8) This is done by saturating
+all negative(cid:11)cost arcs(cid:5) leaving no negative(cid:11)cost arcs in the residual network(cid:8) Unfortunately(cid:5) this
+operation potentially introduces excesses and de(cid:9)cits at nodes(cid:8) However(cid:5) this problem with excesses
+and de(cid:9)cits can be solved by creating a source node s connected to all excesses and a sink node
+t connected to all de(cid:9)cits(cid:5) and by solving a minimum(cid:11)cost max (cid:7)ow in the resulting network(cid:8) We
+know that a feasible solution exists(cid:5) since we could just send all excess (cid:7)ow back to the de(cid:9)cit from
+which it originated(cid:8) Furthermore(cid:5) there will be no negative(cid:11)cost cycles in the residual network(cid:5) so we
+can solve the problem using the shortest augmenting path algorithm(cid:8) Running time will be identical
+to that of the SAP algorithm(cid:8)
+
+(cid:2)(cid:2) Minimum(cid:4)Cost Flow in Unit(cid:4)Capacity Networks
+
+Given that we know how to (cid:9)nd a minimum(cid:11)cost circulation(cid:5) how can we (cid:9)nd a minimum(cid:11)cost
+max (cid:7)ow(cid:18) Recall that all s (cid:1) t maximum (cid:7)ows in a network are equivalent to within addition of
+a circulation(cid:8) Therefore(cid:5) we can transform any max (cid:7)ow into a minimum(cid:11)cost max (cid:7)ow by adding
+to it a minimum(cid:11)cost circulation(cid:8) Hence(cid:5) we can compute a minimum(cid:11)cost (cid:7)ow by (cid:9)rst (cid:9)nding any
+max (cid:7)ow and then (cid:9)nding a minimum(cid:11)cost circulation in its residual network(cid:8) Running time is still
+identical to that of the SAP algorithm(cid:8)
+
+Lecture (cid:2) October (cid:5) 			
+
+(cid:11)
+
+(cid:2)(cid:2) Minimum(cid:4)Cost Flow in General Networks by Capacity(cid:4)Scaling
+
+It is possible to adapt the shortest augmenting path algorithm to general(cid:11)capacity networks by
+scaling capacities(cid:8) During each scaling phase(cid:5) we shift in one bit of each arc capacity(cid:5) for a total of
+O(cid:12)log U (cid:13) phases(cid:8)
+
+In each phase(cid:5) we shift in at most one unit of capacity on each arc(cid:8) This gives a unit(cid:11)capacity
+problem which can be solved using the preceding techniques(cid:8) The total running time over all phases
+will be O(cid:12)m log n log U (cid:13)(cid:8)
+
+Note that in any phase we may shift in capacity on negative reduced(cid:11)cost arcs(cid:5) potentially creating
+negative reduced(cid:11)cost cycles(cid:8) This is not a problem(cid:5) however(cid:5) for the preceding methods(cid:8)
+
+(cid:2)(cid:2) Minimum(cid:4)Cost Flow in General Networks by Cost(cid:4)Scaling
+
+An alternative method of solving for a minimum(cid:11)cost max (cid:7)ow in a general network is by scaling
+costs rather than capacities(cid:8) This is useful if capacities are non(cid:11)integral quantities but costs are
+integers(cid:8) In the shortest augmenting path algorithm(cid:5) we maintained the invariant that there were
+no negative reduced(cid:11)cost arcs in the residual network(cid:8) Let(cid:10)s relax this condition a bit(cid:8)
+
+De(cid:9)nition (cid:2) An residual arc (cid:12)i(cid:0) j (cid:13) is said to be (cid:1)(cid:0)optimal if cp (cid:12)i(cid:0) j (cid:13) (cid:2) (cid:1)(cid:1)(cid:8) A (cid:7)ow is said to be (cid:1)(cid:11)optimal
+if all its residual arcs are (cid:1)(cid:11)optimal(cid:8)
+
+Initially(cid:5) we(cid:10)ll start with a zero price function and any max (cid:7)ow(cid:5) which will be C (cid:11)optimal(cid:8) During
+each scaling phase(cid:5) we(cid:10)ll go from an (cid:1)(cid:11)optimal max (cid:7)ow to an (cid:12)(cid:1)(cid:2)(cid:13)(cid:11)optimal max (cid:7)ow(cid:8) When can
+we terminate the algorithm(cid:18)
+
+Lemma (cid:2) A 
+n(cid:3) (cid:11)optimal max (cid:7)ow is optimal(cid:20) that is(cid:5) it represents a minimum(cid:11)cost max (cid:7)ow(cid:8)
+
+Proof(cid:5) The reduced cost of any residual cycle in such a network is at least (cid:11) n
+n(cid:3) (cid:8) Since the reduced
+cost of a cycle is the same as the actual cost of the cycle(cid:5) we know the actual cost of all cycles in
+the residual network are at least (cid:11) n
+n(cid:3) (cid:5) and therefore strictly larger than (cid:1)(cid:8) However(cid:5) since actual
+arc costs are integers(cid:5) this means that all residual cycles must have non(cid:11)negative cost(cid:8)
+
+We therefore will have O(cid:12)log(cid:12)nC (cid:13)(cid:13) scaling phases(cid:8)
+
+To start each scaling phase(cid:5) we(cid:10)ll saturate all negative(cid:11)cost residual arcs(cid:8) This makes all residual
+arcs have non(cid:11)negative reduced cost(cid:5) but introduces excesses and de(cid:9)cits into the network(cid:8) The
+capacity scaling algorithm then operates much like the push(cid:21)re(cid:11)label algorithm(cid:8) It will attempt to
+push excess (cid:7)ow back toward the de(cid:9)cits(cid:8) Each phase will therefore only circulate (cid:7)ow around(cid:5) and
+since we started with a max (cid:7)ow(cid:5) we(cid:10)ll end up with a max (cid:7)ow(cid:8)
+
+De(cid:9)nition (cid:2) An residual arc is admissible i(cid:16) it has negative reduced cost(cid:8)
+
+During each phase(cid:5) we(cid:10)ll only do push operations along admissible arcs(cid:8) If there are no admissible
+arcs (cid:12)for example(cid:5) when a phase begins(cid:13)(cid:5) we do a relabel operation(cid:8) A relabel operation on a node
+v reduces its price p(cid:12)v(cid:13)(cid:5) making its outgoing arcs cheaper(cid:8) If any outgoing residual arcs drop to a
+negative reduced cost(cid:5) they will become admissible(cid:8) It is always possible to do either a push or a
+relabel operation(cid:5) and we(cid:10)ll keep doing these until the excesses (cid:7)ow back to the de(cid:9)cits(cid:8)
+
+Lecture (cid:2) October (cid:5) 			
+
+(cid:11)
+
+During each phase(cid:5) we start with a (cid:7)ow that is (cid:1)(cid:11)optimal(cid:5) and we maintain the invariant that our
+(cid:7)ow is (cid:12)(cid:1)(cid:2)(cid:13)(cid:11)optimal(cid:8) Since we saturate all negative reduced(cid:11)cost residual arcs at the beginning of a
+phase(cid:5) the invariant will initially hold(cid:20) we just need to make sure it is maintained under pushes and
+relabels(cid:2)
+
+(cid:0) A push will never cause the invariant to fail(cid:8) Since we only push along negative reduced(cid:11)cost
+residual arcs(cid:5) a push can only introduce positive reduced(cid:11)cost residual arcs(cid:5) which satisfy the
+invariant(cid:8)
+
+(cid:0) A relabel has the potential to break the invariant(cid:8) We can (cid:9)x this by reducing a node(cid:10)s label
+by only (cid:1)(cid:2) when relabeling it(cid:8) Since a node is relabeled only if it has no outgoing residual
+admissible arc(cid:5) this means that prior to the relabel all outgoing arcs have non(cid:11)negative reduced
+costs(cid:8) Reducing these costs further by no more than (cid:1)(cid:2) will keep them (cid:12)(cid:1)(cid:2)(cid:13)(cid:11)optimal(cid:8)
+
+How many push and relabel operations can we do(cid:18)
+
+Lemma (cid:2) Each node is relabeled at most n times(cid:8)
+
+Proof(cid:5) At the beginning of a phase(cid:5) we saturate all negative reduced(cid:11)cost residual arcs(cid:5) creating
+excesses and de(cid:9)cits(cid:8) By sending (cid:7)ow along a path P (cid:5) we create not only a de(cid:9)cit at the start of the
+path and an excess at the end of the path(cid:5) but also we introduce a residual path P   along which we
+can send the (cid:7)ow back(cid:8) Consider any such path P   (cid:8) Since we started the phase with an (cid:1)(cid:11)optimal
+(cid:7)ow(cid:5) prior to saturation each arc had cost no less than (cid:1)(cid:1)(cid:5) so each residual arc in P   will have cost
+no larger than (cid:1)(cid:8) The total cost of the path P   will be no more than n(cid:1)(cid:8) Each time we relabel a
+node with some excess (cid:12)these are the only nodes we ever relabel(cid:13)(cid:5) we decrease the cost of every such
+residual path departing from the node by at least (cid:1)(cid:2)(cid:8) Thus(cid:5) after n total relabels of any particular
+node(cid:5) the cost of any departing residual path must be less than (cid:1)n(cid:1)(cid:2)(cid:8) However(cid:5) this can(cid:10)t happen
+if the (cid:7)ow is to remains (cid:12)(cid:1)(cid:2)(cid:13)(cid:11)optimal(cid:8) We therefore have a bound of n relabels per node(cid:8)
+
+Given the bound of O(cid:12)n(cid:13) relabels(cid:21)node(cid:5) the same analysis as with the original push(cid:21)relabel algorithm
+applies(cid:8) There will be O(cid:12)mn(cid:13) saturating pushes and O(cid:12)nm(cid:13) non(cid:11)saturating pushes(cid:5) for a total
+running time of O(cid:12)nm(cid:13) per phase(cid:8) The entire scaling algorithm therefore runs in O(cid:12)nm log(cid:12)nC (cid:13)(cid:13)
+time(cid:8)
+
+(cid:2)(cid:2) State of the Art
+
+Although we have not seen them(cid:5) there exists strongly polynomial min(cid:11)cost (cid:7)ow algorithms(cid:8)
+
+In 	 Tardos(cid:5) using a technique called (cid:24)minimum mean cost cycles(cid:25) gave bounds of the form
+O(cid:12)m poly log m(cid:13)(cid:8) The algorithm proceeded by (cid:9)nding the negative cycles in which the average cost
+per edge was most strongly negative(cid:8) Thus short cycles of a particular negativity are preferred over
+long(cid:8) The algorithm used a cost scaling technique using the ideas of (cid:1)(cid:11)optimality(cid:5) however(cid:5) after
+every m negative cycle saturations an edge is (cid:24)frozen(cid:25)(cid:5) that is(cid:5) it(cid:10)s (cid:7)ow value never again changes(cid:8)
+
+The best known scaling algorithm gives bounds of O(cid:12)mn log log U log C (cid:13)(cid:8) It is an open problem to
+(cid:9)nd strongly polynomial bound of the form O(cid:12)mn poly log m(cid:13)(cid:8)
+
+

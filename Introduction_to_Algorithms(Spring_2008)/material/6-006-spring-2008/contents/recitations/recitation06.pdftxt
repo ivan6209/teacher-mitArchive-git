@@ -1,0 +1,352 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.006 Introduction to Algorithms 
+Spring 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+6.006 Recitation
+
+Build 2008.12
+
+
+PS1 Solutions 
+
+• Posted on homework page 
+• Password-protected 
+• Please write down username/password 
+
+Coming Up Next... 
+
+• More hashing! 
+• Rabin-Karp (String Matching) 
+• vs the dumb naive algorithm 
+• Rolling Hashes 
+• Black Magic: why it works 
+
+Hashing without tables
+
+
+• Fancy names: ﬁngerprint, message digest 
+• Idea (hashing repeated): 
+• given an object, compute a summary 
+that’s easier to work with 
+• Very versatile concept! Don’t forget it!! 
+
+Hashing human beings
+
+
+Hashing human beings
+
+
+• Want something easy to handle 
+
+Hashing human beings
+
+
+• Want something easy to handle 
+• ﬁngerprints (doh) 
+• DNA samples 
+• iris scans 
+• face picture 
+
+Naive String Matching
+
+
+• Want to ﬁnd pattern in text 
+• Slide pattern over text one by one 
+character 
+• If pattern matches overlapping characters 
+of text, report match 
+
+Rabin-Karp 
+
+• Want to ﬁnd pattern in text 
+• Slide pattern over text one by one 
+character 
+• If hash(pattern) matches hash(overlapping 
+characters of text) 
+• If pattern matches overlapping 
+characters of text report match 
+
+Making Rabin-Karp fast 
+
+
+• Good hash function 
+• If many false positives, then many useless 
+full-string comparisons 
+• Fast hash update when “sliding” pattern 
+across text 
+• If we rehash every time, might as well use 
+naive string comparison 
+
+Introducing Rolling Hashes
+
+
+• Data Structure (just like hash table) 
+• start with empty list 
+• append(val): appends val at the end of list 
+• skip(): removes the ﬁrst list element 
+• hash(): computes a hash of the list 
+
+But we have strings 
+
+• Characters are numbers (ASCII, Unicode) 
+• ‘A’ = 65, ‘B’ = 66
+
+• Then strings are lists of numbers 
+• “Boom! Headshot” = [66, 111, 111, 109,
+
+33, 32, 72, 101, 97, 100, 115, 104, 111, 116]
+
+• So we can work with lists of numbers 
+
+Building Rolling Hashes
+
+
+• Key Idea: use division method for hashing 
+• “concatenate” list items into big number 
+• hash value: big number mod prime 
+• reason: skip() is doable (not true for 
+most other hashing methods) 
+
+Goal: Getting to This
+
+class AmnesiacRollingHash:
+
+ 1 
+ 2    
+def __init__(self, base = 256, prime = 1009):
+
+ 3  
+self.hash_value = 0
+
+      
+ 4  
+self.base = base
+
+      
+ 5  
+self.prime = prime
+
+      
+ 6        
+# inv_base is computed s.t. (base * inv_base) % prime == 1 
+
+ 7  
+      
+self.inv_base = pow(base, prime - 2, prime) 
+
+ 8  
+      
+self.skip_multiplier = 1
+
+ 9        
+10    
+def append(self, value):
+
+11  
+      
+self.hash_value = (self.hash_value * self.base + value) % self.prime 
+
+12  
+      
+self.skip_multiplier = (self.skip_multiplier * self.base) % self.prime
+
+13        
+14    
+def skip(self, value):
+
+15  
+      
+self.skip_multiplier = (self.skip_multiplier * self.inv_base) % 
+
+self.prime
+
+      
+self.hash_value = (self.hash_value + self.prime - (value * 
+
+16  
+self.skip_multiplier) % self.prime) % self.prime
+
+
+Hashing Intuition
+
+
+Hashing Intuition 
+
+• Base 100, modulo 23
+
+• Hash [61, 8, 19, 91, 37]
+
+
+Hashing Intuition 
+
+• Base 100, modulo 23
+
+• Hash [61, 8, 19, 91, 37]
+
+• (6108199137 mod 23) = 12
+
+• Hash [a3, a2, a1, a0] 
+
+Hashing Intuition
+
+
+• Base 100, modulo 23
+
+• Hash [61, 8, 19, 91, 37]
+
+• (6108199137 mod 23) = 12
+
+• Hash [a3, a2, a1, a0] 
+• (a3⋅1003 + a2⋅1002 + a1⋅1001 + a0⋅1000) 
+
+mod 23
+
+
+Sliding Intuition 
+
+• Base 100, mod 23
+
+• List: [3, 14, 15, 92, 65, 35, 89, 79, 31]
+
+• [3, 14, 15, 92, 65] to [14, 15, 92, 65, 35]
+
+• get from 11 to 6
+
+• [14, 15, 92, 65, 35] to [15, 92, 65, 35, 89]
+
+• get from 6 to 5
+
+
+Simple Rolling Hashes
+
+
+• formulas for updating the hash value on 
+append and skip 
+
+Fast Rolling Hashes 
+
+• need to avoid exponentiation in skip 
+• cache the result (base ** length mod p) 
+• append: multiply by base 
+• skip: divide by base 
+• can’t divide, use multiplicative inverse 
+
+Python design
+
+
+• Step 1:  Amnesiac Hash -- forgets list items
+
+• need to remind skip() what’s the front 
+element of the list 
+• Step 2: Easy Hash -- keeps track of items 
+• builds upon Amnesiac Hash 
+• keeps track of list items 
+
+Python: Amnesiac Hash
+
+class AmnesiacRollingHash:
+
+ 1 
+ 2    
+def __init__(self, base = 256, prime = 1009):
+
+ 3  
+self.hash_value = 0
+
+      
+ 4  
+self.base = base
+
+      
+ 5  
+self.prime = prime
+
+      
+ 6        
+# inv_base is computed s.t. (base * inv_base) % prime == 1 
+
+ 7  
+      
+self.inv_base = pow(base, prime - 2, prime) 
+
+ 8  
+      
+self.skip_multiplier = 1
+
+ 9        
+10    
+def append(self, value):
+
+11  
+      
+self.hash_value = (self.hash_value * self.base + value) % self.prime 
+
+12  
+      
+self.skip_multiplier = (self.skip_multiplier * self.base) % self.prime
+
+13        
+14    
+def skip(self, value):
+
+15  
+      
+self.skip_multiplier = (self.skip_multiplier * self.inv_base) % 
+
+self.prime
+
+      
+self.hash_value = (self.hash_value + self.prime - (value * 
+
+16  
+self.skip_multiplier) % self.prime) % self.prime
+
+
+Python: Easy Hash
+
+
+from collections import deque
+
+
+ 1 
+ 2
+ 3 
+class RollingHash(AmnesiacRollingHash):
+
+ 4    
+def __init__(self, *args): 
+
+ 5  
+AmnesiacRollingHash.__init__(self, *args) 
+
+      
+ 6  
+self.data = deque()
+
+      
+ 7        
+ 8    
+def append(self, value):
+
+ 9  
+      
+AmnesiacRollingHash.append(self, value) 
+
+10  
+      
+self.data.append(value)
+
+11        
+12    
+def skip(self):
+
+13  
+      
+AmnesiacRollingHash.skip(self, self.data.popleft())
+
+
+

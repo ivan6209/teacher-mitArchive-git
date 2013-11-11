@@ -1,0 +1,1499 @@
+Tunaﬁsh 
+A Novel Approach  to Active  2D  Sonar 
+
+Leon  Fay 
+Miranda  Ha 
+Vinith Misra 
+6.111  Spring  2006 
+
+May  19,  2006 
+
+1
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Contents 
+
+1  Overview 
+
+Vinith Misra 
+
+2  Processing  - Theory 
+2.1  Multiple Transmitters 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+2.2  Multiple Receivers  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+2.3  Nonlinear Spacing 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+3  Analog  Interfacing 
+3.1  Hardware Interface . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+3.2  Non-linear Time-variant Q Reduction 
+. . . . . . . . . . . . . . . . . . . . . 
+
+4  Processing  - Implementation 
+4.1  Pre-Processing 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+4.2  Processing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+4.3  Post-Processing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+5  Module  Summary 
+5.1  Double Buﬀering  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.2  Controller  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.3  Transmitter . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.4  Data Gatherer 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.5  Mic FSM 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.6  Pre-processor  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.7  Processor 
+5.8  Max Lag Finder 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.9  Correlator . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.10 Angle Extractor . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.11 Angle Checker 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.12 Dumper  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.13 BRAM Wrapper 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.14 Top, Front Conversion  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+5.15 Display 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+6  Testing  and  Debugging 
+
+7  Display  Block 
+7.1  Display Module . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+7.2  Data Correction For Front-View Module . . . . . . . . . . . . . . . . . . . . 
+7.3  Data Conversion for Top View Module . . . . . . . . . . . . . . . . . . . . . 
+
+8  Summary 
+
+CONTENTS 
+
+5
+
+
+5
+
+5
+
+7
+
+7
+
+
+9
+
+9
+
+9
+
+
+11 
+
+11
+
+11
+
+11
+
+
+13 
+
+13
+
+13
+
+13
+
+15
+
+15
+
+15
+
+15
+
+15
+
+15
+
+15
+
+15
+
+15
+
+16
+
+16
+
+16
+
+
+16 
+
+
+17 
+
+17
+
+17
+
+21
+
+
+23 
+
+
+2
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Vinith Misra 
+
+9  Appendix 
+9.1  Angle Checker 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.2  Angle Extract . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.3  BRAM Wrapper 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.4  Controller FSM . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.5  Correlator . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.6  Data Gatherer 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.7  Display 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.8  Dumper  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.9  Labkit . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.10 Max Lag Finder 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.11 Mic FSM 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.12 Pre-Processor . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.13 Processor 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.14 Front Conversion  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.15 Top Conversion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.16 Transmitter . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.17 VGA Controller . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+9.18 RS-232 Transmitter 
+
+24 
+
+24
+
+25
+
+32
+
+34
+
+39
+
+42
+
+44
+
+45
+
+50
+
+66
+
+69
+
+71
+
+77
+
+82
+
+88
+
+94
+
+95
+
+96
+
+
+CONTENTS
+
+
+3 
+
+Tunaﬁsh 
+Vinith Misra 
+
+Vinith Misra 
+
+Abstract 
+We  present  a  functioning  active  sonar  that  leverages  a  novel  signal  processing  ap­
+proach  to  achieve  rapid  frame  rates  with  low  quality  devices.  By  placing  increased 
+burden  on  the  processing,  what  normally  requires  dozens  of  transmissions may  be  per­
+formed  with  only  one. 
+Cheap  ultrasonic  transducers  and  receivers  have  been  used  in  order  to  emphasize 
+device-independence.  Furthermore,  home-brewed  2-bit  analog-to-digital  converters  are 
+used  in  lieu  of  more  expensive  options.  The  algorithm,  by  design,  simply  does  not 
+require  the  level  of  detail  aﬀorded  by  higher  resolution  sampling  systems. 
+On  the  digital  front,  the  transmission,  data  gathering,  processing,  displaying,  and 
+even  serial  link-up  have  been  fully  pipelined  in  order  to  maximize  frame  rate.  While 
+only  single  ob ject  tracking  is  demonstrated  reliably  (due  to  the  short  range  of  the 
+transducers),  there  exists  near-full  support  in  both  the  algorithm  and  the  system  to 
+handle  multiple  ob jects.  Display  of  these  ob jects  is  possible  from  both  top  and  frontal 
+views. 
+Various  subtleties  and  optimizations  - some  highly  nonintuitive,  others  virtually 
+necessary  for  proper  operation  - have  been  discovered  as  well.  We  describe  these  in 
+addition  to  the  implementation. 
+
+CONTENTS
+
+
+4 
+
+Tunaﬁsh 
+Vinith Misra 
+
+1 
+
+Overview 
+
+SONAR  - SOund Navigation And Ranging  ­
+was  a  technology  ﬁrst  developed  in  the  early 
+20th  century  as  a  means  to  locate  ob jects 
+beneath  water.  The  willingness  of  sound 
+waves to signiﬁcantly reﬂect oﬀ most surfaces 
+has  contributed  to  its  dominance  today  as  a 
+means  of  localization  in  the  seas. 
+There are  largely two categories of sonar: 
+active and passive.  Passive sonar is a “listen­
+ing”  system  that  simply  attempts  to  localize 
+the source of any sounds it hears.  In military 
+applications  where  stealth  is  a  priority,  this 
+is  often  the  only  option. 
+Active  sonar,  on  the other hand,  involves 
+a  more  active  role  on  the  part  of  the  detec­
+tor.  A  pulse  of  sound,  or  a  “ping”  is  emit­
+ted with a transmitter, and reﬂections of this 
+pulse are interpreted for the desired informa­
+tion.  To  allow  the pro ject  suﬃcient breadth, 
+it was decided  that  an  active  sonar would be 
+attempted. 
+Traditional  active  sonars  utilize  well 
+characterized devices and a procedure known 
+as  “beamforming”  to  emit  highly  directional 
+pings.  The  time  until  the  ping  arrives  back 
+at  the  receiver  can  be  used  to  determine  the 
+distance to the ob ject.  However, even under­
+water (where sound travels roughly ﬁve times 
+as  fast)  these delays are  rather  large  - on  the 
+order  of  tens  of  milliseconds.  Having  to  try 
+all  the  diﬀerent  angles  to  paint  a  full  picture 
+only  multiplies  this  delay.  Eventually,  this 
+translates  over  to  slow  update  rate. 
+Our  goal  was  to  attempt  to  take  care 
+of  this  problem  by  reversing  the  scenario. 
+Rather  than  sending  out  directional  pulses, 
+send  out  a  omnidirectional  ping  (lessening 
+stress  on  devices  as  well).  Then,  have  an  ar­
+ray  of  receivers  instead  of  transmitters  and 
+piece  together  the  distances  to  each  angle  ­
+all  from  a  single  transmission.  In  this  way, 
+frame  rates  can  increase  by  orders  of magni­
+tude.  See the theory section  for more on this 
+rather  watered  down  explanation. 
+
+Vinith Misra 
+
+A  system  was  designed  to  fully  exploit 
+this approach and display  it  in a highly  intu­
+itive manner.  Various processing and control 
+modules ﬁt into a fully pipelined system that 
+determines  where  an  ob ject  is  in  the  ﬁeld  of 
+view.  A  display  unit  (also  pipelined)  then 
+takes  this  information  and  shows  the  ob ject 
+in  a  simpliﬁed  frontal  3D  view,  or  in  a  more 
+traditional  top  view. 
+
+2  Processing  - Theory 
+
+One  has  a  very  high  degree  of  freedom when 
+it  comes  to design  of  an  active  sonar  system, 
+when compared with passive sonar.  The ﬁrst 
+decision  that  must  be  made  is  the  one  that 
+distinguishes  this  design  from  most  sonar 
+systems:  the use of multiple receivers instead 
+of  multiple  transmitters. 
+
+2.1  Multiple  Transmitters 
+
+Traditionally,  multiple  transmitters  are 
+placed  in  a  linear  array,  not  unlike  that 
+shown  in  Figure  1.  If  the  transmitters  are 
+placed  close  enough  to  one  another  (half 
+wavelength  or  less)  one  can  send  out  highly 
+directional  pulses  by  properly  choosing  the 
+phases  going  into  each  transmitter  (see  Fig­
+ure  2  for  an  example  angular  distribution). 
+This  process  is  given  the  colorful  name  of 
+“beamforming.” 
+Since sound travels at a measurable speed 
+and  bounces  oﬀ most  ob jects  fairly well,  one 
+can  immediately  formulate  an  algorithm  for 
+mapping  the  environment  using  beamform­
+ing.  A  sine  wave  pulse  is  sent  at  one  direc­
+tion  - say  0  degrees  - and  one  measures  the 
+time  until  a  reﬂection  is  heard.  This  time 
+is  proportional  to  the  distance  to  the  closest 
+ob ject  at  that  angle.  After  hearing  this  re­
+ﬂection,  another  sine  pulse  may  be  emitted 
+in another direction, and  the process may be 
+repeated  until  all  angles  are  covered. 
+Unfortunately,  above  ground  sound  trav­
+els  at  340  m/s,  giving  a  time  lag  of  6ms  per 
+
+5 
+
+Tunaﬁsh 
+Vinith Misra 
+
+Vinith Misra 
+
+Figure  1:  Linearly  Phased  Array  for  Input  or  Output 
+
+Figure  2:  Sample  Beamforming  Distribution
+
+
+2.1  Multiple  Transmitters 
+
+6
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Vinith Misra 
+
+meter  per  angle.  If  the  closest  ob ject  is  4 
+meters  away,  the  minimum  time  for  a  full 
+scan is 24ms times the number of trial angles. 
+One  cannot  expect  a  frame  rate  faster  than 
+about  a  frame  per  second  for  any  reasonable 
+resolution.  Not  only  is  this  extremely  slow 
+(the  human  eye  detects  ﬂicker  at  24fps)  but 
+unreliable  (if  ob jects move  further  away,  the 
+system  can  slow  down  signiﬁcantly). 
+Additionally,  the  constriction  of  plac­
+ing  extremely  well  characterized  transmit­
+ters within half a wavelength distance,  raises 
+the  system  cost.  Rather  than  attempting  to 
+build  a  traditional  system  with  these  limita­
+tions,  Pro ject  Tunaﬁsh  decided  it  would  be 
+more  interesting  to  address  these  diﬃculties 
+by  shifting  responsibility  to  DSP  and  clever 
+manipulation  of  receiver  spacing. 
+
+2.2  Multiple  Receivers 
+
+What  if,  instead  of  sending  out  a  seperate 
+transmission in each direction, one sent them 
+all  out  at  once  in  an  omnidirectional  trans­
+mission?  With  the  use  of  multiple  receivers, 
+one could theoretically still extract the direc­
+tional  information  from  the  signals. 
+Assume there are two ob jects at diﬀerent 
+distances  and  angles.  If  one  sends  an  omni­
+directional  ping,  seperate  reﬂections  will  be 
+heard  for  the  two  diﬀerent  ob jects  on  each 
+of  the  microphones. 
+If  the  ping  is  short 
+enough  in  time,  each  microphone  will  show 
+two seperate pulses (one for each ob ject).  For 
+each of these pulses, there is a distinct lag be­
+tween arrival time to the diﬀerent mikes.  See 
+Figure  1  - which  applies  to  both  transmis­
+sion  and  reception  - again  for  an  illustration 
+of  these  time  delays  (dcosθ). 
+So,  if  these  pulses  are  kept  short  and  the 
+ob jects  do  not  overlap  signiﬁcantly  distance 
+wise,  one  can  deduce  the  angle  for  either  of 
+the  pulses  after  calculating  its  lagging  be­
+tween  microphones.  The  distance  is  then 
+obtained  easily  in  the  same  way  as  in  the 
+multiple  transmitter  case  (total  delay  since 
+
+transmission). 
+How  to  calculate  the  lags  that  will  give 
+us  the angles  though?  The answer  lies  in  the 
+magic  of  correlations.  Say  one  has  two  sine 
+waves  over  several  periods  at  some  phase  to 
+one  another.  If  he  shifts  one  relative  to  the 
+other,  multiplies  the  two,  and  integrates  the 
+function  that  results,  this  is  called  a  cross-
+correlation.  As  it  turns  out,  this  function 
+turns  out  a  maximum  value  when  the  shift 
+operation  puts  the  sine  waves  in  phase  with 
+one  another. 
+A similar principle holds with our pulses. 
+If  one  correlates  the  pulses  between  the  mi­
+crophones with one another, a maximum will 
+occur  at  the  shift  that  reverses  their  inher­
+ent  phase  shift  (dcosθ).  So  one  simply  has 
+to  search  for  the  maximum  in  these  correla­
+tions between the diﬀerent microphones, and 
+she  can  trace  back  to  the  angles  from  there, 
+right?  Not  entirely.  There  is  a  very  impor­
+tant subtlety regarding this that actually has 
+much broader impact on the process of beam-
+forming  in  general.  In  the  next  section,  we 
+discuss  both  this  problem  and  an  elegant  so­
+lution  that  was  discovered  in  the  course  of 
+the  implementation. 
+
+2.3  Nonlinear  Spacing 
+
+We  observed  before  that  for  sine  waves, 
+correlation  maxima  occur  at  the  phase-
+correcting  lags.  As  it  turns  out,  for  signals 
+that are ﬁnite  length,  this can be generalized 
+using  the  fact  that  a  signal’s  autocorrelation 
+observes  a  maximum  at  zero  lag.  Assum­
+ing the pulsed sine waves observed at each of 
+the  microphones  are  simply  shifted  versions 
+of  one  another  (a  seemingly  reasonable  as­
+sumption),  the  maximum  of  the  correlation 
+will  occur  not  only  when  their  sines  are  in 
+phase,  but  also  when  the  modulating  pulses 
+are  made  to  line  up  exactly.  So,  we  should 
+be able  to uniquely  identify any sized  lag be­
+tween  the  receivers. 
+Only  our  reasonable  assumption  is  not 
+
+2.2  Multiple  Receivers 
+
+7 
+
+Tunaﬁsh 
+Vinith Misra 
+
+at  all  reasonable  for  cheaper  quality  devices, 
+like  the  ones  we  wished  our  system  to  work 
+on,  especially  when  one  considers  quanti­
+zation  noise.  Large  amplitude  diﬀerences 
+between  the  microphones  are  in  fact  quite 
+present  even  for  the  most  steady  of  ob jects. 
+As  it  turns  out,  this  completely  destroys  the 
+possibility for detecting lags greater than the 
+period of  the sine wave  in question  - stuck at 
+40KHz  by  the  resonant  ultrasonic  transduc­
+ers.  Given  the  centimeter  diameter  of  the 
+receivers  we  deal  with,  the  maximum  angu­
+lar  range  possible  is  limited  to  40  degrees. 
+Not  very much. 
+Amazingly,  this  is  an  identical  problem 
+to  that  faced  by  beamforming  transmitters 
+(see  the  multiple  transmitter  section).  The 
+requirement  that  the  spacing  between  trans­
+mitters  be  less  than  half  a  wavelength  is  the 
+exact  mathematical  restriction  we  face,  and 
+for  the  same  reasons. 
+If  transmitters  are 
+spaced  more  than  this  distance  apart,  mul­
+tiple  lobes  are  created  (similarly  to  how  one 
+set of lags can be repeated for multiple angles 
+taken  by  an  ob ject  in  our  case).  A  funda­
+mental  limit  to  angular  range?  Not  so  fast, 
+buddy.  We’re  from MIT,  after  all. 
+Thus  far,  everything  we  have  mentioned 
+can  be  done  with  2  transmitters  or  2  re­
+ceivers.  The  extra  devices  have  been  used 
+essentially  for  added  noise  protection.  Why 
+not  use  them  to  combat  this  problem?  As  is 
+often the case,  the answer  is sometimes more 
+apparent  when  one  looks  at  the  problem  in 
+a  diﬀerent  light. 
+We recall that the lags are given by dcosθ. 
+Plotting  this  over  the  angular  range  we  are 
+interested  in,  we  have  a  cosine  from  0  to 
+π .  Remembering  however  that  we  can  only 
+2 
+count on detecting phase  diﬀerences  and not 
+the total lags, we recognize that lags oﬀ by 25 
+µs  (the  period  of  a  40  KHz  wave)  will  yield 
+identical  phase  diﬀerences.  So  let’s  say  that 
+angles A  and B give  the  same  lags  for mics  1 
+and  2. 
+
+Vinith Misra 
+
+Now,  suppose  that  mics  2  and  3  are 
+spaced  slightly  further  apart  than  1  and  2. 
+While  it  is  true  that  more  angles  will  now 
+overlap (as the maximum lags have increased 
+while  the  period  is  the  same)  we  now  have 
+an  interesting  situation.  Assuming  that  the 
+2-3  spacing  is  not  a  simple  integral  multi­
+ple  of  the  1-2  spacing,  the  angles  that  give 
+the  same  1-2  phase  diﬀerences  are  guaran­
+teed  to  give  diﬀerent  2-3  phase  diﬀerences. 
+The  proof  of  this  statement  is  left  as  an  ex­
+ercise  for  the  reader.  In  short,  we  have  de­
+coupled  the  two  sets  of  receiver’s  lags  so  as 
+to  widen  the  range. 
+The  fact  has  been  veriﬁed  experimen­
+tally:  in  the  original  equally  spaced  setup, 
+observers standing out of the central angular 
+range “wrapped” around to the center screen 
+- exactly what one would expect (veriﬁcation 
+is another exercise for the reader).  In the sec­
+ond setup - decided upon after this analysis ­
+the  entire  range  of  the  transmitters  (almost 
+180  degrees)  was  represented  with  no  such 
+wrapping.  See  Figure  3  for  a  picture  of  the 
+ﬁnal  layout  used.  Notice  the  irregular  spac­
+ing. 
+A  similar  exploitation may  be  performed 
+in  beamforming  systems  with  many  trans­
+mitters. 
+If  one  spaces  them  greater  than 
+half  a  wavelength  - one  will  certainly  have 
+multiple  lobes.  However,  one  can  guarantee 
+that only one of these lobes overlaps between 
+all  the  transmitters  by  making  them  nonlin­
+early  spaced.  If  there  are  enough  transmit­
+ters,  this  essentially  duplicates  a  “properly” 
+beamformed  signal  without  the  need  for  a 
+carefully  fabricated  array. 
+It  should be  emphasized  that while other 
+solutions  exist  to  this  problem  - most  no­
+tably  the  use  of  superior  transducers  and/or 
+analog-digital converters  - none can compete 
+in  terms  of  elegance,  simplicity,  and  cost. 
+
+2.3  Nonlinear  Spacing 
+
+8
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Leon  Fay 
+
+Figure  3:  Receiver  Array 
+
+3  Analog  Interfacing 
+
+Before  jumping  into  the  implementation  of 
+the  processor,  it  is  important  to  understand 
+the  analog-digital  hybrid  aspects  of  the  de­
+sign.  Several  novel  techniques  were  explored 
+here  as  well,  most  notably  non-linear  time-
+variant  reduction  of  the  receiver’s  resonance 
+quality  by  means  of  the  FPGA.  See  Figure 
+4  for  a  schematic  of  the  ﬁnal  circuitry  for  a 
+single mic  (we  had  5). 
+
+3.1 	 Hardware  Interface 
+
+The  hardware  part  of  our  pro ject  is  mostly 
+responsible  for  collecting  data  from  our  ﬁve 
+microphones.  This  data  starts  out  as  a  40 
+kHz waveform with an amplitude of about 10 
+mV. We  amplify  the  signal  about  200  times, 
+and then convert it to digital data.  Our algo­
+rithm works  as well with  sinusoids  as  it  does 
+with  square  waves,  so  using  an  8  bit  ADC 
+would  be  wasteful  since  2  bits  would  suﬃce. 
+The quantization noise  that  is  introduced by 
+this  reduction  in  resolution  proved  a  severe 
+problem  early  on,  but  was  addressed  by  the 
+nonlinearly  spaced  array. 
+It  is  also  important  for  us  to  have  a  high 
+sampling  rate  (about  1  MHz),  so  whatever 
+ADC we used would have to be very high per­
+formance.  We  decided  that  the  easiest  way 
+to  meet  these  speciﬁcations  with  minimal 
+waste would be to make our own ADC out of 
+two comparators (for each microphone).  The 
+comparators  would  normally  both  output  0. 
+One  of  them would  output  a  1 when  the  sig­
+nal  went  above  a  certain  threshold,  and  the 
+other would output a 1 when the signal went 
+below  a  certain  threshold.  The  FPGA  read 
+the  sensor  data  directly  from  the  output  of 
+the  comparators.  We  found  that  our  custom 
+
+ADC  worked  extremely  well,  and  that  the  2 
+bit data was  simple  to gather,  store and pro­
+cess. 
+
+3.2	 Non-linear Time-variant Q Re­
+duction 
+
+In  addition  to working on  the digital  aspects 
+of  our  pro ject,  we  also  invested  time  in  im­
+proving  the  quality  of  our  analog  sensors. 
+One  of  the  largest  problems  was  that  a  very 
+short  transmission  pulse  would  result  in  a 
+long  response  on  our  receivers.  Speciﬁcally, 
+our  transmission  lasts  only  for  6  cycles  of  40 
+kHz,  but  a  reﬂection  from  an  ob ject  could 
+cause  more  than  40  cycles  of  oscillation  on 
+the  ultrasonic  sensors.  We  believe  that  this 
+extended  response was  caused by  the high Q 
+of  our  receivers  (the Q was  about  40  accord­
+ing  to  the  datasheet). 
+
+The Q  is  a  problem  because  it makes  the 
+pulse  associated  with  a  single  echo  (ob ject) 
+extremely  long.  This  means  that  a  second 
+ob ject  would  most  likely  have  an  overlap­
+ping  pulse.  Pulses  from  ob jects  are  much 
+more  diﬃcult  to  process  when  they  overlap, 
+and  since  we  ultimately  did  not  solve  the 
+high  Q  problem,  our  system  is  limited  to 
+single  ob ject  tracking.  Ideally,  the  echoes  on 
+our  receivers would  be  extremely  short,  thus 
+making  it  unlikely  that  there would  be  pulse 
+interference. 
+
+We  attempted  to  solve  the  overlap  prob­
+lem  by  lowering  the  Q  of  our  sensors.  How­
+ever,  simply  lowering  the  Q  by  putting  a 
+small resistor  in parallel with a sensor causes 
+several  problems.  Most  noticeably,  it  de­
+creases  the  amplitude  of  the  receiver’s  re­
+sponse.  A  lower  Q  also  implies  a  larger 
+
+9 
+
+Tunaﬁsh
+
+Vinith Misra 
+
+Leon  Fay 
+
+Figure  4:  Analog  Circuitry  for  1 Mic
+
+
+injecting  some  energy  back  in  is  fairly  dif­
+ﬁcult.  A  typical  discrete  MOSFET  switch 
+stores  enough  energy  in  overlay  capacitance 
+1  to  restart  oscillations  once  the  switch  is 
+open  again.  We  could  have  experimented 
+more with  smaller JFET devices  (less  capac­
+itance),  but  we  ran  out  of  time. 
+
+bandwidth,  meaning  that  our  ”ultrasonic” 
+microphone would  become  sensitive  to  lower 
+frequency sound,  thus  increasing the noise  in 
+our  system.  To  avoid  some  of  these  issues, 
+we  tried  a  non-linear  approach. 
+
+Our  method  involves  using  the  FPGA 
+to  count  the  number  of  oscillations  on  the 
+receiver.  Once  the  oscillation  count  reaches 
+a  critical  number  (after  which  more  data 
+would  not  help  with  signal  processing),  the 
+FPGA  sends  a  signal  that  causes  a  switch 
+to  close,  eﬀectively  shorting  the  sensor  out­
+put  to  ground  for  a  brief  time.  The  goal  is 
+to  cause  the  ultrasonic  resonator  to  lose  all 
+its  energy,  and  go  back  to  the  normal,  non-
+oscillating  state.  Thus,  after  a  brief  period 
+of ringing, the microphone would be ready to 
+accept  new  echoes without  interference  from 
+the  previous  one. 
+
+Although  the  concept  seems  simple, 
+building  a  switch  that  can  cause  a  reso­
+nant  tank  circuit  to  stop  oscillating  without 
+1Thanks  to  Harry  Lee  for  pointing  this  out 
+
+3.2  Non-linear  Time-variant  Q  Reduction 
+
+10 
+
+Tunaﬁsh 
+Vinith Misra 
+
+4	 Processing  - Implementa­
+tion 
+
+The  processing  conveniently  breaks  up  into 
+three  portions,  tellingly  named  the  pre­
+processer,  the  processor,  and  the  post­
+processor.  A  few  details  about  the  system 
+need mentioning  however. 
+First  of  all,  every  portion  of  the  system 
+except  for  the post-processor  is  fully  capable 
+of  tracking multiple  ob jects.  However,  given 
+analog  diﬃculties  with multipath  elongation 
+of  pulses  (see  above),  such  a  feature  would 
+only be reliable if the ob jects were more than 
+half  a  meter  apart.  Considering  the  limited 
+range  of  the  system,  it  was  decided  that  the 
+post-processor would work with only one ob­
+ject  at  a  time  for  reliability’s  sake. 
+Thanks to eﬃcient implementation of the 
+processor,  as  it  turned  out  the  transmission 
+and  reception  (25ms)  was  typically  the  bot­
+tleneck  in our  system  speed.  Not a big prob­
+lem  however,  since  40fps  is  well  beyond  the 
+ﬂicker  fusion  rate  of  the  human  eye,  24fps. 
+
+4.1  Pre-Processing 
+
+The pre-processor works  in  real  time  as data 
+is  collected.  For  the  most  part,  its  purpose 
+is  to  seperate  out  pulses  from  diﬀerent  ob­
+jects,  and  to  identify  whether  these  pulses 
+are  “valid”  for  processing.  For  instance,  if 
+the pulse from one microphone ends too close 
+to  the  start  of  the  same  pulse  in  another mi­
+crophone, the processor will spit out garbage 
+if  asked  to  process  this  region  of  the  signals. 
+Hence,  each  pulse  is  given  a  start  time,  end 
+time,  and  ﬁve  valid  bits  that  identify  which 
+of  the  ﬁve  microphones’  signals  are  valid  for 
+that  pulse.  This  information  is  written  to  a 
+pipelined BRAM  for use by  the processor  on 
+the  next  state  cycle. 
+
+Vinith Misra 
+
+4.2  Processing 
+
+Processing  is  the  heart  of  the  system.  Given 
+a  start  and  end  time  for  a  series  of  pulses, 
+it  ﬁnds  the  pulse  most  likely  to  be  corre­
+sponding  to  the  ob ject  that  is being  tracked, 
+and  proceeds  to  ﬁnd  its  angle.  This  is  done 
+by  use  of  smaller  lag-ﬁnding  and  correlation 
+modules  that are  streamlined  to perform  the 
+computations  of  interest.  The  max-lags  re­
+ceived  from  the  lag-ﬁnder  module  are  there­
+after  passed  to  the  post-processor  for  inter­
+pretation. 
+
+4.3  Post-Processing 
+
+Post  processing  serves  two  purposes.  First 
+of  all,  it  converts  the  max-lags  given  it  by 
+the  processor  into  distances  and  angles  that 
+the  display  module  reads  from  memory.  In 
+doing  so  however,  it  also  implements  basic 
+noise margins  against  sudden  ﬂuctuations. 
+While  the  distance  measurements  were 
+usually  quite  reliable,  two  distinct  methods 
+were  attempted  at  converting  from  the max-
+lags  into  angles.  The  ﬁrst  of  these  took  the 
+more  intuitive  look  up  table  approach.  Es­
+sentially,  if  the  lags  fell  into  a  4-space  “box” 
+(one  range  for  each  of  the  4  lags)  deﬁned  for 
+an angle,  the ob ject was  said  to  exist at  that 
+angle.  If multiple angles claimed responsibil­
+ity, the data was thrown away.  The ranges of 
+these 4-space boxes were determined through 
+an  eﬃcient  calibration  procedure. 
+The  second  angle  ﬁnding  method  found 
+the  “distance”  to  the  characteristic  lags  as­
+sociated  with  several  diﬀerent  angles.  The 
+minimum  of  these  was  declared  the  angle  of 
+the ob ject provided distance was below some 
+noise  threshold.  We  found  the  latter method 
+to  be  far  less  reliable. 
+Finally,  the  user  was  given  some  ability 
+to  trade  oﬀ  speed  for  noise  resistance.  Es­
+sentially,  an  angle was  forced  to  repeat  itself 
+a  threshold  number  of  times  (as  deﬁned  by 
+the  user)  before  it  was  declared  as  the  ob­
+
+11 
+
+Tunaﬁsh 
+Vinith Misra 
+
+Vinith Misra 
+
+ject’s  new  angle.  It  was  found  that  this  sim­
+ply  slowed down  the  system, which normally 
+converged  quite  fast  to  the  correct  location 
+of  an  ob ject  that  had  just  ﬁnished moving. 
+
+4.3  Post-Processing 
+
+12
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Leon  Fay 
+
+5  Module  Summary 
+
+See  Figure  6  for  a  block  diagram  of  the  non-
+display  elements  of  the  system,  and Figure  5 
+for  a  block  diagram  of  the  memory  control 
+elements. 
+
+5.1  Double  Buﬀering 
+
+The sonar architecture places a number of re­
+quirements on  the way memory  is organized. 
+Most  apparent  is  the  fact  that  multiple  in­
+dependent  modules  need  to  access  the  same 
+memories.  For  example,  the  data  gathering 
+module must write  to  the  data memory,  and 
+processing  module  must  read  from  it.  In  or­
+der  to  make  this  possible  without  introduc­
+ing  complexity  into  every  module  that  uses 
+BRAMs, we use a wrapper module  that  con­
+trols which module  is currently ”controlling” 
+which memory.  As  a  result,  the data  gather­
+ing  block  can  be  designed  without  consider­
+ing  the  fact  that  the  processor  also  needs  to 
+access  the  data  memory. 
+The various modules  in  the sonar pro ject 
+have  a  very  sequential  nature,  meaning  that 
+information  naturally  ﬂows  from  one  block 
+to  the  next.  However,  sequential  process­
+ing is unfavorable since each block must wait 
+for  the  previous  block  to  ﬁnish  before  it  can 
+start.  For  example,  the processor  cannot be­
+gin work until  the data  gatherer has ﬁnished 
+collecting  information.  To avoid  this waiting 
+and  thus  improve  the  speed  of  our  system, 
+we  chose  a more  parallel  approach. 
+To  achieve  parallelism,  there  are  two 
+copies  of  every  memory.  So  while  the  data 
+gatherer  is  writing  data  to  memory  A,  the 
+processor  is  performing  computation  on  the 
+contents  of memory B. When both  are done, 
+they  switch memories.  The  control  FSM  de­
+cides  when  this  switching  takes  place,  mak­
+ing  sure  it  happens  only  when  all  the  blocks 
+in  the  pipeline  are  done. 
+In order  to make  the design of each mod­
+ule  in  the  pipeline  simpler,  the  switching  of 
+
+memories is handled externally.  As far as the 
+module knows,  it  is always working with one 
+BRAM. The details  involved  in both reading 
+and  writing  to  multiple  memories  must  be 
+hidden. 
+When  a  module  thinks  it  is  writing  to 
+memory, it is actually changing wires belong­
+ing  to  two  BRAM  wrappers.  These  changes 
+only  take  eﬀect  if  the  block  has  ”control”  of 
+that BRAM. The control FSM sets these con­
+trol  signals  appropriately.  For  example,  it 
+makes  sure  that  the  data  gatherer  and  the 
+processor  are  never  working  with  the  same 
+memory. 
+The  control  FSM  also  decides  what  hap­
+pens when a module reads from memory with 
+the  help  of  a  multiplexer.  The  mux  makes 
+sure that if a block is given control of a given 
+memory,  then  it  will  read  the  output  data 
+from  that memory. 
+Together,  these  memory  control  systems 
+allow modules  to  share memories  and  switch 
+between  them  without  any  special  consider­
+ation.  As  a  result,  the  entire  system’s  speed 
+is  improved  and  design  is  simpliﬁed. 
+
+5.2  Controller 
+
+The controller orchestrates when every mod­
+ule  in  the  sonar  begins  its  work.  The  only 
+inputs  it  requires  are  the  done  signals  from 
+each  of  the modules  it  controls.  It must  also 
+carefully decide which module controls which 
+memory,  so  that parallelism  is possible with­
+out  conﬂict. 
+
+5.3  Transmitter 
+
+The  transmitter  creates  a  40  kHz  signal, 
+which  is  the  resonant  frequency  of  our  ul­
+trasonic  transmitters.  The  3.3v  square  wave 
+output  is  passed  to  an  ampliﬁer,  and  raised 
+to  20v,  so  that  the  transmitter’s will  have  as 
+long  a  range  as  possible. 
+
+13 
+
+Tunaﬁsh 
+Vinith Misra 
+
+Leon  Fay 
+
+Figure  5:  The  Block  RAM Wrapper 
+
+Figure  6:  Main  Block  Diagram
+
+
+5.3  Transmitter 
+
+14
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Leon  Fay 
+
+5.4  Data  Gatherer 
+
+5.8  Max  Lag  Finder 
+
+This module samples data at a rate of 1 MHz, 
+grabbing  all  the  2-bit  sensors  values  at  the 
+same  time.  The  data  is  written  to  mem­
+ory,  and  also  passed  immediately  to  the  pre­
+processor. 
+
+This  module  makes  the  correlator  module 
+ﬁnd  the  correlation  for  each  possible  lag.  It 
+keeps  track  of  the  correlation  with  the  high­
+est  degree  of  overlap  (lag  sum),  and  returns 
+the  corresponding  lag  to  the  processor. 
+
+5.5  Mic  FSM 
+
+There  is  one  Mic  FSM  for  each  ultrasonic 
+sensor.  It  examines  the  data  from  its  micro­
+phone  and  ﬁnds  out  when  a  ”pulse”  starts 
+and  ends,  where  a  pulse  is  a  portion  of  the 
+signal  that  is  non-zero.  The  information 
+about  a  start  and  end  are  passed  to  the  pre­
+processor. 
+
+5.6  Pre-processor 
+
+The  pre-processor’s  goal  is  to  isolate  an  area 
+of  interest  in  the  long  stream  of  bits  coming 
+from the sensors.  It does this operation while 
+data is being gathered.  By using information 
+from  the  Mic  FSMs,  the  pre-processor  ﬁnds 
+areas  of  the  signals  where  as  many  of  the 
+sensors  are  active  as  possible  (the  most  reli­
+able  data),  and  records  the  location  of  these 
+areas in memory.  Each of these ”pulses” cor­
+responds  to  one  ob ject  in  the  environment. 
+
+5.9  Correlator 
+
+The  correlator  actually  performs  the  cross 
+correlation  for  a  given  lag  on  the  data mem­
+ory.  It  does  all  ﬁve  correlations  in  parallel, 
+using dual ported memory to read two values 
+of the data at the same time.  Thus,  it can si­
+multaneously do the multiply accumulate re­
+quired  for  the  cross  correlation  between  sen­
+sor  1  and  2,  2  and  3,  and  so  on. 
+
+5.10  Angle  Extractor 
+
+Given  the  maximum  lags,  this  module  ﬁnds 
+the most  likely  corresponding  angle.  It  com­
+pares  the  lag values  to  those hard coded  into 
+a number of angle checking modules.  If there 
+is  one  match,  the  processor  knows  the  ob-
+ject’s  angle.  Multiple  matches  signify  that 
+the  data  is  probably  invalid. 
+
+5.11  Angle  Checker 
+
+This  module  performs  a  simple  check  to  see 
+if  the  given  lags  fall  within  a  certain  range. 
+The range is hard coded for every angle, with 
+the  values  found  empirically. 
+
+5.7  Processor 
+
+The  processor  takes  the  data  from  the  data 
+gatherer, and the pulse  information  from the 
+pre-processor  and  determines  the  location  of 
+an  ob ject  in  the  ﬁeld.  The  start  location  of 
+a  pulse  determines  the  distance  of  the  ob­
+ject.  The processor performs  a  cross  correla­
+tion and uses a  lookup table  like structure to 
+determine  the  ob ject’s  angle.  The  ﬁnal  an-
+gle/distance  pairs  are  writen  to  memory  for 
+the  display  to  use. 
+
+5.12  Dumper 
+
+This module takes data and sends  it through 
+the  serial  port  using  the  RS-232  protocol. 
+This  entire  part  exists  only  for  debugging; 
+we  use  it  to  see  what  data  is  recorded  from 
+the  sensors  and  what  values  our  signal  pro­
+cessing  modules  come  up  with.  Thus,  the 
+module  sends  out  the  contents  of  various 
+memories  and  also  the  values  of  a  few  regis­
+ters.  The  dumper  is  activated  by  a  button, 
+
+5.4  Data  Gatherer 
+
+15 
+
+Leon  Fay 
+
+was  diﬃcult  to  test  because  it  involved  so 
+many  diﬀerent  pieces  working  together.  In 
+order  to  sort  through  the  dozens  of  relevant 
+signals,  we  made  extensive  use  of  the  $dis­
+play  keyword  to  print  out  what  values  were 
+being  read  from  which  memory.  Since  it 
+took  a  long  time  for  certain  bugs  to  appear, 
+it  was  much  easier  to  examine  a  few  printed 
+statements  than  scrolling  through  many  of 
+long  signals. 
+
+We  found  that  the  logic analyzer was un­
+necessary  for  testing  and  debugging  in  our 
+case.  The  signals  worked  exactly  as  pre­
+dicted  by ModelSim. 
+
+Tunaﬁsh 
+Vinith Misra 
+
+and  normal  operation  is  temporally  stopped 
+while  it  is  sending  information. 
+
+5.13  BRAM  Wrapper 
+
+This  module  makes  double  buﬀering  and 
+memory  sharing  completely  transparent  to 
+the  other  modules  that  use  BRAMs. 
+
+5.14  Top,  Front  Conversion 
+
+The  converters  take  the  angle/distance  in­
+formation  from  the  processor  and  convert  it 
+to  pixel  information  using  sine  and  cosine 
+lookup  tables. 
+
+5.15  Display 
+
+The  display  reads  the  pixel  information  and 
+puts  it  onto  the  screen. 
+
+6  Testing  and  Debugging 
+
+The  key  to  testing  and  debugging  our  sys­
+tem  was  the  RS-232  module. 
+In  the  ﬁrst 
+stage  of  our  development, we  used  this mod­
+ule  to  send  sensor  data  from  the  BRAM’s 
+on  our  lab  kit  to  a  computer.  We  developed 
+an  algorithm  for  locating  ob jects  from  this 
+real  data.  Had  we  tried  to  implement  an 
+algorithm  without  checking  that  the  sensors 
+behaved  as  we  expected,  the  pro ject  would 
+have  never  worked.  Later  on,  as  the  signal 
+processing core was coming together, we sent 
+the  intermediate  results  of  our  calculations 
+to  a  computer  along  with  the  data  being 
+processed.  In  this  way,  we  veriﬁed  that  the 
+FPGA  was  producing  the  same  results  as 
+our MATLAB  code  for  the  given  set  of data. 
+
+It  was  very  easy  to  test  bench  certain 
+modules,  especially  those  that  performed 
+calculations.  We  simply  put  numbers  in  and 
+made  sure  the  right  numbers  came  out.  The 
+memory  wrapper  was  the  only  module  that 
+
+5.13  BRAM Wrapper 
+
+16
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Miranda  Ha 
+
+7  Display  Block 
+
+See Figure  for a block diagram of the display 
+unit. 
+
+7.1 	 Display  Module 
+
+The  display  module  reads  6-bit  RGB  val­
+ues  from  a  display  RAM  and  converts  them 
+to  24-bit  values  ready  to  be  used  by  the 
+VGA.  To  cut  down  on  the  amount  of  mem­
+ory needed, the RAM contains RGB data for 
+every pixel of a 320x240 display even  though 
+the  actual  display  is  640x480  pixels.  There­
+fore, the main challenges in implementing the 
+display  module  were  making  sure  the  RAM 
+was  read  appropriately  to  display  a  640x480 
+screen  and  reading  the  next  address  while 
+converting  data  from  the  current  one. 
+To get a 640x480 display from data meant 
+for  a  320x240,  each  pixel  of  the  smaller  dis­
+play  needs  to  be  read  four  times.  That  is, 
+one pixel of the smaller display becomes  four 
+pixels  in  the  larger  one.  The  RGB  data  for 
+each  pixel  is  stored  in  the  RAM  in  the  or­
+der  the  pixels  are  drawn  on  the  screen-left 
+to  right,  top  to  bottom-so  the  pixel  cnt  and 
+line  cnt  signals  from  the VGA  controller  can 
+be  used  to  address  the  display  RAM.  If  the 
+LSB of each of those signals is not used, then 
+the  VGA  controller  will  draw  each  row  and 
+each  column  of  the  smaller  display  twice  on 
+the  larger  display. 
+The  data  for  a  particular  pixel  in  the 
+320x240  display  is  at  the  address  that  is  the 
+pixel’s  row  number  multiplied  by  the  total 
+number  of  columns  plus  the  pixel’s  column 
+number.  For  example,  the  address  for  the 
+ﬁfth pixel in the fourth row (which means the 
+row number  is 3 and  the column number  is 4 
+since  the  counts  start  at  0)  is  3*320 +  4.  To 
+solve the problem of reading the next address 
+of the RAM while displaying data at the cur­
+rent one, the address that is sent to the RAM 
+is calculated using one more than the current 
+value  of  pixel  cnt.  When  pixel  cnt  becomes 
+
+greater  than  the  number  of  the  last  column 
+on  the  screen,  the  address  is  held  at  that  of 
+the  ﬁrst  pixel  of  the  next  line  so  that  the 
+RGB  data  for  the  ﬁrst  pixel  of  the  next  line 
+is  ready  when  pixel  cnt  rolls  over  to  zero. 
+The  conversion  of  the  6-bit  RGB  value 
+in  the  display  RAM  to  a  full  24-bit  RGB 
+value depends on  the mode of display  (front­
+view  or  top-view),  which  is  selected  by  two 
+switches  on  the  lab  kit.  For  the  top  view, 
+all  ob jects  on  the  screen  are  the  same  color, 
+so  the  nonzero  RGB  values  in  the  RAM  are 
+all  the  same  and  are  just  concatenated  with 
+eighteen  trailing  zeros  to  form  the  VGA-
+ready  RGB  output.  For  the  front  view, 
+the  six  bits  in  the  display  RAM  become 
+the  two  MSBs  for  the  R,  G,  and  B  sec­
+tions,  and  zeros  are  concatenated  to  ﬁll 
+in  the  rest  of  the  24  bits.  For  example, 
+the  value  6’b001001  stored  in  the  display 
+RAM  would  become  the  24-bit  RGB  value 
+24’b000000001000000001000000. 
+
+7.2	 Data  Correction  For  Front-
+View  Module 
+
+The t  d  conv  front.v module reads data from 
+the  theta-distance  pairs  RAM  (written  by 
+the Control Module) and converts  it to RGB 
+data for the front-view display that is written 
+to  another  RAM,  which  is  later  read  by  the 
+Display  Module.  Each  address  in  the  theta-
+distance  pairs  RAM  has  a  16-bit  value;  the 
+ﬁrst  8  bits  represent  an  angle,  and  the  lower 
+order  8  bits  represent  the  distance  at  that 
+angle.  In  the  front  view  display,  each  ob­
+ject  is  represented  by  a  vertical  bar  on  the 
+screen.  The  closer  an  ob ject  is  to  the  trans-
+mitter/receiver  array,  the  longer  and  wider 
+its  bar  is,  and  the  lighter  its  color  is. 
+The  front  view  conversion  module  is  im­
+plemented as an FSM because of the multiple 
+read  and  write  operations  needed  to  do  the 
+data  conversion.  A  state  transition  diagram 
+for  this  module  can  be  found  in  Figure  8  . 
+The FSM is idle (in the frconv  START state, 
+
+17 
+
+Tunaﬁsh
+
+Vinith Misra 
+
+Miranda  Ha 
+
+Figure  7:  Display  Block  Diagram
+
+
+7.2  Data  Correction  For  Front-View Module 
+
+18
+
+
+Control ModuleTheta-DistancePairs RAM(dual RAMs)td_we_ctrlrdda_dt_xamtd_addrtd_weFront Conversion ModuleTop Conversion ModuleVGA ModuleDisplayModuleDisplay RAM(dual RAMs)td_addr_ctrl/8td_we_ftd_we_ttd_addr_f/8/8td_addr_t/88t_d_pair/16pix_addr_fpix_addr_tpix_addr2pd_we_fpd_we_tpix_din_fpix_din_t6/6pix_wepix_din/6171717pix_addr17tuod_xip6Cosine LookupCosine LookupSine Lookupstart_fwriteetirwf_tratspixel_cntline_cnt/10/10fconv_doneenod_vnoctdisp_sel/2(switch[1:0])clkto all modulesto all modulesreset_sync24to VGA signalsTunaﬁsh 
+Vinith Misra 
+
+Miranda  Ha 
+
+which sets all outputs to zero) until an enable 
+signal,  called  start  fwrite,  from  the  control 
+module  signals  the  FSM  to  begin  convert­
+ing  data.  Before  the  front  view  conversion 
+module  can  write  new  data  to  the  display 
+RAM,  all  of  the  previous RGB data must be 
+cleared  (i.e.  set  to  zero).  The  FSM  switches 
+between  the  blank  mem  state,  which  has  a 
+counter  that  addresses  all  locations  of  the 
+display  RAM  one  at  a  time  and  outputs  a 
+value  of  0  to  be written  to  all  addresses,  and 
+the  blank  mem  write  state,  which  sets  the 
+write enable signal to the display RAM high. 
+The write enable signal is only high when the 
+FSM  is  in  the  blank  mem  write  state  to  en­
+sure  that  the  address  and  data  have  settled 
+before  an  attempt  is  made  to  write  to  the 
+display  RAM. 
+When  all  addresses  in  the  display  RAM 
+have  been  cleared,  the  front  view  conver­
+sion  FSM  moves  to  the  read  tdpair  state, 
+which  outputs  an  address  to  be  read  from 
+the theta-distance pairs RAM. If the  last ad­
+dress  in  this  RAM  has  been  read,  the  FSM 
+sends  a  done  signal  to  the  control  module 
+and  becomes  idle  again  (i.e.  returns  to  the 
+frconv  START state) on the next rising clock 
+edge.  If  the  last  address  has  not  been  read, 
+then  the next  theta-distance pair  is  ready on 
+the next rising clock edge, when the state be­
+comes trig  lookup.  This state takes the top 8 
+bits  of  the  theta-distance  pair  (which  repre­
+sent  an  angle)  and  sends  them  to  the  cosine 
+lookup  table.  On  the  next  rising  clock  edge, 
+the FSM goes to the ﬁnd  xcoord state, which 
+calculates the x-coordinate of the ob ject rep­
+resented  by  the  current  theta-distance  pair 
+using  the  cosine  data  from  the  lookup  table. 
+Usually,  the  conversion  of  polar  coordi­
+nates  (an  angle  and  a  distance)  to  a  rectan­
+gular  x-coordinate  is  done  by  simply  multi­
+plying  the  distance  by  the  cosine  of  the  an­
+gle.  However,  in  binary,  the  conversion  be­
+comes more complicated because of the prob­
+lem  of  how  to  represent  non-integer  values. 
+
+In  the  cosine  lookup  table,  values  of  the  co­
+sine function between -1 and 1 are mapped to 
+8-bit  values  between  -64  and  64.  This  8-bit 
+value  is  ﬁrst  multiplied  with  its  correspond­
+ing  distance,  which  is  represented  by  the  8 
+LSBs of the theta-distance pair data from the 
+RAM. The resulting signal, called dcostheta, 
+is an absolute value, so if the incoming cosine 
+value  (which  is  a  two’s  complement number) 
+is  negative,  it  is  converted  to  its  magnitude 
+(by  ﬂipping  all  bits  and  adding  one)  before 
+being  multiplied  by  the  distance. 
+The  display  needs  to  render  ob jects  less 
+than  90  (which  have  a  positive  cosine  value) 
+relative  to  the  transmitter/receiver  array  on 
+the  right  side  of  the  screen,  and  ob jects 
+greater  than  90  (and  less  than  180,  which 
+have  a  negative  cosine  value)  relative  to  the 
+array on the left side of the screen.  An ob ject 
+at  90  relative  to  the  array  (that  is,  directly 
+in  front  of  it) will be  displayed  in  the middle 
+of  the  screen.  In  a  320x240  display,  the mid­
+dle of the screen has an x-coordinate (column 
+number)  of  159,  so  the  value  of  dcostheta  is 
+added  to  159  if  the  cosine  is  positive,  and 
+subtracted  from 159  if  the cosine  is negative. 
+Only bits 13  through 7 of dcostheta are used 
+in the calculation of the x-coordinate because 
+all  bits  except  the  MSB  of  the  cosine  value 
+are  like  the  numbers  after  the  decimal  point 
+of  a  ﬂoating-point  number,  and  by  leaving 
+out  these  lower  order  bits  we  are  essentially 
+truncating  dcostheta  to  get  a  whole  number 
+that  can  be  represented  appropriately  in  bi­
+nary.  We  only  take  up  to  bit  13  of  dcos­
+theta because we do not want  to  add a num­
+ber  to  159  that  will  make  the  sum  greater 
+than  319  (the  maximum  column  number  of 
+the  small  screen)  or  less  than  zero  (the min­
+imum  column  number);  therefore we  restrict 
+the  added  or  subtracted  number  to  be  seven 
+bits. 
+After  the  x-coordinate  is  calculated,  the 
+FSM  moves  on  to  the  prep  pixdata  state, 
+which  determines  the  6-bit  RGB  value  to 
+
+7.2  Data  Correction  For  Front-View Module 
+
+19 
+
+Tunaﬁsh 
+Vinith Misra 
+
+Miranda  Ha 
+
+Figure  8:  Front  View  FSM 
+
+7.2  Data  Correction  For  Front-View Module 
+
+20 
+
+frconv_STARTpd_we = 0done = 0td_addr = 0theta_req = 0pd_addr = 0pix_data = 0blank_mempd_we = 0pd_addr = pd_addr + 1pix_data = 0(or 0 if full)blank_mem_writepd_we = 1read_tdpairfind_xcoordprep_widthinit_cntrstrig_lookuptheta_req = t_d_pair[15:8]prep_pixdatapixdata = 6’bXXXXXXstart_fwrite = 1start_fwrite = 0write_pixdatapd_addr = ???pd_we = 1pd_addr < 76,800*pd_addr≥76,800td_addr≤max_td_addrtd_addr>max_td_addr*****width_cnt > ext_widthMiranda  Ha 
+
+state  transition  diagram  for  this module  can 
+be  found  in  Figure  9.  In  the  prep  pixdata 
+state  for  the  top  view  conversion  FSM,  both 
+the  x- and  y-coordinates  of  the  ob ject  must 
+be calculated.  The x-coordinate is calculated 
+the same way as  it was  in the front view con­
+version  module.  The  y-coordinate  calcula­
+tion begins similarly.  The angle of the ob ject 
+(represented by the eight MSBs of the theta-
+distance  pair  read  from  the  RAM)  is  sent  to 
+a  sine  lookup  table,  and  the  8-bit  value  that 
+is  returned  is  multiplied  by  the  distance  of 
+the  ob ject  to  get  the  value  of dsintheta.  The 
+dsintheta  value  is  truncated  like  the  dcos­
+theta  value  was  and  then  subtracted  from 
+230  (since  we  want  the  closest  ob jects  to  be 
+near  the  bottom  of  the  screen)  to  obtain  the 
+y-coordinate. 
+When  the  x- and  y-coordinates  have 
+been  calculated,  the  FSM  transitions  to  the 
+write  pixdata  states,  each  of  which  writes 
+RGB  data  into  the  display  RAM  for  one 
+pixel  of  the  3x3  square  (in  the  320x240  dis­
+play;  this  gets  blown  up  to  a  6x6  square  in 
+the  640x480  display)  that  represents  the  ob­
+ject  on  the  screen.  After  the  last  write  state 
+(write  pixdata9),  the FSM  transitions  to  the 
+read  tdpair  state,  which  will  continue  con­
+versions  or  send  the  FSM  back  to  its  idle 
+state,  depending  on  if  there  are  more  theta-
+distance  pairs  to  be  read. 
+
+Tunaﬁsh 
+Vinith Misra 
+
+be  written  to  the  display  RAM  based  on 
+the distance of  the ob ject  from the  transmit-
+ter/receiver  array.  As  mentioned  before,  the 
+closer  an  ob ject  is  to  the  array,  the  darker 
+the  color  of  the  bar  that  represents  the  ob­
+ject  on  the  display.  The  length  of  the  bar 
+representing  the  ob ject  is  also  determined  in 
+this  state. 
+The  next  state,  prep  width,  determines 
+the  width  of  the  bar  representing  the  ob­
+ject.  Then  the  init  cntrs  state  sets  to  zero 
+the  values  of  the  counters  that  will  be  keep­
+ing  track  of  what  address  is  sent  to  the  dis­
+play RAM for writing the RGB data for each 
+pixel.  Finally,  the write  pixdata  state writes 
+RGB  values  to  the  appropriate  addresses  in 
+the  display  RAM  and  returns  to  the  FSM 
+to  the  read  tdpair  state  when  the  necessary 
+data has been stored.  The FSM will continue 
+its  conversions  or  return  to  the  idle  state  de­
+pending  on  if  there  are  more  theta-distance 
+pairs  to  be  read. 
+
+7.3 	 Data  Conversion  for  Top  View 
+Module 
+
+The  t  d  conv  top.v  module  reads  data  from 
+the theta-distance pairs RAM and converts it 
+to RGB data  for the top-view display.  In the 
+top  view  display,  each  ob ject  is  represented 
+by  a  small  square  on  the  screen.  The  closer 
+an ob ject is to the transmitter/receiver array, 
+the  closer  the  square  that  represents  it  is  to 
+the  bottom  of  the  display  screen.  Ob jects  at 
+an  angle  less  than  90  relative  to  the  trans-
+mitter/receiver  array  are  drawn  on  the  right 
+side  of  the  screen,  and  ob jects  at  an  angle 
+greater  than  90  (and  less  than  180)  relative 
+to  the  array  are drawn  on  the  left  side  of  the 
+screen.  An  ob ject  at  90  relative  to  the  ar­
+ray  (that  is,  directly  in  front  of  it)  will  be 
+displayed  in  the middle  of  the  screen. 
+The  front  view  conversion module  is  also 
+implemented  as  an  FSM,  and  it  is  essen­
+tially the same as the FSM for the front view 
+conversion  through  the  trig  lookup  state.  A 
+
+7.3  Data  Conversion  for  Top  View Module	
+
+21
+
+
+Tunaﬁsh 
+Vinith Misra 
+
+Miranda  Ha 
+
+Figure  9:  Top  FSM 
+
+7.3  Data  Conversion  for  Top  View Module 
+
+22 
+
+topconv_STARTpd_we = 0done = 0td_addr = 0theta_req = 0pd_addr = 0pix_data = 0blank_mempd_we = 0pd_addr = pd_addr + 1pix_data = 0(or 0 if full)blank_mem_writepd_we = 1read_tdpairtrig_lookuptheta_req = t_d_pair[15:8]prep_pixdatapixdata = 6’bXXXXXXstart_twrite = 1start_twrite = 0write_pixdata[9:1]pd_addr = ???pd_we = 1pd_addr < 76,800*pd_addr≥76,800td_addr≤max_td_addrtd_addr>max_td_addr**width_cnt > ext_widthTunaﬁsh 
+Vinith Misra 
+
+8 
+
+Summary 
+
+An  original  approach  to  active  acoustic  lo­
+calization  has  been  both  proposed  and  im­
+plemented.  The  improvements  to  traditional 
+sonar  include  multiple  order-of-magnitude 
+speedup,  and  lack of  reliance  on device qual­
+ity.  A  technique  in  beamforming  that  allows 
+the  use  of  large  devices  and  roughly  placed 
+phase  arrays  was  also  discovered  along  the 
+way. 
+By  means  of  a  fully  pipelined  architec­
+ture  that  “never  rests,”  the  speed  improve­
+ment  lent  by  the  algorithm  was  exploited 
+completely,  making  the  pulse  delay  the  lim­
+iting  factor  in  speed. 
+A  display  module  reads  data  provided 
+it  by  the  processing  and  data  gathering  el­
+
+Vinith Misra 
+
+ements  (pipelined)  and  displays  its  view  of 
+the  ﬁeld  from  a  top  view  and  a  front  view. 
+The  latter  demonstrates  perspective,  chang­
+ing  the  size  and  width  of  the  ob ject  as  it 
+moves  closer  and  further  away. 
+The system works well within a short dis­
+tance  range,  after  which  point  limitations  of 
+the  transmitters  attenuate  the  signal  to  be­
+low  the  noise  ﬂoor. 
+Post-processing  intentionally  limited  the 
+system  to  single  ob ject  tracking  to  deal with 
+noise  issues  stemming  from  multiple  path­
+ways  of  reﬂection. 
+Mathematical  and  implementation  de­
+tails  have  intentionally  been  left  out  of  this 
+paper  for  the  sake  of  succinctness.  The  au­
+thors  may  be  reached  for any  comments, 
+suggestions,  or  questions. 
+
+23 
+
+

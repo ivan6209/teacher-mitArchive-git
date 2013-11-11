@@ -1,0 +1,318 @@
+18.335 Midterm Solutions 
+Problem 1:  Schur, backsubstitution, complexity (20 points) 
+You  are  given matrices  A  (m × m),  B  (n × n),  and C  (m × n),  and want  to  solve  for  an  unknown matrix  X 
+(m × n) solving: 
+AX − X B = C. 
+We will do this using the Schur decompositions of A and B.  (Recall that any square matrix S can be factorized 
+in the Schur form S = QU Q∗  for some unitary matrix Q and some upper-triangular matrix U .) 
+AX − X QBUBQ∗
+(a)	 AX − X B = C = QAUAQ∗ 
+∗  and on  the  right 
+B ,  and hence  (multiplying on  the  left by QA 
+by QB ), we obtain
+
+AX QB − Q
+∗ 
+∗ 
+∗ CQB ,
+
+AX QBUB  = QA
+UAQ
+so A′  = UA , B′  = UB , C ′  = Q∗
+∗ X QB . To get X  from X ′ , we obtain X = QAX ′Q∗
+ACQB , and X ′  = QA
+B . 
+(b)  The last row of A′X ′ − X ′B′  = C ′ , since A′  is upper-triangular, is: 
+mm m,: − X
+I − B
+′ 
+′  = C
+′ 
+′  X
+′ 
+′  = Xm
+′ 
+′ ),
+,: (A
+A
+,:B
+m
+m,: 
+mm
+,:  of X ′ . To ﬁnd this last row, then, we merely need to solve the 
+′ 
+which is only in terms of the last row Xm
+I − B′  is  upper-triangular, we  can  do  this  by  backsubstitution 
+system  of  equations  above—since A′ 
+mm
+in O(n2 ) operations.  Or, I guess, technically, this is “forward” substitution because you start with the 
+ﬁrst column of B′  and move right, but whatever—it’s the same thing under a permutation. [Although 
+this  is a row-vector problem, we can obviously  transpose  to get  the familiar column-vector problem, 
+I − B′ )T  is lower-triangular.] 
+in which case (A′ 
+mm
+(c)  More generally,  the	 j-th  row of A′X ′ − X ′B′  = C ′  can be written purely  in  terms of  the  j-th and  later 
+rows of X ′ , since A′  is upper-triangular: 
+,: − X j
+′ 
+′ 
+′ 
+′ 
+′ 
+j,: + ∑ A
+jiXi
+A
+j j X
+,:B
+i> j 
+
+′  = C
+
+′ 
+j,: 
+
+and hence 
+
+j,: − ∑ A
+j j I − B
+′ 
+′ 
+′ ) = C
+′ 
+′ 
+′ 
+,: (A
+jiXi
+X j
+,: , 
+i> j 
+which is again an upper-triangular system of equations.  It takes 2(m −  j)n operations to construct the 
+right-hand side, and O(n2 ) operations to solve by backsubstitution. 
+
+(d)  We have to solve for m rows. Each of them requires an O(n2 ) backsubstitution, for O(mn2 ) operations. 
+There are also ≈ ∑m
+j=1 2(m − j)n = O(m2 n) ﬂops to compute the right-hand sides. Finally, to compute 
+X  = QAX ′QB
+∗ requires  two  matrix  multiplies,  for  2m2n + 2mn2  ﬂops.  So,  the  total  complexity  is 
+O(m2n) + O(mn2 ), not including the O(m3 ) + O(n3 ) time for the Schur factorizations. 
+
+Problem 2:  Stability (20 points) 
+Since it is backwards stable (with respect to A and/or b), we obtain an x + δ x such that (A + δ A)(x + δ x) = 
+b + δ b ≈ A(x + δ x) + δ A x, where ∥δ A∥ = O(εmachine )∥A∥ and ∥δ b∥ = O(εmachine )∥b∥. That means that 
+the residual, computed in exact arithmetic, would r = b − A(x + δ x) = Aδ x = δ A x − δ b. The norm of this is 
+≤ ∥δ A x∥ + ∥δ b∥ ≤ ∥δ A∥ ∥x∥ + ∥δ b∥ = [∥A∥ ∥x∥ + ∥b∥]O(εmachine ). But ∥x∥ = ∥A−1b∥ ≤ ∥A−1 ∥ ∥b∥, and 
+so we obtain ∥r∥ ≤ [κ(A) + 1]∥b∥O(εmachine ).  However,  I didn’t specify whether the backwards stability 
+was with respect to A or b; if you only assumed the latter you wouldn’t have gotten the κ(A) term. 
+This  is  still  not  quite  right,  however,  if  the  residual  r  itself  is  computed  in  ﬂoating-point  arithmetic. 
+In  particular,  the  computation  of  b − Ay  in  ﬂoating-point  for  any  y  is  also  backwards  stable  with  respect 
+
+1 
+
+to  y,  so  in  computing  b − A(x + δ x)  we  obtain  b − A(x + δ x + δ x′ )  where  ∥δ x′ ∥ =  ∥x∥O(εmachine ) ≤ 
+∥A−1∥ ∥b∥O(εmachine ).  Hence, this gives us an additional term Aδ x′  in the residual, which has magnitude 
+≤ ∥A∥ ∥δ x ∥ ≤ κ(A)∥b∥O(εmachine ). 
+′
+Adding these two sources of error, we obtain a residual whose magnitude proportional to κ(A)∥b∥O(εmachine ). 
+Problem 3: Conjugate gradient (20 points) 
+(a)  CG does not change the component of xn  in the nullspace (the span of the zero-λ eigenvectors). 
+Proof:  If  we  expand  x j  = ∑i γ
+( j)qi  in  the  eigenvectors  qi  with  some  coefﬁcients  γ
+( j) ,  we  see  im­
+i 
+i 
+mediately that Ax j  = ∑i>k λiγ
+( j)qi  is in the span of the nonzero-λ eigenvectors of A; equivalently, it is 
+perpendicular to the nullspace.  Hence, the residual r j  = b − Ax j  (which we compute by recurrence in 
+i 
+the CG algorithm)  is also perpendicular  to  the nullspace.  Since all  the residuals are perpendicular  to 
+the nullspace, and since the directions d j  are linear combinations of the residuals (via Gram-Schmidt), 
+the directions d j  are also perpendicular to the nullspace. Hence, when we compute xn = xn−1 + αndn−1 , 
+we do not change the components of x in the nullspace, and γ(n) = γ(n−1)  for i ≤ k.
+i
+i 
+(b)  Because CG only changes xn  in directions perpendicular to the nullspace, it is equivalent to doing CG 
+
+on the nonsingular problem of Ax = b acting within the column space of A.  Since x0  = 0,  it initially
+
+has no (nonzero) component in the nullspace and hence xn  has no component in the nullspace. Hence,
+
+√ 
+if  b = ∑i>k βi qi  for  some  coefﬁcients βi ,  it  converges  to  xn  → ∑i>k 
+βi qi .  The  rate  of  convergence  is
+
+λi 
+determined  by  the  square  root  of  the  condition  number  of  A  within  this  subspace,  i.e.  at  worst  the 
+convergence requires O(  λm/λk+1 ) iterations, assuming we have sorted the λj ’s in increasing order. 
+(Not including possible superlinear convergence depending on the eigenvalue distribution.) 
+(c)  If  we  choose  the  initial  guess  x0  ≠
+0,  it  will  still  converge,  but  it  may  just  converge  to  a  different
+
+solution—the component of x0  in  the nullspace has no effect on CG at all, and  the component  in  the
+
+column space  is  just a different starting guess for  the nonsingular CG  in  the subspace.  That  is,  since
+
+the  component  ∑i≤k γi qi  of  x0  in  the  nullspace  is  not  changed  by  CG,  we  will  get  (in  the  notation
+
+above) xn → ∑i≤k γi qi + ∑i>k 
+βi qi .λi 
+√ 
+(d)  Just  set  b = 0  and  pick  x0  to  be  a  random  vector,  and  from  above  it will  converge  to  a  vector  in  the 
+nullspace in O(  λm/λk+1 ) iterations at worst. 
+)
+(
+Problem 4: Rayleigh quotients (20 points) 
+Let  the  smallest-λ eigensolution of B be Bλ1  = λ1q1  where q∗
+q1 
+1q1  = 1.  Let x = 
+,  in which case  the 
+0 
+Rayleigh quotient is r(x) = λ1  by inspection, and since this is an upper bound for the smallest eigenvalue of 
+A, we are done. 
+)
+(
+Problem 5: Norms and SVDs (20 points) 
+( 
+)
+If B were  just  a  real number  b,  this would be  a 2 × 2 matrix A = 
+, which has  eigenvalues 1 ± b 
+1  b
+b  1 
+.  We would  immediately obtained  the desired  result since ∥B∥ = |b| and ∥A∥2  is 
+1
+±1 
+for eigenvectors 
+) ( 
+(
+)
+the  ratio  of  the maximum  to  the minimum  eigenvalue.  Now, we  just want  to  use  a  similar  strategy  for  the 
+general case where B is m × n, where from the SVD we can write: 
+∗ 
+U ΣV 
+I
+B 
+I
+B∗ 
+V ΣT U ∗ 
+= 
+I
+I 
+
+A =
+
+.
+
+2 
+
+(
+)
+That is, we expect to get ± combinations of eigenvectors of B. 
+For simplicity, let’s start with the case where B is square m × m, in which case Σ = ΣT  (diagonal) and U
+and V  are all m × m.  In this case, consider the vectors corresponding to the columns of X±  = 
+( 
+) ( 
+) 
+( 
+) 
+U
+±V 
+.  In 
+this case, 
+±
+∗ 
+U Σ
+Σ 
+= X± (I ± Σ), 
+±U
+U
+±U
+V 
+I
+AX±  = 
+U ∗ 
+= 
+V Σ
+V Σ
+V 
+V 
+I
+±
+Since  the matrix  at  right  is diagonal,  this means  that  the  columns of X are eigenvectors of A, with  eigen­
+values  1 ± σi  where  σi  are  the  singular  values  of  B  (possibly  including  some  zeros  from  the  diagonal  of 
+Σ  if  B  is  not  full  rank).  These  are,  moreover,  all  of  the  2m  eigenvalues  of  A.  Since  A  is  Hermitian, 
+eigenvalues  are  the  same  thing  as  the  singular  values,  and  hence  the  maximum  singular  value  of  A  is 
+1 + max σi  and the minimum is 1 − max σi  (since we are given that ∥B∥2  < 1 and hence σi  < 1), and hence 
+κ(A) = (1 + max σi )/(1 − max σi ) = (1 + ∥B∥2 )/(1 − ∥B∥2 ). Q.E.D. 
+What  about  the  case  where  B  is  not  square?  Suppose  m > n,  in  which  case U  is  bigger  than V  so  it 
+±
+±
+doesn’t make sense to write X as above.  However, there is a simple ﬁx.  In the deﬁnition of X , just pad V
+with m − n columns of zeros to make an n × m matrix V0 .  Then V 
+∗V0  is the n × n identity matrix plus m − n 
+) 
+) ( 
+) ( 
+( 
+columns of zeros. Then we get 
+±
+∗ 
+U Σ0 
+U Σ
+± (I ± Σ0 ),
+U 
+V 
+I
+U 
+±V0 
+± V0 
+±  = 
+U ∗ 
+= X
+=
+AX
+V ΣT
+Σ
+T
+V
+I
+where  Σ0  is  Σ  padded with m − n  columns  of  zeros  to make  a  diagonal  m × m matrix,  noting  that V ΣT  = 
+V0ΣT  = V0Σ0 . The result follows as above.  If m < n, the analysis is similar except that we pad U  with n − m
+0 
+columns of zeros. 
+
+Problem 6: Least-squares problems (20 points) 
+We want  to minimize  (Ax − b)∗W (Ax − b).  The  best  thing  to  do  is  to  turn  this  into  a  regular  least-squares 
+problem by breaking W  in “halves” and putting half on  the  left and half on  the right.  For example, we can 
+compute the Cholesky factorization W  = R∗R, and then we are minimizing (RAx − Rb)∗ (RAx − Rb), which 
+is equivalent to solving the least-squares problem for RA and Rb.  This we could do, e.g., by computing the 
+QR factorization RA = Q′R′ , and  then solve R′ x = Q′∗Rb by backsubstitution.  None of  these steps has any 
+√
+particular accuracy problems. 
+√
+√
+W  by  diagonalizing 
+Of  course,  there  are  plenty  of  other  ways  to  do  it.  You  could  also  compute 
+W  = QΛQ∗  and  then using 
+ΛQ∗
+√
+√
+W  = Q
+. This might be a bit more obvious  if you have  forgotten about 
+W b, this works, but is a bit less efﬁcient 
+W A and 
+Cholesky. Again solving the least-squares problem with 
+because eigenproblems take many more operations than Cholesky factorization. 
+We  could  also  write  down  the  normal  equations  A∗W Ax = A∗W b,  derived  from  the  gradient  of  (Ax −
+b)∗W (Ax − b) with respect to x. However, solving these directly sacriﬁces some accuracy because (as usual) 
+it squares the condition number of A. 
+
+3 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods 
+Fall 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

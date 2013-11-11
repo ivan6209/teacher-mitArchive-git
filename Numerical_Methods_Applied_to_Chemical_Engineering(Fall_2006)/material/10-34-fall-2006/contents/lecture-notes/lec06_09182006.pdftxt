@@ -1,0 +1,625 @@
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+10.34, Numerical Methods Applied to Chemical Engineering 
+Professor William H. Green 
+Lecture #6: Modern Methods for Solving Nonlinear Equations. 
+ 
+1D-Problem 
+     unknown: T of reactor 
+ 
+ 
+Qrxnexp(-Ea/RT) + h(T – Ta) + c(T4 – Ta
+4) = 0 
+f(x) = 0 
+ heat of reaction        convection 
+  radiation 
+ 
+      (+)                         (-)                 (-) 
+ 
+                           Gain heat                 Lose heat         Lose heat 
+f(T) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+0 
+ 
+ 
+ 
+ 
+*netheat.m* 
+ 
+function qdot = netheat(T) 
+% computes the net heating rate of a reactor 
+% qdot = 0 at the steady state 
+qdot = Q.*exp(-Ea/(R.*T)) + h.*(T-Ta) + c.*(T.^4-Ta.^4); 
+ 
+
+2 steady state temperatures 
+Make a plot with MATLAB 
+
+Figure 1. 1D problem 
+
+   T 
+
+Q = -2e-5; 
+Ea = 5000; 
+R = 1.987; 
+h = 3; 
+Ta = 300; 
+c = 1e-8; 
+
+Tvec = linspace(300,3000)
+qdot = netheat(Tvec) 
+plot(Tvec,qdot) 
+
+ 
+
+ 
+
+ 
+
+ 
+Figure 2. Professor Green modified variables Q and c until the plot looked like 
+the one above. Increased Q and decreased c. 
+
+ 
+ To solve for steady state zeros 
+
+ 
+ 
+ 
+ 
+f(T) = 0 
+ 
+ 
+
+   a (cid:198)      (cid:197) b 
+
+Figure 3. Have computer bracket in and find small 
+ 
+range where plot goes from negative to positive. 
+ 
+ 
+ 
+ 
+ 
+ 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Figure 4. Function must be continuous. 
+
+ 
+
+ 
+
+ 
+ 
+ 
+
+Relative tolerance 
+
+rtol: if(b-a) < rtol*|a| 
+
+ 
+
+Bisection 
+ 
+start a,b 
+ 
+such that f(a)<0 and f(b) < 0  
+ba
++
+x
+=
+2
+if f(x) · f(a) > 0 
+a = x 
+
+ 
+
+ 
+
+ 
+
+ 
+ 
+else 
+ 
+b = x 
+This is a problem of TOLERANCE 
+ 
+if((b-a) < tol)  stop 
+ 
+ 
+ 
+ 
+ 
+                                                Types of tolerance 
+Absolute tolerance 
+ 
+ 
+ 
+ 
+ 
+atol: has units 
+ 
+if |f(x)| < atol·f 
+ 
+ 
+ 
+ 
+   has to be BIG number 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+while abs(b-a) > atolx 
+ 
+x = (a+b)/2 
+if f(x)·f(a) > 0 
+ 
+a = x 
+else 
+ 
+end 
+
+b = x 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+
+ 
+
+In MATLAB
+ 
+*bisect.m* 
+function x = bisect(f,a,b,atolx,rtolx, 
+atolf) 
+
+%solves f(x) = 0 
+while abs(b-a) > atolx 
+x = 0.5*(b+a); 
+ 
+if((feval(f,x)*feval(f,a))>0) 
+ 
+a=x; 
+else 
+ 
+end 
+
+b=x; 
+
+ 
+
+ 
+
+Command Window 
+
+end 
+ 
+ 
+ 
+x = bisect(@netheat,300,2000,0.1,0,0) 
+x = 1.2373e+003 
+ 
+CHECK: netheat(1237) = -1.0474 (cid:205) close
+Keep in mind: never get actual solution, but can come close 
+
+ 
+
+ 
+
+ 
+
+ 
+ 
+We can change tolerances to improve results.   
+(cid:198)  
+while(abs(b-a)>atolx)&&(abs(b-a)>(rtolx*abs(a))) 
+AND: must satisfy both conditions 
+x = 0.5*(b+a); 
+ 
+ 
+ 
+if(abs(feval(f,x))<atolf) 
+ 
+ 
+ 
+ 
+return 
+ 
+     %if value becomes low enough, return value 
+ 
+x = bisect(@netheat,300,2000,0.1,1e-2,0.5) 
+looser tolerance gives less accurate answer 
+x = 1.2363e+003   
+ 
+ 
+ 
+Bisection cuts interval by 2 each time 
+
+10.34 Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 6 
+Page 2 of 4 
+
+Every time we cut 3 times, we lose a sig fig 
+ 
+In bisection, time grows linearly with the number of significant figures. 
+ 
+a < xtrue < b 
+xtrue = xsoln ± b-a/2 
+Newton’s Method (1-D) 
+ 
+ 
+ 
+ 
+ 
+
+ 
+
+ 
+
+evaluates slope of f(x) 
+next guess is the xnew that satisfies f(xnew)=0 
+for a line from f(xguess) with the slope at f(xguess) 
+
+ 
+ 
+
+ 
+ 
+
+ 
+
+ 
+ 
+
+Figure 5. Newton’s Method. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+f(x) = f(x0)+f’(x0)*(x-x0)+O(Δx2) 
+
+0 = f(xguess)+f’(xguess)*(x-xguess) 
+
+xnew = xguess – f(xguess)/f’(xguess) 
+
+For a good guess Newton’s method doubles 
+the number of significant figures after every 
+iteration; however, we lose robustness if 
+guess is poor 
+ 
+If f’(xguess) ≈ 0  --  doesn’t work 
+ 
+ 
+
+f’(x) = 0
+
+ 
+
+ 
+
+Figure 6. NO intersection 
+
+Another drawback is one needs a derivative of the function. 
+ 
+Secant Method  
+same as Newton’s, but uses f’(x) approximate 
+k
+k
+][
+]1
+[
+−
+xf
+xf
+)
+(
+(
+)
+−
+k
+k
+]1
+][
+[
+−
+x
+x
+−
+Bisection method works only for 1D problems, but Newton/Secant can be used for problems 
+with greater dimension 
+ 
+
+approx
+
+x
+)(
+
+=
+
+ 
+
+f
+
+'
+
+10.34 Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 6 
+Page 3 of 4 
+
+ 
+Broyden’s Method (Multi-dimensional) 
+F(x) = F(x0) + J(x0)·(x-x0) 
+ 
+ 
+Method breaks down when J is singular 
+ 
+
+ 
+
+ 
+
+∑
+j
+
+⎛
+⎜
+⎜
+⎝
+
+f
+∂
+x
+∂
+
+i
+
+j
+
+⎞
+⎟
+⎟
+⎠
+
+x
+
+o
+
+(
+
+x
+
+j
+
+−
+
+x
+
+jo
+,
+
+)
+
+ 
+
+f(x) = 0 
+ 
+approx J = B   
+ 
+
+ 
+
+ 
+
+ 
+
+outer product is opposite of dot product 
+
+[k
+
+1
++
+
+]
+
+B
+
+k
+][
+
+=
+
+B
+
++
+
+[
+
+k
+
+]1
++
+
+F
+
+(
+
+x
+
+)
+
+∗
+||
+
+[
+
+x
+(
+x
+Δ
+
+k
+
+]1
++
+
+−
+
+x
+
+k
+T][
+)
+
+2
+
+||
+
+ 
+
+Outer Product: 
+
+xF
+Δ
+1
+1
+xF
+Δ
+2
+1
+
+⎛
+⎜⎜
+⎝
+
+xF
+Δ
+1
+2
+xF
+Δ
+2
+
+2
+
+xF
+Δ
+1
+3
+xF
+Δ
+2
+
+3
+
+(cid:34)
+…
+
+⎞
+ ⎟⎟
+⎠
+
+ 
+ 
+ 
+Newton’s Method (Multi-dimensional) 
+O = F(x0)+J(x0)·(x-x0) 
+
+J*Δx = -F(x0)  
+ 
+ 
+LU 
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+LU 
+ 
+
+B[k]Δx = -F
+
+LU[k+1] without redoing factorization 
+
+Done in detail in homework problem. 
+
+10.34 Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 6 
+Page 4 of 4 
+
+

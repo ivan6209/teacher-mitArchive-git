@@ -1,0 +1,1353 @@
+C H A P T E R 
+
+6 
+
+State Observers  and  State  Feedback 
+
+Our study of  the modal solutions of LTI state-space models made clear  in complete 
+analytical  detail  that  the  state  at  any  given  time  summarizes  everything  about  the 
+past  that  is  relevant  to  future  behavior  of  the  model.  More  speciﬁcally,  given  the 
+value of the state vector at some initial instant, and given the entire input tra jectory 
+over  some  interval  of  time  extending  from  the  initial  instant  into  the  future,  one 
+can  determine  the  entire  future  state  and  output  tra jectories  of  the  model  over 
+that  interval.  The  same  general  conclusion  holds  for  nonlinear  and  time-varying 
+state-space models,  although  they  are  generally  far  less  tractable  analytically.  Our 
+focus  will  be  on  LTI models. 
+
+It  is  typically  the  case  that  we  do  not  have  any  direct  measurement  of  the  ini­
+tial  state  of  a  system,  and  will  have  to  make  some  guess  or  estimate  of  it.  This 
+uncertainty about the  initial state generates uncertainty about the  future state tra­
+jectory,  even  if  our  model  for  the  system  is  perfect,  and  even  if  we  have  accurate 
+knowledge  of  the  inputs  to  the  system. 
+
+The  ﬁrst  part  of  this  chapter  is  devoted  to  addressing  the  issue  of  state  tra jectory 
+estimation, given uncertainty about the initial state of the system.  We shall see that 
+the  state  can  actually  be  asymptotically  determined  under  appropriate  conditions, 
+by  means  of  a  so-called  state  observer.  The  observer  uses  a  model  of  the  system 
+along  with  past  measurements  of  both  the  input  and  output  tra jectories  of  the 
+system. 
+
+The  second  part  of  the  chapter  examines  how  the  input  to  the  system  should  be 
+controlled  in  order  to  yield  desirable  system  behavior.  We  shall  see  that  having 
+knowledge of the present state of the system provides a powerful basis for designing 
+feedback  control  to  stabilize  or  otherwise  improve  the  behavior  of  the  resulting 
+closed-loop  system.  When  direct  measurements  of  the  state  are  not  available,  the 
+asymptotic  state  estimate  provided  by  an  observer  turns  out  to  suﬃce. 
+
+6.1  PLANT  AND  MODEL 
+
+It  is  important now to make a distinction between the actual, physical (and causal) 
+system we are interested in studying or working with or controlling — what is often 
+termed  the  plant  (as  in  “physical  plant”) —  and  our  idealized model  for  the  plant. 
+The plant  is usually  a  complex,  highly nonlinear  and  time-varying  ob ject,  typically 
+requiring  an  inﬁnite  number  (or  a  continuum)  of  state  variables  and  parameters  to 
+represent  it  with  ultimate  ﬁdelity.  Our  model,  on  the  other  hand,  is  an  idealized 
+and  simpliﬁed  (and  often  LTI)  representation,  of  relatively  low  order,  that  aims  to 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+101
+
+102  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+capture  the  behavior  of  the  plant  in  some  limited  regime  of  its  operation,  while 
+remaining  tractable  for  analysis,  computation,  simulation  and  design. 
+
+The  inputs  to  the model  represent  the  inputs  acting  on  or driving  the  actual plant, 
+and  the  outputs  of  the  model  represent  signals  in  the  plant  that  are  accessible  for 
+measurement.  In  practice  we  will  typically  not  know  all  the  driving  inputs  to  the 
+plant  exactly.  Apart  from  those  driving  inputs  that  we  have  access  to,  there  will 
+also generally be additional unmeasured disturbance inputs acting on the plant that 
+we are only able  to  characterize  in  some general way, perhaps as  random processes. 
+Similarly,  the measured outputs of  the plant will diﬀer  from what we might predict 
+on  the  basis  of  our  limited  model,  partly  because  of measurement  noise. 
+
+6.2  STATE  ESTIMATION  BY  REAL-TIME  SIMULATION 
+
+Suppose the plant of interest to us is correctly described by the following equations, 
+which  constitute  an  Lth-order  LTI  state-space  representation  of  the  plant: 
+
+q[n + 1] = Aq[n] + bx[n] + w[n]  , 
+y [n] = c T q[n] + dx[n] + ζ [n]  . 
+
+(6.1) 
+(6.2) 
+
+Here  x[n]  denotes  the  known  (scalar)  control  input,  and  w[n]  denotes  the  vector 
+of  unknown  disturbances  that  drive  the  plant,  not  necessarily  through  the  same 
+channels  as  the  input x[n].  For  example, we might have w[n] = f v [n], where  v [n]  is 
+a  scalar  disturbance  signal  and  f  is  a  vector  describing  how  this  scalar  disturbance 
+drives  the  system  (just  as  b  describes  how  x[n]  drives  the  system).  The  quantity 
+y [n] denotes the known or measured (scalar) output, and ζ [n] denotes the unknown 
+noise  in  this  measured  output.  We  refer  to  w[n]  as  plant  disturbance  or  plant 
+noise, and to ζ [n] as measurement noise.  We  focus mainly on the DT case now, but 
+essentially  everything  carries  over  in  a  natural  way  to  the  CT  case. 
+
+With  the  above  equations  representing  the  true  plant,  what  sort  of  model  might 
+we  use  to  study  or  simulate  the behavior  of  the plant,  given  that we  know x[n]  and 
+y [n]?  If  nothing  further  was  known  about  the  disturbance  variables  in  w[n]  and 
+the  measurement  noise  ζ [n],  or  if  we  only  knew  that  they  could  be  represented  as 
+zero-mean  random  processes,  for  instance,  then  one  strategy  would  be  to  simply 
+ignore  these  variables  when  studying  or  simulating  the  plant.  If  everything  else 
+about  the  plant  was  known,  our  representation  of  the  plant’s  behavior  would  be 
+embodied  in  an  LTI  state-space  model  of  the  form 
+qb[n + 1] = Aqb[n] + bx[n]  , 
+yb[n] = c T qb[n] + dx[n] . 
+The x[n]  that drives our model  is  the  same known x[n]  that  is an  input  (along with 
+possibly  other  inputs)  to  the  plant.  However,  the  state  qb[n]  and  output  yb[n]  of  the 
+model will generally diﬀer  from  the corresponding  state q[n] and output y [n] of  the 
+plant,  because  in  our  formulation  the  plant  state  and  output  are  additionally  per­
+turbed by w[n] and ζ [n] respectively.  The assumption that our model has correctly 
+captured  the  dynamics  of  the  plant  and  the  relationships  among  the  variables  is 
+
+(6.3) 
+(6.4) 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  6.3 
+
+The  State  Observer  103 
+
+what  allows  us  to  use  the  same A, b,  cT  and  d  in  our model  as  occur  in  the  “true” 
+plant. 
+
+It  bears  repeating  that  in  reality  there  are  several  sources  of  uncertainty  we  are 
+ignoring here.  At  the very  least,  there will be discrepancies between  the actual and 
+assumed  parameter  values —  i.e.,  between  the  actual  entries  of  A,  b,  cT  and  d  in 
+(6.1),  (6.2)  and  the  assumed  entries  of  these  matrices  in  (6.3),  (6.4)  respectively. 
+Even  more  troublesome  is  the  fact  that  the  actual  system  is  probably  more  accu­
+rately  represented  by  a  nonlinear,  time-varying  model  of  much  higher  order  than 
+that  of  our  assumed  LTI  model,  and  with  various  other  disturbance  signals  acting 
+on it.  We shall not examine the eﬀects of all these additional sources of uncertainty. 
+
+With a model  in hand,  it  is natural to consider obtaining an estimate of the current 
+plant  state  by  running  the model  forward  in  real  time,  as  a  simulator.  For  this, we 
+initialize  the  model  (6.3)  at  some  initial  time  (which  we  take  to  be  n =  0  without 
+loss  of  generality),  picking  its  initial  state  qb[0]  to  be  some  guess  or  estimate  of  the 
+initial  state  of  the  plant.  We  then  drive  the model with  the  known  input x[n]  from 
+time  n = 0  onwards,  generating  an  estimated  or  predicted  state  tra jectory  qb[n]  for 
+n > 0.  We could then also generate the predicted output yb[n] using the prescription 
+in  (6.4). 
+In order to examine how well this real-time simulator performs as a state estimator, 
+we  examine  the  error  vector 
+
+qe[n] = q[n] − qb[n]  . 
+(6.5) 
+Note  that  qe[n]  is  the  diﬀerence  between  the  actual  and  estimated  (or  predicted) 
+state  tra jectories.  By  subtracting  (6.3)  from  (6.1),  we  see  that  this  diﬀerence,  the 
+estimation  error  or  prediction  error  qe[n],  is  itself  governed  by  an  LTI  state-space 
+equation: 
+qe[n + 1] = Aqe[n] + w[n] 
+(6.6) 
+with  initial  condition 
+(6.7) 
+qe[0] = q[0] − qb[0]  . 
+This  initial  condition  is  our  uncertainty  about  the  initial  state  of  the  plant. 
+What  (6.6)  shows  is  that,  if  the  original  system  (6.1)  is  unstable  (i.e.,  if  A  has 
+eigenvalues  of  magnitude  greater  than  1),  or  has  otherwise  undesirable  dynamics, 
+and  if  either  qe[0]  or  w[n]  is  nonzero,  then  the  error  qe[n]  between  the  actual  and 
+estimated  state  tra jectories will  grow  exponentially,  or will have  otherwise undesir­
+able  behavior,  see  Figure  6.1.  Even  if  the  plant  is  not  unstable,  we  see  from  (6.6) 
+that the error dynamics are driven by the disturbance process w[n], and we have no 
+means to shape the eﬀect of this disturbance on the estimation error.  The real-time 
+simulator  is  thus  generally  an  inadequate  way  of  reconstructing  the  state. 
+
+6.3  THE  STATE  OBSERVER 
+
+To do better than the real-time simulator (6.3), we must use not only the input x[n] 
+but  also  the measured  output  y [n].  The  key  idea  is  to  use  the  discrepancy  between 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+104  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+q 
+
+q ^ 
+
+0 
+
+t 
+
+FIGURE  6.1  Schematic  representation  of  the  eﬀect  of  an  erroneous  initial  condition 
+on  the  state  estimate  produced  by  the  real-time  simulator  for  an  unstable  plant. 
+actual  and  predicted  outputs,  y [n]  in  (6.2)  and  yb[n]  in  (6.4)  respectively —  i.e.,  to 
+use  the  output  prediction  error —  as  a  correction  term  for  the  real-time  simulator. 
+The  resulting  system  is  termed  a  state  observer  (or  state  estimator)  for  the  plant, 
+and  in  our  setting  takes  the  form 
+qb[n + 1] = Aqb[n] + bx[n] 
+´ 
+³ 
+− ℓ y [n] − yb[n]
+The  observer  equation  above  has  been  written  in  a  way  that  displays  its  two  con­
+stituent  parts:  a  part  that  simulates  as  closely  as  possible  the  plant  whose  states 
+we are  trying  to  estimate,  and a part  that  feeds  the  correction  term y [n] − yb[n]  into 
+this  simulation.  This  correction  term  is  applied  through  the  L-component  vector 
+ℓ,  termed  the  observer  gain  vector,  with  ith  component  ℓi .  (The  negative  sign  in 
+front of ℓ in (6.8) is used only to simplify the appearance of some later expressions). 
+Figure  6.2  is  a  block-diagram  representation  of  the  resulting  structure. 
+
+(6.8) 
+
+. 
+
+Now subtracting (6.8) from (6.1), we ﬁnd that the state estimation error or observer 
+error  satisﬁes 
+´
+³
+T 
+qe[n + 1] = Aqe[n] + w[n] + ℓ y [n] − c qb[n] − dx[n]
+= (A + ℓc T )qe[n] + w[n] + ℓζ [n]  . 
+If  the  observer  gain  ℓ  is  0,  then  the  error  dynamics  are  evidently  just  the  dynamics 
+of  the  real-time  simulator  (6.6).  More  generally,  the  dynamics  are  governed  by  the 
+system’s  natural  frequencies,  namely  the  eigenvalues  of A + ℓcT  or  the  roots  of  the 
+characteristic  polynomial 
+κ(λ) = det³λI − (A + ℓc T )´ 
+= λL  + κL−1λL−1  +
++ κ0  . 
+· · · 
+(This  polynomial,  like  all  the  characteristic  polynomials  we  deal  with,  has  real 
+coeﬃcients  and  is  monic,  i.e.,  its  highest-degree  term  is  scaled  by  1  rather  than 
+some  non-unit  scalar.) 
+
+(6.10) 
+
+(6.11) 
+
+(6.9) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Section  6.3 
+
+The  State  Observer  105 
+
+x[n] 
+
+b 
+
+]1
+
+[  +nq 
++ 
++ + 
+
+observer 
++ ˆq [ n  +  1 ] 
++ 
+b 
++ 
+
+­
+
+D
+
+A 
+
+D 
+
+A 
+
+y[n] 
+
+q [ n ] 
+
+cT
+
+ˆq [ n ] 
+
+cT 
+
+ˆy [ n ] 
+
++ 
++ 
+
+­
+
+l 
+
+FIGURE  6.2  An  observer  for  the  plant  in  the  upper  part  of  the  diagram  comprises 
+a  real-time  simulation  of  the  plant,  driven  by  the  same  input,  and  corrected  by  a 
+signal  derived  from  the  output  prediction  error. 
+
+Two  questions  immediately  arise: 
+
+(i)	 How  much  freedom  do  we  have  in  placing  the  observer  eigenvalues,  i.e.,  the 
+eigenvalues  of  A +  ℓcT  or  the  roots  of  κ(λ),  by  appropriate  choice  of  the 
+observer  gain  ℓ ? 
+(ii)	 How  does  the  choice  of  ℓ  shape  the  eﬀects  of  the  disturbance  and  noise  terms 
+w[n]  and  ζ [n]  on  the  observer  error? 
+
+Brief  answers  to  these  questions  are  respectively  as  follows: 
+
+(i)	 At  ℓ  =  0  the  observer  eigenvalues,  namely  the  eigenvalues  of  A + ℓcT ,  are 
+those  of  the  real-time  simulator,  which  are  also  those  of  the  given  system  or 
+plant.  By  varying  the  entries  of  ℓ  away  from  0,  it  turns  out  we  can  move  all 
+the  eigenvalues  that  correspond  to  observable  eigenvalues  of  the  plant  (which 
+may number as many as L eigenvalues), and those are the only eigenvalues we 
+can  move.  Moreover,  appropriate  choice  of  ℓ  allows  us,  in  principle,  to  move 
+these  observable  eigenvalues  to  any  arbitrary  set  of  self-conjugate  points  in 
+the  complex  plane.  (A  self-conjugate  set  is  one  that  remains  unchanged  by 
+taking  the  complex  conjugate  of  the  set.  This  is  equivalent  to  requiring  that 
+if  a  complex  point  is  in  such  a  set,  then  its  complex  conjugate  is  as  well.) 
+The  self-conjugacy  restriction  is  necessary  because  we  are  working  with  real 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+106  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+parameters  and  gains. 
+The unobservable  eigenvalues  of  the plant  remain  eigenvalues  of  the  observer, 
+and  cannot  be  moved.  (This  claim  can  be  explicitly  demonstrated  by  trans­
+formation  to modal coordinates, but we omit  the details.)  The  reason  for  this 
+is  that  information  about  these  unobservable  modes  does  not  make  its  way 
+into  the  output  prediction  error  that  is  used  in  the  observer  to  correct  the 
+real-time  simulator. 
+It follows from the preceding statements that a stable observer can be designed 
+if and only if all unobservable modes of the plant are stable (a property that is 
+termed detectability).  Also, the observer can be designed to have an arbitrary 
+characteristic  polynomial  κ(λ)  if  and  only  if  the  plant  is  observable. 
+We  shall  not  prove  the  various  claims  above.  Instead,  we  limit  ourselves  to 
+proving,  later  in  this  chapter,  a  closely  analogous  set  of  results  for  the  case  of 
+state  feedback  control. 
+In  designing  observers  analytically  for  low-order  systems,  one way  to  proceed 
+is by  specifying a desired  set of observer eigenvalues  ǫ1 ,
+ǫL ,  thus  specifying 
+· · · 
+the  observer  characteristic  polynomial  κ(λ)  as 
+L
+κ(λ) = Y(λ − ǫi )  . 
+i=1 
+Expanding  this  out  and  equating  it  to  det³λI −  (A + ℓc T )´ 
+,  as  in  (6.10), 
+yields L simultaneous linear equations in the unknown gains ℓ1 , 
+· · · 
+, ℓL .  These 
+equations  will  be  consistent  and  solvable  for  the  observer  gains  if  and  only  if 
+all  the unobservable eigenvalues of  the plant are  included among  the  speciﬁed 
+observer  eigenvalues  {ǫi }. 
+The  preceding  results  also  suggest  an  alternative  way  to  determine  the  un-
+observable  eigenvalues  of  the  plant:  the  roots  of  det³λI − (A + ℓc  )´ 
+T
+that 
+cannot  be  moved,  no  matter  how  ℓ  is  chosen,  are  precisely  the  unobservable 
+eigenvalues  of  the  plant.  This  approach  to  exposing  unobservable  modes  can 
+be  easier  in  some  problems  than  the  approach  used  in  the  previous  chapter, 
+which  required  ﬁrst  computing  the  eigenvectors  {vi }  of  the  system,  and  then 
+checking  for  which  i  we  had  cT vi  = 0. 
+
+(6.12) 
+
+(ii)	 We  now  address  how  the  choice  of  ℓ  shapes  the  eﬀects  of  the  disturbance  and 
+noise  terms  w[n]  and  ζ [n]  on  the  observer  error.  The  ﬁrst  point  to  note  is 
+that  if  the  error  system  (6.9)  is  made  asymptotically  stable  by  appropriate 
+choice  of  observer  gain  ℓ,  then  bounded  plant  disturbance w[n]  and  bounded 
+measurement  noise  ζ [n]  will  result  in  the  observer  error  being  bounded.  This 
+is most  easily  proved  by  transforming  to modal  coordinates,  but  we  omit  the 
+details. 
+The  observer  error  equation  (6.9)  shows  that  the  observer  gain  ℓ  enters  in 
+two  places,  ﬁrst  in  causing  the  error  dynamics  to  be  governed  by  the  state 
+evolution  matrix  A + ℓcT  rather  than  A,  and  again  as  the  input  vector  for 
+the  measurement  noise  ζ [n].  This  highlights  a  basic  tradeoﬀ  between  error 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  6.3 
+
+The  State  Observer  107 
+
+decay and noise  immunity.  The observer gain can be used  to obtain  fast error 
+decay,  as  might  be  needed  in  the  presence  of  plant  disturbances  w[n]  that 
+continually  perturb  the  system  state  away  from  where  we  think  it  is  —  but 
+large entries in ℓ may be required to accomplish this (certainly in the CT case, 
+but  also  in DT  if  the model  is  a  sampled-data  version  of  some  underlying CT 
+system,  as  in  the  following  example),  and  these  large  entries  in  ℓ  will  have 
+the  undesired  result  of  accentuating  the  eﬀect  of  the  measurement  noise.  A 
+large  observer  gain may  also  increase  the  susceptibility  of  the  observer  design 
+to mod!  eling  errors  and  other  discrepancies.  In  practice,  such  considerations 
+would lead us design somewhat conservatively, not attempting to obtain overly 
+fast  error-decay  dynamics. 
+Some  aspects  of  the  tradeoﬀs  above  can  be  captured  in  a  tractable  optimiza­
+tion problem.  Modeling w[n]  and  ζ [n]  as  stationary  random processes  (which 
+are  introduced  in  a  later  chapter),  we  can  formulate  the  problem  of  picking 
+ℓ  to  minimize  some  measure  of  the  steady-state  variances  in  the  components 
+of  the  state  estimation  error  qe[n].  The  solution  to  this  and  a  range  of  related 
+problems  is provided by  the  so-called Kalman ﬁltering  framework.  We will be 
+in  a  position  to  work  through  some  elementary  versions  of  this  once  we  have 
+developed  the  machinery  for  dealing  with  stationary  random  processes. 
+
+EXAMPLE  6.1 
+
+Ship  Steering 
+
+= 
+
+(6.13) 
+
+q[n + 1] = 
+
+Consider  the  following  simpliﬁed  sampled-data  model  for  the  steering  dynamics 
+of  a  ship  traveling  at  constant  speed,  with  a  rudder  angle  that  is  controlled  in  a 
+piecewise-constant  fashion  by  a  computer-based  controller: 
+· 
+1  σ  ¸ · 
+· 
+ǫ  ¸ 
+· 
+q1 [n + 1]  ¸
+q1 [n]  ¸
++ 
+x[n]
+q2 [n + 1] 
+0  α
+q2 [n] 
+σ 
+= Aq[n] + bx[n]  . 
+The  state  vector  q[n]  comprises  the  sampled  heading  error  q1 [n]  (which  is  the 
+direction  the  ship  points  in,  relative  to  the  desired  direction  of  motion)  and  the 
+sampled  rate  of  turn  q2 [n]  of  the  ship,  both  sampled  at  time  t  =  nT ;  x[n]  is  the 
+constant  value  of  the  rudder  angle  (relative  to  the  direction  in  which  the  ship 
+points)  in  the  interval  nT  ≤  t < nT  + T  (we  pick  positive  rudder  angle  to  be  that 
+which  would  tend  to  increase  the  heading  error).  The  positive  parameters  α,  σ 
+and  ǫ  are  determined  by  the  type  of  ship,  its  speed,  and  the  sampling  interval  T . 
+In  particular,  α  is  generally  smaller  than  1,  but  can  be  larger  than  1  for  a  large 
+tanker;  in  any  case,  the  system  (6.13)  is  not  asymptotically  stable.  The  constant  σ 
+is  approximately  equal  to  the  sampling  interval  T . 
+Suppose  we  had  (noisy)  measurements  of  the  rate  of  turn,  so 
+T c  = ¡ 
+1  ¢ 
+. 
+0
+1  σ + ℓ1  ¶ 
+µ 
+A + ℓc T  = 
+0  α + ℓ2 
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Then 
+
+(6.14) 
+
+(6.15) 
+
+. 
+
+108  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+Evidently  one natural  frequency  of  the  error  equation  is ﬁxed  at  1,  no matter what 
+ℓ  is.  This  natural  frequency  corresponds  to  a  mode  of  the  original  system  that  is 
+unobservable from rate-of-turn measurements.  Moreover, it is not an asymptotically 
+stable  mode,  so  the  corresponding  observer  error  will  not  decay.  Physically,  the 
+problem  is  that  the  rate  of  turn  contains  no  input  from  or  information  about  the 
+heading  error  itself. 
+
+In  this  case 
+
+If,  instead,  we  have  (noisy)  measurements  of  the  heading  error,  so 
+T c  = ¡ 
+0  ¢ 
+. 
+1
+µ 
+1 + ℓ1  σ  ¶ 
+A + ℓc T  = 
+α 
+ℓ2 
+The  characteristic  polynomial  of  this  matrix  is 
+κ(λ) = λ2  − λ(1 + ℓ1  + α) + α(1 + ℓ1 ) − ℓ2σ . 
+This  can  be  made  into  an  arbitrary  monic  polynomial  of  degree  2  by  choice  of  the 
+gains  ℓ1  and  ℓ2 ,  which  also  establishes  the  observability  of  our  plant  model. 
+One  interesting choice of observer gains  in  this case  is ℓ1  = −1 − α and ℓ2  = −α2 /σ 
+(which,  for  typical  parameter  values,  results  in  ℓ2  being  large).  With  this  choice, 
+σ  ¶ 
+µ 
+−α2
+α
+/σ  α 
+−
+The characteristic polynomial of this matrix is κ(λ) = λ2 , so the natural frequencies 
+of  the  observer  error  equation  are  both  at  0. 
+
+A + ℓc T  = 
+
+(6.19) 
+
+(6.16) 
+
+(6.17) 
+
+(6.18) 
+
+. 
+
+. 
+
+A DT LTI system with all natural frequencies at 0 is referred to as deadbeat, because 
+its  zero-input  response  settles  exactly  to  the  origin  in  ﬁnite  time.  (This  ﬁnite-time 
+settling  is  possible  for  the  zero-input  response  of  an  LTI  DT  system,  but  not  for 
+an  LTI  CT  system,  though  of  course  it  is  possible  for  an  LTI  CT  system  to  have 
+an arbitrarily  small  zero-input  response after any  speciﬁed positive  time.)  We have 
+not discussed how  to analyze LTI  state-space models with non-distinct eigenvalues, 
+but to verify the above claim of ﬁnite settling  for our observer,  it suﬃces to conﬁrm 
+from  (6.19)  that  (A + ℓcT )2  =  0  when  the  gains  ℓi  are  chosen  to  yield  κ(λ) =  λ2 . 
+This  implies  that  in  the  absence  of  plant  disturbance  and  measurement  noise,  the 
+observer  error  goes  to  0  in  at  most  two  steps. 
+
+In the presence of measurement noise, one may want to choose a slower error decay, 
+so  as  to  keep  the  observer  gain  ℓ  —  and  ℓ2  in  particular  —  smaller  than  in  the 
+deadbeat  case,  and  thereby  not  accentuate  the  eﬀects  of measurement  noise  on  the 
+estimation  error. 
+
+6.4  STATE  FEEDBACK  CONTROL 
+
+For  a  causal  system  or  plant  with  inputs  that  we  are  able  to  manipulate,  it  is 
+natural  to  ask  how  the  inputs  should  be  chosen  in  order  to  cause  the  system  to 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  6.4 
+
+State  Feedback  Control  109 
+
+behave  in  some  desirable  fashion.  Feedback  control  of  such  a  system  is  based  on 
+sensing  its  present  or  past  behavior,  and  using  the  measurements  of  the  sensed 
+variables to generate control signals to apply to  it.  Feedback control  is also referred 
+to  as  closed-loop  control. 
+
+Open-loop control, by contrast,  is not based on continuous monitoring of the plant, 
+but  rather  on  using  only  information  available  at  the  time  that  one  starts  inter­
+acting  with  the  system.  The  trouble  with  open-loop  control  is  that  errors,  even  if 
+recognized,  are  not  corrected  or  compensated  for.  If  the  plant  is  poorly  behaved  or 
+unstable,  then  uncorrected  errors  can  lead  to  bad  or  catastrophic  consequences. 
+
+Feedforward  control  refers  to  schemes  incorporating  measurements  of  signals  that 
+currently  or  in  the  future  will  aﬀect  the  plant,  but  that  are  not  themselves  af­
+fected  by  the  control.  For  example,  in  generating  electrical  control  signals  for  the 
+positioning  motor  of  a  steerable  radar  antenna,  the  use  of  measurements  of  wind 
+velocity would correspond to feedforward control, whereas the use of measurements 
+of  antenna  position  would  correspond  to  feedback  control.  Controls  can  have  both 
+feedback  and  feedforward  components. 
+
+Our  focus  in  this  section  is  on  feedback  control.  To  keep  our  development  stream­
+lined,  we  assume  the  plant  is  well  modeled  by  the  following  Lth-order  LTI  state-
+space  description: 
+
+q[n + 1] = Aq[n] + bx[n] 
+y [n] = c T q[n] 
+
+(6.20) 
+(6.21) 
+
+rather  than  the  more  elaborate  description  (6.1),  (6.2).  As  always,  x[n]  denotes 
+the  control  input  and  y [n]  denotes  the  measured  output,  both  taken  to  be  scalar 
+functions  of  time.  We  shall  also  refer  to  this  as  the  open-loop  system.  Again,  we 
+treat  the  DT  case,  but  essentially  everything  carries  over  naturally  to  CT.  Also, 
+for  notational  simplicity,  we  omit  from  (6.21)  the  direct  feedthrough  term  dx[n] 
+that  has  appeared  in  our  system  descriptions  until  now,  because  this  term  can 
+complicate  the  appearance  of  some  of  the  expressions  we  derive,  without  being  of 
+much  signiﬁcance  in  itself;  it  is  easily  accounted  for  if  necessary. 
+
+Denote  the  characteristic  polynomial  of  the  matrix A  in  (6.20)  by 
+L
+a(λ) = det(λI − A) = Y(λ − λi )  . 
+i=1 
+The  transfer  function H (z )  of  the  system  (6.20),  (6.21)  is  given  by 
+H (z ) = c T (z I − A)−1b 
+η(z ) 
+= 
+. 
+a(z ) 
+
+(6.22) 
+
+(6.23) 
+
+(6.24) 
+
+(The  absence  of  the  direct  feedthrough  term  in  (6.21)  causes  the  degree  of  the 
+polynomial η(z ) to be strictly  less than L.  If the  feedthrough term was present,  the 
+transfer  function  would  simply  have  d  added  to  the  H (z )  above.)  Note  that  there 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+110  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+may  be  pole-zero  cancelations  involving  common  roots  of  a(z )  and  η(z )  in  (6.24), 
+corresponding  to  the  presence  of  unreachable  and/or  unobservable  modes  of  the 
+system.  Only  the  uncanceled  roots  of  a(z )  survive  as  poles  of  H (z ),  and  similarly 
+only  the  uncanceled  roots  of  η(z )  survive  as  zeros  of  the  transfer  function. 
+
+We  reiterate  that  the  model  undoubtedly  diﬀers  from  the  plant  in  many  ways, 
+but  we  shall  not  examine  the  eﬀects  of  various  possible  sources  of  discrepancy 
+and  uncertainty.  A  proper  treatment  of  such  issues  constitutes  the  ﬁeld  of  robust 
+control,  which  continues  to  be  an  active  area  of  research. 
+
+Since  the  state  of  a  system  completely  summarizes  the  relevant  past  of  the  system, 
+we  should  expect  that  knowledge  of  the  state  at  every  instant  gives  us  a  powerful 
+basis  for  designing  feedback  control  signals.  In  this  section  we  consider  the  use  of 
+state feedback for the system (6.20), assuming that we have access to the entire state 
+vector  at  each  time.  Though  this  assumption  is  unrealistic  in  general,  it  will  allow 
+us  to  develop  some  preliminary  results  as  a  benchmark.  We  shall  later  consider 
+what  happens  when  we  treat  the  more  realistic  situation,  where  the  state  cannot 
+be measured  but  has  to  be  estimated  instead.  It will  turn  out  in  the  LTI  case  that 
+the  state  estimate provided by  an observer will  actually  suﬃce  to accomplish much 
+of  what  can  be  achieved  when  the  actual  state  is  used  for  feedback. 
+
+The  particular  case  of LTI  state  feedback  is  represented  in Figure  6.3,  in which  the 
+feedback part of the  input x[n]  is a constant  linear function of the state q[n] at that 
+instant: 
+
+x[n] = p[n] + g T q[n] 
+
+(6.25) 
+
+where  the  L-component  row  vector  gT  is  the  state  feedback  gain  vector  (with  ith 
+component  gi ),  and  p[n]  is  some  external  input  signal  that  can  be  used  to  augment 
+the  feedback  signal.  Thus  x[n]  is  p[n]  plus  a  weighted  linear  combination  of  the 
+state  variables  qi [n],  with  constant  weights  gi . 
+
+p 
+
+�
+
++ 
+� 
+
+x 
+
+�
+
+Linear  Dynamical 
+System 
+
+q 
+
+> 
+
+g T 
+q 
+
+<gT
+
+FIGURE  6.3  Linear  dynamical  system  with  LTI  state  feedback.  The  single  lines 
+denote  scalar  signals  and  the  double  lines  denote  vector  signals. 
+
+With  this  choice  for  x[n],  the  system  (6.20)  becomes 
+³
+´
+T 
+q[n + 1] = Aq[n] + b p[n] + g q[n]
+= ³A + bgT ´q[n] + bp[n]  . 
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+(6.26) 
+
+Section  6.4 
+
+State  Feedback  Control  111 
+
+The  behavior  of  this  closed-loop  system,  and  in  particular  its  stability,  is  governed 
+by  its  natural  frequencies,  namely  by  the  L  eigenvalues  of  the  matrix  A + bgT  or 
+the  roots  of  the  characteristic  polynomial 
+ν (λ) = det³λI − (A + bgT )´	
+= λL  + νL−1λL−1  +
++ ν0  .	
+· · · 
+Some  questions  immediately  arise: 
+
+(6.27) 
+
+(6.28) 
+
+(i)	 How much  freedom do we have  in placing  the closed-loop eigenvalues,  i.e.,  the 
+eigenvalues of A + bgT  or the roots of ν (λ), by appropriate choice of the state 
+feedback  gain  gT  ? 
+(ii)	 How  does  state  feedback  aﬀect  reachability,  observability  and  the  transfer
+
+function  of  the  system?
+
+(iii)	 How does the choice of gT  aﬀect the state behavior and the control eﬀort that 
+is  required? 
+
+Brief  answers  to  these  (inter-related)  questions  are  respectively  as  follows: 
+
+(i)	 By  varying  the  entries  of  gT  away  from  0,  we  can  move  all  the  reachable 
+eigenvalues  of  the  system  (which may  number  as many  as  L),  and  only  those 
+eigenvalues.  Moreover,  appropriate  choice  of  gT  allows  us,  in  principle,  to 
+move  the reachable eigenvalues  to any arbitrary  set of self-conjugate points  in 
+the  complex  plane. 
+The  unreachable  eigenvalues  of  the  open-loop  system  remain  eigenvalues  of 
+the closed-loop  system,  and  cannot be moved.  (This  can be explicitly demon­
+strated  by  transformation  to  modal  coordinates,  but  we  omit  the  details.) 
+The  reason  for  this  is  that  the  control  input  cannot  access  these  unreachable 
+modes. 
+It  follows  from  the  preceding  claims  that  a  stable  closed-loop  system  can  be 
+designed  if  and  only  if  all  unreachable  modes  of  the  open-loop  system  are 
+stable  (a  property  that  is  termed  stabilizability).  Also,  state  feedback  can 
+yield an arbitrary closed-loop characteristic polynomial ν (λ)  if and only  if the 
+open-loop  system  (6.20)  is  reachable. 
+The  proof  for  the  above  claims  is  presented  in  Section  6.4.1.
+
+In  designing  state  feedback  control  analytically  for  low-order  examples,  one
+
+way to proceed is by specifying a desired set of closed-loop eigenvalues µ1 ,
+· · · 
+µL ,
+
+thus  specifying  ν (λ)  as 
+L
+ν (λ) = Y(λ − νi )  . 
+(6.29) 
+i=1 
+Expanding  this  out  and  equating  it  to  det³λI − (A + bgT )´,  as  in  (6.27), 
+yields L simultaneous linear equations in the unknown gains g1 , 
+, gL .  These 
+· · · 
+equations  will  be  consistent  and  solvable  for  the  state  feedback  gains  if  and 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+112  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+only  if  all  the  unreachable  eigenvalues  of  the  plant  are  included  among  the 
+speciﬁed  closed-loop  eigenvalues  {µi }. 
+The  preceding  results  also  suggest  an  alternative  way  to  determine  the  un­
+reachable eigenvalues of the given plant:  the roots of det³λI− (A+bgT )´ 
+that 
+cannot  be  moved,  no  matter  how  gT  is  chosen,  are  precisely  the  unreachable 
+eigenvalues  of  the  plant.  This  approach  to  exposing  unreachable  modes  can 
+be  easier  in  some  problems  than  the  approach  used  in  the  previous  chapter, 
+which  required  ﬁrst  computing  the  eigenvectors  {vi }  of  the  plant,  and  then 
+checking  which  of  these  eigenvectors  were  not  needed  in  writing  b  as  a  linear 
+combination  of  the  eigenvectors. 
+[The above discussion has closely paralleled our discussion of observers, except 
+that  observability  statements  have  been  replaced  by  reachability  statements 
+throughout.  The  underlying  reason  for  this  “duality”  is  that  the  eigenvalues 
+of  A + bgT  are  the  same  as  those  of  its  transpose,  namely  AT  + gbT .  The 
+latter  matrix  has  exactly  the  structure  of  the  matrix  A + ℓcT  that  was  the 
+focus  of  our  discussion  of  observers,  except  that  A  is  now  replaced  by  AT , 
+and cT  is replaced by bT .  It is not hard to see that the structure of observable 
+and  unobservable  modes  determined  by  the  pair  AT  and  bT  is  the  same  as 
+the  structure  of  reachable  and  unreachable  modes  determined  by  the  pair  A 
+and  b.] 
+
+(ii)	 The  results  in  part  (i)  above  already  suggest  the  following  fact:  that whether 
+or  not  an  eigenvalue  is  reachable  from  the  external  input  —  i.e.,  from  x[n] 
+for  the  open-loop  system  and  p[n]  for  the  closed-loop  system —  is  unaﬀected 
+by  state  feedback.  An unreachable eigenvalue of  the open-loop  system cannot 
+be  excited  from  the  input  x[n],  no  matter  how  the  input  is  generated,  and 
+therefore  cannot  be  excited  even  in  closed  loop  (which  also  explains  why  it 
+cannot  be  moved  by  state  feedback).  Similarly,  a  reachable  eigenvalue  of  the 
+open-loop  system  can  also  be  excited  in  the  closed-loop  system,  because  any 
+x[n]  that  excites  it  in  the  open-loop  system  may  be  generated  in  the  closed-
+loop  system  by  choosing  p[n] = x[n] − gT q[n]. 
+The  proof  in  Section  6.4.1  of  the  claims  in  (i)  will  also  establish  that  the 
+transfer  function  of  the  closed-loop  system,  from  p[n]  to  y [n],  is  now 
+Hcl (z ) = c T ³ 
+z I − (A + bgT )´−1 
+b 
+η(z ) 
+. 
+= 
+ν (z ) 
+Thus  the  zeros  of  the  closed-loop  transfer  function  are  still  drawn  from  the 
+roots of  the same numerator polynomial η(z )  in (6.24)  that contains  the zeros 
+of  the  open-loop  system;  state  feedback  does  not  change  η(z ).  However,  the 
+actual  zeros  of  the  closed-loop  system  are  those  roots  of  η(z )  that  are  not 
+canceled  by  roots  of  the  new  closed-loop  characteristic  polynomial  ν (z ),  and 
+may  therefore  diﬀer  from  the  zeros  of  the  open-loop  system. 
+We  know  from  the  previous  chapter  that  hidden modes  in  a  transfer  function 
+are  the  result  of  the  modes  being  unreachable  and/or  unobservable.  Because 
+
+(6.30) 
+
+(6.31) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Section  6.4 
+
+State  Feedback  Control  113 
+
+state feedback cannot alter reachability properties,  it follows that any changes 
+in cancelations of roots of η(z ),  in going from the original open-loop system to 
+the  closed-loop  one,  must  be  the  result  of  state  feedback  altering  the  observ­
+ability  properties  of  the  original  modes.  If  an  unobservable  (but  reachable) 
+eigenvalue  of  the  open-loop  system  is  moved  by  state  feedback  and  becomes 
+observable,  then  a  previously  canceled  root  of  η(z )  is  no  longer  canceled  and 
+now  appears  as  a  zero  of  the  closed-loop  system.  Similarly,  if  an  observable 
+(and reachable) eigenvalue of the open-loop system is moved by state feedback 
+to  a  location where  it  now  cancels  a  root  of  η(z ),  then  this  root  is  no  longer  a 
+zero  of  the  closed-loop  system,  and  this  hidden  mode  corresponds  to  a  mode 
+that  has  been made  unobservable  by  state  feed!  back. 
+(iii)	 We turn now to the question of how the choice of gT  aﬀects the state behavior 
+and  the  control  eﬀort  that  is  required.  Note  ﬁrst  that  if  gT  is  chosen  such 
+that  the  closed-loop  system  is asymptotically  stable,  then a bounded external 
+signal  p[n]  in  (6.26) will  lead  to  a  bounded  state  tra jectory  in  the  closed-loop 
+system.  This  is  easily  seen  by  considering  the  transformation  of  (6.26)  to 
+modal  coordinates,  but  we  omit  the  details. 
+The  state  feedback  gain  gT  aﬀects  the  closed-loop  system  in  two  key  ways, 
+ﬁrst  by  causing  the  dynamics  to  be  governed  by  the  eigenvalues  of  A + bgT 
+rather  than  those  of A,  and  second  by  determining  the  scaling  of  the  control 
+input  x[n]  via  the  relationship  in  (6.25).  This  highlights  a  basic  tradeoﬀ 
+between  the  response  rate  and  the  control  eﬀort.  The  state  feedback  gain 
+can  be  used  to  obtain  a  fast  response,  to  bring  the  system  state  from  its 
+initially  disturbed  value  rapidly  back  to  the  origin —  but  large  entries  in  gT 
+may  be  needed  to  do  this  (certainly  in  the  CT  case,  but  also  in  DT  if  the 
+model  is  a  sampled-data  version  of  some  underlying  CT  system),  and  these 
+large entries  in gT  result  in  large control eﬀort being expended.  Furthermore, 
+the  eﬀects  of  any  errors  in  measuring  or  estimating  the  state  vector,  or  of 
+modeling  errors  and  other  discrepancies,  are  likely  to  be  accentuated  with 
+large  feedback  gains.  In  practice,  these  considerations  would  lead  us  design 
+somewhat  conservatively,  not  attempting  to  obtain  overly  fast  closed-loop 
+dynamics.  Again,  some  aspects  of  the  tradeoﬀs  involved  can  be  captured  in 
+tractable  optimization problems,  but  these  are  left  to more  advanced  courses. 
+
+We  work  through  a  CT  example  ﬁrst,  partly  to  make  clear  that  our  development 
+carries  over  directly  from  the  DT  to  the  CT  case. 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+114  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+EXAMPLE  6.2 
+
+Inverted  Pendulum  with  Torque  Control 
+
+m 
+
+θ 
+
+R 
+
+FIGURE  6.4  Inverted  pendulum. 
+
+Consider  the  inverted  pendulum  shown  in  Figure  6.4,  comprising  a  mass  m  at  the 
+end  of  a  light,  hinged  rod  of  length  R.  For  small  deviations  θ(t)  from  the  vertical, 
+
+(6.33) 
+
+q˙ (t) = 
+
+= K θ(t) + σx(t) , 
+
+d2 θ(t) 
+dt2 
+where  K  =  g/R  (g  being  the  acceleration  due  to  gravity),  σ  = 1/(mR2 ),  and 
+a  torque  input  x(t)  is  applied  at  the  point  of  support  of  the  pendulum.  Deﬁne 
+q1 (t) = θ(t),  q2 (t) = θ˙(t);  then 
+0  ¸ 
+· 
+· 
+1  ¸
+0
+q(t) + 
+x(t)  . 
+σ 
+K  0 
+We could now determine the system eigenvalues and eigenvectors to decide whether 
+the  system  is  reachable.  However,  this  step  is  actually  not  necessary  in  order  to 
+assess  reachability  and  compute  a  state  feedback.  Instead,  considering  directly  the 
+eﬀect  of  the  state  feedback,  we  ﬁnd 
+x(t) = g T q(t) 
+· 
+· 
+0  ¸ 
+1  ¸
+0
+[  g1  g2  ]q(t) 
+q(t) + 
+K  0 
+σ 
+· 
+1  ¸ 
+0
+q(t)  . 
+K + σg1  σg2 
+The  corresponding  characteristic  polynomial  is 
+ν (λ) = λ2  − λσg2  − (K + σg1 )  . 
+Inspection  of  this  expression  shows  that  by  appropriate  choice  of  the  real  gains  g1 
+and  g2  we  can make  this  polynomial  into  any  desired monic  second-degree  polyno­
+mial.  In other words, we can obtain any self-conjugate set of closed-loop eigenvalues. 
+This  also  establishes  that  the  original  system  is  reachable. 
+
+q˙ (t) = 
+
+= 
+
+(6.32) 
+
+(6.34) 
+
+(6.35) 
+
+(6.36) 
+
+(6.37) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Section  6.4 
+
+State  Feedback  Control  115 
+
+Suppose  we  want  the  closed-loop  eigenvalues  at  particular  numbers  µ1 ,  µ2 ,  which 
+is  equivalent  to  specifying  the  closed-loop  characteristic  polynomial  to  be 
+ν (λ) = (λ − µ1 )(λ − µ2 ) = λ2  − λ(µ1  + µ2 ) + µ1µ2  . 
+Equating  this  to  the  polynomial  in  (6.37)  shows  that 
+µ1  + µ2 
+µ1µ2  + K
+g1  = − 
+σ 
+σ
+Both  gains  are  negative  when  µ1  and  µ2  form  a  self-conjugate  set  in  the  open 
+left-half  plane. 
+
+(6.38) 
+
+(6.39) 
+
+g2  = 
+
+and 
+
+. 
+
+We  return  now  to  the  ship  steering  example  introduced  earlier. 
+
+EXAMPLE  6.3 
+
+Ship  Steering  (continued) 
+
+= 
+
+(6.40) 
+
+q[n + 1] = 
+
+Consider  again  the DT  state-space model  in Example  6.1,  repeated  here  for  conve­
+nience: 
+1  σ  ¸ · 
+· 
+· 
+ǫ  ¸ 
+· 
+q1 [n + 1]  ¸
+q1 [n]  ¸
++ 
+x[n]
+q2 [n + 1] 
+0  α
+q2 [n] 
+σ 
+= Aq[n] + bx[n]  . 
+(A model of this  form  is also obtained  for other systems of  interest,  for  instance the 
+motion  of  a DC motor whose  input  is  a  voltage  that  is  held  constant  over  intervals 
+of  length  T  by  a  computer-based  controller.  In  that  case,  for  x[n]  in  appropriate 
+units,  we  have  α = 1,  σ = T ,  and  ǫ = T 2 /2.) 
+For  the  purposes  of  this  example,  take 
+· 
+· 
+1  ¸
+1  ¸
+32 
+4 
+1 
+1 
+4 
+x[n] = g1 q1 [n] + g2 q2 [n] 
+to  get  the  closed-loop  matrix 
+· 
+g2  ¸
+1 
+1 +  g1 
++ 
+4 
+32 
+32 
+1 +  g2 
+g1 
+4 
+4
+The fastest possible closed-loop response in this DT model is the deadbeat behavior 
+described  earlier  in  Example  6.1,  obtained  by  placing  both  closed-loop  natural 
+frequencies at 0, i.e., choosing the closed-loop characteristic polynomial to be ν (λ) = 
+λ2 .  A little bit of algebra shows that g1  and g2  need to satisfy the following equations 
+for  this  to  be  achieved: 
+
+A + bgT  = 
+
+and  set 
+
+,  b = 
+
+(6.42) 
+
+A = 
+
+1 
+0
+
+(6.41) 
+
+. 
+
+(6.43) 
+
+g1 
+32 
+g1 
+− 
+32 
+
+g2 
++  = −2 
+4 
+g2 
+= −1  . 
++
+4 
+
+(6.44) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+116  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+Solving  these  simultaneously,  we  get  g1  =  −16  and  g2  =  −6.  We  have  not  shown 
+how  to  analyze  system  behavior  when  there  are  repeated  eigenvalues,  but  in  the 
+particular  instance  of  repeated  eigenvalues  at  0,  it  is  easy  to  show  that  the  state 
+will  die  to  0  in  a  ﬁnite  number  of  steps —  at most  two  steps,  for  this  second-order 
+system.  To  establish  this,  note  that  with  the  above  choice  of  g  we  get 
+1  ¸ 
+· 
+1
+2 
+16 
+1 
+−4  − 2 
+³A + bgT ´2 
+= 0  , 
+which shows that any nonzero initial condition will vanish in two steps.  In practice, 
+such  deadbeat  behavior  may  not  be  attainable,  as  unduly  large  control  eﬀort  — 
+rudder  angles,  in  the  case  of  the  ship  —  would  be  needed.  One  is  likely  therefore 
+to  aim  for  slower  decay  of  the  error. 
+
+A + bgT  = 
+
+(6.46) 
+
+(6.45) 
+
+so 
+
+, 
+
+Typically,  we  do  not  have  direct  measurements  of  the  state  variables,  only  knowl­
+edge  of  the  control  input,  along  with  noisy  measurements  of  the  system  output. 
+The  state  may  then  be  reconstructed  using  an  observer  that  produces  asymptot­
+ically  convergent  estimates  of  the  state  variables,  under  the  assumption  that  the 
+system (6.20),  (6.21)  is observable.  We shall see  in more detail shortly that one can 
+do  quite well  using  the  state  estimates  produced  by  the  observer,  in  place  of  direct 
+state  measurements,  in  a  feedback  control  scheme. 
+
+6.4.1  Proof  of  Eigenvalue  Placement  Results 
+
+This  subsection  presents  the  proof  of  the main  result  claimed  earlier  for  state  feed­
+back, namely that it can yield any (monic, real-coeﬃcient) closed-loop characteristic 
+polynomial ν (λ) that includes among its roots all the unreachable eigenvalues of the 
+original  system.  We  shall  also  demonstrate  that  the  closed-loop  transfer  function 
+is  given  by  the  expression  in  (6.31). 
+
+First  transform  the  open-loop  system  (6.20),  (6.21)  to  modal  coordinates;  this 
+changes  nothing  essential  in  the  system,  but  simpliﬁes  the  derivation.  Using  the 
+same  notation  for  modal  coordinates  as  in  the  previous  chapter,  the  closed-loop 
+system  is  now  deﬁned  by  the  equations 
+
+where 
+
+ri [n + 1] = λi ri [n] + βix[n]  ,
+i = 1, 2, . . . , L 
+x[n] = γ1 r1 [n] +  + γL rL [n] + p[n]  , 
+· · · 
+¡ 
+γL  ¢ 
+· · · 
+and  V  is  the  modal  matrix,  whose  columns  are  the  eigenvectors  of  the  open-loop 
+system.  The  γi  are  therefore  just  the  state-feedback  gains  in  modal  coordinates. 
+
+(6.47) 
+(6.48) 
+
+= g T V  , 
+
+(6.49) 
+
+γ1 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  6.5 
+
+Observer-Based  Feedback  Control  117 
+
+X (z )
+P (z ) 
+
+Now  using  (6.47)  and  (6.48)  to  evaluate  the  transfer  function  from  p[n]  to  x[n],  we 
+get 
+= ³1 − X  γiβi  ´−1 
+L
+z − λi 
+1 
+To  obtain  the  second  equality  in  the  above  equation,  we  have  used  the  following 
+facts:  (ii)  the  open-loop  characteristic  polynomial  a(z )  is  given  by  (6.22),  and  this 
+is  what  appears  in  the  numerator  of  (6.50;  (ii)  the  poles  of  this  transfer  function 
+must be the closed-loop poles of the system, and its denominator degree must equal 
+its numerator degree, so the denominator of this expression must be the closed-loop 
+characteristic  polynomial  ν (z ).  Then  using  (6.24), we  ﬁnd  that  the  overall  transfer 
+function  from  the  input  p[n]  of  the  closed-loop  system  to  the  output  y [n]  is 
+
+a(z ) 
+ν (z )
+
+(6.50) 
+
+= 
+
+. 
+
+Y (z ) X (z ) 
+Y (z ) 
+= 
+P (z )  X (z ) P (z ) 
+η(z )  a(z ) 
+a(z )  ν (z ) 
+η(z ) 
+ν (z ) 
+
+= 
+
+= 
+
+. 
+
+(6.51) 
+
+(6.52) 
+
+(6.53) 
+
+Inverting  (6.50),  we  ﬁnd 
+
+The  conclusion  from  all  this  is  that  state  feedback  has  changed  the  denominator  of 
+the input-output transfer function expression from a(z ) in the open-loop case to ν (z ) 
+in  the  closed-loop  case,  and  has  accordingly modiﬁed  the  characteristic  polynomial 
+and  poles.  State  feedback  has  left  unchanged  the  numerator  polynomial  η(z )  from 
+which  the  zeros are  selected;  all  roots  of  η(z )  that  are not  canceled by  roots  of  ν (z ) 
+will  appear  as  zeros  of  the  closed-loop  transfer  function. 
+X  γiβi 
+L
+= 1 − 
+z − λi 
+1 
+Hence, given  the desired closed-loop characteristic polynomial ν (λ), we can expand 
+ν (z )/a(z )  in  a  partial  fraction  expansion,  and  determine  the  state  feedback  gain  γi 
+(in  modal  coordinates)  for  each  i  by  dividing  the  coeﬃcient  of  1/(z − λi )  by  −βi , 
+assuming  this  is  nonzero,  i.e.,  assuming  the  ith mode  is  reachable.  If  the  j th mode 
+is  unreachable,  so  βj  =  0,  then  λj  does  not  appear  as  a  pole  on  the  right  side  of 
+(6.54),  which  must  mean  that  ν (z )  has  to  contain  z − λj  as  a  factor  (in  order  for 
+this  factor  to  cancel  out  on  the  left  side  of  the  equation),  i.e.,  every  unreachable 
+natural  frequency  of  the  open-loop  system  has  to  remain  as  a  natural  frequency  of 
+the  closed-loop  system. 
+
+ν (z ) 
+a(z ) 
+
+(6.54) 
+
+. 
+
+6.5  OBSERVER-BASED  FEEDBACK  CONTROL 
+
+The  obstacle  to  state  feedback  is  the  general  unavailability  of  direct measurements 
+of  the  state.  All  we  typically  have  are  knowledge  of  what  control  signal  x[n]  we 
+are  applying,  along  with  (possibly  noise-corrupted)  measurements  of  the  output 
+y [n],  and  a  nominal  model  of  the  system.  We  have  already  seen  how  to  use  this 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+118  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+(6.55) 
+
+information  to  estimate  the  state  variables,  using  an  observer  or  state  estimator. 
+Let  us  therefore  consider  what  happens  when  we  use  the  state  estimate  provided 
+by  the  observer,  rather  than  the  (unavailable)  actual  state,  in  the  feedback  control 
+law  (6.25).  With  this  substitution,  (6.25)  is modiﬁed  to 
+x[n] = p[n] + g T qb[n] 
+= p[n] + g T (q[n] − qe[n])  . 
+The  overall  closed-loop  system  is  then  as  shown  in  Figure  6.5,  and  is  governed  by 
+the  following  state-space  model,  obtained  by  combining  the  representations  of  the 
+subsystems  that make up  the overall  system, namely  the plant  (6.1),  observer error 
+dynamics  (6.9),  and  feedback  control  law  (6.55): 
+· 
+0  ¸ 
+· 
+q[n]  ¸ · 
+A + bgT  −bgT  ¸ · 
+· 
+· 
+I  ¸
+b  ¸
+q[n + 1]  ¸
+ζ [n]  . 
+w[n]+ 
+p[n]+ 
+q[n + 1]  = 
++
+A + ℓcT 
+0 
+0 
+ℓ
+I
+q[n]
+e
+e
+(6.56) 
+Note  that  we  have  reverted  here  to  the  more  elaborate  plant  representation  in 
+(6.1),  (6.2)  rather  than  the  streamlined  one  in  (6.20),  (6.21),  in  order  to  display 
+the  eﬀect  of  plant  disturbance  and  measurement  error  on  the  overall  closed-loop 
+system.  (Instead  of  choosing  the  state  vector  of  the  overall  system  to  comprise 
+the  state  vector  q[n]  of  the  plant  and  the  state  vector  qe[n]  of  the  error  equation, 
+we  could  equivalently  have  picked  q[n]  and  qb[n].  The  former  choice  leads  to  more 
+transparent  expressions.) 
+The  (block)  triangular  structure  of  the  state matrix  in  (6.56)  allows  us  to  conclude 
+that  the natural  frequencies of  the overall  system are  simply  the eigenvalues of A + 
+bgT  along with those of A + ℓcT .  (This  is not hard to demonstrate, either based on 
+the  deﬁnition  of  eigenvalues  and  eigenvectors,  or  using  properties  of  determinants, 
+but  we  omit  the  details.)  In  other  words,  our  observer-based  feedback  control  law 
+results  in  a  nicely  behaved  closed-loop  system,  with  natural  frequencies  that  are 
+the  union  of  those  obtained  with  perfect  state  feedback  and  those  obtained  for  the 
+observer error equation.  Both sets of natural frequencies can be arbitrarily selected, 
+provided  the  open-loop  system  is  reachable  and  observable.  One  would  normally 
+pick  the modes  that  govern  observer  error  decay  to  be  faster  than  those  associated 
+with  state  feedback,  in order  to have  reasonably accurate estimates available  to  the 
+feedback  control  law  before  the  plant  state  can  wander  too  far  away  from  what  is 
+desired. 
+
+The  other  interesting  fact  is  that  the  transfer  function  from  p[n]  to  y [n]  in  the  new 
+closed-loop  system  is  exactly  what  would  be  obtained  with  perfect  state  feedback, 
+namely the transfer function in (6.46).  The reason is that the condition under which 
+the  transfer  function  is  computed  —  as  the  input-output  response  when  starting 
+from  the  zero  state  —  ensures  that  the  observer  starts  up  from  the  same  initial 
+condition  as  the  plant.  This  in  turn  ensures  that  there  is  no  estimation  error,  so 
+the  estimated  state  is  as  good  as  the  true  state.  Another  way  to  see  this  is  to  note 
+that  the  observer  error  modes  are  unobservable  from  the  available  measurements. 
+
+The  preceding  observer-based  compensator  is  the  starting  point  for  a  very  general 
+and  powerful  approach  to  control  design,  one  that  carries  over  to  the  multi-input, 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Section  6.5 
+
+Observer-Based  Feedback  Control  119 
+
+p
+
+
+� +
+� 
+
+x
+
+
+� 
+
+Plant 
+q 
+
+y
+
+
+�  Observer 
+bq 
+
+� 
+
+by = cT bq 
+
+� 
+� 
++ 
+�− 
+
+�ℓ
+
+� 
+
+g T 
+
+bq 
+
+FIGURE  6.5  Observer-based  compensator,  feeding  back  an  LTI  combination  of  the 
+estimated  state  variables. 
+
+multi-output  case.  With  the  appropriate  embellishments  around  this  basic  struc­
+ture, one can obtain every possible stabilizing LTI feedback controller for the system 
+(6.20),  (6.21).  Within  this  class  of  controllers,  we  can  search  for  those  that  have 
+good  robustness  properties,  in  the  sense  that  they  are  relatively  immune  to  the 
+uncertainties  in  our  models.  Further  exploration  of  all  this  has  to  be  left  to  more 
+advanced  courses. 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+120  Chapter  6 
+
+State  Observers  and  State  Feedback 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010
+
+c
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.011 Introduction to Communication, Control, and Signal Processing 
+Spring 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

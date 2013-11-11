@@ -1,0 +1,409 @@
+Lecture  24	 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+Lecture  24:  Parallel  Processor  Architecture  &
+ 
+Algorithms
+ 
+
+Processor  Architecture 
+
+Computer  architecture  has  evolved: 
+•	 Intel  8086  (1981):  5 MHz  (used  in  ﬁrst  IBM  PC) 
+•	 Intel  80486  (1989):  25 MHz  (became  i486  because  of  a  court  ruling  that  prohibits  the 
+trademarking  of  numbers) 
+•	 Pentium  (1993):  66 MHz 
+•	 Pentium  4  (2000):  1.5 GHz  (deep  ≈  30-stage  pipeline) 
+•	 Pentium  D  (2005):  3.2 GHz  (and  then  the  clock  speed  stopped  increasing) 
+•	 Quadcore  Xeon  (2008):  3 GHz  (increasing  number  of  cores  on  chip  is  key  to  perfor­
+mance  scaling) 
+
+Processors  need  data  to  compute  on: 
+
+Problem:  SRAM  cannot  support more  than  ≈ 4 memory  requests  in  parallel.
+ 
+
+
+ 
+
+DRAMSRAM fastslowPPPP1Lecture  24 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+$:  cache  P:  processor 
+ 
+
+Most  of  the  time  program  running  on  the  processor  accesses  local  or  “cache” memory 
+
+Every  once  in  a  while,  it  accesses  remote memory: 
+
+Round-trip  required  to  obtain  data 
+
+ 
+
+P$P$P$P$P$P$P$P$P$P$P$data request(addr)data2Lecture  24 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+Research  Idea:  Execution  Migration 
+
+When  program  running  on  a  processor  needs  to  access  cache memory  of  another  processor, 
+it migrates  its  “context”  to  the  remote  processor  and  executes  there: 
+
+One-way  trip  for  data  access 
+  
+' 
+'
+Context  =  ProgramCounter + RegisterFile + . . .  (can  be  larger  than  data  to  be  accessed) 
+fewKbits 
+Assume  we  know  or  can  predict  the  access  pattern  of  a  program 
+m1 , m2 , . . . , mN 
+(memory  addresses) 
+(processor  caches  for  each mi ) 
+p(m1 ), p(m2 ), . . . p(mN ) 
+
+Example 
+
+p1  p2  p2  p1  p1  p3  p2 
+costmig (s, d) = distance(s, d) + L  ←  load  latency  L  is  a  function  of  context  size 
+costaccess (s, d) = 2 ∗ distance(s, d) 
+if  s == d,  costs  are  deﬁned  to  be  0 
+
+
+ 
+
+P$P$migrate program“context”3Lecture  24 
+
+Problem 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+Decide  when  to migrate  to  minimize  total  memory  cost  of  trace  For  example: 
+
+What  can  we  use  to  solve  this  problem? 
+Dynamic  Programming! 
+
+Dynamic  Programming  Solution 
+
+Program  at  p,  initially,  number  of  processors  =  Q 
+
+Subproblems? 
+
+DP (k + 1, pj ) =
+
+Complexity? 
+
+Deﬁne  DP (k , pi )  as  cost  of  optimal  solution  for  the  preﬁx  m1 , . . . , mk  of  memory  accesses 
+ 
+when  program  starts  at  p1  and  ends  up  at  pi . 
+
+DP (k , pj ) + costaccess
+(pj , p(mk+1 )) 
+Q 
+=1 (DP (k , pi ) + costmig (pi , pj )) 
+M INi
+'  ' 
+'
+' 
+  
+O(  N  · Q 
+· 
+Q 
+no.of subproblems  cost  per  subproblem 
+My  research  group  is  building  a  128-processor  Execution  Migration  Machine  that  uses  a 
+migration  predictor  based  on  this  analysis. 
+
+if  pj  
+= p(mk+1 )
+if  pj  = p(mk+1 ) 
+
+) = O(N Q2 )
+
+
+ 
+
+Example:   p1      p2          p2     p1          p1    p3       p2 start at p1  migrate to p2migrate to p1remoteaccessremoteaccesslocal accessescosts4Lecture  24	 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+Lecture  24:  Research  Areas  and  Beyond  6.006 
+
+Erik’s  Main  Research  Areas 
+•	 computational  geometry 
+
+[6.850] 
+
+–	 geometric  folding  algorithms 
+
+[6.849] 
+
+[6.851] 
+
+–	 self-assembly 
+•	 data  structures 
+•	 graph  algorithms 
+[6.899] 
+•	 recreational  algorithms 
+•	 algorithmic  sculpture 
+
+[SP.268] 
+
+Geometric  Folding  Algorithms:  [6.849],  Videos  Online 
+
+Two  aspects:  design  and  foldability 
+•	 design:  algorithms  to  fold  any  polyhedral  surface  from  a  square  of  paper  [Demaine, 
+Demaine, Mitchell  (2000);  Demaine  &  Tachi  (2011)] 
+–	 bicolor  paper  =⇒  can  2-color  faces 
+–	 OPEN:  how  to  best  optimize  “scale-factor” 
+–	 e.g.  best  n × n  checkerboard  folding —  recently  improved  from  ≈ n/2 →≈ n/4 
+•	 foldability:  given  a  crease  pattern,  can  you  fold  it  ﬂat 
+
+–	 NP-complete  in  general  Bern  &  Hayes  (1996) 
+–	 OPEN:  m × n map  with  creases  speciﬁed  as mountain/valley  [Edmonds  (1997)] 
+–	 just  solved:  2 × n  Demaine,  Liu, Morgan  (2011) 
+–	 hyperbolic  paraboloid  [Bauhaus  (1929)]  doesn’t  exist  [Demaine,  Demaine,  Hart, 
+Price,  Tachi  (2009)] 
+
+
+ 
+
+5Lecture  24	 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+–	 understanding  circular  creases 
+
+–	 any  straight-line graph  can be made by  folding ﬂat & one  straight  cut  [Demaine, 
+Demaine,  Lubiw  (1998);  Bern,  Demaine,  Eppstein,  Hayes  (1999)] 
+
+Self-Assembly 
+
+Geometric  model  of  computation 
+•	 glue  e.g.  DNA  strands,  each  pair  has  strength 
+•	 square  tiles  with  glue  on  each  side 
+•	 Brownian  motion:  tiles/constructions —  stick  together  if
+ 
+ 
+ature 
+•	 can  build  n × n  square  using  O
+lg n
+tiles  [Rothemund  &  Winfree  2000]  or  using 
+lg lg n
+O(1) tiles & O(lg n) “stages” algorithmic steps by the bioengineer [Demaine, Demaine, 
+Fekete,  Ishaque,  Rafalin,  Schweller,  Souvaine  (2007)] 
+•	 can  replicate ∞ copies of given unknown shape using O(1) tiles and O(1) stages [Abel, 
+Benbernou,  Damian,  Demaine,  Flatland,  Kominers,  Schweller  (2010)] 
+
+glue  strengths ≥  temper­
+
+ 
+
+Data  Structures:  [6.851],  Videos  Next  Semester 
+
+There  are  2 main  categories  of  data  structures 
+•	 Integer  data  structures:  store  n  integers  in  {0, 1, · · · u − 1}  sub ject  to  insert,  delete, 
+predecessor,  successor  (on  word  RAM) 
+
+–	 O
+
+–	 hashing  does  exact  search  in  O(1) 
+–	 AVL  trees  do  all  in  O(lg n) 
+ 
+ 
+–	 O  (lg lg u)/op  van  Emde  Boas 
+  
+ 
+lg n 
+/op  fusion  trees:  Fredman  & Willard 
+lg lg u
+lg n 
+–	 O
+/op  min  of  above 
+lg lg n
+•	 Cache-eﬃcient  data  structures 
+–	 memory  transfers  happen  in  blocks  (from  cache  to  disk/main memory) 
+ 
+ 
+–	 searching  takes  Θ(logB N )  transfers  (vs.  lg n  ) 
+N 
+N
+–	 sorting  takes  Θ B  logC B transfers 
+–	 possible  even  if  you  don’t  know  B  &  C  ! 
+
+ 
+
+6Lecture  24 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+( A lm os t )   P l a n a r   G r a p h s :  [6 . 889 ] ,   V i d eos   O n l i n e 
+ 
+n lg2 n  
+•  Dijkstra  in  O(n)  time  [Henzinger,  Klein,  Rao,  Subramanian  (1997)] 
+ 
+•  Bellman-Ford  in  O
+time  [Mozes  & Wolﬀ-Nilson  (2010)] 
+lg lg n
+•  Many  problems  NP-hard,  even  on  planar  graphs  But  can  ﬁnd  a  solution  within  1 + ε 
+.
+
+factor  of  optimal,  for  any  E  [Baker  1994  &  Others]: 
+
+ 
+
+}block B}block Bc blocksCPUFASTSLOWCACHEDISK/MAIN MEMORY.rkkkk7Lecture  24	 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+–	 run  BFS  from  any  root  vertex  r 
+
+–	 delete  every  k  layers 
+
+–	 for  many  problems,  solution messed  up  by  only  1 + 
+
+1 
+factor  ( =⇒  k = )
+1
+k	
+ε 
+–	 connected  components  of  remaining  graph  have  < k  layers.  Can  solve  via  DP 
+typically  in  ≈ 2k  · n  time 
+
+Recreational  Algorithms 
+•	 many  algorithms  and  complexities  of  games  [some  in  SP.268  and  our  book  Games, 
+ 
+ 
+Puzzles  &  Computation  (2009)] 
+2n
+•  n × n × n Rubik’s Cube  diameter  is Θ 
+lg n 
+Winslow  (2011)] 
+•	 Tetris  is NP-complete [Breukelaar, Demaine, Hohenberger, Hoogeboom, Kosters, Liben-
+Nowell  (2004)] 
+•	 balloon  twisting  any  polyhedron  [Demaine,  Demaine,  Hart  (2008)] 
+•	 algorithmic  magic  tricks 
+
+[Demaine, Demaine,  Eisenstat,  Lubiw, 
+
+
+ 
+
+8Lecture  24 
+
+Beyond  6.006 
+
+6.006  Fall  2011
+ 
+
+Algorithms  Classes  at  MIT:  (post  6.006) 
+•  6.046:  Intermediate  Algorithms  (more  advanced  algorithms  &  analysis,  less  coding) 
+•  6.047:  Computational  Biology  (genomes,  phylogeny,  etc.) 
+•  6.854:  Advanced  Algorithms  (intense  survey  of  whole  ﬁeld) 
+•  6.850:  Geometric  Computing  (working  with  points,  lines,  polygons, meshes,  . . . ) 
+•  6.849:  Geometric  Folding  Algorithms  origami,  robot  arms,  protein  folding,  . . . 
+•  6.851:  Advanced  Data  Structures  (sublogarithmic  performance) 
+•  6.852:  Distributed  Algorithms  (reaching  consensus  in  a  network  with  faults) 
+•  6.853:  Algorithmic  Game  Theory  (Nash  equilibria,  auction mechanism  design,  . . . ) 
+•  6.855:  Network  Optimization  (optimization  in  graph:  beyond  shortest  paths  ) 
+•  6.856:  Randomized Algorithms  (how  randomness makes  algorithms  simpler &  faster) 
+•  6.857:  Network  and  Computer  Security  (cryptography) 
+
+Other  Theory  Classes: 
+•  6.045:  Automata,  Computability,  &  Complexity 
+•  6.840:  Theory  of  Computing 
+•  6.841:  Advanced  Complexity  Theory 
+•  6.842:  Randomness  &  Computation 
+•  6.845:  Quantum  Complexity  Theory 
+•  6.440:  Essential  Coding  Theory 
+•  6.441:  Information  Theory 
+
+
+ 
+
+9Top 10 Uses of 6.006 Cushions 
+10.  Sit on it: guaranteed inspiration in constant time 
+ 
+        
+  
+ (bring it to the final exam) 
+ 
+ 
+9. 	 Frisbee (after cutting it into a circle)* 
+ 
+8. 	 Sell as a limited-edition collectible on eBay 
+ 
+(they’ll probably never be made again—at least $5) 
+	 Put two back-to-back to remove branding* 
+7. 	
+ 
+ 
+ 
+ 
+ 
+(so no one will ever know you took this class) 
+ 
+6. 	 Holiday conversation starter… and stopper 
+ 
+(we don’t recommend re-gifting) 
+ 
+ 
+5.  Asymptotically optimal acoustic paneling 
+
+ 
+(for practicing piano & guitar fingering DP) 
+
+ 
+ 
+4.	
+	 Target practice for your next LARP* 
+ 
+(Live Action Role Playing) 
+ 
+3. 	 Ten years from now, it might be all you'll 
+ 
+ 
+remember about 6.006 
+ 
+(maybe also this top ten list) 
+2. 	 Final exam cheat sheet* 
+ 
+1. 	 Three words:  OkCupid profile picture 
+ 
+
+10MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

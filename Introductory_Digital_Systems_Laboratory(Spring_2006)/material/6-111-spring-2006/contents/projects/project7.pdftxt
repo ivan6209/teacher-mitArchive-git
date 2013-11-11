@@ -1,0 +1,1618 @@
+Voice Training Karaoke Machine
+
+
+6.111 Final Project 
+
+Masood Qazi 
+Zhongying Zhou 
+
+6.111 Spring 2006 
+May 17, 2006 
+
+Abstract: 
+A Karaoke has been implemented for the purpose of vocal training. It will have as its two 
+primary inputs the user's singing and the notes from the sheet music of the vocals for a selected 
+song. The user's voice will be recorded through a microphone interfaced to an analog to digital 
+converter. The power spectrum of the user’s voice will be computed and analyzed to infer the 
+note being sung. The system will then compare the user's singing, by pitch and rhythm, with what 
+is described in the sheet music. This comparative analysis is presented in a meaningful way to the 
+user through a VGA display. Finally, the user will also have access to audio outputs such as the 
+sequence of correct tones and the user's recorded voice through headphones.  This system 
+demonstrates important design concepts such as modularity and integration.  In particular, testing 
+was made more efficient by debugging smaller chunks such as the Fourier Transform or the 
+Video Display at one time.  A secondary round of testing was needed once the blocks were 
+integrated. 
+
+Table of Contents: 
+
+1 
+
+OVERVIEW .........................................................................................................................................2
+
+
+1.1 
+1.2 
+
+OPERATION .................................................................................................................................. 3
+
+IMPLEMENTATION ........................................................................................................................ 5
+
+
+2 
+
+AUDIO INTERFACING, SPECTRUM ANALYSIS, NOTE SYNTHESIS (MQ) ........................5
+
+
+2.1 
+2.2 
+2.3 
+2.4 
+
+REPRESENTATION OF NOTES (MQ) .............................................................................................. 5
+
+AC97 AUDIO INTERFACE (MQ) ................................................................................................... 6
+
+NOTE SYNTHESIS .......................................................................................................................... 8
+
+FFT AND NOTE DETECTION (MQ) ................................................................................................ 9
+
+
+3  MUSIC READING AND COMPARISON DISPLAY (ZZ) ...........................................................10
+
+
+3.1 
+3.2 
+3.3 
+3.4 
+
+PULSIFY  ..................................................................................................................................... 10
+
+DIVIDER ..................................................................................................................................... 11
+
+MUSIC READER FINITE STATE MACHINE ................................................................................... 11
+
+VIDEO DISPLAY.......................................................................................................................... 12
+
+
+4 
+
+5 
+
+TESTING AND DEBUGGING ........................................................................................................15
+
+
+CONCLUSION ..................................................................................................................................16
+
+
+List of Figures: 
+FIGURE 1 :  LED DISPLAY FOR ADDRESS AND RHYTHM ................................................................................... 4
+
+FIGURE 2: POSITIONING OF OUTPUTS ON VISUAL DISPLAY ............................................................................... 4
+
+FIGURE 3: TOP-LEVEL BLOCK DIAGRAM .......................................................................................................... 3
+
+FIGURE 4: CYCLICAL INDEXING OF NOTES ....................................................................................................... 6
+
+FIGURE 5: BLOCK DIAGRAM FOR AC97 AUDIO INTERFACE  ............................................................................. 7
+
+FIGURE 6: EXAMPLE TIMING DIAGRAM ILLUSTRATING SERIAL TO PARALLEL CONVERSION............................. 8
+
+FIGURE 7: SYNTHESIZER BLOCK DIAGRAM ...................................................................................................... 8
+
+FIGURE 9: FFT CONROL FSM .......................................................................................................................... 9
+
+FIGURE 8: FFT BLOCK DIAGRAM .................................................................................................................. 10
+
+FIGURE 10: SPECTRUM PROCESSING FSM ..................................................................................................... 10
+
+FIGURE 11: STATE TRANSITION DIAGRAM FOR MUSIC READER ...................................................................... 12
+
+FIGURE 12:  DISPLAY BLOCK DIAGRAM ......................................................................................................... 13
+
+FIGURE 13:  DRAW GRAPH BLOCK DIAGRAM................................................................................................. 14
+
+FIGURE 14:  DRAW FFT BLOCK DIAGRAM ..................................................................................................... 14
+
+FIGURE 15:  PULSIFY MODULE SIMULATION WAVEFORM ............................................................................... 15
+
+FIGURE 16:  FSM SIVMULATION WAVEFORM DEMONSTRATING PAUSE STATE ............................................... 15
+
+
+List of Tables: 
+TABLE 1 :  NOTE DURATION AND SWITCH VALUES FOR DIFFERENT TEMPOS .................................................... 4
+
+TABLE 2:  ENCODING OF LOWER 4 BITS OF A NOTE IN HEX .............................................................................. 5
+
+TABLE 3: INFORMATION RELATED TO MUSIC NOTES (EXAMPLE FOR OCTAVE 5) .............................................. 6
+
+TABLE 4:  CLOCK CYCLES CORRESPONDING TO TEMPO ................................................................................. 11
+
+TABLE 5 : OUTPUTS FOR FSM STATES ........................................................................................................... 11
+
+
+1  Overview 
+
+Many times, people cannot distinguish whether they are singing the correct pitch in a song.  
+This is may be due to the inability to hear their own voice, or due to the presence of background 
+instrumentals of a song.  As a result, many people might consider themselves to be good singers 
+and embarrass themselves if in reality as they sing off-key.  The purpose of this project is to allow 
+users to have a more objective feedback to their singing.  There are two songs stored in the 
+
+memory and the playback tempo can be modified.  The user can also pause, fast forward or 
+rewind through songs.  The input singing will be analyzed in the frequency domain to select the 
+pitch they are singing.  The system will then display the waveform and pitch that the singer is 
+singing compared to what is described in the sheet music.  Additionally, the frequency domain 
+analysis will also be displayed to provide additional sources of feedback.  Finally, the user will 
+also have access to audio outputs such as the sequence of correct tones and the user's recorded 
+voice through headphones. 
+Shown in Figure 1 is the top-level block diagram that gives the overview of the system.  
+There are four major divisions in the system: 
+1.  Interface for the audio input through microphone with A/D converter.  
+2.  Music reading component that controls which note of the song is outputted. 
+3.  Analysis of the spectrum of the user’s audio input to decide the most appropriate note. 
+4.  Comparison of information by producing a visual of spectrum analysis and input notes. 
+v
+t
+o
+o
+i
+n
+c
+e
+e
+_
+_
+o
+o
+n
+n
+ 
+
+m
+i
+c
+v
+_
+u
+p
+/
+d
+n
+ 
+
+o
+u
+t
+v
+_
+u
+p
+/
+d
+n
+ 
+
+music_note[7:0] 
+
+A/D 
+
+audio_in[15:0] 
+
+Synthesizer 
+
+tone[15:0] 
+
+offset[15:0] 
+
++ 
+sub-
+- tract 
+
+voice[15:0] 
+
+audio_out[15:0] 
+
+audio_out[15:0] 
+
+Select 
+& 
+Add 
+
+en48k 
+tone[9:3] 
+
+mic. 
+
+Audio 
+Interface 
+
+D/A 
+ 
+]
+0
+:
+7
+[
+t
+n
+u
+o
+c
+t
+i
+b
+
+ 
+8
+8
+2
+p
+2
+1
+k
+l
+c
+
+headphone 
+
+en48k 
+
+EN 
+
+FFT 
+
+& 
+
+fft_out[6:0] 
+fft_disp 
+singer_note[7:0] 
+
+Display 
+
+RGB [23:0] 
+
+[3:0] 
+
+DCM 
+
+clk
+
+x3, 180 
+
+Note Decision 
+
+song_sel [1:0] 
+
+reset 
+
+rewind 
+
+fforward 
+
+pause 
+
+start 
+
+e
+z
+i
+n
+o
+r
+h
+c
+n
+y
+S
+/
+e
+c
+n
+u
+o
+b
+e
+D
+
+reset_sync (global) 
+
+rewind_sync 
+
+fforward_sync 
+
+Pulsify(P) 
+pause_p
+pause_sync 
+
+Pulsify(S) 
+startmr
+start_sync 
+
+tempo_sel [1:0] 
+
+Figure 1: Top-level block diagram 
+
+Music 
+
+Reader 
+
+FSM 
+
+d
+_
+e
+s
+u
+a
+p
+
+ 
+e
+l
+b
+a
+n
+e
+
+Divider 
+
+]
+0
+:
+0
+1
+[
+t
+n
+u
+o
+c
+_
+l
+e
+x
+i
+p
+
+ 
+]
+0
+:
+0
+1
+[
+t
+n
+u
+o
+c
+_
+e
+n
+i
+l
+
+measure[7:0] 
+
+music_note[3:0] 
+
+VGA 
+
+vga signals 
+
+addr [12:0] 
+
+data[7:0] 
+
+ROM 
+Memory 
+
+32 Kb 
+
+1.1  Operation 
+Music Reader 
+There are two songs stored in memory:  “Crazy” by Britney Spears and “She Bangs” by 
+Ricky Martin corresponding to the song select value of 0 and 1 respectively.  The user can pause, 
+rewind or fast forward through the song.  Also, the user can adjust the tempo of the song once the 
+system is reset.  There will be a 2 bit tempo select switch [1:0] corresponding to largo, andante, 
+
+moderato, and allegro.  (Table 1 :  Note duration and switch values for different tempos)   Note 
+that the values are calculated based on the equation that the duration for a quarter note is four 
+times that of a sixteenth note.  The music reader will use this information accordingly. 
+
+Table 1 :  Note duration and switch values for different tempos 
+Switch [1:0] 
+Beats/Minute 
+Tempo 
+
+Largo 
+Andante 
+Moderato 
+Allegro 
+
+60 
+90 
+120 
+150 
+
+00 
+01 
+10 
+11 
+
+16th Note Duration (ms) 
+250 
+166.7 
+125 
+100 
+
+To ensure proper operation of the music reader, the lower 7 bits of the output address is 
+wired to the lower 7 bits of the LED display.  The highest bit of the LED toggles between on and 
+off every time a sixteenth note has passed.  This displays the current rhythm.  (Figure 2 :  LED 
+display for address and rhy) 
+
+Tempo 
+
+addr [6:0] 
+
+Figure 2 :  LED display for address and rhythm 
+
+Display 
+The display module gives a visual cue to the singer on his/her performance.  The 
+synthesized square wave is displayed at the top right corner and the singer’s input waveform is 
+displayed below that.  Each waveform consists of 400 7-bit data and a maximum amplitude of 
+128.  At the bottom of the screen is the frequency domain spectrum.  However for the frequency 
+display, each of the data appears as a filled box that is 4 pixels wide.  (Figure 3)  In addition, the 
+user can freeze the graphs to observe the waveforms at an instant in time.  One final feature of the 
+display is on the top left half of the screen, the current song title and artist are displayed as well as 
+the lyrics corresponding to the measure of the song that the system is playing. 
+
+Figure 3: Positioning of outputs on visual display 
+
+Testmode 
+The Karaoke playback of the song can be paused at anytime by entering a testmode which 
+is indicated by bringing switch[3] high. In this testmode, the fast forward and rewind buttons 
+change function to incrementing and decrementing the synthesizer note. Basically, the system 
+turns into a voice tuning machine in which the user can tune his or her voice to a fixed note while 
+observing the audio wave form and the power spectrum in real time. Upon exiting the testmode, 
+the song resumes from where it left off. 
+
+1.2  Implementation 
+
+Music Reader 
+The inputs for pause, play, rewind, and fast forward are implemented as buttons. 
+The data for the tune of the song is stored in a block ROM that is 4096 x 8 bits.  For one block of 
+data (8 bits), the upper 4 bits represents the octave of the note in binary and the lower 4 bits is 
+reserved for the actual note.  In addition, the lower 4 bits also encodes for rest, begin song and 
+end song signals. (Table 2:  Encoding of lower 4 bits of a note in Hex)  Choosing this design 
+scheme allows each note to have a constant duration of one sixteenth note.  An FSM module will 
+be built to control which address of the memory the system is reading from. 
+
+Table 2:  Encoding of lower 4 bits of a note in Hex 
+0 
+note[3:0] 
+1 
+2 
+3 
+4 
+5 
+6 
+7 
+Encodes 
+A  A#  B  C  C#  D  D#  E 
+
+8 
+F 
+
+9 
+b 
+a 
+F#  G  G# 
+
+c 
+e 
+d 
+rest  beg  end 
+
+f 
+--
+
+Display 
+
+There are two major components of the visual display:  waveforms and alphanumeric 
+characters.  The following blocks are all instantiated within the Display/Comparator block.  To 
+display the waveforms, a display graph module is used.  A modified version is used for the FFT 
+module.  Finally, the alphanumeric display is processed within the Compare/Display block.  It 
+uses an existing code that outputs the display when given a string of 8 characters and position 
+desired.  All of the resulting RGB signals are then OR’ed to produce the final output. 
+The remainder of this document will describe the Voice Training Karaoke Machine’s design 
+and performance specifications followed by the testing and debugging procedures used in its 
+development.  Finally, the shortcomings of the current design and possible improvements will be 
+explored. 
+
+2 	 Audio Interfacing, Spectrum Analysis, Note Synthesis 
+(MQ) 
+
+2.1  Representation of Notes (MQ) 
+
+A note sung by a person generates a periodic waveform whose frequency corresponds to 
+the pitch. This period corresponds to the fundamental frequency: the lowest frequency component 
+in the Fourier transform representation of the audio signal; however, the quality and uniqueness 
+of a person’s voice depends on contributions from higher harmonics of the fundamental 
+frequency in both magnitude and phase relative to the fundamental. 
+Classical music theory maps notes to the frequency domain in a geometric spacing given 
+
+by: 
+
+n /12
+
+• 2
+
+
+=  f 
+f n 
+A4 
+This formula indexes a note by an integer n that represents its distance in “half steps” from the 
+note A4 (the note A in the fourth octave where fA4 = 440kHz). Multiplying or dividing a note’s 
+(fundamental) frequency by a power of two does not change the note, but only shifts the octave. 
+Thus a note can be indexed by a set of twelve integers m from 0 to 11. Shown in Table 3 is an 
+example of frequencies, and indices for the notes in octave 5. Shown in Figure 4 is a graphical 
+representation of the cyclical indexing of notes with the clockwise direction representing 
+increasing frequency. 
+
+Table 3: Information related to music notes (example for octave 5) 
+Note: 
+f [Hz] 
+n 
+m = n mod 
+FFT “k” 
+Half period in 
+clock cycles 
+range 
+12 
+20945 
+73-77 
+0 
+19770 
+78-81 
+1 
+2 
+82-86 
+18660 
+17613 
+87-91 
+3 
+16624 
+92-97 
+4 
+15691 
+98-103 
+5 
+6 
+104-109 
+14811 
+13979 
+110-115 
+7 
+13195 
+116-122 
+8 
+9 
+123-129 
+12454 
+11755 
+130-137 
+10 
+11 
+138-145 
+11095 
+
+880 
+932 
+988 
+1047 
+1109 
+1175 
+1245 
+1319 
+1397 
+1480 
+1568 
+1661 
+
+A 
+A# 
+B 
+C 
+C# 
+D 
+D# 
+E 
+F 
+F# 
+G 
+G# 
+
+12 
+13 
+14 
+15 
+16 
+17 
+18 
+19 
+20 
+21 
+22 
+23 
+
+Thus, the goal of my (Masood Qazi) component of the project is to obtain a digital representation 
+of the singer’s audio, examine its spectral content, and infer what note is being sung. In addition, 
+the correct tone will be synthesized as audio feedback for the user along with his or her own 
+voice. I will design for the range of human vocal frequencies which extends from roughly 80Hz 
+1
+to 1.2 kHz. 
+
+m=11 
+
+G# 
+
+m=0 
+
+A 
+
+A# 
+
++ 
+
+B 
+
+C 
+
+C# 
+
+D# 
+
+D 
+
+G 
+
+F# 
+
+F 
+
+E 
+
+m=6 
+Figure 4: cyclical indexing of notes 
+
+2.2  AC97 Audio Interface (MQ) 
+
+1 
+
+http://www.tnt-audio.com/topics/frequency_e.html 
+
+Shown in Figure 5 is a block diagram for the AC97 Audio interface. At the heart of the 
+system is the LM4500 chip that performs analog to digital and digital to analog conversion at a 
+rate of 48kHz (i.e. 48,000 discrete time samples per second). In order to give the LM4500 
+commands and read its data, serial to parallel conversion must be performed since only two wires 
+are used for input and output. Illustrated in Figure 6 is an example of serial to parallel conversion 
+of data. For a given range of clock cycles—indexed by the bitcount variable—the current value 
+on the serial data port is interpreted as one of the bits of a multi-bit signal. After all the bits have 
+been red sequentially, they are simultaneously presented on a bus of multiple wires. As a result, 
+the entire converted signal is available to the rest of the system in one clock cycle. 
+All the tasks in the AC97 interface are referenced to a common time axis through the 
+bitcount variable which cyclically counts from 0 through 255. These 266 clock cycles correspond 
+to one “frame” in which one new data sample for both left and right channels can be received and 
+submitted. In addition to receiving and sending audio data, the interface has a command loop to 
+cycle through a sequence of commands on a frame-by-frame basis. As a result the user can adjust 
+the microphone and headphone volumes because these variables are internally updated in the 
+LM4500 chip frequently when the corresponding command is entered in the command loop. A 
+cycle through all the commands occurs on a millisecond time scale.  
+headphone 
+
+mic. 
+
+reset_sync 
+
+SDATA_IN 
+
+LM4500 
+
+SDATA_OUT 
+
+clk_12p288 
+
+SERIAL TO 
+PARALLEL 
+
+audio_in[15:0] 
+
+ 
+c
+n
+y
+s
+
+SYNCGEN 
+
++1 
+
+D 
+
+Q
+
+clk_12p288 
+
+bitcount[7:0] 
+
+micv_up/dn 
+
+outv_up/dn 
+
+COMMAND LOOP: 
+
+SDATA_OUT 
+
+command0 
+(e.g. mic volume) 
+
+(bitcount == 255) 
+
+command1 
+
+(bitcount == 255) 
+
+ 
+.
+.
+.
+
+commandN 
+
+(bitcount == 255) 
+
+C/L 
+
+MUX 
+
+PARALLEL 
+TO SERIAL 
+ 
+]
+0
+:
+7
+[
+t
+n
+u
+o
+c
+t
+i
+b
+
+audio_out[15:0] 
+
+Figure 5: Block diagram for AC97 audio interface
+
+
+clk 
+
+count 
+
+1 
+
+2 
+
+3 
+
+4 
+
+5 
+
+6 
+
+7 
+
+8 
+
+9 
+
+10 
+
+11 
+
+serial_in 
+
+parallel_out 
+
+4’bX 
+
+4’b1010 
+
+4’b0110 
+
+Figure 6: Example timing diagram illustrating serial to parallel conversion 
+
+2.3  Note synthesis 
+
+Shown in Figure 7 is the block diagram for the synthesizer. This module is best 
+understood by tracing the data path through the block diagram. The specified “music_note” is 
+mapped to a half period in terms of number of system clock cycles (which operates at a rate of 
+36.864MHz). This implementation is restricted to a discrete set of frequencies, but the very fast 
+system clock relative to the audio sample rate allows for very high precision in note specification. 
+An example of half period lengths can be found in Table 3for octave 5. 
+Next, a cyclic counter runs from 1 to the half period (returning to 1 thereafter). This 
+counted value provides phase information for the periodic wave form to be synthesized. In the 
+case of the simple square wave, this counting scheme was used to trigger the amplitude to reverse 
+it’s sign (in a 2’s complement number representation) twice during one period. 
+
+music_note[7:0] 
+
+pby2[15:0] 
+
+note 
+to 
+period 
+
+cyclic counter 
+
+pby2count = 1 
+
+phase FSM 
+
+phase 
+
+toggle 
+
+toggle
+
+toggle 
+
+pby2count = 2 
+
+ 
+.
+.
+.
+
+phase 
+
+pby2count = pby2 
+
+toggle = (pby2count == pby2) 
+
+phase 
+
+amplitude[15:0] 
+
+(~amplitude[15:0]) + 1 
+
+tone[15:0] 
+
+0 
+
+1 
+
+Figure 7: Synthesizer block diagram
+
+
+2.4  FFT and Note detection (MQ) 
+
+Shown in Figure 9 is the block diagram for the FFT and note detection subsystem. Once, 
+4096 consecutive audio samples are written to a block RAM, the data is read in a serial fashion to 
+an FFT module that will subsequently output evenly spaced discrete samples of the signal’s 
+Fourier transform. This behavior is illustrated in the state transition diagram of Figure 8. A length 
+of 4096 corresponds to roughly 85ms which is roughly four times the period length of the lowest 
+audio frequency we hope to observe. However, finite window length effects limit the ability to 
+unambiguously resolve a note to the third octave. Below the third octave, notes are spaced too 
+closely in frequency to be distinguished; only the octave can be extracted. However, real signals 
+like human vocals contain a rich set of harmonics in addition to the fundamental frequency, thus 
+the actual note (the k value in Figure 4) is inferred from a second, fourth, or eighth harmonic of 
+the note. As a result, the karaoke machine successfully detected notes in all eight octaves.  
+Another issue to that compromised frequency resolution was a strong DC component in 
+the signal due to built in offsets in the audio analog to digital converter. The strong DC 
+component would suppress the dynamic range for non-zero frequency spectrum values due to 
+finite precision arithmetic and it also introduced sinc-like ripples extending into higher parts of 
+the frequency spectrum. This problem was solved by using the sample of the dc component in the 
+spectrum to auto-zero the incoming data to the FFT module. This zero-mean data was also 
+instrumental for the VGA display of the voice waveform as shown in the screenshot of Figure 3. 
+With this setup, the singer’s note was determined from a simple maximum location 
+algorithm described by the state transition diagram in Figure 10. The fact that the data was output 
+in a serial fashion accommodated this approach very well. On the dot matrix display near the 
+pushbuttons of the lab kit, the inferred note is displayed along with the octave number side by 
+side with the correct note. Using this dot matrix display, the user can tune to a desired note and 
+octave.  
+
+FFT control FSM 
+
+load 
+
+(count == 4095) 
+
+(count == 4095) 
+
+load 
+
+count is used as memory address 
+
+en48k is used as write enable during load_bar 
+
+Figure 8: FFT conrol FSM 
+
+load 
+
+count = 0 
+
+count = 1 
+
+ 
+.
+.
+.
+
+count = 4095 
+
+(transition every clock edge) 
+
+load 
+
+count = 0 
+
+en48k 
+
+count = 1 
+
+en48k 
+
+en48k 
+
+ 
+.
+.
+.
+
+count = 4095
+
+xk_re[15:0] 
+
+xk_im[15:0] 
+
+SQUARE 
+
+SUM 
+& 
+
+FFT 
+
+xk_index[11:0] 
+
+done 
+
+dv 
+
+sk[31:0]
+
+ 
+]
+0
+:
+5
+1
+[
+e
+r
+_
+n
+x
+
+t
+r
+a
+t
+s
+
+ 
+]
+0
+:
+1
+1
+[
+x
+e
+d
+n
+i
+_
+n
+x
+
+singer_note[7:0] 
+
+SPECTRUM 
+
+FSM 
+
+fft_out[6:0] 
+
+fft_disp 
+
+offset[15:0] 
+
+CONTROL 
+
+FSM 
+
+data_out[15:0] 
+
+en48k 
+
+addr[11:0] 
+
+RAM 
+
+en48k 
+
+voice[15:0] 
+
+Figure 9: FFT Block diagram
+
+
+spectrum FSM 
+
+done (FFT) 
+
+idle 
+
+idle 
+
+!dv 
+
+!dv 
+
+kmax = 0 
+
+sk_max = 0 
+
+new 
+
+new 
+
+(xk_index = 2047)
+
+kmax = xk_index1 
+
+sk_max = sk_max1 
+
+new 
+
+new 
+
+ 
+.
+.
+.
+
+ 
+.
+.
+.
+
+new = (sk > skmax) 
+
+Figure 10: Spectrum processing FSM 
+
+3  Music reading and Comparison display (ZZ) 
+
+3.1  Pulsify 
+
+This module takes an input and converts the positive edge of the input signal into a pulse.  
+It is triggered on the posedge of the global clock.  The module will delay and invert the signal 
+into another register.  The actual output is the registered value of the actual signal ANDed with 
+the delayed signal.  Registering the output is important because it indicates to the music reader 
+whether it needs to switch states. 
+
+3.2  Divider 
+
+This module takes a 2-bit tempo input and a pause_d input from the music reader.  The 
+tempo input selects the duration every time the user resets the system.  This module counts using 
+the 36.8 mHZ clock signals and outputs an enable pulse based on the tempo.  (Table 4:  Clock 
+cycles corresponding to tempo)  This enable signal activates the music reader FSM to update a 
+new music note to the display and synthesizer modules and a new address to the block ROM.  
+Also the music reader sends a pause_d input.  If that signal is low, the divider will function as 
+described above.  However, if the signal is high, the divider will hold the current count value and 
+only resume counting when pause_d is deactivated. 
+
+Table 4:  Clock cycles corresponding to tempo 
+Tempo 
+Largo 
+Andante 
+Moderato 
+Allegro 
+
+# clock cycles 
+9216000 
+6144000 
+4608000 
+3686400 
+
+3.3  Music Reader Finite State Machine 
+
+The Music Reader takes the debounced rewind, fast forward signals and the pulsified 
+startmr and pause_p user inputs.  From the block ROM, it receives an 8-bit data corresponding to 
+a note in the song.  The outputs are the pause_d signal to the divider module, the 12 bit address 
+counter to the block ROM and the lower four bits of the data, the music_note.  The measure is the 
+upper 8 bits of the address.  This is because one measure is a whole note for the songs 
+implemented so the lower 4 bits are omitted. 
+At reset, the state is initialized to IDLE and the address is offset based on the song_sel 
+value.  Also the output pause_d and music_note is zeroed.  Otherwise, at every clock cycle, the 
+state is updated and the pausing condition is checked.  If the state is in PAUSE, then the input to 
+the divider is high.  When the divider sends an enable signal, the address is also updated.  
+However, if the new address will be outside of memory, the old address is maintained.  
+Music_note registers the current value of the lower 4 bits of data. 
+The FSM is implemented as a Moore machine and has a total of 7 states.  At restart, the 
+state is in IDLE and the increment is 0.  The table shows the output signals corresponding to the 
+states.  (Table 5 : Outputs for FSM states)  The state evolution is also outlined below. (Figure 11: 
+State transition diagram for music reader) 
+
+Table 5 : Outputs for FSM states 
+pause_d 
+Increment 
+State 
+Parameter 
+0 
+0 
+0 
+IDLE 
+0 
+1 
+1 
+PLAY 
+1 
+0 
+2 
+PAUSE 
+0 
+-4 
+REWIND 
+3 
+0 
+4 
+4 
+FFORWARD 
+0 
+0 
+5 
+ENDSONG 
+0 
+0 
+BEGSONG 
+6 
+The BEGSONG and ENGSONG states exist since the user cannot fast forward or rewind past a 
+song.  However, the user can still rewind from the end of the song and continue normal operation 
+from wherever the location the song rewound to.  The case for the beginning of a song is similar. 
+
+startmr=0 
+
+Idle 
+
+incr=0 
+
+starmr=1 
+
+rewind=0 
+
+rewind=1 
+
+EndSong 
+
+incr=0 
+
+music_note=1101 
+
+pause_p=0 
+& rewind=0 & fforward=0 
+
+music_note=1101 
+
+rewind=1 
+
+rewind=1 
+
+Rewind 
+
+rewind=0 
+
+incr=-4 
+
+Play 
+
+incr=1 
+
+fforward=0 
+
+fforward=1 
+
+fforward=1 
+
+Fforward 
+
+pause_p=1 
+
+startmr=1 
+
+incr=4 
+
+music_note=1110 
+
+Pause 
+
+incr=0 
+
+rewind=1 
+
+forward=1 
+
+startmr=1 
+
+BegSong 
+
+incr=0 
+
+startmr=0 
+
+fforward=1 
+
+forward=0 & startmr=0 
+
+Figure 11: State transition diagram for music reader 
+
+3.4  Video Display 
+
+The display employs the 600x800 VGA timing scheme.  This module instantiates all of the 
+submodules described below and feeds them the correct inputs.  The inputs into this module are 
+pixel count, line count both 11 bits, music_note and singer_note, the copy_internal, and new_m, 
+new_s, new_f which indicates new data, voice and fft_out inputs.  Measure indicates which 
+measure of the song is playing and song_sel indicates which song is playing.  Graphs for music 
+and singer are drawn using the appropriate update, copy and data signals.  Also the fft data inputs 
+are inputted to the draw fft module.  Finally music_note, singer_note, measure, and song_sel 
+choose which words are displayed.  All of the RGB outputs from each component or ORed with 
+each other to provide the final VGA outputs.  (Figure 12:  Display block diagram) 
+
+)
+m
+(
+ 
+x
+_
+l
+
+ 
+)
+m
+(
+ 
+y
+_
+l
+
+d_music 
+
+new_m 
+
+copy 
+
+tone [15:9] 
+
+)
+s
+(
+x
+_
+l
+
+ 
+)
+s
+(
+y
+_
+l
+
+new_s 
+
+copy 
+
+d_singer 
+
+)
+f
+voice [15:9] 
+(
+x
+_
+l
+
+new_f 
+
+ 
+)
+f
+(
+x
+_
+l
+
+d_fft 
+
+Display 
+
+rgb_m [23:0] 
+
+rgb_s [23:0] 
+
+rgb_f [23:0] 
+
+RGB [23:0] 
+
+fft_out [8:2] 
+
+rgb_fr [23:0] 
+
+x
+_
+f
+
+ 
+y
+_
+f
+
+Frame 
+
+song_sel [1:0] 
+
+rgb [23:0] 
+
+measure [7:0] 
+
+Text Display 
+
+music_note [3:0] 
+
+singer_note [3:0] 
+
+k
+c
+o
+l
+c
+
+]
+0
+:
+9
+[
+ 
+t
+n
+u
+o
+c
+_
+p
+
+]
+0
+:
+9
+[
+ 
+t
+n
+u
+o
+c
+_
+l
+
+To All 
+
+ 
+t
+e
+s
+e
+r
+
+Figure 12:  Display block diagram 
+
+Alphanumeric Display 
+This project also uses an alphanumeric display on the VGA.  Existing code from 
+the Fall 2005 6.111 class was consulted and used.  To output the key that the singer and 
+the song are producing, a case statement comparing the input with the encoding of a 
+particular key is used.  To display the song title and artist, a case statement uses the 
+song_sel input to output the corresponding song.  Finally, a similar case statement is used 
+to output the lyrics based on the value of the measure input. 
+
+Frame 
+
+This module is a modified version of the prior rectangle module.  Instead of 
+drawing a filled rectangle, this draws the outer frame of the rectangle.  The inputs are 
+pixel count, line count, the top left coordinates of the frame, and the width and height of 
+the frame which are 11 bits.  The module outputs the corresponding RGB values.  At 
+every pixel and line count, the module first determines if the pixel count is at the left or 
+right edge of the frame and within the height of the frame.  If not, then it determines 
+whether the line count is at the top or bottom edge and the pixel count is within the width.  
+If either of the conditions is true, a white pixel is outputted (all 1s).  Otherwise, the output 
+is black (all 0s). 
+
+Draw Graph 
+
+Both the music and singer inputs are displayed as a waveform.  This module takes 
+pixel count, line count, and top left coordinates of the graph, which are all 11 bit inputs.  
+The data input is 7 bits and is updated every 48 kHz.  When the update signal is high the 
+data is written into an array.  When the copy_internal signal is high, it copies all of the 
+400 stored data into a backup array.  (Figure 13:  Draw Graph block diagram) 
+
+[10:0] 
+t
+n
+u
+o
+c
+p
+
+ 
+t
+n
+u
+o
+c
+l
+
+x
+_
+l
+
+ 
+y
+_
+l
+
+new 
+
+copy 
+
+[6:0] 
+
+Draw Graph 
+
+rgb [23:0]
+
+Figure 13:  Draw Graph block diagram 
+
+There is a sequential block where the write pointer points to the position in the 
+array that the next data will be written into.  The read pointer points to the most recent 
+data entry.  If the update signal is high, the data is written and the write and read pointer 
+is incremented.  However if the copy internal signal is high, the entire array and the write 
+and read pointer values are copied.  This is used to latch the data once per frame so that 
+the data will not change while the display is still drawing. 
+The combinational block determines the RGB values.  It then uses the pixel count 
+and matches it with the appropriate data value using the read pointer. 
+
+Draw FFT 
+
+The FFT module implements a similar idea.  The module also takes pixel count, 
+line count, and top left coordinates of the graph which are all 11 bit inputs.  The data 
+input is 7 bits and is written into the array when the update signal is high.  The RGB 
+outputs are then calculated. (Figure 14:  Draw FFT block diagram) 
+
+[10:0] 
+t
+n
+u
+o
+c
+p
+
+y
+_
+l
+
+ 
+t
+n
+u
+o
+c
+l
+
+x
+_
+l
+
+new 
+
+[6:0] 
+
+Draw FFT 
+
+rgb [23:0]
+
+Figure 14:  Draw FFT block diagram 
+
+The sequential block also updates the read and write pointer and writes the new data 
+into the arrays.  However, only 200 data samples are stored.  The component that 
+
+designates the RGB values is programmed in combinational logic.  To allow four pixels 
+per data, the relative index of the data is computed by shifting the output of pcount-l_x to 
+the right by 2.  Also, since the sequence of the FFT data is reversed as high frequency is 
+most recent, the relative index is instead added to the write pointer.  Finally, the output is 
+white only if the pixel is below the data and above the bottom edge. 
+
+4  Testing and Debugging 
+
+There were many tests to ensure the proper function of these modules.  For the music 
+reading section, modelsim was used to ensure the proper operation of the divider, pulse 
+and music reader FSM modules.  The pulsify module was first tested because it was a 
+simpler module.  As shown below, pause_p is high for one cycle if the input transitions 
+from low-> high.  The delayed and inverted intermediate signal is displayed as well to 
+ensure proper operation. (Figure 15:  Pulsify module simulation waveform) The FSM 
+caused some trouble because the address would not increment initially.  The states were 
+used as outputs to debug the FSM module and the error was found.  The following is an 
+example of operation of the FSM and a pause pulse input to the system.  The state goes 
+into the pause (2) and pause_d to the divider is lowered.  (Figure 16:  FSM simulation 
+waveform demonstrating pause state)  Afterwards, all of the modules were integrated and 
+the address was outputted onto an LED display.  After the address bits transitioned 
+correctly, I added the data output from the ROM.   
+
+Figure 15:  Pulsify module simulation waveform 
+
+Figure 16:  FSM simulation waveform demonstrating pause state 
+
+However the display module was tested visually with the VGA screen output.  
+The first step was to build a module that stored input data into an array and displayed the 
+array according to proper indexes into a line on the screen.  However, the negative data 
+would not display correctly so the decision was made so that all input data were positive 
+numbers.  Thus a buffer variable was added to convert the signed numbers into the 
+unsigned numbers needed for the display.  Once this was achieved, the FFT display was a 
+modified version where the frequency axis was flipped due to the order of the input data.  
+Additionally, each data corresponded to 4 pixels to have a clearer display. 
+The character display was also tested visually.  The notes were compared to the ones 
+displayed on the FPGA to ensure accuracy.  The different songs were selected and the 
+correct titles and artists displayed.  In addition, when the song select switches were 
+changed during singing, the title and artist still remained the same as expected.  Finally 
+the lyrics were tested by making sure they matched with the sheet music. 
+
+5  Conclusion 
+
+This project lends itself well to the real world.  There may be many people who are 
+unaware of how well they sing.  With this new system, people will find objective ways to 
+measure whether or not they are on tune with a song.  Additionally, the visual displays 
+allow the user to adjust their pitch and eventually perfect their singing talents. 
+One of the most challenging parts of this project was the design aspect.  Because 
+there were no basic block diagrams to follow, all aspects of digital design had to be 
+considered.  For example, since the A/D converter had an internal clock, to have the rest 
+of the system compatible with that clock, the 36.864 MHz clock was used.  However this 
+may pose a slight problem for the VGA because the clock rate for 800x600 is 38 MHz.  
+Once the clock rate was decided, the next challenge was how to approach the modules.  
+Masood implemented a basic backbone structure for his components while Zhongying 
+built the music reader first and then worked on the visual display.  However, both 
+approaches were successful because of the division of the modules. 
+All of the goals detailed in the proposal have been met.  There were additional 
+features such as the testing mode and the lyrics for the song that were added.  However, if 
+given more time, the system could still be improved.  For example, a score could be 
+displayed at the end of a song to reflect the singer’s ability to stay on pitch. 
+One of the greatest lessons learned from the final project was the importance of 
+modular designs.  The visual display could be implemented without actual data; so long 
+as the input data satisfied the requirements for that block.  Each of the main blocks could 
+function and be tested independently allowing a great reduction in debugging the 
+modules.  Overall this project gave insight into designing a complex system which could 
+be divided and tested separately.  As a result, the integration portion was successful due 
+to well-defined input and output constraints. 
+
+

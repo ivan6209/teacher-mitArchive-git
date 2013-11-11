@@ -1,0 +1,570 @@
+Lecture  6:  9/24/2003 
+
+6.854   Advanced   Algorithms  
+Lecturer:  Erik  Demaine, David  Karger 
+Scribes:  Alexandr  Andoni 
+
+Maximum   Flows  
+
+6.1   The   Maximum   Flow   Problem  
+
+In  this  section we deﬁne  a  ﬂow network and  setup  the  problem we are  trying  to  solve  in  this  lecture: 
+the  maximum  ﬂow  problem. 
+
+Deﬁnition   1   A network  is  a  directed  graph  G  = (V , E ) with a source  vertex  s  ∈ V  and a  sink  vertex 
+t  ∈  V .  Each  edge  e  = (v ,   w)  from  v  to   w  has  a  deﬁned  capacity,  denoted  by  u(e)  or  u(v ,   w). It  is  
+useful  to  also  deﬁne  capacity  for  any  pair  of  vertices  (v ,   w), with  u(v ,   w) = 0  for  any  pair  (v ,   w)  (cid:2)∈ E . 
+Let  m  =  |E |  and  n  =  |V |  be  the  number  of edges  and  vertices  in  the  graph,  respectively. 
+
+s 
+
+2 
+
+1 
+
+1 
+
+1 
+
+1 
+
+2 
+
+2 
+
+1 
+
+t 
+
+Figure  6.1:  An  example  of  a  network  with  4  vertices  and  6  edges.  The  capacities  of  the  edges  are 
+shown on the  edges. 
+
+In  a  network  ﬂow  problem,  we  assign  a  ﬂow   to  each  edge.  There  are  two  ways  of  deﬁning  a  ﬂow: 
+raw  (or  gross)  ﬂow  and  net  ﬂow. 
+
+•  Conservation: 
+
+Deﬁnition   2   Raw  ﬂow  is  a  function  r(v ,   w) : V 2  → �
+� 
+� 
+r(w,   v)  − 
+r(v ,   w)  = 0,  for  al l  v  ∈ V  \ {s,   t}. 
+� 
+� 
+��
+��
+�
+�
+w∈V
+w∈V 
+outgoing  ﬂow 
+incoming  ﬂow 
+•  Capacity   constraint:   0 ≤ r(v ,   w) ≤ u(v ,   w). 
+
+  that  satisﬁes  the  fol lowing  properties: 
+
+6-1 
+
+Lecture   6:   9/24/2003  
+
+6-2 
+
+For  every  vertex  v  except  the  source  or  sink,  conservation  requires  that  the  total  ﬂow  entering  v 
+must  equal  the  total  ﬂow  leaving  v .  The  capacity  constraint  requires  that  the  ﬂow  along  any  edge 
+be  positive  and  less  than  the  capacity  of  that  edge.  We  say  that  a  ﬂow  f  is  feasible  if  satisﬁes  these 
+two  conditions. 
+
+s 
+
+1 
+
+1 
+
+1 
+
+1 
+
+2 
+
+2 
+
+t 
+
+Figure  6.2:  An  example  of  a  raw  ﬂow  for  the  network  above.  The  ﬂow  has  a  value  of  2. 
+
+  that   satisﬁes   the   fol lowing   conditions:  
+
+With  a  raw  ﬂow,  we  can  have  ﬂows  going  both  from  v  to  w  and  ﬂow  going  from  w  to  v . In  a  net 
+ﬂow  formulation  however, we  only  keep  track  of  the  diﬀerence  of  these  two  ﬂows. 
+Deﬁnition   3   Net  ﬂow  is  a  function  f (v ,   w) : V 2  → �
+•  Skew  symmetry:  f (v ,   w) = −f (w,   v). 
+� 
+•  Conservation: 
+w∈V  f (v ,   w) = 0,  for  al l  v  ∈ V  \ {s,   t}. 
+•  Capacity   constraint:   f (v ,   w) ≤ u(v ,   w)  for  al l  v ,   w   ∈ V . 
+A raw  ﬂow  r(v ,   w)  can  be  converted  into  a  net  ﬂow  via  the  formula  f (v ,   w) = r(v ,   w) − r(w,   v).  For 
+example,  if  we  have  7  units  of  ﬂow  from  v  to  w  and  4  units  of  ﬂow  from  w  to  v ,  then  the  net  ﬂow 
+from v  to w  is f (v ,   w) = 3.  Skew  symmetry follows directly  from this  formula  relating raw ﬂows and 
+net ﬂows.  Because we can convert from raw ﬂows to  net ﬂows,  for  the  rest of  the  lecture we consider 
+only  net  ﬂow  problems. 
+
+Although  skew  symmetry  relates  f (v ,   w) and  f (w,   v),  it  is  important  to  note  that  capacity  is  still 
+directional  for  a  net  ﬂow  problem.  The  capacity  in  one  direction  u(v ,   w)  is  independent  of  the 
+� 
+capacity  in  the  reverse  direction,  u(w,   v). 
+f (v ,   w) by  f (v ,   S ) or  −f (S, v).
+To  simplify  notation  later  in  the  lecture,  we  denote 
+w∈S 
+� 
+Deﬁnition   4   The  value  of  a  ﬂow  f  is   deﬁned as   |f | = 
+v∈V 
+The  value  of  a  ﬂow  is  the  sum  of  the  ﬂow  on  all  edges  leaving  the  source  s.  We  later  show  that  this 
+is  equivalent  to  the  sum  of  all  the  ﬂow  going  into  the  sink  t.  The  value  of  a  ﬂow  represents  how 
+much we can transport from the  source to  the sink.  Our goal in this  lecture  is  to solve the maximum 
+ﬂow  problem. 
+
+f (s,   v). 
+
+Deﬁnition   5   Maximum  ﬂow  problem:  Given  a  network  G  = (V , E ),  ﬁnd a feasible  ﬂow  f  with 
+maximum   value.  
+
+Lecture   6:   9/24/2003	
+
+6-3 
+
+6.2  Flow  Decomposition  and  Cuts 
+
+In  this  section, we  show  that  any  feasible ﬂow  can  be  decomposed  into  paths  from  the  source  to  the 
+sink  and  cycles.  We  use  this  fact  to  derive  an  upper  bound  on  the  maximum  ﬂow  value  in  terms  of 
+cuts  of  the  network. 
+
+Lemma   1   (Flow  decomposition).  We  can  decompose  any  feasible  ﬂow  f  on  a  network  G  into  at 
+most   m  cycles  and  s-t  paths. 
+
+Proof:  The  following  algorithm  extracts  the m  paths  and  cycles. 
+
+1.  Find  a  path  with  positive  ﬂow  from  the  node  s  to  node  t.  (If  the  ﬂow  is  non-zero, 
+there  exists  at  least  one  such  path.) 
+2.	 Anti-augment  the  ﬂow  on  this  path—that  is,  reduce  the  ﬂow  in  the  path  until  the 
+ﬂow  on  some  edge  becomes  0. 
+3.  Add  this  path  as  an  element  of  the  ﬂow  decomposition. 
+4.  Continue  these  operations  until  there  are  no  more  paths  from  s  to  t  with  positive 
+ﬂow. 
+5.  If  there  are  still  some  edges  with  non-zero  ﬂow,  the  remaining  ﬂow  can  be  decom-
+posed  into  cycles.  Find  a  cycle  in  the  following  way:  take  any  edge  with  non-zero 
+ﬂow  and  follow  an  outgoing  edge  with  non-zero  ﬂow  until  a  cycle  is  found. 
+6.	 Anti-augment  on  the  cycle  found. 
+7.  Add  the  cycle  as  an  element  of  the  ﬂow  decomposition. 
+8.	 Continue  ﬁnding  cycles  until  there  are  no more  edges  with  non-zero  ﬂow. 
+
+Each time we  anti-augment a path  or a  cycle, we zero out  the  ﬂow on  some edge.  There are at most 
+m  anti-augmentations,  and,  consequently, m  paths/cycles  in  the  ﬂow  decomposition. 
+
+In  a  network  ﬂow  problem,  it  is  useful  to  work with  a  cut  of  the  graph,  particularly  an  s-t   cut. 
+
+Deﬁnition   6   A cut  of  network  G  is   a   partition   of   the   vertices   V  into  2  groups:  S  and  S ¯ = V  \ S . 
+
+Deﬁnition   7   An   s-t   cut   is   a   cut   such   that   s  ∈ S  and  t  ∈ S¯ . 
+We  will  usually  represent  a  cut  as  the  pair  (S, S¯),  or  just  S .  We  generalize  the  concept  of  the  net 
+ﬂow  and  the  capacity  of  an  edge  to  deﬁne  the  net  ﬂow  and  capacity  of  a  cut. 
+�  � 
+v∈S
+w∈ ¯S 
+�  � 
+w∈ 
+v∈S
+¯S 
+
+Deﬁnition   8   The  net  ﬂow  along  cut  (S, S¯)  is   deﬁned as   f (S ) = 
+
+f (v ,   w). 
+
+Deﬁnition   9   The  value  (or  capacity)  of  a  cut  is  deﬁned  as  u(S ) = 
+
+u v ,   w .
+(
+)
+
+Lecture   6:   9/24/2003  
+
+6-4 
+
+� 
+
+s 
+
+�
+� 
+
+t 
+
+Figure  6.3:  An  illustration  of  the  s-t  cut.  s  ∈ S  and  t  ∈ S¯.  There might  be  both  edges  from  S  to  S 
+¯
+and  from  S ¯  to  S . 
+
+s 
+
+2 
+
+1 
+
+1 
+
+1 
+
+1 
+
+2 
+
+2 
+
+1 
+
+t 
+
+Figure  6.4:  An  example  of  a  cut  in  a  network.  The  s-t  cut  is  represented  by  a  dashed  line.  The 
+value  (capacity)  of  the  cut  is  equal  to  3.  This  is  one  of  the  minimum  s-t  cuts. 
+
+In  summary,  the  ﬂow  (or  capacity) of  a  cut  is  the  sum  of  all ﬂows  (capacities)  of  edges  that  go  from 
+¯ 
+S  to  S .  Note  that  direction  is  important  in  these  deﬁnitions.  Flow  or  capacity  along  an  edge  in  the 
+reverse  direction,  from  w  ∈ S ¯  to  v  ∈ S , does not  count. 
+Working  with  cuts  is  useful  because  of  the  following  lemma: 
+Lemma   2   Given  a  ﬂow  f ,  for  any  cut  S ,  f (S ) =  |f |.   In   other   words,   al l   s-t   cuts   carry   the   same  
+ﬂow:  the  value  of  the  ﬂow  f . 
+
+Proof:  We can use Lemma 1 to prove this  statement directly.  We decompose the ﬂow into s-t paths 
+and  cycles.  Each  s-t  path  must  end  up  in  S¯,  so  it  must  go  from  set  S  to  S  one  more  time  than  it 
+¯
+goes  from S ¯  to S .  Therefore,  an  s-t path  carring x  ﬂow  along  that path  contributes exactly x  to  the 
+value  of  the  cut.  A  cycle  must  go  from  S  to  S ¯  the  same  number  of  times  as  it  goes  from  S  to  S , 
+¯
+contributing  0  to  the  value  of  the  cut.  Therefore  the  total  value  of  the  cut  S  is  equal  to  the  sum  of 
+the  ﬂows  along  every  s-t  path,  which  is  equal  to  |f |. 
+Alternatively,  we  can  prove  the  lemma  by  induction  on  the  size  of  the  sets  S . For  S  = s, the  claim 
+is  true.  Now,  suppose  we  move  one  vertex  v  from  S ¯  to  S . The  value  f (S )  changes  in  the  following 
+way: 
+•  f (S )  increases  by  f (v , S¯). 
+•  f (S )  decreases  by  f (S,   v) = −f (v ,   S ). 
+
+Lecture   6:   9/24/2003  
+
+6-5 
+
+In  conclusion,  the  total  change  in  the  value  of  f (S )  after  moving  the  vertex  v  from  S  to  S ¯  is  equal 
+to  f (v , S¯) + f (v ,   S ) = f (v ,   V ) = 0  (by  conservation  of  ﬂow). 
+
+For  a  ﬂow  network,  we  deﬁne  a  minimum   cut   to  be  a  cut  of  the  graph  with  minimum  capacity. 
+Then,  Lemma  3  gives  us  an  upper  bound  on  the  value  of  any  ﬂow. 
+
+Lemma   3   If  f  is  a  feasible  ﬂow,  then  |f | ≤ u(S )  for  any  cut  S . 
+Proof:  For  all  edges  e,  f (e) ≤ u(e),  so  f (S ) ≤ u(S )  (the  ﬂow across any cut S  is not more  than  the 
+capacity  of  the  cut).  By  Lemma  2,  |f | = f (S ),  so  |f | ≤ u(S )  for  any  cut  S . 
+
+If  we  pick  S  to  be  a  minimum  cut,  then  we  get  an  upper  bound  on  the  maximum  ﬂow  value. 
+
+6.3  Max-Flow  Min-Cut  Theorem 
+
+In  this  section,  we  show  that  the  upper  bound  on  the  maximum  ﬂow  given  by  Lemma  3  is  exact. 
+This  is  the  max-ﬂow min-cut  theorem. 
+
+To  prove  the  theorem,  we  introduce  the  concepts  of  a  residual  network  and  an  augmenting  path. 
+
+Deﬁnition   10   Let  f  be  a  feasible  ﬂow  on  a  network  G.  The  corresponding  residual  network,  denoted 
+Gf ,  is  a  network  that  has  the  same  vertices  as  the  network  G,  but  has  edges  with capacities  uf (v ,   w) = 
+u(v ,   w) − f (v ,   w).   Only   edges   with   non-zero   capacity,   uf (v ,   w) >  0,  are  included  in  Gf  . 
+Note  that  the  feasibility  conditions  imply  that  uf (v ,   w) ≥ 0 and  uf (v ,   w) ≤ u(v ,   w) + u(w,   v).  This 
+means  all  capacities  in  the  residual  network will  be  non-negative. 
+
+Deﬁnition   11   An  augmenting  path  is  a  directed  path  from  the  node  s  to   node   t  in  the  residual 
+network   Gf . 
+
+1 
+
+s 
+
+1 
+
+1 
+
+1 
+
+2 
+
+2 
+
+2 
+
+t 
+
+1 
+
+Figure 6.5:  An example of a  residual network.  This residual network corresponds to  the network de-
+picted in Figure 6.1 and the ﬂow in Figure 6.2.  The dashed line corresponds to a possible augmenting 
+path. 
+
+Lecture   6:   9/24/2003  
+
+6-6 
+
+Note  that  if  we  have  an  augmenting  path  in  Gf ,  then  this  means  we  can  push  more 
+ﬂow  along  such  a  path  in  the  original  network  G. 
+To  be more precise, 
+if  we have 
+an  augmenting  path  (s, v1 , v2 , . . . vk , t),  the  maximum  ﬂow  we  can  push  along  that  path  is 
+min{uf (s, v1 ), uf (v1 , v2 ), uf (v2 , v3 ), . . . uf (vk−1 , vk ), uf (vk , t)}.  Therefore, for a given network G and 
+ﬂow  f ,  if  there  exists  an  augmenting  path  in  Gf ,  then  the  ﬂow  f  is  not  a maximum  ﬂow. 
+(cid:2)  still 
+(cid:2)  is  a  feasible ﬂow  in Gf , then  f + f
+(cid:2)  is  a  feasible  ﬂow  in G.  The  ﬂow  f + f
+More  generally,  if  f
+(cid:2)  is  feasible  because we  can 
+satisﬁes  conservation because  ﬂow  conservation  is  linear.  The  ﬂow  f + f
+(cid:2) (e) ≤ uf (e) = u(e) − f (e) to  get  f
+(cid:2) (e) + f (e) ≤ u(e).  Conversely,  if  f
+(cid:2)  is 
+rearrange  the  inequality  f
+a feasible  ﬂow  in  G,  then  the  ﬂow  f − f
+(cid:2)  is  a  feasible  in  Gf . 
+Using  residual  networks  and  augmenting  paths,  we  can  state  and  prove  the max-ﬂow min-cut  theo-
+rem. 
+
+Theorem  1  (Max-ﬂow  min-cut  theorem).  In  a  ﬂow  network  G,  the  fol lowing  conditions  are  equiv­
+alent: 
+
+1.  A  ﬂow  f  is  a  maximum  ﬂow. 
+
+2.  The  residual  network  Gf  has  no  augmenting  paths. 
+3.  |f | = u(S )  for  some  cut  S . 
+
+These  conditions  imply  that  the  value  of  the  maximum  ﬂow  is  equal  to  the  value  of  the  minimum  s-t 
+cut:  maxf  |f | = minS  u(S ), where  f  is  a  ﬂow  and  S  is  as-t  cut. 
+Proof:  We  show  that  each  condition  implies  the  other  two. 
+
+•	 1  ⇒  2:  If  there  is  an  augmenting  path  in  Gf  ,  then  we  previously  argued  that  we  can  push 
+additional  ﬂow  along  that  path,  so  f  was  not  a maximum  ﬂow.  1 ⇒ 2 is  the  contrapositive  of 
+this  statement. 
+•	 2 ⇒ 3: 
+If  the  residual  network  Gf  has  no  augmenting  paths,  s  and  t  must  be  disconnected.  Let 
+S = {vertices  reachable  from  s  in  Gf }. Since  t  is  not  reachable,  the  set  S  describes  a  s-t  cut. 
+
+� 
+
+s 
+
+t 
+
+Figure 6.6:  Network Gf  is disconnected.  The  set S contains all the  nodes  that are  reachable from s. 
+
+By  construction,  all  edges  (v , w)  straddling  the  cut  have  residual  capacity  0.  This  means  in 
+the  original  network G, these  edges  have  f (v , w) = u(v , w).  Therefore,  |f | = f (S ) = u(S ). 
+
+Lecture   6:   9/24/2003	
+
+6-7 
+
+•	 3  ⇒  1:  If  for  some  cut  S ,  |f |  =  u(S ),  we  know  f  must  be  a  maximum  ﬂow.  Otherwise,  we 
+would  have  a  ﬂow  g with  |g | > u(S ),  contradicting  Lemma  3. 
+
+From  (1)  and  (3),  we  know  that  the  maximum  ﬂow  can  not  be  less  than  the  value  of  the  minimum 
+cut,  because  for  some  S ,  |f | = u(S ) and  u(S )  is  at  least  as  big  as  the  minimum  cut  value.  Lemma 
+3  tells  us  that  the  maximum  ﬂow  can  not  be  greater  than  the  minimum  cut  value.  Therefore,  the 
+maximum  ﬂow  value  and  the  minimum  cut  value  are  the  same. 
+
+6.4  Ford-Fulkerson  Algorithm 
+
+The  Ford-Fulkerson  algorithm  solves  the  problem  of  ﬁnding  a  maximum  ﬂow  for  a  given  network. 
+The  description  of  the  algorithm  is  as  follows: 
+
+1.  Start  with  f (v , w) = 0. 
+2.  Find  an  augmenting  path  from  s  to  t  (using,  for  example,  a  depth  ﬁrst  search  or 
+similar  algorithms). 
+3.	 Use  the  augmenting  path  found  in  the  previous  step  to  increase  the  ﬂow. 
+4.  Repeat  until  there  are  no more  augmenting  paths. 
+
+If  the  capacities  are  all  integers,  then  the  running  time  is  O(m|f |).  This  is  true  because  ﬁnding  an 
+augmenting  path  and  updating  the  ﬂow  takes O(m)  time,  and  every  augmenting  path we  ﬁnd must 
+increase  the  ﬂow  by  an  integer  that  is  at  least  1. 
+
+In  general,  if  we  have  integral  capacities,  then  our  solution  satisﬁes  an  integrality  property: there 
+exists  an  integral maximal ﬂow.  This happens  because  every augmenting path  increases ﬂows by  an 
+integer  amount. 
+
+Since  the  running  time  is  directly  proportional  to  the  value  of  the  maximal  ﬂow,  this  particular 
+algorithm  is  only  good  for  cases when  the  value  |f |  is  small.  For  example, when  all  capacities  are at 
+most 1, the maximum ﬂow |f | is at most n.  In general, the algorithm may be as bad as linear in unary 
+representation  of  the  input.  Figure  6.7  illustrates  a  bad  case  for  this  form  of  the  Ford-Fulkerson 
+algorithm. 
+
+We  describe  such  an  algorithm  as  being  pseudo-polynomial,  because  it  is  polynomial  in  terms  of 
+variables we  care  about  (but  not  necessarily  the  input). 
+
+If  the  capacities are  rational, then  it  can be  shown that  the  algorithm will ﬁnish.  It might, however, 
+require more  than O(m|f |)  time.  If  the  capacities are  real, the  algorithm might never ﬁnish,  or  even 
+converge  to  a  non-optimal  value. 
+
+If  we  setup  better  rules  for  selecting  the  augmentation  paths  however,  we  might  get  better  results. 
+Before  showing  some  improvements  to  the  Ford-Fulkerson  algorithm,  we  will  introduce  some  new 
+notions  on  the  running  time  of  algorithms. 
+
+Lecture   6:   9/24/2003  
+
+6-8 
+
+1 
+
+�
+
+��� 
+
+ 
+
+�
+
+��� 
+
+ 
+
+s 
+
+1
+
+1
+
+t 
+
+��� 
+�
+
+ 
+
+�
+
+���
+
+ 
+
+2 
+
+Figure 6.7:  An example  for which the Ford-Fulkerson,  in the  stated  form, might perform very badly. 
+The  algorithm  runs  slowly  if  at  each  step,  the  augmentation  path  is  either  s  →  1  →  2  →  t  or 
+s  → 2 → 1 → t  (shown with  dashed  lines).  At  an  augmentation,  the  ﬂow will  increase by  at most 2. 
+
+Deﬁnition   12   An  algorithm  is  psuedo-polynomial  if  it  is  polynomial  in  the  unary representation  of 
+the   input.  
+
+Deﬁnition   13   An  algorithm  is  weakly  polynomial  if  it  is  polynomial  in  the  binary representation  of 
+the   input.  
+
+Deﬁnition   14   An  algorithm  is  strongly  polynomial  if  it  is  polynomial  in  combinatorial  complexity 
+of  input.  (For  example,  in  the  case  of  max-ﬂow  problem,  the  algorithm  would  have  to  be  polynomial 
+in  n  and  m.) 
+
+6.4.1 
+
+Improvements  to  the  Ford-Fulkerson  Algorithm 
+
+The  are  at  least  two  possible  ideas  for  improving  the  Ford-Fulkerson  algorithm.  Both  of  the  im-
+provements  rely  on  a  better  choice  of  an  augmenting  path  (rather  than  a  random  selection  of  an 
+augmenting  path). 
+
+1.  Using  breadth-ﬁrst  search,  we  can  choose  shortest-length  augmenting  path.	 With  this  path-
+selection  rule,  the  number  of  augmentations  is  bounded  by  n  · m,  and  thus  the  running  time 
+of  the  algorithm  goes  down  to  O(nm2 ) time. 
+
+2.	 We  can  also  choose  the  maximum-capacity  augmenting  path:  the  augmenting  path  among 
+all  augmenting  paths  that  increases  the  ﬂow  the  most  (max-capacity  augmenting  path).  It  is 
+possible to ﬁnd  such a path  in O(m  log n) time using a modiﬁed Dijkstra’s algorithm (ignoring 
+the  cycles).  The  number  of  augmentations  will  be  at  most  m  ln |f | ≤ m  ln(nU   ),  where  U  = 
+max{u(v ,   w)} (for  integral  capacities). 
+
+In  this  lecture  we  prove  the  time  bound  for  the  second  improvement.  Consider  the  maximum  ﬂow 
+f  in  the  current  residual  network.  We  apply  the  ﬂow-decomposition  lemma,  Lemma  1  (discarding 
+the  cycles  because  they  do  not  modify  |f |).  There  are  at  most  m  paths  carrying  all  the  ﬂow,  so 
+there  must  be  at  least  one  path  carrying  at  least  |f |/m   ﬂow.  Therefore,  the  augmenting  path  with 
+
+Lecture   6:   9/24/2003	
+
+6-9 
+
+maximum  capacity  increases  the  ﬂow  in  the  original  network  by  at  least  |f |/m.  This  decreases  the 
+maximum possible  ﬂow  in  the  residual graph  from  |f |  to  (1 − 1/m)|f |  (remember,  the  smaller  is  the 
+maximum  possible  ﬂow  in  the  residual  graph,  the  greater  is  the  corresponding  ﬂow  in  the  original 
+graph). 
+We  need  to  decrease  the  ﬂow  |f |  by  a  factor  of  (1 − 1/m) about  m  ln |f |  times  before  we  decrease 
+the  max  ﬂow  in  the  residual  graph  to  1.  This  is  because 
+� 
+�
+�ln   |f |
+� 
+m  ln   |f | 
+|f |  1 − 
+1 
+e 
+
+≈ |f |
+
+1
+m
+
+≈ 1. 
+
+In one more step, the residual graph will have a maximum ﬂow of 0, meaning that the corresponding 
+ﬂow  in the  original graph is maximal.  Thus, we need O(m  ln |f |) augmentations.  Since one augmen-
+tation  step takes about O(m  log n)  time,  the  total  running  time  is O(m2  ln |f | · ln n).  This algorithm 
+is  weakly  polynomial,  but  not  strongly  polynomial. 
+
+6.4.2  Scaling  Algorithm 
+
+We can also  improve the  running  time of the Ford-Fulkerson algorithm by using a scaling algorithm. 
+The  idea  is  to  reduce  our  max  ﬂow  problem  to  the  simple  case,  where  all  edge  capacities  are  either 
+0 or 1. 
+
+The  scaling  idea,  described  by Gabow  in  1985  and  also  by  Dinic  in  1973,  is  as  follows: 
+
+1.	 Scale  the  problem  down  somehow  by  rounding  oﬀ  lower  order  bits. 
+
+2.	 Solve  the  rounded  problem. 
+
+3.  Scale the problem back up, add back the bits we rounded oﬀ, and ﬁx any errors in our solution. 
+
+In  the  speciﬁc  case  of  the  maximum  ﬂow  problem,  the  algorithm  is: 
+
+1.  Start with  all  capacities  in  the  graph  at  0. 
+
+2.  Shift  in  the  higher-order  bit  of  each  capacity.  Each  capacity  is  then  either  0  or  1. 
+
+3.	 Solve  this  maximum  ﬂow  problem. 
+
+4.	 Repeat  this  process  until  we  have  processed  all  remaining  bits. 
+
+This  description  of  the  algorithm  tells  us  how  to  scale down  the  problem.  However, we  also  need  to 
+describe  how  to  scale  our  algorithm  back  up  and  ﬁx  the  errors. 
+
+To  scale  back  up: 
+
+1.  Start  with  some  max  ﬂow  for  the  scaled-down  problem.	 Shift  the  bit  of  each  capacity  by  1, 
+doubling  all  the  capacities.  If  we  then  double  all  our  ﬂow  values,  we  still  have  a  maximum 
+ﬂow. 
+
+Lecture   6:   9/24/2003  
+
+6-10 
+
+2.  Increment  some  of  the  capacities.  This  restores  the  lower  order  bits  that  we  truncated. 	 Find 
+augmenting  paths  in  the  residual  network  to  re-maximize  the  ﬂow. 
+
+We  will  need  to  ﬁnd  at  most  m  augmenting  paths.  Before  we  scaled  our  problem  back  up,  we  had 
+solved  a  maximum  ﬂow  problem,  so  some  cut  in  the  residual  network  had  0  capacity.  Doubling  all 
+the  capacities  and  ﬂows  keeps  this  the  same.  When  we  increment  the  edges  however,  we  increase 
+the  cut  capacity  by  at  most  m:  once  for  each  edge.  Each  augmenting  path  we  ﬁnd  increases  the 
+ﬂow  by  at  least  1,  so  we  need  at  most m  augmenting  paths. 
+
+Each  augmenting  path  takes  at  most  O(m)  time  to  ﬁnd,  so  we  spend  O(m2 ) time  in each iteration 
+of  the  scaling  algorithm.  If  the  capacity  of  any  edge  is  at  most  U , which  is  an  O(lg U ) bit  number, 
+we  require  O(lg U )  iterations  of  the  scaling  algorithm. 
+
+Therefore  the  total  running  time  of  the  algorithm  is  O(m2  lg U ).  This  algorithm  is  also  a  weakly 
+polynomial  algorithm. 
+
+

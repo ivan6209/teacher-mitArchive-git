@@ -1,0 +1,652 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Today’s Topics 
+principles and concepts of system design 
+¾ modularity 
+
+¾ decoupling
+
+¾¾ information hiding
+information hiding
+
+a new notation 
+¾ module dependency diagram 
+case study: designing a stock quoter 
+¾ using interfaces to decouple modules 
+
+Decoupling and Interfaces 
+
+Rob Miller 
+Fall 2008 
+
+© Robert Miller 2008 
+
+© Robert Miller 2007 
+
+Quote Generation Problem 
+problem 
+¾ obtain stock quotes for some ticker symbols 
+¾ produce both RTF and HTML output 
+¾ put the ask price in bold if the change since open is ≥ ± 1%
+¾ put the ask price in bold if the change since open is ≥ ± 1% 
+
+Design Tasks 
+tasks, for each ticker symbol: 
+¾ download quote information from web site
+
+¾ parse to extract stock quotes
+
+¾¾ write to file in RTF or HTML format
+write to file in RTF or HTML format
+
+parsing 
+¾ minimize parsing by choosing a site with a simple format 
+¾ Yahoo offers stock quotes in comma-separated-values (CSV) format 
+example 
+¾ http://quote.yahoo.com/d/quotes.csv?s=aapl&f=noa
+
+¾¾ rreturns the string “APPLE INC”,130.75,125.20 
+
+eturns the string “APPLE INC” 130 75 125 20 
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+1 
+
+Downloading & Parsing 
+public class Quoter {
+
+private URL url;
+
+private String open, ask;
+
+private int change;
+
+
+why are the fields of 
+why are the fields of 
+Quoter private? 
+Quoter private?
+
+publiic Quoter (Striing symbol) throws MalformedURLExceptiion {
+
+url = new URL("http://quote.yahoo.com/d/quotes.csv?s=“
+
++symbol+"&f=noa");
+
+Quoter is a state machine. 
+Draw it.  What design 
+pattern does it use? 
+
+}
+
+public String getOpen () {return open;}
+
+public String getAsk () {return ask;}
+
+public int getChange () {return change;}
+
+public void obtainQuote () throws IOException {
+
+BufferedReader in = new BufferedReader(new 
+InputStreamReader(url.open..)); 
+St i 
+String csv = in.readLine();  
+
+i
+ dLi
+() 
+ 
+BufferedReader is also 
+BufferedReader is also 
+in.close();
+
+a state machine.  
+a state machine. 
+String[] fields = csv.split(“,”);
+
+Draw it.  What design 
+Draw it.  What design 
+open = fields[1];
+
+pattern does it use?
+pattern does it use? 
+ask = fields[2];
+
+change = (int)(100 *(Float.valueOf(ask)-Float.valueOf(open))
+
+/ Float.valueOf(open));
+
+© Robert Miller 2007
+
+
+} 
+
+}
+
+
+Design Option #1 
+just build two formatters that use Quoter 
+public class HTMLFormatter {
+
+private final Set<String> symbols = new HashSet<String> ();
+
+...
+
+public void
+throws IOException { 
+void generateOutput () 
+public 
+u
+generateO tput () throws 
+IOExcepti n {
+
+o
+PrintStream out = new PrintStream(new FileOutputStream (...)); 
+out.println("<html>"); 
+for (String symbol: symbols) { 
+Quoter q = new Quoter (symbol);
+
+q.obtainQuote();
+
+out.println(symbol + ": "
+
++ "<i>opened at</i> " + q.getOpen () 
++ "<i> and is currently trading at </i>"); 
+boolean bigChange = Math abs (q getChange()) >= 1;
+boolean bigChange  Math.abs (q.getChange()) >  1;
+
+if (bigChange) out.println("<b>");
+
+out.println(q.getAsk ());
+
+if (bigChange) out.println("</b>");
+
+out.println("<br>");
+
+
+How would the RTF 
+How would the RTF 
+version differ?  What ’s 
+version differ?  What ’s 
+undesirable about this 
+undesirable about this 
+choice?
+choice? 
+
+}
+
+out.close();
+
+
+}
+
+
+} 
+
+© Robert Miller 2007
+
+
+} 
+
+Modularity and Decoupling 
+modularity is essential for managing complexity 
+¾ system is divided into parts (modules) that can be handled separately and 
+recombined in other combinations 
+coupling
+coupling 
+¾ degree of dependence between parts of the system
+
+¾ an important measurement of modularity
+
+
+decoupling achieved so far 
+¾ the website (Yahoo) and its format (CSV) have been decoupled from the 
+rest of the system
+rest of the system 
+
+next step 
+¾ design the part of the system that generates the report
+
+¾ report can be either HTML or RTF
+
+© Robert Miller 2007 
+
+Design Option #2 
+build one formatter that takes a flag (RTF or HTML) 
+¾ tests flag to determine flow of control 
+
+public class Formatter { 
+p 
+Is this a wise 
+public enum Format { HTML, RTF }; 
+private final Format format; 
+way to test the 
+.. 
+format flag? 
+public void generateOutput () throws IOException { 
+PrintStream out = new PrintStream(new FileOutputStream (...)); 
+out.println(format == HTML ? "<html>“ : "{\\rtf1\\mac“); 
+for (String symbol: symbols) { 
+... 
+boolean bigChange = Math.abs (q.getChange()) >= 1; 
+g 
+g 
+(q g 
+g ()) 
+; 
+if (bigChange) out.println(format == HTML ? "<b>“ : "\\f\\b“); 
+out.println(q.getAsk ()); 
+if (bigChange) out.println(format == HTML ? "</b>“ : "\\f\\b0“); 
+out.println("<br>"); 
+} 
+... 
+
+What ’s undesirable about this choice?
+What ’s undesirable about this choice? 
+
+} 
+
+© Robert Miller 2007 
+
+2 
+
+A Better Solution 
+factor out responsibilities for report generation 
+¾ generator : knows how to put in bold, italics, etc . 
+¾ formatter : knows what to put in bold, italics, etc . 
+
+designing the generator 
+¾ make it a state machine! 
+¾ two versions, one RTF and one HTML 
+¾ but same interface 
+
+© Robert Miller 2007 
+
+Generator Machine
+key design idea
+(cid:190) develop generic interface for text formatting
+
+OPEN
+
+write,
+newline
+
+close
+
+PLAIN
+
+ROMAN
+
+toggleBold
+
+toggleBold
+
+toggleItalic
+
+toggleItalic
+
+CLOSED
+CLOSED
+
+BOLD
+BOLD
+
+ITALIC
+ITALIC
+
+© Robert Miller 2007
+
+A Principle 
+localize each design decision in exactly one place 
+¾ more crudely: “don’t repeat yourself ” 
+
+why?why? 
+¾ ready for change: if decision needs to change, there’s only one place 
+¾ ease of understanding: don’t have to think about the details of that decision 
+when working on the rest of the system 
+¾ safety from bugs: fewer places to change means less chance of omission 
+
+variations on the same idea
+variations on the same idea 
+¾ Information hiding: localizing design decision and protecting the rest of the 
+system from it 
+¾ Encapsulation: wrapping code up into a module that hides information 
+¾ Separation of concerns: responsibility for a feature is given to one module, 
+not spread across system 
+
+© Robert Miller 2007 
+
+A Generator 
+public class RTFGenerator implements Generator {
+
+private boolean italic;
+
+private boolean bold;
+
+private final String filename;
+
+private PrintStream stream;
+
+private PrintStream stream; 
+
+public RTFGenerator (String filename) { 
+this.filename = filename; } 
+public void open() throws FileNotFoundException { 
+FileOutputStream fos = new FileOutputStream (filename); 
+stream = new PrintStream(fos); 
+stream.println ("{\\rtf1\\mac"); } 
+public void close() { 
+public void close() {
+
+stream.println ("}"); stream.close(); }
+
+public void newLine () {  
+
+stream.println ("\\"); }
+
+public void toggleBold() {  
+
+stream.println (bold ? "\\f\\b0" : "\\f\\b");
+
+bold = !bold; }
+
+
+...
+
+} 
+
+© Robert Miller 2007 
+
+3 
+
+The Big Question 
+how to make formatter independent of generator? 
+¾ we want them decoupled
+
+¾ so we can plug in different generators
+
+¾ without changing the formatter’s code
+
+¾ without changing the formatter s code 
+
+solution 
+¾ formatter doesn’t refer to a particular generator class 
+
+¾ it refers to an interface instead
+
+
+Interfaces,  in Pictures 
+what we want 
+how does formatter refer to 
+generators? 
+¾ two ways to configure formatter 
+¾ with an interface 
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+Generator Interface 
+/** 
+* Interface for generator with basic text formatting.
+* Typically a stream is passed to the constructor.
+
+*/
+
+public interface Generator { {
+public interface Generator
+
+public void open () throws Exception;
+
+public void close ();
+
+public void newLine ();
+
+public void toggleBold ();
+
+public void toggleItalic ();
+
+public void write (String s);
+
+
+} 
+
+public class RTFGenerator implements Generator { 
+public void open() throws FileNotFoundException { ... } 
+...} 
+public class HTMLGenerator implements Generator {
+public void open() throws FileNotFoundException { ... } 
+...} 
+
+© Robert Miller 2007 
+
+Using the Generator Interface 
+public class QuoteFormatter {
+
+private final Set<String> symbols = new HashSet<String> (); 
+
+private final Generator generator;
+
+
+public QuoteFormatter(Generator generator) { 
+thiis.generator = generator ;
+
+
+}
+
+public void addSymbol (String symbol) { 
+
+symbols.add (symbol);
+
+
+an object implementing
+Generator is plugged into 
+p gg
+the formatter
+
+}
+
+public void generateOutput () throws Exception {
+
+generator.open (); 
+for (String symbol: symbols) {
+
+Quoter q = new Quoter (symbol);
+
+q.obtainQuote();
+
+generator.write (symbol + ": ");
+
+generator.toggleItalic ();
+
+generator.write ("opened at ");
+
+generator.toggleItalic ();
+
+...
+
+generator.close();
+
+
+}
+
+} 
+
+no mention of HTMLGenerator
+or RTFGenerator anywhere!
+
+© Robert Miller 2007 
+
+4 
+
+Putting Everything Together 
+public class QuoteApp { 
+
+public static void main(String[] args) throws Exception {
+
+Generator rtfg = new RTFGenerator ("myQuotes.rtf");
+
+QuoteFormatter formatter = new QuoteFormatter(rtfg);
+
+formatter.addSymbol ("AAPL");
+
+formatter.addSymbol ("INTC");
+
+formatter.addSymbol ("JAVA");
+
+formatter.addSymbol ("MSFT");
+
+formatter.generateOutput ();
+
+
+plugin is selected here 
+plugin is selected here
+
+Generator htmlg = new HTMLGenerator ("myQuotes.html");
+
+formatter = new QuoteFormatter(htmlg);
+
+formatter.addSymbol ("AAPL");
+
+formatter.addSymbol ("INTC");
+
+formatter.addSymbol ("JAVA");
+
+formatter.addSymbol ("MSFT");
+
+formatter.generateOutput ();
+
+
+}
+
+
+}
+
+
+What We’ve Achieved 
+dependency diagram 
+¾ arc means “depends on” 
+
+invokes QuoteFormatter with 
+invokes QuoteFormatter with 
+tickers & selects output format
+tickers & selects output format 
+
+obtains and outputs quotes
+obtains and outputs quotes 
+
+QuoteApp
+QuoteApp 
+
+QuoteFormatter 
+QuoteFormatter
+
+Generator
+Gen 
+erator
+
+Quoter
+Quoter 
+
+HTMLGenerator 
+HTMLGenerator
+
+RTFGenerator 
+RTFGenerator
+
+obtains quotes
+obtains quotes 
+
+formats text in HTML
+formats text in HTML 
+
+formats text in RTF 
+formats text in RTF
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+Exercise 
+which modules would you need to modify to... 
+¾ handle new RTF syntax for italics?
+
+¾ put the ask price in bold if the stock went down since open?
+
+¾ use Google Finance instead of Yahoo?
+
+¾ use Google Finance instead of Yahoo?
+
+¾ add year-to-date change to the report?
+
+
+An Interface is a Specification 
+a general strategy 
+¾ client should only know about the specification of the service it uses 
+¾ so decouple the client from the service by interposing the specification 
+in Java:
+in Java: 
+¾ the specification is declared by an interface 
+¾ the service is plugged in by passing an object implementing that interface 
+
+specification is a contract 
+¾ we’ll see more about this idea in later lectures 
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+5 
+
+Other Uses of Interfaces 
+decoupling from choice of representation 
+¾ very common and important 
+
+List<NoteEvent> recording = new ArrayList<NoteEvent>();
+
+recording add(  );
+
+recording.add(...); 
+
+List<NoteEvent> recording = new LinkedList<NoteEvent> (); 
+recording.add(...); 
+
+“marker” interfaces 
+¾ declare no methods
+
+¾ declare no methods
+
+¾ used to expose specification properties (e.g. java.util.RandomAccess)
+
+¾ or as a hack to add functionality (e.g. java.io.Serializable)
+
+
+Summary 
+system design principles 
+¾ modularity
+
+¾ decoupling using interfaces
+
+dependency diagrams
+dependency diagrams 
+¾ show essence of code design
+
+¾ missing dependences are the interesting ones! 
+
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+6 
+
+

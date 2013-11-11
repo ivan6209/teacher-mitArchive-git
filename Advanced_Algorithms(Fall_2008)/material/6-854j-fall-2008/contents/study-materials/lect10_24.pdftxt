@@ -1,0 +1,263 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854 Advanced Algorithms 
+
+October  24,  2001 
+
+Lecturer:   M iche l   X .   G o em a n s  
+
+Lecture   1 2  
+Scribe:   David   Wood ru f f   and   X zaowen   X i n  
+
+In  this lecture we  continue th e  presentation of  th e  Cancel and  Tighten Algorithm for solving t h e  mini- 
+mum cost circulation problem.  In our initial analysis, we will determine the  algorithm's running time 
+t o  be O ( m i n ( n n 2  log(&),  m 2 n  log (2n ) ) ) .  Th e  la t te r   half  of  today's lecture will  be devoted  t o  splay 
+trees, a d a t a  s t ruc tu re  which will help reduce th is  running time t o  O ( m i n ( n n  log (nC )  log n ,  m 2 n  log2 n ) ) .  
+
+1  Cancel  and  Tighten 
+
+1.1  The Algorithm 
+
+Definition  1  T h e   admissible   edges  of  a  residual   n e tw o r k   Gp  are  defined  t o   be  t h e   s e t   of  edges 
+{(v, w)  E  Ef  : cp(v, W )  < 0).  A n  admissible   cycle   of  t h e   residual   graph Gf  i s  a  cycle   con s i s t ing   solely 
+of  admissible   edges.  T h e   admissible   graph  i s   t h e   subgraph  of  G  con s i s t ing   solely  of  t h e   admissible  
+edges  of  E f  . 
+
+Cancel and Tighten Algorithm: 
+
+1. Initialize  f , p ,   E. 
+2 .   While  f  is  not  optimum, i.e.,  G  contains  a  negative  cost  cycle, do: 
+
+( a )   Cancel:  While Gp  contains an  admissible  cycle r ,  push  as much flow  as possible along r .  
+(b )   Tighten:  Find  p',  E', such t h a t   f  is  E'-optimum with  respect  t o  p'  and   E'  5 (1- l l n ) ~ .  
+
+At  any  point  in  the   algorithm  we  will  have  a  circulation  f ,   a  potential  function p ,   and   a n   E  such 
+t h a t   f  is  E-optimum with  respect  t o  p.  Recall  t h a t   f  is  said  t o   be  E-optimum with  respect  t o  p  if 
+V ( v ,  W )  E  Ef ,cp(v, W )  2  -E.  TO initialize  th e   algorithm,  we  will  assume  t h a t   f  = 0  satisfies  the  
+capacity  constraints  (i-e., f = 0  is  a  circulation).  If  this  is  not  th e   case,  then  a  circulation  can  be 
+obtained by  solving one maximum  flow problem  or  by  modifying  the   instance so t h a t   a  circulation 
+can easily be found.  Our  initial  potential function p will  be  th e  zero function.  Setting 
+
+E  =  max  Ic(v, w)l, 
+( v , w )  E E  
+we  surely have  t h a t   f  is  E-optimal, i.e.,  t h a t  
+
+The  existence  of  p',  E',  in  t h e  tighten  s tep  follows  from  a  lemma  shown last  time  or  from  Theorem 
+10 in  th e  notes. 
+
+1.2  Analysis 
+
+Each  t ime  we  complete  a  tighten  s tep ,  we  reduce  e  by  a  factor  of  1- l l n .  S ta r t ing  with 
+
+E = C =   max  Ic(v,w)I, 
+( v , w ) € E  
+
+a  simple  argument  given  last  time  shows  t h a t   c  will  be  less  th an   l / n   after  O ( n l o g ( nC ) )  tighten 
+steps, which  will  then  imply  t h a t   f  is  optimal.  Alternatively,  after  n log(2n) iterations  of  tighten, 
+one  additional  edge  is  €-fixed,  and   t h a t   edge  remains  fixed  because  ~ ( f )  does  not  increase  as  the  
+algorithm  progresses.  Using  th is   alternative  analysis, we  obtain  the   strongly  polynomial  bound  of 
+O (mn log (2n ) )  iterations  of  th e   tighten  step.  To  determine  th e   overall  running  time  of  t h e  Cancel 
+and  Tighten Algorithm we need t o  determine th e  time spent for each cancel s tep  and  for each tighten 
+step. 
+
+Implementing the  Tighten  Step:  To  implement  the   tighten  s tep ,   we  could  use  a n   extended 
+Bellman-Ford  algorithm  t o   find  th e   minimum  mean  cost  cycle  in  O (m n )   time.  This  would  be 
+sufficient  for  our  purposes,  but  is  not  necessary.  We  need  only  find  a  p',  el,  such  t h a t   f  is  E'-
+optimum with  respect  t o  p1 and   E'  < (1- l / n ) e .   After  t h e  cancel s tep  completes,  we  know  the re  are 
+no   cycles  in  th e   admissible  graph.  Therefore we  can  take  a  topological  ordering of  t h e   admissible 
+graph to  rank the  vertices so t h a t  for every edge (u, w)  in th e  admissible g raph ,  r a n k ( u )  < r ank (w ) . 
+This ranking  of  t h e  vertices  can be  done  in  O (m )  time using  a  s tanda rd  topological  sort  algorithm. 
+Letting  l (u )   : V  + { 0 , 1 , 2 , ...,n  - 1) denote  t h e   rank  function  on  the   vertices  V  of  G f ,we  have 
+1(w) > 1( v ) if  (u, w)  is an  admissible edge of  Ef. For each vertex v of  V ,  we  define our new potential 
+function p'  by p' (u) = p (u )  - 1 (u) c l n .  
+Claim  1  p'  is  such  that  f  is  8 -op t ima l  with  respect  to p',  where  E'  < (1- l l n ) ~ .  
+
+Proof of  claim 1:  Suppose  (u, w)  E  Ef.Then ,  
+
+Casel:  (v, w)  was  admissible: 
+cb(v, w)  =  cp(u, w) + c /n ( l  (w) - l ( v ) )  
+>  - e + c / n  
+>  - ( I -
+l / n ) c  
+
+Case2:  (v, w)  was  not  admissible: 
+cb(v, w)  =  cp(u, w) + c /n ( l  (w) - 1(u)) 
+>  0 - c / n ( n - 1) 
+=  - (1   - l / n ) c  
+
+Hence, in  either  case, f is  €'-optimal  with  respect  t o  p', where  E'  < (1- l / n ) c .  
+
+Implementing the  Cancel  Step:  We  now  shift  our  focus  t o  th e   implementation  of  t h e   cancel 
+step.  Th e  goal in th e  cancel s tep  is t o  s a tu r a t e  a t  least one edge in every cycle in the  admissible graph 
+G = (V, A ) .  We will implement  this with  a Depth-First-Search  (DFS), pushing  flow t o  sa tu ra te  and  
+remove edges every time we  encounter a cycle, and  removing edges whenever we  determine t h a t  they 
+cannot  be  pa r t   of  any  cycle.  The  algorithm  is: 
+
+C a n c e l   S t e p  a l g o r i t h m ( G  = (V, A ) )  : 
+
+1. Choose v  in  V.  Begin  a  DFS  rooted  a t  v. 
+
+( a )   If  we  encounter  a  vertex  w  t h a t   we  have  previously  encountered  on  our  p a th   from 	 v ,  
+we  have  found  a  cycle  r. In   th is   case,  we  let  S = min(,,w),r  u (v ,  w).  We  then   increase 
+t h e  flow  along  each  of  t h e  edges of 
+by  S, sa tu ra t ing  a t  least  one edge.  We  remove  the  
+sa tu ra ted  edges  from A,  and   recurse  with  G 1= (V, A'), where  A'  denotes  th e  edges of  A 
+with  th e  sa tu ra ted   edges removed. 
+(b )   If  we  encounter  a  vertex  w  such  t h a t   the re   a re   no  edges  emanating  from  w  in  G ,   we 
+backtrack  until  we  find  a n  ancestor r  of  w  for which  the re  is  another  child t o  explore.  As 
+we  backtrack,  we  remove th e  edges we  backtrack  along from A  until  we  encounter  r .  We 
+continue  the  DFS  by  exploring  pa ths  emanating a t  r. 
+
+Every  edge  e  f A  t h a t   is  not  pa r t   of  any  cycle  is  visited  a t  most  two  times, and  hence  t h e  running 
+time t o  remove edges t h a t   are not  pa r t   of  any cycle is O (m ) .  For each cycle t h a t  we  cancel, we  need 
+t o  determine 
+
+u =  min  u ( v ,w )  
+( 'u , 'w )E r  
+and   upda te   th e   flow  along  each  of  th e   edges  of  th e   cycle.  Since there  can  be  a t  most  n  - 1 edges 
+in  a  cycle, we  spend  O ( n )  time per  cycle cancelled.  Since we  s a tu r a t e  and  remove a t  least  one  edge 
+from  A  every  time  we  cancel  a  cycle, we  can  cancel  a t   most  m  cycles.  Hence,  th e   overall running 
+time of  the   cancel  s tep  is  0(m  + nm )  = 0(m n ). 
+
+O v e r a l l   R u n n i n g  T i m e :   Note  t h a t   t h e  cancel  step  requires  O (m n )  time  per  iteration,  whereas 
+t h e   tighten  s tep   only  requires  O (m )   time.  Hence,  t h e   cancel  step  is  the   bottleneck  of  the   Can- 
+cel  and   Tighten  Algorithm.  Earlier  we  determined  t h a t   the   number  of  iterations  of  th e   Can- 
+cel  and   Tighten  Algorithm  is  O (m in (n  log (nC ) ,  m n  log (2n ) ) ) .   Hence  the   overall  running  time  is 
+O (m in (mn2  log (nC )  ,m 2 n 2  log (2n ) ) ) .  
+In th e  following sections we will create d a t a  structures which will  reduce t h e  running time of  a single 
+cancel  s tep   from  O (m n )   t o   O (m1ogn ) .   We  will  make  use  of  dynamic  trees  which  will  enable  us 
+t o   spend  a n   amortized  cost  of  O(1ogn) per  cycle  cancelled.  The   overall running  time  will  then  be 
+0(m in (mn  log (nC )  log n ,  m 2 n  log2 n ) ) .  
+
+2  Binary  Search  Trees 
+
+A Binary Search Tree  (BST) is a d a t a  s t ruc tu re  t h a t  stores a dictionary.  A dictionary  is a  collection 
+of  objects with  ordered  (and we'll assume unique)  keys. 
+
+2.1  Structure of  a BST 
+
+A BST  stores objects  a s  nodes  in  a  binary  t ree   such  t h a t   key[x]  5 key[y]  if  and  only  if  x  is  t o  the  
+left  of  y  (see Figure  1). 
+
+2.2  Operations on  a BST 
+
+Here  a re  some operations  t h a t   a  typical BST  supports: 
+
+Figure  1: A BST  where x  is  t o  t h e  left  of  y. 
+
+1. f ind ($ ) :   returns  t ru e   if  x  is  in  th e   t ree ,   otherwise  returns  false.  This  is  implemented  by 
+traversing  the   tree:  when  you  encounter  an   element  y,  branch  left  if  key[y] > key[x], branch 
+right  if  key[y] < key[x], and   re tu rn   t ru e   if  key[y] = key[x].  If  you  cannot  traverse  any  more, 
+then  re tu rn   false.  This  runs  in  O ( h )  time, where  h  is  the   height  of  the   BST. 
+
+2 .   	 i n s e r t ( x ) :  inserts x into th e  tree.  This is implemented  by  traversing t h e  t ree  similar t o  f i n d ( x )  
+above until  you  reach  th e  end, and  inserting  x  as a  leaf  node.  This runs  in  O ( h )  time. 
+
+3 .   	 delete(x):  deletes  x  from  th e   tree.  This  is  implemented  by  first  finding x .   If  x  is  a  leaf  node, 
+delete i t ,  otherwise  swap x with  i ts  immediate successor.  Since t h e  immediate successor of  x  is 
+guaranteed  t o  be  a  leaf node, x  becomes a  leaf node,  and  we  can  delete i t .   This runs  in  O (h )  
+time. 
+
+4. 	 m in :   find  th e  minimum  element  in  t h e  entire tree. 
+
+5. 	 max :   find  th e  maximum  element  in  the   entire  tree. 
+6.  	 successo r (x ) :  find t h e  element  y with  th e  smallest key [y], where  key [y] > key [XI. 
+7.  p redecesso r (x ) :  find  the   element  y with  th e  greatest  key[y], where  key[y] < key[x]. 
+8.  spZit(x):  returns  two  dictionaries such  t h a t   one  of  them   contains elements  y:  key[y] > key [XI 
+and  t h e  other  one  contains  elements  x:  key[x] < key[$]. 
+9.  jo in (T l ,  x ,  T2 ) :  given  TI  which  contains  elements  2:  key[z]  < key[x]  and   T2 which  contains 
+elements  y:  key[y] > key [X I ,   re tu rn   a  BST  t h a t   contains T I ,  x ,  and  T2. 
+
+In  the  worse case, the  height  of  th e  tree could be equal to  th e  number  of  elements  in th e  t ree ,  so the  
+running  time  of  these  operations  is  linear  in  the   number  of  elements.  A  "balanced"  BST  is  a  BST 
+such  t h a t   th e   height  is  maintained  a t   O(1og n ) , where  n  is  th e   number  of  nodes  in  th e   tree.  W i th  
+such  a  t ree ,  above  operations  would  run   in  O(1og n ) .   A  balanced  BST  can  be  implemented  using  a 
+Red-Black  tree,  AVL,  or B-tree. 
+
+2 .3   Rotations 
+
+In order t o  mu ta te  th e  layout  of  a BST we  can ro t a t e  p a r t s  of  the  t ree  t o  raise or lower nodes.  Figure 
+2  shows a  right  rotation  operation, known as a  zig.  A  left  rotation,  called a  zag, is  the  mirror  image 
+of  this.  In  the   following, we  will  see how  we  can use  these  operations t o  lower  t h e   am o r t i z e d   cost of 
+t h e  operations on  a  BST. 
+
+(Right Rotation)  a 
+
+Figure  2:  Zig  (right  rotation)  operation. 
+
+Figure  3:  case  1. 
+
+3  Splay Tree 
+
+A Splay Tree is a BST which performs  a  splay operation  every time an  access is made.  We will prove 
+t h a t   the  amortixed  cost of  one  operations  on  a  splay t ree   is  O(1ogn).  We  will  see  t h a t   this  implies 
+t h a t  for every k, the  to ta l  running time of  any sequence of  k operations on t h e  tree is O ( ( k + n )  log n ) .  
+
+3.1  Splay  Step  
+
+splay-step(x)  a t t emp t s  t o  move  x  two  levels higher  if  it's not  already  t h e  root. 
+
+case 1: p a r e n t ( x )  = root  (Figure 3):  If  x is t h e  left child of  its parent, then do a zig, otherwise, 
+do a  zag t o  make  x  th e  root. 
+
+case  2:  bo th  x  and  p a r e n t ( x )  a re  left  children or they  a re  bo th  right  children of  their parents. 
+Let  y = p a r e n t ( x )  and  x = p a r en t (y ) .  
+
+- If x  and  y  a re  left  children,  then   do a  xig(x) followed  by  a  xig(y).  (See Figure  4). 
+- If  x  and  y  a re  right  children,  then   do  a xag(x) followed by  a  zag (y ) .  
+
+case  3:  x  is a right  child while p a r e n t ( x )  is a left  child or vice versa.  Again,  let  y = p a r e n t ( x )  
+and  x = p a r e n t ( y ) .  
+
+- If  x  is a right child and  y is a  left  child, then  do a  xag(y) followed by  a xig(x).  (See Figure 
+5 ) .  
+- If  x  is  a  left  child  and  y  is  a  right  child,  then   do a  xig(y) followed  by  a  xig(x). 
+
+Figure  4:  case 2. 
+
+Figure  5:  case 3. 
+
+3.2  Splay 
+
+The   operation  sp lay (x )  moves  x  to   t h e   root  by  repeatedly  calling  splay-step(x).  Th e   Splay  Tree 
+d a t a  s t ruc tu re  is defined by  the  following rule:  When  you  access a  Splay Tree, always call  sp lay (x )  
+where x is t h e  last  element you  access.  For instance, when  calling f i n d ( x ) ,  if  you  find x  in th e  Splay 
+Tree, you  should  then   call  sp lay (x ) .   If  you  don't find  x ,  bu t   instead find  the   leaf  y ,  you  should  call 
+splay (y ) .  For  deletions, splay is  called  on  t h e  parent  of  th e   element  x  being  deleted,  if  t h e  element 
+x  is  in  fact  found  in  the   Splay Tree. 
+
+3 .3   Amortized  Analysis  of  Splay Tree 
+
+Assume  s p l a y s t e p  takes  1 unit  of  time.  Suppose for  every  node  x  of  th e   t ree  we  have  assigned  a 
+weight  w (x )  > 0  (These weight  are assigned  only for  t h e  sake of  analysis  of  th e   running  time of  the  
+algorithm  and  do not  appea r  in  th e   actual  implementation  of  th e   algorithm). We  define: 
+
+S ( x )   = 
+
+C 
+w (Y ) ,  
+yEtree  roo ted   at  x 
+=  llog,  ( S (X )  )I. 
+
+We  call r ( x )  th e   credit of  t h e  vertex s .  We  define our  credit invariant as t h e  sum of  r (z ) for all nodes 
+x  in  t h e  tree.  Now, we  can define th e   amortized  cost of  a n  operation  as follows:  If  the  operation has 
+cost  (i.e., running time)  I c ,   t h e  amortized cost  of  th e  operation  is  k + C , r l ( x )  - r ( x ) .   We  prove the  
+following two  lemmas  in  the  next  lecture. 
+
+Lemma  2  T h e  amo r t i zed   cost   of  o n e   s p l a y - s t e p ( z )  i s   a t   m o s t  3 ( r ' (x )  - r ( z ) )+ c ,  where   c  i s   1  if  x 
+i s   a parent   of  t h e   root ,   and   0 o the rw i se .  
+Lemma  3  T h e   amo r t ixed   cost  of  splaying   a  tree   of  root  v  a t   node   x  i s   a t   m o s t  3 ( r ( v )  - r ( x ) )  + 1. 
+
+Notice  t h a t   if  we  take  w ( z )   = 1 for  every  vertex  x  of  th e   t ree ,   then   Lemma  3  implies  t h a t   the  
+amortized  cost  of  splaying  a  t ree   a t   any  node  is  a t  most  3 l o g n   (this  is  because  t h e   credit  of  any 
+node is a t  most  log (n ) ) ,  even though the  actual cost may  be n .   Intuitively, this means  t h a t  th e  ex t ra  
+cost  is paid  by  the   credits  in  t h e  tree. 
+
+

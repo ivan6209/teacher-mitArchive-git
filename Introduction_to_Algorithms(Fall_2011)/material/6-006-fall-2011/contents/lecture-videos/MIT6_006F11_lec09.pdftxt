@@ -1,0 +1,197 @@
+Lecture 9
+
+Hashing II
+
+6.006 Fall 2011
+
+Lecture 9: Hashing II
+
+Lecture Overview
+• Table Resizing
+• Amortization
+• String Matching and Karp-Rabin
+• Rolling Hash
+
+Recall:
+
+Hashing with Chaining:
+
+Figure 1: Hashing with Chaining
+
+Expected cost (insert/delete/search): Θ(1 + α), assuming simple uniform hashing OR
+universal hashing & hash function h takes O(1) time.
+
+Division Method:
+
+where m is ideally prime
+
+h(k) = k mod m
+
+Multiplication Method:
+h(k) = [(a · k) mod 2w ] (cid:29) (w − r)
+where a is a random odd integer between 2w−1 and 2w , k is given by w bits, and m = table
+size = 2r .
+
+1
+
+1....Ukkkkk1234k...4k.k2k3all possiblekeyshtablem  slots collisionsexpected sizeα  = n/m}keys in set DSnLecture 9
+
+Hashing II
+
+6.006 Fall 2011
+
+How Large should Table be?
+• want m = Θ(n) at all times
+• don’t know how large n will get at creation
+• m too small =⇒ slow; m too big =⇒ wasteful
+
+Idea:
+
+Start small (constant) and grow (or shrink) as necessary.
+
+Rehashing:
+
+To grow or shrink table hash function must change (m, r)
+=⇒ must rebuild hash table from scratch
+for item in old table: → for each slot, for item in slot
+insert into new table
+=⇒ Θ(n + m) time = Θ(n) if m = Θ(n)
+
+How fast to grow?
+
+When n reaches m, say
+• m + =1?
+=⇒ rebuild every step
+=⇒ n inserts cost Θ(1 + 2 + · · · + n) = Θ(n2 )
+• m ∗ =2? m = Θ(n) still (r+ =1)
+=⇒ rebuild at insertion 2i
+=⇒ n inserts cost Θ(1 + 2 + 4 + 8 + · · · + n) where n is really the next power of 2
+= Θ(n)
+• a few inserts cost linear time, but Θ(1) “on average”.
+
+Amortized Analysis
+This is a common technique in data structures — like paying rent: $1500/month ≈ $50/day
+• operation has amortized cost T (n) if k operations cost ≤ k · T (n)
+• “T (n) amortized” roughly means T (n) “on average”, but averaged over all ops.
+• e.g. inserting into a hash table takes O(1) amortized time.
+
+2
+
+Lecture 9
+
+Hashing II
+
+6.006 Fall 2011
+
+Back to Hashing:
+Maintain m = Θ(n) =⇒ α = Θ(1) =⇒ support search in O(1) expected time (assuming
+simple uniform or universal hashing)
+
+Delete:
+
+Also O(1) expected as is.
+• space can get big with respect to n e.g. n× insert, n× delete
+• solution: when n decreases to m/4, shrink to half the size =⇒ O(1) amortized cost
+for both insert and delete — analysis is harder; see CLRS 17.4.
+
+Resizable Arrays:
+• same trick solves Python “list” (array)
+• =⇒ list.append and list.pop in O(1) amortized
+
+Figure 2: Resizeable Arrays
+
+String Matching
+
+Given two strings s and t, does s occur as a substring of t? (and if so, where and how many
+times?)
+E.g. s = ‘6.006’ and t = your entire INBOX (‘grep’ on UNIX)
+
+Simple Algorithm:
+any(s == t[i : i + len(s)] for i in range(len(t) − len(s)))
+— O(|s|) time for each substring comparison
+=⇒ O(|s| · (|t| − |s|)) time
+= O(|s| · |t|)
+potentially quadratic
+
+3
+
+01234567listunused}}Lecture 9
+
+Hashing II
+
+6.006 Fall 2011
+
+Figure 3: Illustration of Simple Algorithm for the String Matching Problem
+
+Karp-Rabin Algorithm:
+• Compare h(s) == h(t[i : i + len(s)])
+• If hash values match, likely so do strings
+– can check s == t[i : i + len(s)] to be sure ∼ cost O(|s|)
+– if yes, found match — done
+
+1
+– if no, happened with probability < |s
+|
+⇒
+= expected cost is O(1) per i.
+• need suitable hash function.
+• expected time = O(|s| + |t| · cost(h)).
+– naively h(x) costs |x|
+– we’ll achieve O(1)!
+– idea: t[i : i + len(s)] ≈ t[i + 1 : i + 1 + len(s)].
+
+Rolling Hash ADT
+
+Maintain string x sub ject to
+• r(): reasonable hash function h(x) on string x
+• r.append(c): add letter c to end of string x
+• r.skip(c): remove front letter from string x, assuming it is c
+
+Karp-Rabin Application:
+
+for c in s: rs.append(c)
+for c in t[:len(s)]: rt.append(c)
+if rs() == rt(): ...
+This ﬁrst block of code is O( s )| |
+
+4
+
+tssLecture 9
+
+Hashing II
+
+6.006 Fall 2011
+
+for i in range(len(s), len(t)):
+rt.skip(t[i-len(s)])
+rt.append(t[i])
+if rs() == rt(): ...
+The second block of code is O(|t|) + O(# matches − |s|) to verify.
+
+Data Structure:
+
+Treat string x as a multidigit number u in base a where a denotes the alphabet size, e.g.,
+256
+
+• r() = u mod p for (ideally random) prime p ≈ |s| or |t| (division method)
+• r stores u mod p and |x| (really a|x| ), not u
+=⇒ smaller and faster to work with (u mod p ﬁts in one machine word)
+• r.append(c): (u · a + ord(c)) mod p = [(u mod p) · a + ord(c)] mod p
+• r.skip(c): [u − ord(c) · (a|u|−1 mod p)] mod p
+= [(u mod p) − ord(c) · (a|x−1| mod p)] mod p
+
+5
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

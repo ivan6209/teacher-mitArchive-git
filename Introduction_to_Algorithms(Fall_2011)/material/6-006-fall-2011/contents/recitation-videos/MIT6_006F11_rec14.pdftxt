@@ -1,0 +1,141 @@
+6.006 Introduction to Algorithms
+DFS Edge Classiﬁcation
+
+Recitation 14
+
+November 2, 2011
+
+The edges we traverse as we execute a depth-ﬁrst search can be classiﬁed into four edge types.
+During a DFS execution, the classiﬁcation of edge (u, v), the edge from vertex u to vertex v ,
+depends on whether we have visited v before in the DFS and if so, the relationship between u and
+v .
+
+1. If v is visited for the ﬁrst time as we traverse the edge (u, v), then the edge is a tree edge.
+
+2. Else, v has already been visited:
+
+(a) If v is an ancestor of u, then edge (u, v) is a back edge.
+(b) Else, if v is a descendant of u, then edge (u, v) is a forward edge.
+(c) Else, if v is neither an ancestor or descendant of u, then edge (u, v) is a cross edge.
+
+After executing DFS on graph G, every edge in G can be classiﬁed as one of these four edge
+types. To to this, we need to keep track of when a vertex is ﬁrst being disocvered (visited) in the
+search (recorded in start time[v]), and when it is ﬁnished (recorded in finish time[v]),
+that is, when its adjacency list has been examined completely. These timestamps are integers be-
+tween 1 and 2|V |, since there is one discovery event and one ﬁnishing event for each of the |V |
+vertices.
+Tree edges are immediate from the speciﬁcation of the algorithm. For back edges, observe
+that vertices that are currently being visited but is not ﬁnished form a linear chain of descenedants
+corresponding to the stack of active DFS -V I S I T invocations. Exploration always proceeds from
+the deepest vertex currently being visited, so an edge that reaches another vertex being visited has
+reached an ancester. An edge (u, v) is a forward edge, if v is ﬁnished and start time[u] <
+start time[v ]. An edge (u, v) is a cross edge, if v is ﬁnished and start time[u] >
+start time[v ]. The following is the Python code for classifying edges in a directed graph.
+1 class DFSResult:
+def __init__(self):
+2
+3
+self.parent = {}
+4
+self.start_time = {}
+5
+self.finish_time = {}
+6
+self.edges = {} # Edge classification for directed graph.
+7
+self.order = []
+
+16.006 Introduction to Algorithms
+
+Recitation 14
+
+November 2, 2011
+
+self.t = 0
+
+8
+9
+10 def dfs(g):
+11
+results = DFSResult()
+for vertex in g.itervertices():
+12
+if vertex not in results.parent:
+13
+14
+dfs_visit(g, vertex, results)
+return results
+15
+16
+17 def dfs_visit(g, v, results, parent = None):
+18
+results.parent[v] = parent
+19
+results.t += 1
+20
+results.start_time[v] = results.t
+if parent:
+21
+22
+results.edges[(parent, v)] = ’tree’
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+
+for n in g.neighbors(v):
+if n not in results.parent: # n is not visited.
+dfs_visit(g, n, results, v)
+elif n not in results.finish_time:
+results.edges[(v, n)] = ’back’
+elif results.start_time[v] < results.start_time[n]:
+results.edges[(v, n)] = ’forward’
+else:
+results.edges[(v, n)] = ’cross’
+
+results.t += 1
+results.finish_time[v] = results.t
+results.order.append(v)
+We can use edge type information to learn some things about G. For example, tree edges form
+trees containing each vertex DFS visited in G. Also, G has a cycle if and only if DFS ﬁnds at least
+one back edge.
+An undirected graph may entail some ambiguity, since (u, v) and (v , u) are really the same
+edge. In such a case, we classify the edge as the ﬁrst type in the classiﬁcation list that applies, i.e.,
+we classify the edge according to whichever of (u, v) or (v , u) the search encounters ﬁrst. Note
+that undirected graphs cannot contain forward edges and cross edges, since in those cases, the
+edge (v , u) would have already been traversed (classiﬁed) during DFS before we reach u and try
+to visit v .
+
+Topological Sort
+
+Many applications use directed acyclic graphs to indicate precedences among events. Topologi-
+cally sorted vertices should appear in reverse order of their ﬁnishing time.
+1 def topological_sort(g):
+2
+dfs_result = dfs(g)
+3
+dfs_result.order.reverse()
+return dfs_result.order
+4
+
+2MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Fall 2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

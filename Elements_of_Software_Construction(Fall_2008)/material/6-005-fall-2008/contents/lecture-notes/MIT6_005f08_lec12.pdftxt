@@ -1,0 +1,495 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Today’s Topics
+how to avoid debugging
+(cid:190) assertions
+(cid:190) code reviews
+
+how to do it when you have to
+(cid:190) reducing test cases
+(cid:190) hypothesis-driven debugging
+(cid:190) binary search
+
+very hard bugs
+very hard bugs
+(cid:190) Heisenbugs
+
+Debugging
+
+Rob Miller
+Fall 2008
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Defensive Programming
+first defense against bugs is to make them impossible
+(cid:190) Java makes buffer overflow bugs impossible
+second defense against bugs is to not make them
+(cid:190) correctness: get things right first time
+ 
+  hi
+  i h  fi
+  i
+(cid:190)
+third defense is to make bugs easy to find
+(cid:190) local visibility of errors: if things fail, we'd rather they fail loudly and 
+immediately – e.g. with assertions
+fourth defense is extensive testing 
+(cid:190) uncover as many bugs as possible
+l
+i
+ i  d b
+ 
+last resort is debugging
+(cid:190) needed when effect of bug is distant from cause
+
+First Defense: Impossible By Design
+in the language
+(cid:190) automatic array bounds checking make buffer overflow bugs impossible
+(cid:190) static typing eliminates many runtime type errors
+in the protocols/libraries/modules
+in the protocols/libraries/modules
+(cid:190) TCP/IP guarantees that data is not reordered
+(cid:190) BigInteger guarantees that there will be no overflow
+in self-imposed conventions
+(cid:190) immutable objects can be passed around and shared without fear
+(cid:190) caution: you have to keep the discipline
+• get the language to help you as much as possible , e.g. with private and 
+t   d 
+i
+t th  l
+ith 
+ 
+ibl    
+ 
+h 
+ 
+ 
+ t  h l  
+final
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/15/2008
+
+1
+
+Second Defense: Correctness
+get things right the first time
+(cid:190) don’t code before you think! Think before you code.
+• do your thinking in design; use a pattern to map that design to code
+especially true when debugging is going to be hard
+especially true when debugging is going to be hard
+(cid:190) concurrency
+simplicity is key
+(cid:190) modularity
+• divide program into chunks that are easy to understand
+• use abstract data types with well-defined interfaces
+• avoid rep exposure
+id 
+ 
+(cid:190) specification
+• write specs for all modules, so that an explicit, well-defined contract 
+exists between each module and its client
+
+Third Defense: Immediate Visibility
+if we can't prevent bugs, we can try to localize them to 
+a small part of the program
+(cid:190) fail fast: the earlier a problem is observed, the easier it is to fix
+(cid:190) assertions: catch bugs early  before failure has a chance to contaminate (and 
+(cid:190) assertions: catch bugs early, before failure has a chance to contaminate (and 
+be obscured by) further computation
+• in Java: assert boolean-expression
+• note that you must enable assertions with -ea
+(cid:190) unit testing: when you test a module in isolation, you can be confident that 
+any bug you find is in that unit (or in the test driver)
+(cid:190) regression testing: run tests as often as possible when changing code. 
+• if a test fails, the bug is probably in the code you just changed
+when localized to a single method or small module, 
+bugs can be found simply by studying the program text
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Example:  Assertions
+/*
+* Returns n!, the number of permutations of n objects.
+* n must be nonnegative.
+*/
+public static int fact(int n) {
+public static int fact(int n) {
+if (n == 0) return 1;
+else return n * fact(n-1);
+
+where would
+where would 
+assertions be 
+usefully added 
+to this code?
+
+}
+
+/*
+* Returns (n choose k), the number of distinct subsets 
+* of size k in a set of size n. 
+* Requires 0 <= k <= n
+* Requires 0 <= k <= n. 
+*/
+public static int combinations(int n, int k) {
+return fact(n) / (fact(k) * fact(n-k));
+
+}
+
+© Robert Miller 2008
+
+Code Review
+other eyes looking at the code can find bugs
+
+code review
+h )
+(cid:190) careful, systematic study of source code by others (not original author)
+l 
+i i
+ 
+ (
+  d  b   h
+d   f 
+i  
+f
+l  
+(cid:190)
+(cid:190) analogous to proofreading an English paper
+(cid:190) look for bugs, poor style, design problems, etc .
+(cid:190) formal inspection: several people read code separately, then meet to 
+discuss it
+(cid:190) lightweight methods: over-the-shoulder walkthrough, or by email
+(cid:190) many dev groups require a code review before commit
+y
+g
+p
+q
+code review complements other techniques
+(cid:190) code reviews can find many bugs cheaply
+(cid:190) also test the understandability and maintainability of the code
+(cid:190) three proven techniques for reducing bugs: reasoning, code reviews,  
+testing
+
+© Robert Miller 2008
+
+10/15/2008
+
+2
+
+Let’s Review Some Code
+public class PigLatin {
+static String[] words;
+
+public static String toPigLatin(String s) {
+words = s.split(" ");
+
+String result = "";
+for (int i = 0; i <= words.length; ++i) {
+piggify(i);
+result += words[i];
+
+}
+return result;
+
+}
+
+public static void piggify(int i) {
+if (words[i].startsWith("a") || words[i].startsWith("e") || ...) {
+words[i] += "yay";
+} else {
+words[i] = words[i].substring(1);
+words[i] += words[i].charAt(0) + "ay";
+
+10/15/2008
+
+How to Debug
+1) reproduce the bug with a small test case
+(cid:190) find a small, repeatable test case that produces the failure (may take effort, 
+but helps clarify the bug, and also gives you something for regression)
+(cid:190) don't move on to next step until you have a repeatable test
+(cid:190) don t move on to next step until you have a repeatable test
+2) find the cause
+(cid:190) narrow down location and proximate cause
+(cid:190) study the data / hypothesize / experiment / repeat
+(cid:190) may change code to get more information
+(cid:190) don't move on to next step until you understand the cause
+3) fix the bug
+3) fix the bug
+(cid:190) is it a simple typo, or is it a design flaw? does it occur elsewhere?
+4) add test case to regression tests
+(cid:190) then run regression tests to ensure that the bug appears to be fixed,  and 
+no new bugs have been introduced by the fix
+
+}
+
+}
+
+}
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Reducing to a Simple Test Case
+find simplest input that will provoke bug
+(cid:190) usually not the input that originally revealed existence of the bug
+(cid:190) start with data that revealed bug
+(cid:190) keep paring it down (binary search can help)
+(cid:190) keep paring it down (binary search can help)
+(cid:190) often leads directly to an understanding of the cause
+same idea is useful at many levels of a system
+(cid:190) method arguments
+(cid:190) input files
+(cid:190) keystrokes and mouse clicks in a GUI
+
+© Robert Miller 2008
+
+Example
+/**
+* Returns true if and only if s contains t as a substring,
+* e.g. contains("hello world", "world") == true.
+*/
+public static boolean contains(String s, String t) { ... }
+public static boolean contains(String s, String t) { ... } 
+
+(cid:190) a user discovers that
+contains("Life is wonderful! I am so very very happy all the time“,  
+"very happy")
+incorrectly returns false
+wrong approach:  
+g pp
+(cid:190) try to trace the execution of contains() for this test case
+right approach:
+(cid:190) first try to reduce the size of the test case
+(cid:190) even better : bracket the bug with a test case that fails and similar test cases 
+that succeed
+
+© Robert Miller 2008
+
+3
+
+Code for contains()
+/**
+* Returns true if and only if s contains t as a substring,
+* e.g. contains("hello world", "world") == true.
+*/
+public static boolean contains(String s, String t) {
+public static boolean contains(String s, String t) {
+search:
+for (int i = 0; i < s.length(); ++i) {
+for (int j = 0; j < t.length(); ++j, ++i) {
+if (s.charAt(i) != t.charAt(j)) continue search;
+
+}
+
+}
+return true;
+
+}
+return false;
+return false;
+
+Finding the Cause
+exploit modularity
+(cid:190) start with everything, take away pieces until bug goes
+(cid:190) start with nothing, add pieces back in until bug appears
+take advantage of modular reasoning
+take advantage of modular reasoning
+(cid:190) trace through program, viewing intermediate results
+(cid:190) insert assertions targeted at the bug
+(cid:190) design all data structures to be printable (i.e., implement toString())
+(cid:190) println is a surprisingly useful and universal tool
+• in large systems, use a logging infrastructure instead of println
+use binary search to speed things up
+use binary search to speed things up
+(cid:190) bug happens somewhere between first and last statement
+(cid:190) so do binary search on the ordered set of statements
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Example: Finding a Sudoku Bug
+suppose a Sudoku solver produces the wrong answer
+
+3....
+......
+......
+
+Sudoku 
+solver
+solver
+
+7....
+......
+......
+
+parse 
+input
+
+make SAT 
+formula
+
+SAT 
+solver
+
+interpret 
+assignment
+
+print 
+output
+
+Note that this isn’t a state machine diagram or a module dependence diagram; it 
+shows data flow, which is often useful for thinking about bugs.
+
+Regression Testing
+whenever you find and fix a bug
+(cid:190) store the input that elicited the bug
+(cid:190) store the correct output
+(cid:190) add it to your test suite
+(cid:190) add it to your test suite
+why regression tests help
+(cid:190) helps to populate test suite with good test cases
+• remember that a test is good if it elicits a bug – and every regression 
+test did in one version of your code
+(cid:190) protects against reversions that reintroduce bug
+(cid:190) the bug may be an easy error to make (since it happened once already)
+g
+y
+y
+(
+pp
+y)
+test-first debugging
+(cid:190) when a bug arises, immediately write a test case for it that elicits it
+(cid:190) once you find and fix the bug, the test case will pass, and you’ll be done
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/15/2008
+
+4
+
+The Ugliest Bugs
+we’ve had it easy so far
+(cid:190) sequential, deterministic programs have repeatable bugs
+but the real world is not that nice…
+(cid:190) i
+i
+ d
+(cid:190) timing dependencies
+d
+i
+(cid:190) unpredictable network delays
+(cid:190) varying processor loads
+(cid:190) concurrency
+heisenbugs 
+(cid:190) nondeterministic , hard to reproduce
+!
+(cid:190) may even disappear when you try to look at it with println or debugger!
+ d b
+i tl  
+ith 
+k  t it 
+ t  l
+ t
+  h  
+ di
+ 
+(cid:190)
+one approach
+(cid:190) build a lightweight event log (circular buffer)
+(cid:190) log events during execution of program as it runs at speed
+(cid:190) when you detect the error, stop program and examine logs
+
+© Robert Miller 2008
+
+Example of a heisenbug
+public class Bank {
+int balance;
+
+public Bank(int balance) {
+this.balance = balance;
+this.balance
+ balance;
+
+}
+
+public void deposit(int amount) {
+balance += amount;
+
+}
+
+public void withdraw(int amount) {
+balance
+= amount;
+balance -= amount;
+
+}
+
+public int getBalance() {
+return balance;
+
+}
+
+© Robert Miller 2008
+
+}
+
+Example of a heisenbug
+// our bank account starts with $100
+final Bank account = new Bank(100);        
+// start a bunch of threads
+List<Thread> threads = new ArrayList<Thread>();
+for (int i = 0; i < 10; ++i) {
+for (int i   0; i < 10; ++i) {
+Thread t = new Thread(new Runnable() {
+public void run() {
+// each thread does a bunch of bank transactions
+for (int i = 0; i < 10000; ++i) {                     
+account.deposit(1);  // put a dollar in
+account.withdraw(1); // take it back out
+}}});
+t start(); // don't forget to start the thread!
+t.start(); // don't forget to start the thread!
+threads.add(t); }        
+// wait for all the threads to finish
+for (Thread t: threads) t.join(); 
+// display the final account balance
+System.out.println(account.getBalance());
+
+Summary
+avoid debugging
+(cid:190) it’s not fun and not productive
+(cid:190) many of the techniques of this class are designed to save you from bugs
+approach it systematically
+approach it systematically
+(cid:190) simplify test cases
+(cid:190) find cause before trying to fix
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/15/2008
+
+5
+
+

@@ -1,0 +1,519 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+November  19,  2008 
+
+Approximaion  Algorithms:  MAXCUT 
+Lecturer:  Michel  X.  Goemans 
+
+1  MAX-CUT  problem 
+cut  (S  : S¯), S  ⊆ V  that  maximizes  w(S  : S¯) = � 
+MAX-CUT  Problem:  Given  a  graph  G  = (V , E )  and  weights  on  the  edges  w  :  E
+S ) w(e). 
+e∈(S : ¯
+MIN-CUT  Problem:  ﬁnd  a  cut  (S  : S¯)  that minimizes  w(S  : S¯). 
+There  is  a  polynomial  algorithm  for  the  MIN-CUT  problem:  use  the  min  s − t  cut  algorithm 
+on  each  pair  of  vertices  (or,  better,  for  a  ﬁxed  s),  and  take  the  smallest  of  them.  However,  the 
+MAX-CUT  problem  is  NP-hard,  and  we’ll  try  several  ways  of  designing  approximation  algorithms 
+for  it. 
+
+R+ ,  ﬁnd  a 
+
+→ 
+
+Idea  #1:  Local  Search 
+2 
+Algorithm:  Start  from  any  cut  (S  :  S¯).  Deﬁne  the  neighborhood  N (S  :  S¯)  of  the  cut  to  be  the 
+MOVE  neighborhood:  all  the  cuts  that  result  from  moving  one  vertex  from  one  side  of  the  cut  to 
+the  other  side.  Consider  a  locally maximum  cut  for  this  neighborhood. 
+Lemma  1  If  (S  :  S¯)  is  a  local  maximum  for  the  MOVE  neighborhood,  then  w(S  :  S¯)  ≥  2 w(E )  ≥
+1
+1 OP T .
+2 
+Proof  of  lemma  1:  Look  at  a  vertex  i  ∈  V .  Let  Ci  be  the  set  of  all  edges  (i, j )  ∈  E  that  are 
+part  of  the  cut  (S  :  S¯)  (that  is  if  i  ∈  S  then  j  ∈  S ¯  and  vice  versa).  Let  Ai  be  the  set  of  all  edges 
+(i, j ) ∈ E  that  are  not  part  of  the  cut  (S  : S¯).  Since moving  any  single  vertex  i  to  the  other  side  of 
+the  cut  does  not  improve  the  weight  of  the  cut,  we  know  that: 
+w(Ci ) ≥ w(Ai ). 
+� 
+� 
+w(Ci ) ≥ 
+w(Ai ), 
+i∈V 
+i∈V
+or  2w(S  : S¯) ≥ 2w(E \(S  : S¯)).  Rearranging,  we  get: 
+4w(S  : S¯) ≥ 2w(E ) 
+
+Summing  over  all  vertices  i,  we  get: 
+
+or 
+
+Remarks: 
+
+w(S  :  ¯ S ) ≥ 
+
+1 
+w(E ) ≥ 
+2 
+
+1 
+OP T . 
+2 
+
+� 
+
+(a)  The  bound  of  1/2  cannot  be  improved  for  this  MOVE  neighborhood:  Consider  a  k-vertex 
+cycle, where k  is a multiple of 4,  as  the graph G  (with unit weights).  The best  cut will  include 
+
+Lec18-1 
+
+all  edges.  However,  if  we  start  from  a  cut  in  which  the  edges  of  the  cycle  alternate  in  and  out 
+of  the  cut,  we  have  a  locally  optimum  solution  with  only  k/2  edges  in  the  cut. 
+
+(b)  The  local  search  algorithm  based  on  the  MOVE  neighborhood  for  MAX-CUT  takes  expo­
+nentially  many  steps  in  the  worst-case.  This  is  true  even  for  graphs  that  are  4-regular  (each 
+vertex  has  exactly  4  neighbors)  (Haken  and  Luby  [1]).  For  3-regular  graphs  the  algorithm  is 
+polynomial  (Poljak  [4]). 
+
+(c)  To  capture  the  complexity  of  local  search,  Johnson,  Papadimitriou  and  Yannakakis  [3]  have 
+deﬁned  the  class  PLS  (Polynomial  Local  Search).  Members  of  this  class  are  optimization 
+problems  of  the  form  max{f (x) :  x  ∈  S }  together  with  a  neighborhood  N  :  S 
+→
+2S .  We  say 
+that  v  ∈  S  is  a  local  optimum  if  c(v)  =  max{c(x) :  x  ∈  N (v)}.  To  be  in  PLS,  we  need  to 
+have  polynomial-time  algorithms  for  (i)  ﬁnding  a  feasible  solution,  (ii)  deciding  if  a  solution  is 
+feasible and  if  so computing  its cost,  and  (iii) deciding  if a better  solution  in  the neighborhood 
+N (v)  of  a  solution  v  exists  and  if  so  ﬁnding  one.  They  introduce  a  notion  of  reduction,  and 
+this leads to PLS-complete problems for which any problem in PLS can be reduced to it.  Their 
+notion  of  reduction  implies  that  if,  for  one  PLS-complete  problem,  one  has  a  polynomial-time 
+algorithm  for  ﬁnding  a  local  optimum  then  the  same  true  for  all PLS  problems.  In  particular, 
+MAX-CUT  with  the  MOVE  neighborhood  is  PLS-complete  [5].  Furthermore,  it  follows  from 
+Johnson  et  al.  [3]  that  the  obvious  local  search  algorithm  is  not  an  eﬃcient  way  of  ﬁnding 
+a  local  optimum  for  a  PLS-complete  problem;  indeed,  for  any  PLS-complete  problem,  there 
+exist  instances  for which  the  local  search algorithm  of  repeatedly ﬁnding an  improved  solution 
+takes  exponential  time.  The  result  of  Haken  and  Luby  above  is  thus  just  a  special  case.  Still, 
+this  does  not  preclude  other  ways  of  ﬁnding  a  local  optimum. 
+
+3 
+Idea  #2:  Random  Cut 
+Algorithm:  There  are  2|V |  possible  cuts.  Sample  a  cut  randomly using  a uniform distribution  over 
+all  possible  cuts  in  the  graph:  ∀v ∈ V ,  P r(v ∈ S ) =  1 ,  independently  for  all  vertices  v ∈ V .
+2 
+Lemma  2  This  randomized  algorithm  gives  a  cut  with  expected  weight  that  is  ≥  1 OP T .
+2 
+� 
+� 
+Proof  of  lemma  2: 
+w(e)I (e ∈ (S  :  ¯ S ))] = 
+w(e) · P r(e ∈ (S  :  ¯ S )) 
+E [w(S  :  ¯ S )]  =  E [ 
+e∈E � 
+e∈E 
+w(e) · 
+e∈E 
+
+1 
+w(E ). 
+2 
+
+= 
+
+1 
+2 
+
+= 
+
+� 
+Using  the  method  of  conditional  expectations,  we  can  transform  this  randomized  algorithm  into 
+a  deterministic  algorithm.  The  basic  idea  is  to  use  the  following  identity  for  a  random  variable  f 
+and  event  A: 
+E [f ] =  E [f A]P r(A) + E [f A¯]P r(A¯) = E [f |A]P r(A) + E [f |A¯](1 − P r(A)) 
+|
+|
+≤  max
+{E [f |A], E [f |A¯]
+}. 
+
+· · · 
+In  our  setting,  we  consider  the  vertices  in  a  speciﬁc  order,  say  v1 , v2 , 
+,  and  suppose  we  have 
+· · · 
+already  decided/conditioned  on  the  position  (i.e.  whether  or  not  they  are  in  S )  of  v1 , 
+, vi−1 .
+Now,  condition  on  whether  vi  ∈ S .  Letting  f  = w(S  : S¯),  we  get: 
+E [f |{v1 , · · ·  , vi−1 } ∩ S  = Ci−1 ] 
+≤  max(E [f |{v1 , · · ·  , vi−1 } ∩ S  = Ci−1 , vi  ∈ S ], E [f |{v1 , · · ·  , vi−1 } ∩ S  = Ci−1 , vi  ∈/ S ]). 
+
+Lec18-2 
+
+Both  terms  in  the  max  can  be  easily  computed  and  we  can  decide  to  put  vi  on  the  side  of  the  cut 
+which  gives  the maximum,  i.e.  we  set  Ci  to  be  either  Ci−1  or  Ci−1  ∪ {vi }  in  such  a  way  that: 
+E [f |{v1 , · · ·  , vi−1 } ∩ S  = Ci−1  ≤ E [f |{v1 , · · ·  , vi } ∩ S  = Ci ]. 
+When  we  have  processed  all  inequalities,  we  get  a  cut  (Cn  : C¯ n )  such  that 
+1 
+w(E ) ≤ E [f ] ≤ w(Cn  : C¯ n ), 
+2 
+and  this  provides  a  deterministic  0.5-approximation  algorithm. 
+Examining  this  derandomized  version  more  closely,  we  notice  that  we  will  place  vi  on  the  side 
+of  the  cut  that  maximizes  the  total  weight  between  vi  and  the  previous  vertices  {v1 , v2 , 
+, vi−1 }.
+· · · 
+This  is  therefore  a  simple  greedy  algorithm. 
+
+Remarks: 
+
+(a)  The  performance  guarantee  of  the  randomized  algorithm  is  no  better  than  0.5;  just  consider 
+the  complete  graph  on  n  vertices  with  unit  weights.  Also,  the  performance  guarantee  of  the 
+greedy  algorithm  is  no  better  than  0.5  int  he  worst-case. 
+
+max 
+
+s.t. 
+
+⇔ 
+
+4 
+
+∀cycle  C  ⊆ E  ∀F  ⊆ C,  |F |  odd 
+
+Idea  #3:  LP  relaxation 
+� 
+Algorithm:  Start  from  an  integer-LP  formulation  of  the  problem: 
+w(e)xe 
+�  � 
+e∈E 
+xe  ∈ {0, 1}  ∀e ∈ E 
+(1 − xe ) ≤  |C | − 1 
+�  � 
+xe  + 
+e∈F 
+e∈C \F 
+xe  − 
+e∈F 
+e∈C \F 
+Since  we  have  a  variable  xe  for  each  edge  (if  xe  =  1  than  e  ∈  (S  :  S )),  we  need  the  second  type  of 
+¯ 
+constraints  to  guarantee  that  S  is  a  legal  cut.  The  validity  of  these  constraints  comes  from  the  fact 
+that  any  cycle  and  any  cut  must  intersect  in  an  even  number  of  edges.  even  number  of  edges  that 
+are  in  the  cut. 
+� 
+Next,  we  relax  this  integer  program  into  a  LP: 
+w(e)xe 
+�  � 
+e∈E 
+0 ≤ xe  ≤ 1  ∀e ∈ E 
+xe  − 
+xe  ≤ |F | − 1  ∀cycle  C  ⊆ E  ∀F  ⊆ C,  |F |  odd. 
+e∈F
+e∈C \F 
+
+xe  ≤  |F | − 1  ∀cycle  C  ⊆ E  ∀F  ⊆ C,  |F |  odd 
+
+max 
+
+s.t. 
+
+This  isa  relaxation  of  the  maximum  cut  problem,  and  thus  provides  an  upper  bound  on  the  value 
+of  the  optimum  cut.  We  could  try  to  solve  this  linear  program  and  devise  a  scheme  to  “round”  the 
+possibly  fractional  solution  to  a  cut. 
+
+Remarks: 
+
+Lec18-3 
+
+(a)  This  LP  can  be  solved  in  a  polynomial  time.	 One  possibility  is  to  use  the  ellipsoid  algorithm 
+as  the  separation  problem  over  these  inequalities  can  be  solved  in  polynomial  time  (this  is  not 
+trivial).  Another  possibility  is  to  view  the  feasible  region  of  the  above  linear  program  as  the 
+pro jection  of  a  polyhedral  set  Q  ⊆  Rn 2  with  O(n3 )  number  of  constraints;  again,  this  is  not 
+obvious. 
+
+(b)  If  the  graph	 G  is  planar,  then  all  extreme  points  of  this  linear  program  are  integral  and 
+correspond  to  cuts.  We  can  therefore  ﬁnd  the  maximum  cut  in  a  planar  graph  in  polynomial 
+time  (there  is  also  a  simpler  algorithm  working  on  the  planar  dual  of  the  graph). 
+(c)  There  exist  instances  for  which  OP T  ∼  1  (or  ∃G = (V , E ), w(e) = 1, OP T  ≤ n( 1  + �),  LP  ≥
+n(1 − �)), which means  that any  rounding algorithm we could come up with will not guarantee 
+LP 
+2	
+2 
+a  factor  better  than  1 .2 
+
+5 
+
+Idea  #4:  SDP  relaxation 
+
+max 
+
+w(i, j )
+
+The  idea  is  to  use  semideﬁnite  programming  to  get  a  more  useful  relaxation  of  the  maximum  cut 
+problem.  This  is  due  to  Goemans  and Williamson  [2]. 
+Instead  of deﬁning  variables  on  the  edges  as we  did  in  the previous  section,  let’s  use  variables  on 
+the  vertices  to  denote  which  side  of  the  cut  a  given  vertex  is.  This  leads  to  the  following  quadratic 
+� 
+integer  formulation  of  the  maximum  cut  problem: 
+1 − yi yj 
+2 
+(i,j )∈E 
+yi  ∈ {1, −1}n  ∀i ∈ V . 
+s.t. 
+Here  we  have  deﬁned  a  variable  yi  for  each  vertex  i  ∈  V  such  that  yi  =  1  if  i  ∈  S  and  yi  =  −1 
+otherwise.  We  know  that  an  edge  (i, j )  is  in  the  cut  (S  :  S¯)  iﬀ  yi yj  =  −1,  and  this  explains  the 
+quadratic  term  in  the  ob jective  function. 
+We  can  rewrite  the  ob jective  function  in  a  slightly  more  convenient  way  using  the  Laplacian  of 
+⎧ ⎪0
+the  graph.  The  Laplacian matrix  L  is  deﬁned  as  follows: 
+⎨ 
+∈ E 
+⎪� 
+(i, j )  /
+⎩ 
+lij  =  −w(i, j ) 
+i = j, (i, j ) ∈ E 
+i = j. 
+=i w(i, k) 
+k:k
+that  is,  the  oﬀ-diagonal  elements  are  the  minus  the  weights,  and  the  diagonal  elements  correspond 
+to  the  sum  of  the weights  incident  to  the  corresponding  vertex.  Using  the  Laplacian matrix, we  can 
+� 
+n�  � 
+n�  n� 
+rewrite  equivalently  the  ob jective  function  in  the  following  way: 
+w(i, k) − 
+⎛ 
+y 2 
+yi yj lij  = 
+i 
+yi yj w(i, j ) = 4 ⎝  � 
+� 
+k �=i 
+(i,j )∈E 
+i=1  j=1 
+i=1 
+=  2w(E ) − 
+(i,j )∈E 
+(i,j )∈E 
+� 
+1 − yi yj 
+w(i, j ) 
+2 
+(i,j )∈E 
+
+⎞ 
+yi yj w(i, j ) 
+2  ⎠ , 
+1 − yi yj 
+w(i, j ) 
+
+y T Ly  = 
+
+= 
+
+1 
+4 y T Ly . 
+
+and  thus 
+
+Lec18-4 
+
+�
+�
+Thus  the  maximum  cut  value  is  thus  equal  to 
+1 
+max{ 
+y T LY  : y ∈ {0, 1}n }. 
+4 
+If  the  optimization  was  over  all  y ∈ Rn  with  ||y ||2  = n  then  we  would  get  that 
+2 
+1	
+n 
+max{ 
+4 y T LY  : y ∈ Rn , ||y ||2  = n} =
+λmax (L), 
+4 
+where  λmax (L)  is  the  maximum  eigenvalue  of  the  matrix  L.  This  shows  that  OP T  ≤  n λmax (L);
+4 
+this  is  an  eigenvalue  bound  introduced  by  Delorme  and  Poljak. 
+Using  semideﬁnite  programming,  we  will  get  a  slightly  better  bound.  Using  the  Frobenius  inner 
+product,  we  can  again  reformulate  the  ob jective  function  as: 
+1 
+• 
+y T Ly =  L  (yy T ),
+4 
+
+1
+4
+
+or  as 
+
+1 
+• 
+L Y
+4 
+if  we  deﬁne  Y  =  yyT .  Observe  that  Y  �  0,  Y  has  all  1’s  on  its  diagonal,  and  its  rank  is  equal  to 
+1.  It  is  easy  to  see  that  the  coverse  is  also  true:  if  Y  �  0,  rank(Y )  =  1  and  Yii  =  1  for  all  i  then 
+Y  = yyT  where  y ∈ {−1, 1}n .  Thus  we  can  reformulate  the  problem  as: 
+1 
+• 
+L Y
+4 
+rank(Y ) = 1, 
+∀i ∈ V  :  Yii  = 1, 
+Y  � 0. 
+
+max 
+
+s.t. 	
+
+This  is  almost  a  semideﬁnite  program  except  that  the  rank  condition  is  not  allowed.  By  removing 
+the  condition  that  rank(Y )  =  1,  we  relax  the  problem  to  a  semideﬁnite  program,  and  we  get  the 
+following  SDP: 
+
+SDP  = max 
+
+s.t.	
+
+1 
+• 
+L Y
+4 
+∀i ∈ V  :  Yii  = 1, 
+Y  � 0. 
+
+Obviously,  by  removing  the  condition  that  rank(Y )  =  1  we  only  increase  the  space  on  which  we 
+maximize,  and  therefore  the  value  (simply  denoted  by  SDP )  to  this  semideﬁnite  program  is  an 
+upper  bound  on  the  solution  to  the  maximum  cut  problem. 
+We  can  use  the  algorithms  we  described  earlier  in  the  class  to  solve  this  semideﬁnite  program 
+to  an  arbitrary  precision.  Either  the  ellipsoid  algorithm,  or  the  interior-point  algorithms  for  conic 
+programming.  Remember that semideﬁnite programs were better behaved  if they satisﬁed a regular­
+ity  condition  (e.g.,  they  would  satisfy  strong  duality).  Our  semideﬁnite  programming  relaxation  of 
+MAXCUT  is particularly simple and  indeed satisﬁes both the primal and dual regularity conditions: 
+(a)	 Primal  regularity  conditions  ∃Y  �  0  s.t.  Yii  = 1  ∀i.  This  condition  is  obviously  satisﬁed 
+(consider  Y  =  I). 
+
+Lec18-5 
+
+min 
+
+s.t. 
+
+� 
+(b)  Dual  regularity  condition:  First  consider  the  dual  problem  ­
+1
+⎛
+⎞ 
+zi 
+4 
+i∈V 
+⎟⎟⎟⎠ − L � 0,
+⎜⎜⎜⎝ 
+0 
+0 
+... 
+z1 
+0 
+0 
+... 
+z2 
+. . . 
+. . . 
+. . . 
+. . . 
+0 
+0 
+...  zn 
+⎛
+⎞
+∈  V .  The  regulation  condition  is  that  there  exist  zi ’s  such  that 
+where  zi  ∈  R  for  all  i 
+⎟⎟⎟⎠ − L � 0.  This  is  for  example  satisﬁed  if,  for  all  i,  zi  > λmax (L).
+⎜⎜⎜⎝ 
+0 
+0 
+... 
+z1 
+0 
+0 
+... 
+z2 
+.
+.
+. 
+.
+. 
+.
+. 
+.
+.
+.
+. 
+. 
+0 
+0
+...  zn 
+If  we  add  the  condition  that  z1  =  z2  =  ...  =  zn  to  the  dual  then  the  smallest  value  zi 
+Remark: 
+can  take  is  equal  to  λmax (L),  and  we  derive  that: 
+OP T  ≤ SDP  ≤ 
+
+n 
+λmax (L), 
+4 
+and  therefore  this  SDP  bound  improves  upon  the  eigenvalue  bound. 
+We  will  start  the  next  lecture  by  proving  the  following  theorem. 
+Theorem  3  ([2])  For  al l  w ≥ 0,  we  have  that  OP T  ≥ 0.87856.
+SDP 
+In order to prove this theorem, we will propose an algorithm which derives a cut from the solution 
+to  the  semideﬁnite  program.  To describe  this  algorithm, we  ﬁrst  need  some  preliminaries.  From  the 
+Cholesky’s  decomposition,  we  know  that: 
+Y  � 0  ⇔ ∃V  ∈ Rk×n , k = rank(Y ) ≤ n,  s.t.  Y  = V T V 
+⇔ ∃v1 , ..., vn  s.t.  Yij  = v T vj , vi  ∈ Rn .
+i 
+� 
+Therefore,  we  can  rewrite  the  SDP  as  a  ’vector  program’: 
+1 − vi
+T vj 
+2 
+(i,j )∈E 
+�vi � = 1 
+∀i ∈ V  : 
+∀i ∈ V  : 
+vi  ∈ Rn . 
+
+w(i, j )
+
+max 
+
+s.t. 
+
+To  be  continued... 
+
+References 
+
+[1]  A.  Haken  and M.  Luby,  “Steepest  descent  can  take  exponential  time  for  symmetric  connection 
+networks”,  Complex  Systems,  1988. 
+
+[2]  M.X.  Goemans  and  D.P. Williamson,  Improved  Approximation  Algorithms  for  Maximum  Cut 
+and  Satisﬁability  Problems  Using  Semideﬁnite  Programming,  J.  ACM,  42,  1115–1145,  1995. 
+
+[3]  D.S.  Johnson,  C.H.  Papadimitriou  and  M.  Yannakakis,  “How  easy  is  local  search”,  Journal  of 
+Computer  and  System  Sciences,  37,  79–100,  1988. 
+
+Lec18-6 
+
+[4]  S.  Poljak,  “Integer  Linear  Programs  and  Local  Search  for  Max-Cut”,  SIAM  J.  on  Computing, 
+24,  1995,  pp.  822-839. 
+
+[5]  A.A. Sch¨aﬀer and M. Yannakakis, “Simple  local  search problems  that are hard  to  solve”, SIAM 
+Journal  on  Computing,  20,  56–87,  1991. 
+
+Lec18-7 
+
+

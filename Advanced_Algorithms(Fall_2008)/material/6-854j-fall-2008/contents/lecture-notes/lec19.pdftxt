@@ -1,0 +1,429 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854 Advanced Algorithms 
+
+November 21, 2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  19 
+
+1 
+
+Introduction 
+
+In  this  lecture,  we  revisit  MAXCUT  and  describe  a  randomized  γ  (≈ .87856)-approximation  al­
+gorithm.  We  also  explore  SPARSEST-CUT,  an  NP-hard  problem  for  which  no  constant  factor 
+approximation  is  known.  We  begin  to  describe  an  O(log k)  approximation  using  multicommodity 
+ﬂows ; here  k  is  the  number  of  commodities.  To  deﬁne  the  relationship  between  the  optimal  values 
+of  SPARSEST-CUT  and  multicommodity  ﬂow,  we  introduce  metrics  and  ﬁnite  metric  spaces. 
+
+2  Revisiting  MAXCUT 
+
+Recall  the MAXCUT problem: given a graph  G  = (V , E ) and  weights  w :  E 
+→
+R+  (we could assume 
+that  G  is  the  complete  graph  and  weights  are  0  for  the  original  non-edges),  maximize  w(S  :  S¯) 
+ 
+�
+wij ) in  S  ⊂ V .  MAXCUT  can be formulated  as the integer program 
+(= 
+i∈S
+
+j∈S¯
+
+
+max 
+
+ 
+
+�
+(i,j)∈E 
+
+wij (1 − xixj )/2 
+
+sub ject to 
+
+xi  ∈ {±1}, ∀i. 
+The  prior  lecture  described  a  1/2-approximation  algorithm  and  an  upper  bound  on  the  solution  to 
+the  above  optimization,  via  reduction  to  a  semideﬁnite  program. 
+
+2.1  SDP  Relaxation  of   MAXCUT 
+In the SDP  relaxation, we replaced the  xi  with  unit  vectors in the sphere  S n−1  :=  {x  ∈ Rn :  kxk = 1}. 
+Thus,  the  goal  of  the  relaxed  MAXCUT  was  to  ﬁnd 
+ 
+
+wij (1 − v T vj )/2
+i 
+
+max 
+
+�
+(i,j)∈E 
+
+sub ject to 
+
+vi  ∈ S n−1  , ∀i. 
+Though it is not immediately  clear that this represents a semideﬁnite program, it  can be reformulated 
+as follows: 
+ 
+wij (1 − Yij )/2, 
+
+max 
+
+�
+(i,j) 
+
+sub ject to 
+
+Yii  = 1, ∀i 
+Y  (cid:23) 0. 
+
+19-1 
+
+Figure  1:  For  the  5-cycle,  the  optimum  vectors  end  up  being  in  a  lower-dimensional  space  (of 
+dimension  2),  see  left  ﬁgure.  The  angle  between  any  two  consecutive  vectors  is  4π/5  and  total  SDP 
+value is 5(1  − cos(4π/5))/2  = 4.52
+· · · 
+.  Taking  a  random  hyperplane  through  the  origin  gives  the 
+cut (S  :  S¯),  see  the  right  ﬁgure. 
+
+Given a solution to the SDP in the form of unit  vectors  vi , we would like to  ﬁnd  a feasible  S  giving as 
+large a  cut  as possible.  The ideal is to have vertices  i  and  j  separated by  the  cut  when (1 − vT vj )/2
+i 
+is large, i.e.,  vi  and  vj  are  far  apart  on  the  sphere.  Here  is  a  way  to  do  this.  Choosing  a  hyperplane 
+through  the  origin  divides  the  vectors  into  two  groups,  and  we  let  S  be  the  intersection  of  one 
+halfspace  with  the  set  of  vectors.  The  sets  of  vectors  on  each  side  of  the  hyperplane  correspond  to 
+S  and  S¯.  As  an  example,  we  illustrate  the  vectors  for  a  cycle  of  length  5  in  Figure  1. 
+Which  hyperplane  should  we  choose?  Well,  the  optimum  vectors  are  deﬁnitely  not  unique;  any 
+rotation  of  them  (orthonormal  transformation)  will  also  provide  an  optimum  solution  since  the 
+T vj ).  Therefore  we  should  not  have  a 
+ob jective  function  depends  only  on  the  inner  products  (vi
+preferred direction for the hyperplane. 
+
+3 
+
+MAXCUT  γ -Approximation Algorithm 
+
+This discussion provides the intuition behind  the following  randomized  algorithm, due to Goemans 
+and Williamson ([1]): 
+
+1.  Choose  a  unit  vector  r  ∈ S n−1  uniformly. 
+2.  Let  S  =  {i  ∈ V  :  rT vi  ≥ 0}. 
+Remark 1  In  the  case  n  = 2,  it  is  easy  to  pick  a  uniform  r,  by  taking  θ  ∈ [0, 2π)  uniformly, 
+whence  r  = (cos θ, sin θ)T .  For  a  general  n,  we  should  ﬁnd  r  ∈ S n−1  by  selecting  each  component 
+independently  from  a  Gaussian  distribution,  and  then  normalize  to  krk = 1. 
+Theorem 1  The  Goemans-Wil liamson  algorithm  is  a  randomized  γ -approximation  algorithm  for 
+2 cos−1  x 
+(≈
+MAXCUT,  where  γ  =  min 
+−1≤x≤1  π(1 − x)
+“OPT”  and  “SDP”  will  denote  the  optimal  solution  to  the  MAXCUT  instance  and  its 
+Proof: 
+SDP  relaxation.  We  show  E [w(S  :  S¯)] ≥ γ  SDP  ≥ γ  OPT.
+·
+· 
+
+.87856). 
+
+19-2 
+
+By  linearity  of  expectations,  we  have: 
+
+ 
+wij {1 if  (i, j ) ∈ (S  :  ¯S );  0 otherwise}] 
+
+E [w(S  :  ¯S )]  =  E [ 
+�
+(i,j) 
+ 
+wij P r[(i, j ) ∈ (S  :  ¯S )]. 
+�
+(i,j) 
+
+= 
+
+If  we  were  in  dimension  2  then  vi  and  vj  are  separated  by  the  line  orthogonal  to  r  if  and  only 
+if  this  line  falls  between  vi  and  vj  and  this  occurs  with  a  probability  ∠(vi , vj )/π  (where  ∠(vi , vj ) 
+denotes  the  angle  between  vi  and  vj ).  The  same  is  also  true  for  higher  dimensions.  Indeed,  let  p 
+denote  the  pro jection  of  r  onto  the  2-dimensional  space  F  spanned by  vi  and  vj .  We  have 
+
+T 
+T
+r vi  =  p vi 
+T 
+T
+r vj  =  p vj 
+
+implying  that  vi  and  vj  are  separated for the partition deﬁned by  r  if  and  only  if  they  are  separated 
+for the partition deﬁned by  p.  But  p/ p is  uniform  over  the  unit  circle  in  F .  Therefore, 
+|| ||
+P r[(i, j ) ∈ (S  :  S¯)] =  ∠(vi , vj )/π 
+T vj  = cos ∠(vi , vj )): 
+and,  using  the  fact  that  vi  and  vj  are  unit  vectors (and thus  vi
+T vj )π . 
+P r[(i, j ) ∈ (S  :  S¯)] =  cos −1 (vi
+So,  we  get  a  closed-form  formula  for  the  expected  weight  of  the  cut  produced: 
+ 
+T vj )/π . 
+wij  cos −1 (vi
+
+E [w(S  :  S¯)] = 
+
+�
+(i,j) 
+
+On  the  other  hand,  we  know  that 
+
+ 
+wij (1 − v T vj )/2.
+i 
+
+SDP  = 
+
+�
+(i,j) 
+Since  wij  is  non-negative,  E [w(S  :  S¯)]/SDP  ≥ the  smallest  ratio  over  all (vi , vj ): 
+E [w(S  :  S¯)]/SDP  ≥  min  (cos−1 (x)/π)/[(1 − x)/2] 
+−1≤x≤1 
+=:  γ (≈ 0.87856). 
+
+(cid:3) 
+
+Several  remarks  are  in  order. 
+
+Remark 2  The  analysis  is  tight  in  the  sense  that,  for  any  ε >  0,  there  exist  instances  such  that 
+OPT/SDP  ≤ γ  +  ε.[2] 
+Remark 3  It is possible to derandomize Goemans-Wil liamson (and  achieve  a performance guaran­
+tee  of  γ ); stil l,  in  practice,  the  fact  that  one  can  output  many  cuts  is  useful  as  one  can  then  exploit 
+the  variance  of  the  weight  of  the  cut. 
+
+Remark 4  No  approximation  algorithm  achieving  better  than  γ  is  currently  known. 
+
+Remark 5  Approximating  MAXCUT  within  16/17  (≈ .94117)  +ε  for  any  ε >  0  is  NP-hard[3]. 
+Approximating  MAXCUT  within  γ  +  ε  for  any  ε >  0  is  UGC-hard;  that  is,  an  eﬃcient  algorithm 
+doing  such  would  imply  the  falsity  of  the  Unique  Games  Conjecture. 
+
+Remark 6  It  can  be  shown  that  the  SDP  relaxation  above  always  has  an  optimal  solution  in  dimen­
++1  ≤ n  (i.e.  r  ≤ 2√n). 
+sion  r  where  r(r
+2
+
+19-3 
+
+4  SPARSEST-CUT  and  Multicommodity-Cut 
+
+We now consider the problem of identifying  a sparse cut in a graph:  one which is as small  as possible, 
+relative  to  the  number  of  edges  which  could  exist  between  the  sets  of  vertices.  The  latter  quantity 
+is  maximized  by  balancing  the  vertices  across  the  partition.  Hence,  we  seek  S  ⊂ V  minimizing 
+w(S  :  S¯)/|S  × S¯|.  A  generalization  of  SPARSEST-CUT  is  the  multicommodity  cut  problem,  in 
+which  we  have,  in  addition  to  a  capacitated  G  = (V , E ),  some k  commodities,  each  associated  with 
+a  “demand”  fi  and  a  source  and  sink  si , ti 
+V .  (The  idea  is  that  we  want  to  ship 
+∈
+units  of 
+fi 
+commodity  i  from  si  to  ti .)  We  seek the  value  of  a  cut (S  :  S¯) with  minimum  capacity  relative  to 
+the  demand  across  it,  i.e., 
+
+u(S  :  S¯)
+ 
+min 
+�
+i:(si ,ti )∈(S :S¯) fi ] 
+S :S¯ [ 
+We  will  write  β  for  the  ob jective  in  this  expression,  and  denote  its  optimum  by  β ∗  . 
+We  recover  SPARSEST-CUT  by  taking  u  =  w  and  creating  a  commodity  of  demand  1  for  each 
+pair of vertices.  As another special case, when  k  = 1, we are minimizing u(S  :  S¯) over cuts separating 
+s  and  t,  so  we  have  the  min  s–t  cut problem (in  an  undirected graph). 
+
+. 
+
+4.1  Concurrent  multicommodity  ﬂow 
+
+Let  us  now  discuss  a  problem  which  is  in  a  sense  dual  to  the  multicommodity  cut.  In  concurrent 
+multicommodity  ﬂow, we are given  G  = (V , E ) with  k  commodities and  capacity  constraints on each 
+edge  ∈ E , and  seek  the maximum  α  such  that we can send  αfi  units of  ﬂow across the graph from  si 
+to  ti  for all  i  simultaneously,  without  violating  the  capacity  constraints  on  each  edge.  Let  α∗  denote 
+the optimal  value.  It is easy  to see how to do multicommodity  ﬂow by  linear programming. 
+The  multicommodity  cut  and  ﬂow  problems  are  related  by  α∗  ≤ β ∗  .  Indeed,  if  we  can  send  αfi 
+from  si  to  ti  for  all  i,  u(S  :  S¯) must  be  at  least  αfi  for  each (si , ti ) in  the  cut,  so 
+
+β  = 
+
+�
+[ 
+
+u(S  :  S¯)
+ 
+i:(si ,ti )∈(S :S¯) fi ]  ≥ α 
+for  all  feasible  β  and  α.  This  is  a  “weak  duality”-type  condition. 
+If  k  =  1,  we  have  equality,  by  the  max  s  − t  ﬂow  min  s  − t  cut theorem (one  can  show that the 
+theorem  for  directed  graphs  implies  it  also  for  undirected  graphs).  It  is  non-obvious  that  we  have 
+α∗  =  β ∗  for  k  =  2  as  well.  In  general,  however,  we  do  not  have  equality.  In  ﬁgure  2,  we  show  an 
+example  of  a graph  with  a  relatively  small  number  of  commodities (4)  for  which  α∗  is  strictly  less 
+than  β ∗  . 
+In this graph, all capacities have value  = 1.  For this graph, β ∗  = 1.  Consider the multicommodity 
+cut given by  the dashed line.  For this  cut,  and  any  similar cuts, the  sum  of  the  capacities across the 
+ 
+cut is  u(S  :  S¯) =  3  and  the  amount  of  demand  that  needs  to  go  through  it  is 
+�
+i:(si ,ti )∈(S :S¯) fi  = 3 
+also.  If  we  choose  a  cut  for  which  the  capacties  sum  to  2  instead,  the  sum  of  the  demands  will  also 
+be  2.  Therefore,  β ∗  = 1. 
+What is  α∗  though?  There  are  k  = 4  commodities  in  this  graph,  and  yet  a  maximum  of  3  units 
+of  ﬂow  can  be  pushed  across  a  cut  at  one  time.  Since  s2  and  t2  are  on  the  same  side  of  the  cut,  you 
+might  think  that  α∗  might  be  able  to  reach  1.  However,  since  each  si  is  at  least  two  edges  away 
+from its  ti  and  there  are  4  commodities,  if  α∗  =  1  then  the  sum  of  the  ﬂow  on  all  the  edges  of  the 
+graph would have to be (4)(2)(1)  = 8.  Yet there only 6 edges, each with capacity 1.  This shows  
+that  α∗  ≤ 3/4. 
+So  what  IS  the  relationship  between  α∗  and  β ∗  in general? 
+
+Theorem 2 
+
+β ∗ 
+α∗ 
+
+=  O(log k). 
+
+19-4 
+
+Figure  2:  An  Example  Graph  where  α∗  < β ∗  . 
+
+Remark 7  Computing  β ∗  is  NP-hard.  However—as  we  wil l  see  in  the  upcoming  lecture  —  we  can 
+get  a  O(log k)  approximation  using  the  LP  we  have  for  α∗ ,  and  a  tighter  O(√log k)  approximation 
+using  an  SDP. 
+
+To  prove  the  above  result,  we  introduce  metric  spaces.  
+
+5  Finite  Metric  Spaces 
+
+Deﬁnition 1  Let  X  be  an  arbitrary  set,  and  d  a function  X 
+the  fol lowing  properties  hold  for  al l  x, y , z  ∈ X : 
+1.  d(x, y ) ≥ 0  (Nonnegativity) 
+2.  d(x, y ) =  d(y , x)  (Reﬂexivity) 
+
+× X  →
+
+R.  (X, d) is  a  metric  space  if 
+
+3.  d(x, y ) + d(y , z ) ≥ d(x, z ) (Triangle Inequality) 
+For simplicity, we will deal  only  with  ﬁnite metric spaces (i.e.  X is  ﬁnite). 
+|
+|
+Deﬁnition 2  Let  X ,  Y  be  sets  with  associated  metrics  d,  ℓ.  For  c  ≥ 1,  we  say  that  (X, d)  embeds 
+into (Y , ℓ) with  distortion  c  if  there  is  a  mapping  φ :  X
+Y  such  that  for  any  x, y  ∈ X ,  d(x, y ) ≤
+→
+ℓ(φ(x), φ(y )) ≤ cd(x, y ).  If  c  = 1,  the  embedding  is  cal led  isometric. 
+This  distortion  measure  is  useful  when  we  can  transform  a  problem  deﬁned  on  one  metric  into 
+another  metric  that  is  easier  to  deal  with.  This  is  precisely  what  we  will  do  in  the  context  of 
+multicommodity  cuts  and  ﬂows. 
+The most familiar metric spaces are  n-dimensional Euclidean spaces, where  d(x, y ) :=  kx − yk2  = 
+ 
+ 
+(xi  − yi )2  .  Generalizing  gives  the  family  of  ℓn  spaces,  where  we  work  over  the  set  Rn  and 
+�
+�
+p 
+ 
+i
+i  |xi  − yi |p )1/p .  One  can  show  that  in  the  limit  as  p  → ∞,  this  expression 
+d(x, y ) :=  kx  − ykp  = ( �
+|.  This  space  is  denoted  ℓn 
+tends  to  maxi  |
+∞ . 
+xi  − yi
+ℓn 
+Suppose (X, d)  is  isometrically  embeddable  into  ℓ1  (that is, 
+1  for  some  n).  Is  d  isometrically 
+embeddable into  ℓ2  as  well?  Not  necessarily.  Here  we  claim  that  ℓ2 -embeddable  metrics  are  only  a 
+subset  of  ℓ1 -embeddable  metrics,  which  in  turn  are  a  subset  of  ℓ∞  metrics.  In fact,  we put forth  the 
+following  lemma: 
+
+19-5 
+
+|V |
+Lemma 3  Any  ﬁnite  metric  space  (V , d) is  isometrical ly  embeddable  in  ℓ∞  .
+
+
+Proof:  For  notational purposes, let  V  =  {1, 2, . . . , n}.  The  mapping  φ :  V 
+φ(v) = (d(1, v), d(2, v), . . . , d(n, v)). 
+
+→
+
+R|V |  is given by
+
+
+Using  properties  of  metrics,  we  have 
+
+d(u, v) =  = 
+|d(u, u) − d(u, v)| 
+≤  max  d(i, u) − d(i, v)
+i∈V  |
+| 
+=  kφ(u) − φ(v)k∞ 
+= 
+ℓ∞ (φ(u), φ(v)). 
+
+On  the  other  hand,  the  triangle  inequality  gives 
+
+(φ(u) − φ(v))i  =  d(i, u) − d(i, v) ≤ d(u, v) 
+(φ(v) − φ(u))i  =  d(i, v) − d(i, u) ≤ d(u, v) 
+for  all  i,  so  ℓ∞ (φ(u), φ(v)) = maxi∈V  |(φ(u) − φ(v))i | ≤ d(u, v). 
+
+Remark 8  The  ℓ2 -embeddable  ﬁnite  metrics  are  ℓ1 -embeddable. 
+
+(cid:3) 
+
+The proof for this will be revisited in the next lecture.  For now we return to the Multicommodity-Cut 
+problem,  and  how  metrics  can  help  us  get  an  approximation  algorithm  for  it. 
+
+6 
+
+Back  to  multicommodity  cut 
+
+In  the  notation  of  metric  spaces,  we  have  the  following.  (“M  ≤ M  ′ ”  means  “M  is isometrically 
+embeddable in  M  ′ ”) 
+
+Theorem 4 
+
+ 
+�
+e=(i,j)∈E  u(e)ℓ(i, j ) 
+α ∗  =  min 
+ℓ : (V ,ℓ)≤ℓ∞  �k  fi ℓ(si , ti )
+i=1 
+ 
+�
+e=(i,j)∈E  u(e)ℓ(i, j ) 
+β  ∗  =  min 
+�k
+ℓ : (V ,ℓ)≤ℓ1 
+fi ℓ(si , ti )
+i=1 
+(Note that the only diﬀerence between these two expressions is the class of metrics in which  we permit 
+(V , ℓ) to  reside.  Thus,  since  α∗  minimizes  over  a  larger  space,  we  have  α∗  ≤ β ∗  immediately—as  we 
+expect.)  In  the  following  lecture,  we  show  an  algorithm  to  compute  β ∗  approximately,  making  use 
+of  the  above. 
+
+References 
+
+[1]  M.X.  Goemans  and  D.P.  Williamson,  Improved  Approximation  Algorithms  for  Maximum  Cut 
+and Satisﬁability  Problems Using  Semideﬁnite Programming, J. ACM, 42, 1115–1145, 1995. 
+
+[2]  U.  Feige  and  G.  Schechtman,  On  the  optimality  of  the  random   hyperplane  rounding  technique 
+for MAX CUT, Algorithms, 2000. 
+
+[3]  J.  H˚astad,  Some  optimal  inapproximability  results,  J.  ACM,  48,  798–869,  2001. 
+
+19-6 
+
+

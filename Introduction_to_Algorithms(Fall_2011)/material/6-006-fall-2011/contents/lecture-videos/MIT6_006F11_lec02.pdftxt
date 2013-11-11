@@ -1,0 +1,318 @@
+Lecture  2	 
+
+6.006  Fall  2011  
+
+Lecture  2:  Models  of  Computation  
+
+Lecture  Overview 
+•	 What  is  an  algorithm?  What  is  time? 
+•	 Random  access  machine 
+•	 Pointer  machine 
+•	 Python  model 
+•	 Document  distance:  problem  &  algorithms 
+
+History 
+
+Al-Khw¯arizm¯ı  “al-kha-raz-mi”  (c.  780-850) 
+•	 “father  of  algebra”  with  his  book  “The  Compendious  Book  on  Calculation  by  Com­
+pletion  &  Balancing” 
+•	 linear  &  quadratic  equation  solving:  some  of  the  ﬁrst  algorithms 
+
+What  is  an  Algorithm? 
+•	 Mathematical  abstraction  of  computer  program 
+•	 Computational  procedure  to  solve  a  problem 
+
+Figure  1:  Algorithm 
+
+Model  of  computation  speciﬁes 
+•	 what  operations  an  algorithm  is  allowed 
+•	 cost  (time,  space,  . . . )  of  each  operation 
+•  cost  of  algorithm  =  sum  of  operation  costs 
+
+1  
+
+programming languagepseudocodecomputermodel of computationprogramalgorithmanalogbuilt on top ofLecture  2 
+
+6.006  Fall  2011  
+
+Random  Access  Machine  (RAM)  
+
+•  Random  Access Memory  (RAM)  modeled  by  a  big  array 
+•  Θ(1)  registers  (each  1  word) 
+•  In  Θ(1)  time,  can 
+–  load  word  @  ri  into  register  rj 
+–  compute  (+, −, ∗, /, &, |, ˆ)  on  registers 
+–  store  register  rj  into memory  @  ri 
+•  What’s  a  word?  w ≥  lg (memory  size)  bits 
+–  assume  basic  ob jects  (e.g.,  int)  ﬁt  in  word 
+–  unit  4  in  the  course  deals  with  big  numbers 
+•  realistic  and  powerful →  implement  abstractions 
+
+Pointer  Machine 
+•  dynamically  allocated  ob jects  (namedtuple)  
+•  ob ject  has  O(1)  ﬁelds  
+•  ﬁeld  =  word  (e.g.,  int)  or  pointer  to  ob ject/null  (a.k.a.  reference) 
+•  weaker  than  (can  be  implemented  on)  RAM 
+
+2  
+
+012...345...word}Lecture  2 
+
+6.006  Fall  2011  
+
+Python  Model 
+
+Python  lets  you  use  either  mode  of  thinking 
+1.  “list”  is  actually  an  array →  RAM  
+L[i] = L[j ] + 5 → Θ(1) time  
+2.  ob ject  with  O(1)  attributes  (including  references) →  pointer machine  
+x = x.next → Θ(1) time  
+Python  has  many  other  operations.  To  determine  their  cost,  imagine  implementation  in 
+terms  of  (1)  or  (2): 
+
+1.  list 
+(a)  L.append(x) → θ(1)  time 
+obvious  if  you  think  of  inﬁnite  array  
+
+but  how  would  you  have  > 1  on  RAM?  
+via  table  doubling  [Lecture  9] 
+'L = L1 + L2
+"
+v 
+(θ(1+|L1|+|L2|) time)
+
+≡ L =  [ ] → θ(1) 
+
+(b)  
+
+for  x  in  L1:
+L.append(x) → θ(1) 
+for  x  in  L2:
+L.append(x) → θ(1) 
+
+3 
+
+  
+  
+
+θ(|L1 |) 
+
+θ(|L2 |) 
+
+⎫  
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎬  
+⎪⎪⎪⎪⎪ ⎪⎪⎪⎪⎪⎭  
+
+val5prevnullnextval-1prevnullnextLecture  2 
+
+6.006  Fall  2011  
+
+θ(1 + |L2 |)  time 
+
+θ(j − i + 1) = O(|L|) 
+⎫ ⎪⎪⎪⎪⎪⎪⎪⎬  
+θ(index  of  x)  = θ(|L|)  
+⎪⎪⎪⎪⎪⎪⎪⎭  
+
+θ(1)  
+
+(e) 
+
+b = x  in  L  ≡  
+&  L.index(x) 
+&  L.ﬁnd(x) 
+
+(c)  L1.extend(L2)  ≡  for  x  in  L2: 
+≡ L1+ = L2 
+L1.append(x)  → θ(1) 
+(d)  L2 = L1[i  : j ] ≡ L2 =  [] 
+for  k  in  range(i, j ): 
+L2.append(L1[i]) → θ(1) 
+
+ 
+(cid:41)
+(cid:41)
+ 
+⎫ ⎪⎬ ⎪⎭ 
+for  y  in  L:  
+if  x == y :  
+b = T rue; 
+break 
+else 
+b = F alse 
+(f )  len(L) → θ(1)  time  - list  stores  its  length  in  a  ﬁeld 
+(g)  L.sort() → θ(|L| log |L|)  - via  comparison  sort  [Lecture  3,  4  &  7)] 
+2.  tuple,  str:  similar,  (think  of  as  immutable  lists) 
+ 
+(cid:41)
+3.  dict:  via  hashing  [Unit  3  =  Lectures  8-10]  
+D[key]  =  val  
+key  in  D 
+
+θ(1)  time  w.h.p.
+
+4.  set:  similar  (think  of  as  dict  without  vals) 
+5.  heapq:  heappush  &  heappop  - via  heaps  [Lecture  4] → θ(log(n))  time 
+6.  long:  via  Karatsuba  algorithm  [Lecture  11]  
+x + y → O(|x| + |y |)  time  where  |y |  reﬂects #  words  
+x ∗ y → O((|x| + |y |)log(3) )  ≈ O((|x| + |y |)1.58 )  time  
+
+Document  Distance  Problem  —  compute  d(D1 , D2) 
+
+The  document  distance  problem  has  applications  in  ﬁnding  similar  documents,  detecting  
+duplicates  (Wikipedia  mirrors  and  Google)  and  plagiarism,  and  also  in  web  search  (D2  =  
+query).  
+Some  Deﬁnitions:  
+•  Word  =  sequence  of  alphanumeric  characters 
+•  Document  =  sequence  of  words  (ignore  space,  punctuation,  etc.) 
+The  idea  is  to  deﬁne  distance  in  terms  of  shared  words.  Think  of  document D  as  a  vector: 
+D [w] = #  occurrences  of  word W .  For  example: 
+
+4  
+
+Lecture  2 
+
+6.006  Fall  2011  
+
+Figure  2:  D1  =  “the  cat”,  D2  =  “the  dog” 
+As  a  ﬁrst  attempt,  deﬁne  document  distance  as   
+d/ (D1 , D2 ) = D1  · D2  =
+W 
+
+D1 [W ] · D2 [W ] 
+
+The  problem  is  that  this  is  not  scale  invariant.  This means  that  long  documents  with  99%  
+same  words  seem  farther  than  short  documents  with  10%  same  words.  
+This  can  be  ﬁxed  by  normalizing  by  the  number  of  words:  
+D1  · D2
+d// (D1 , D2 ) =  |D1 | · |D2 | 
+where  |Di |  is  the  number  of  words  in  document  i.  The  geometric  (rescaling)  interpretation 
+of  this  would  be  that: 
+d(D1 , D2 ) = arccos(d// (D1 , D2 )) 
+or  the  document  distance  is  the  angle  between  the  vectors.  An  angle  of  0◦  means  the  two 
+documents  are  identical  whereas  an  angle  of  90◦  means  there  are  no  common  words.  This 
+approach  was  introduced  by  [Salton, Wong,  Yang  1975]. 
+
+Document  Distance  Algorithm 
+
+1.  split  each  document  into  words 
+
+2.  count  word  frequencies  (document  vectors) 
+
+3.  compute  dot  product  (&  divide) 
+
+5  
+
+dogcatD2D1theLecture  2	 
+
+6.006  Fall  2011  
+
+|
+word ) 
+
+=  O(|doc|)  
+
+(3) 
+
+(1)  re.ﬁndall  (r“  w+”,  doc) →  what  cost?  
+⎫ ⎪⎪⎪⎪⎪⎬  
+in  general  re  can  be  exponential  time 
+→  for  char  in  doc: 
+Θ(|doc|)  
+⎫ ⎪⎬  Θ(1)  ⎪⎪⎪⎪⎪⎭
+if  not  alphanumeric  
+⎪⎭ 
+add  previous  word  
+(if  any)  to  list 
+start  new  word 
+⎫ ⎪⎪⎪⎪⎪⎪⎪⎬ 
+O(   |
+←  O(k log k · |word|)  where  k  is #words 
+(2)  sort  word  list 
+⎫ ⎪⎪⎪⎬  
+for  word  in  list:  
+if  same  as  last  word:	  ← O(|word|) 
+⎪⎪⎪⎪⎪⎪⎪⎭ 
+increment  counter 
+Θ(1)  
+⎪⎪⎪⎭  ⎫⎪⎬ ⎪⎭⎫  
+else: 
+add  last  word  and  count  to  list 
+reset  counter  to  0 
+for  word,  count1  in  doc1:  ← Θ(k1 ) 
+O(k1  · k2 ) 
+if  word,  count2  in  doc2:  ← Θ(k2 ) 
+  
+total  +=  count1  *  count2  Θ(1) 
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎬ ⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎭  
+|word|) = O(|doc|) 
+O( 
+
+start  at  ﬁrst  word  of  each  list  
+if  words  equal:  ← O(|word|) 
+total  +=  count1  *  count2 
+if  word1  ≤  word2:  ← O(|word|) 
+advance  list1 
+else: 
+advance  list2 
+repeat  either  until  list  done 
+
+(3)’ 
+
+Dictionary  Approach 
+count  =  {}
+
+(2)’ 
+
+⎫ ⎪⎬ 
+for  word  in  doc: 
+if word  in  count:   ← Θ(|word|) + Θ(1) w.h.p 
+⎪⎭ 
+count[word]  +=  1 
+else 
+Θ(1) 
+count[word]  =  1 
+as  above → O(|doc1 |)  w.h.p. 
+
+(3)’ 
+
+⎫ ⎪⎪⎪⎪⎪⎪⎪⎬ 
+⎪⎪⎪⎪⎪⎪⎪⎭  
+O(|doc|)  w.h.p. 
+
+6 
+
+Lecture  2	 
+
+6.006  Fall  2011  
+
+Code  (lecture2  code.zip  &  data.zip  on  website) 
+
+t2.bobsey.txt  268,778  chars/49,785  words/3354  uniq 
+t3.lewis.txt  1,031,470  chars/182,355  words/8534  uniq 
+seconds  on  Pentium  4,  2.8  GHz,  C-Python  2.62,  Linux  2.6.26 
+•	 docdist1:  228.1 —  (1),  (2),  (3)  (with  extra  sorting) 
+words  =  words  +  words  on  line 
+•  docdist2:  164.7 —  words  +=  words  on  line 
+•  docdist3:  123.1 —  (3)’  . . . with  insertion  sort 
+•  docdist4:  71.7 —  (2)’  but  still  sort  to  use  (3)’ 
+•  docdist5:  18.3 —  split  words  via  string.translate 
+•  docdist6:  11.5 —  merge  sort  (vs.  insertion) 
+•  docdist7:  1.8 —  (3)  (full  dictionary) 
+•  docdist8:  0.2 —  whole  doc,  not  line  by  line 
+
+7  
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

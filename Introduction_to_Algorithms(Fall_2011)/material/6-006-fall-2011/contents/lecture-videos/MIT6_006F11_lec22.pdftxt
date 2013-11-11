@@ -1,0 +1,245 @@
+Lecture 22
+
+Dynamic Programming IV of IV
+
+6.006 Fall 2011
+
+Lecture 22: Dynamic Programming IV
+
+Lecture Overview
+• 2 kinds of guessing
+• Piano/Guitar Fingering
+• Tetris Training
+• Super Mario Bros.
+
+Review:
+
+* 5 easy steps to dynamic programming
+
+(a) deﬁne subproblems
+
+(b) guess (part of solution)
+
+(c) relate subproblem solutions
+
+(d) recurse + memoize
+problems
+OR build DP table bottom-up
+check subproblems acyclic/topological order
+
+count # subproblems
+
+count # choices
+
+compute time/subproblem
+time = time/subproblem · # sub-
+
+(e) solve original problem: = a subproblem
+OR by combining subproblem solutions
+
+=⇒ extra time
+
+* 2 kinds of guessing:
+
+(A) In (3), guess which other subproblems to use (used by every DP except Fibonacci)
+
+(B) In (1), create more subproblems to guess/remember more structure of solution used
+by knapsack DP
+• eﬀectively report many solutions to subproblem.
+• lets parent subproblem know features of solution.
+
+Piano/Guitar Fingering:
+
+Piano
+
+[Parncutt, Sloboda, Clarke, Raekallio, Desain, 1997]
+[Hart, Bosch, Tsai 2000]
+[Al Kasimi, Nichols, Raphael 2007] etc.
+• given musical piece to play, say sequence of n (single) notes with right hand
+
+1
+
+Lecture 22
+
+Dynamic Programming IV of IV
+
+6.006 Fall 2011
+
+• ﬁngers 1, 2, . . . , F = 5 for humans
+• metric d(f , p, g , q) of diﬃculty going from note p with ﬁnger f to note q with ﬁnger g
+e.g., 1 < f < g & p > q =⇒ uncomfortable
+stretch rule: p (cid:28) q =⇒ uncomfortable
+legato (smooth) =⇒ ∞ if f = g
+weak-ﬁnger rule: prefer to avoid g ∈ {4, 5}
+3 → 4 & 4 → 3 annoying ∼ etc.
+
+First Attempt:
+
+1. subproblem = min. difﬁculty for sufﬁx notes[i :]
+
+2. guessing = ﬁnger f for ﬁrst note[i]
+
+3. recurrence:
+DP[i] = min(DP [i + 1] + d(note[i], f , note[i + 1], ?) for f · · · )
+→ not enough information!
+
+Correct DP:
+
+1. subproblem = min diﬃculty for suﬃx notes[i :] given ﬁnger f on ﬁrst note[i]
+=⇒ n · F subproblems
+
+2. guessing = ﬁnger g for next note[i + 1]
+=⇒ F choices
+
+3. recurrence:
+DP [i, f ] = min(DP [i + 1, g ] + d(note[i], f , note[i + 1], g) for g in range(F ))
+DP[n, f ] = 0
+=⇒ Θ(F ) time/subproblem
+
+4. topo. order: for i in reversed(range(n)):
+for f in 1, 2, . . . , F :
+total time O(nF 2 )
+
+5. orig. prob. = min(DP[0, f ] for f in 1, . . . , F )
+(guessing very ﬁrst ﬁnger)
+
+2
+
+Lecture 22
+
+Dynamic Programming IV of IV
+
+6.006 Fall 2011
+
+Figure 1: DAG.
+
+Guitar
+
+Up to S ways to play same note! (where S is # strings)
+• redeﬁne “ﬁnger” = ﬁnger playing note + string playing note
+• =⇒ F → F · S
+
+Generalization:
+
+Multiple notes at once e.g. chords
+• input: notes[i] = list of ≤ F notes
+(can’t play > 1 note with a ﬁnger)
+• state we need to know about “past” now assignment of F ﬁngers to
+=⇒ (F + 1)
+F
+such mappings
+(1) n · (F + 1)F subproblems where (F + 1)F is how notes[i] is played
+
+(2) (F + 1)F choices (how notes[i + 1] played)
+(3) n · (F + 1)2F total time
+• works for 2 hands F = 10
+• just need to deﬁne appropriate d
+
+3
+
+≤ F + 1 notes/null
+
+}(5)di(cid:31)culty(cid:30)ngersnotesLecture 22
+
+Dynamic Programming IV of IV
+
+6.006 Fall 2011
+
+Figure 2: Tetris.
+
+Tetris Training:
+• given sequence of n Tetris pieces & an empty board of small width w
+• must choose orientation & x coordinate for each
+• then must drop piece till it hits something
+• full rows do not clear
+without the above two artiﬁcialities WE DON’T KNOW!
+(but: if nonempty board & w large then NP-complete)
+• goal: survive i.e., stay within height h
+
+First Attempt:
+
+1. subproblem = survive in sufﬁx i:? WRONG
+2. guessing = how to drop piece i =⇒ # choices = O(w)
+
+3. recurrence: DP [i] = DP [i + 1] ?! not enough information!
+What do we need to know about preﬁx : i?
+
+Correct:
+• 1. subproblem = survive? in suﬃx i:
+given initial column occupancies h0 , h1 , · · · , hw 1 , call it h
+−
+=⇒ # subproblems = O(n · hw )
+• 3. recurrence: DP [i, h] = max(DP [i, m] for valid moves m of piece i in h)
+=⇒ time per subproblem = O(w)
+• 4. topo. order: for i in reversed(range(n)): for h · · ·
+total time = O(nwhw )
+(DAG as above)
+• 5. solution = DP [0, 0]
+(& use parent pointers to recover moves)
+
+4
+
+Lecture 22
+
+Dynamic Programming IV of IV
+
+6.006 Fall 2011
+
+Super Mario Bros
+
+Platform Video Game
+• given entire level (ob jects, enemies, . . . ) (← n)
+• small w × h screen
+• conﬁguration
+– screen shift (← n)
+– player position & velocity (O(1)) (← w)
+– ob ject states, monster positions, etc. (← cw.·h )
+– anything outside screen gets reset (← cw.·h )
+– score (← S )
+– time (← T )
+• transition function δ : (conﬁg, action) → conﬁg’
+nothing, ↑, ↓, ←, →, B, A press/release
+
+(1) subproblem: best score (or time) from conﬁg. C
+=⇒ n · cw·h · S · T subproblems
+
+if on ﬂag
+if C .dead or C .time = 0
+for A in actions
+
+(3) recurrence:
+
+(2) guess: next action to take from C
+=⇒ O(1) choices
+ C .score
+ ∞
+max(DP (δ(C, A)))
+=⇒ O(1) time/subproblem
+
+DP (C ) =
+
+(4) topo. order: increasing time
+
+(5) orig. prob.: DP(start conﬁg.)
+
+• pseudopolynomial in S & T
+• polynomial in n
+•
+
+·
+exponential in w h
+
+5
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

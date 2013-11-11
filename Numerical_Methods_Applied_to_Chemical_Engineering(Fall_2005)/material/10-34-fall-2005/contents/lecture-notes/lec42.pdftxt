@@ -1,0 +1,93 @@
+% nlin_fit_kinetics 
+
+Produced using MATLAB® software. 
+Page 1 of 2 
+
+% nlin_fit_kinetics.m 
+%
+
+% This MATLAB m -file predicts the concentrations
+
+% of the species at several times for a reaction
+
+% network of the two reactions :
+
+%  A + B --> C
+
+%  C + B --> D 
+
+%
+
+% The two parameters to be fixed are the rate
+
+% constants for each reaction.
+
+%
+
+% The data to be fit are the concentrations of
+
+% species A, C, and D for various times for
+
+% several experiments of initial concentrations
+
+% of A and B.
+
+%
+
+% K. Beers
+
+% MIT ChE
+
+% 12/9/2001
+
+
+function [yhat,iflag] = nlin_fit_kinetics(theta,Param_fix); 
+
+iflag = 0; 
+
+num_exp = 3; 
+num_species_data = 3; 
+
+% We now allocate memory for the vector of model predictions. 
+num_data = num_species_data*sum(Param_fix.num_time_data); 
+yhat = zeros(num_data,1); 
+
+% We now perform each dynamic simulation. 
+count = 0;
+
+for iexp = 1:num_exp
+
+[t_traj,y_traj] = ode15s(@nlin_fit_kinetics_tdot, ... 
+Param_fix.time_data(iexp,1:Param_fix.num_time_data(iexp)), ... 
+Param_fix.conc_init(iexp,:)',[],theta); 
+% We then extract the model predictions. 
+% A 
+yhat(count+1:count+Param_fix.num_time_data(iexp)) = ... 
+y_traj(:,1); 
+count = count + Param_fix.num_time_data(iexp); 
+% C 
+yhat(count+1:count+Param_fix.num_time_data(iexp)) = ... 
+y_traj(:,3); 
+count = count + Param_fix.num_time_data(iexp); 
+% D 
+yhat(count+1:count+Param_fix.num_time_data(iexp)) = ... 
+y_traj(:,4); 
+
+ 
+
+7/16/2002 
+
+% nlin_fit_kinetics 
+
+Page 2 of 2 
+
+count = count + Param_fix.num_time_data(iexp); 
+end 
+
+iflag = 1; 
+
+return; 
+
+7/16/2002 
+
+

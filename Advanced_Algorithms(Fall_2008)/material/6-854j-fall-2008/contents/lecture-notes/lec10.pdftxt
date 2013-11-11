@@ -1,0 +1,389 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+October  8,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  10 
+
+Last  lecture  we  introduced  the  basic  formulation  of  a  linear  programming  problem,  namely  the 
+problem  with  the  ob jective  of  minimizing  the  expression  cT x  (where  c  ∈  Rn , x  ∈  Rn )  sub ject  to 
+the  constraints  Ax  =  b  where  A  ∈  Rmxn , b  ∈  Rm )  and  x  ≥  0.  We  then  introduced  the  dual  linear 
+program, with the ob jective of maximizing bT y , sub ject to the constraints that AT y ≤ c.  Eventually, 
+we  were  able  to  relate  the  two  forms  via  the  Theorem  of  Strong  Duality,  which  states  that  if  either 
+the  primal  or  the  dual  has  a  feasible  solution  then  their  values  are  equal: 
+w  := min{c T x : Ax = b, x ≥ 0} = max{bT y  : AT y ≤ c} =: z . 
+
+Today,  we  further  explore  duality  by  justifying  the  Theorem  of  Strong  Duality  via  a  physical 
+argument,  introducing  rules  for  constructing  dual  problems  for  non-standard  linear  programming 
+formulations,  and  further  discussing  the  notion  of  complementary  slackness  mentioned  in  the  last 
+lecture.  We  then  shift  gears  and  discuss  the  geometry  of  linear  programming,  which  leads  us  to  the 
+Simplex Method  of  solving  linear  programs. 
+
+1  The  Dual 
+
+1.1  Physical  Justiﬁcation  of  the  Dual 
+Consider  the  standard dual  form  of  a  linear  program.  The  set  of  feasible  solutions  y  that  satisfy  the 
+constraints  AT y  ≤  c  form  a  polyhedron  in  Rn ;  this  is  the  intersection  of  m  halfspaces.  Consider  a 
+tiny ball within  this polyhedron  at position  y .  To maximize  bT y , we move  the  ball  as  far  as  possible 
+in  the  direction  of  b  within  the  conﬁnes  of  our  polyhedron.  This  is  analogous  to  having  a  force,  say 
+gravity,  acting  on  the  ball  in  the  b  direction. 
+We  now  switch  over  entirely  to  the  physical  analogy.  At  equilibrium,  the  ball  ends  up  at  a  point 
+y  maximizing  bT y  over  AT y  ≤  c,  and  the  gravity  force  b  is  in  equilibrium  with  the  forces  exerted 
+against  the  ball  by  the  ’walls’  of  our  polyhedron.  These  wall  forces  are  normal  to  the  hyperplanes 
+T y ≤ c  (where aj  is  the  j th column of A),  the  force 
+deﬁning  them,  so  for  the hyperplane deﬁned by aj
+exerted  on  the  ball  can  be  expressed  as  −xj aj  for  some  magnitude  multiplier  xj  ≥  0.  As  stated 
+� 
+previously,  our  ball  is  at  equilibrium  (there  is  no  net  force  on  it),  and  so  we  ﬁnd 
+b − 
+xj aj  = 0. 
+j 
+
+We  also  note  that  for  any  wall  which  our  ball  is  not  touching,  there  is  no  force  exerted  by  that  wall 
+on  the  ball.  This  is  equivalent  to  saying 
+
+T y < cj . 
+xj  = 0  if  aj
+� 
+We  now  argue  that  these multipliers  xj  form  an  optimum  solution  to  the  primal  linear  program. 
+We  ﬁrst  note  that 
+b − 
+xj aj  = 0 
+j 
+is  equivalent  to  Ax  =  b,  and  that  the  multipliers  xj  are  either  zero  or  positive,  and  thus  x  ≥  0. 
+This  shows  that  our  xj ’s  yield  a  feasible  solution  to  the  primal,  now  we  need  to  prove  that  the  xj ’s 
+
+10-1 
+
+Figure  1:  Physical  visualization  of  the  dual  with  n = 2  (two  dimensions),  m = 6  (six  hyperplanes), 
+and  b  as  gravity.  The  dual  is maximized when  our  bT y  ball  is  at  the  lowest  point  of  the  polyhedron. 
+
+minimize  the  primal.  For  this,  we  will  show  that  the  value  cT x  equals  bT y ,  and  therefore  by  weak 
+� 
+� 
+duality,  this  will mean  that  x  is  a minimizer  for  the  primal.  The  value  cT x  is: 
+T y)xj , 
+(aj
+cj xj  =
+j 
+j
+since  xj  is  non-zero  only  where  aT
+j  y  =  cj  (a  non-zero  force  is  only  exerted  by  a  wall  on  our  ball  if 
+� 
+� 
+the  ball  is  touching  that  wall),  and  thus 
+T y)xj  = y T ( 
+aj xj ) = y T b = bT y . 
+(aj
+j 
+j
+
+c T x = 
+
+c T x =
+
+1.2  Rules  for  Writing  a  Dual 
+So  far,  we  have  dealt  only  with  the  dual  of  the  standard  primal  linear  programming  problem, 
+minimizing  cT x  such  that Ax = b  and  x ≥ 0.  What  if we  are  confronted with  a  non-standard  linear 
+program,  such  as  a  program  that  involves  inequalities  on  the  aij xj ,  or  non-positivity  constraints  on 
+the  xj ?  We  have  two  options.  The  ﬁrst  is  to  massage  the  linear  program  into  the  standard  primal 
+form,  immediately convert to the standard dual, and then potentially massage the dual problem into 
+� 
+a  form more  suitable  to  our  original  problem.  This  can  be  a  long,  frustrating  process,  however,  and 
+so  instead  we  present  a  set  of  standard  rules  for  converting  any  linear  program  into  its  dual  form. 
+Consider  a  linear  problem  with  the  ob jective  of  minimizing 
+j  cj xj  sub ject  to  the  following 
+⎧ ⎪⎨= bi 
+constraints: 
+� 
+i ∈ I=
+
+aij xj ⎪⎩
+i ∈ I≥ 
+≥ bi 
+⎧ ⎪⎨ ⎪⎩ 
+≤ bi 
+i ∈ I≤ 
+j 
+j  ∈ J+
+
+≥ 0 
+≤ 0 
+j  ∈ J− 
+∈ R  j  ∈ J0 . 
+� 
+Earlier,  the  way  we  obtained  the  dual  was  to  get  a  lower  bound  (or  an  upper  bound  if  it  was  a 
+maximization  problem)  on  the  ob jective  function  of  the  primal,  and  to maximize  this  upper  bound. 
+We  claim  that  the  same  process  leads  to  the  dual  of maximizing 
+i bi yi  sub ject  to  the  constraints: 
+
+(1) 
+
+
+xj 
+
+(2)
+
+
+10-2 
+
+yi 
+
+(3)
+
+
+(4) 
+
+⎧ ⎪⎨ 
+� 
+j  ∈ J+
+
+≤ cj 
+⎪⎩
+j  ∈ J− 
+≥ cj 
+aij yi 
+⎧ ⎪⎨ ⎪⎩ 
+j  ∈ J0 
+= cj 
+i 
+i ∈ I≥ 
+≥ 0 
+≤ 0 
+i ∈ I≤ 
+∈ R 
+i ∈ I= 
+Weak  duality  is  pretty  straightforward.  Constraints  (4)  on  yi  guarantee  that,  when  multiplying 
+� 
+�  � 
+constraint  (1)  by  yi  and  summing  them  over  i,  we  get 
+aij xj  ≥ 
+yi bi . 
+yi 
+j 
+i 
+i
+�  � 
+� 
+Similarly,  constraints  (3)  together  with  constraints  (2)  imply  that 
+cj xj  ≥ 
+aij yi . 
+xj 
+i 
+j 
+j
+
+(5) 
+
+(6) 
+
+The left-hand-side of  (5) being equal to the right-hand-side of  (6) (after rearranging the summation), 
+we  get  weak  duality  that 
+c T x ≥ bT y . 
+And  strong  duality  also  holds  provided  that  either  the  primal  or  the  dual  has  a  feasible  solution. 
+
+1.3  Complementary  Slackness 
+Complementary  slackness allows  to easily check when a  feasible primal and dual solutions are  simul­
+taneously  optimal.  Consider  the  primal 
+min{c T x : Ax = b, x ≥ 0}. 
+
+Consider  an  alternative  deﬁnition  of  the  dual  LP  obtained  by  adding  slack  variables: 
+max{bT y  : AT y + I s = c, s ≥ 0}, 
+where  s ∈ Rn .  Given  a  feasible  primal  solution  x  and  a  feasible  dual  solution  (y , s),  we  see  that  the 
+diﬀerence  in  their  value  is 
+
+c T x − bT y = s T x + y T Ax − y T b = s T x, 
+
+and this quantity better be 0  if x  is optimum for the primal and (y , s)  is optimal for the dual.  Notice 
+that  x  ≥  0  and  s  ≥  0,  and  therefore  xT s  =  0  if  and  only  if  xj sj  =  0  for  all  j .  Thus,  for  the  2 
+solutions to be simultaneously optimum  in the primal and  in the dual, we need that,  for all j , xj  = 0 
+whenever  sj  > 0  (or  equivalently  that  sj  = 0  whenever  xj  > 0). 
+Summarizing,  we  have: 
+Theorem  1  Let  x∗  be  feasible  in  the  primal,  and  (y∗ , s∗ )  be  feasible  in  the  dual.  Then  the  fol lowing 
+are  equivalent. 
+1.  x∗  is  optimal  in  the  primal,  and  (y∗ , s∗ )  is  optimal  in  the  dual, 
+j  > 0 = ⇒  sj
+2.  For  al l  j :  x∗ 
+∗  = 0, 
+
+10-3 
+
+� 
+3.  For  al l  j :  x∗ 
+j s∗ 
+j  = 0, 
+j s∗ 
+x∗ 
+j  = 0. 
+j 
+
+4. 
+
+1.  yi  = 0  whenever 
+
+For  a  general  pair  of  primal-dual  linear  programs  as  given  in  (1)-(2)  and  (3)-(4),  complementary 
+slackness  says  that,  for  x  to  be  optimal  in  the  primal  and  for  y  to  be  optimal  in  the  dual,  we  must 
+� � 
+have  that 
+j  aij xj  =�
+i aij yi  =�
+2.  xj  = 0  whenever 
+The  Geometry  of  Linear  Programming 
+
+2 
+
+bi  and, 
+
+cj . 
+
+We now  switch gears and discuss  the geometry of  linear programming.  First, we deﬁne a polyhedral 
+set  P  =  {x  ∈  Rn  :  Ax  ≤  b}  as  the  ﬁnite  intersection  of  halfspaces.  We  then  deﬁne  a  vertex  of 
+polyhedral  set  P  to  be  any  x ∈ P  such  that  x + y ∈ P  ∧ x − y ∈ P  = ⇒  y = 0.  Intuitively,  a  vertex 
+is  a  “corner”  of  a polyhedral  set.  We  can  state  this  geometric deﬁnition  also  algebraically.  Given  an 
+index  set  J  ⊆ {1, 2, · · ·  , n},  AJ  denotes  the  m × |J |  submatrix  of  A  consisting  of  all  columns  of  A 
+indexed  by  J . 
+Lemma  2  For  P  = {x : Ax = b, x ≥ 0}  and  x ∈ P ,  x  is  a  vertex  of  P  if  and  only  if  AJ  has  linearly 
+independent  colums  for  J  = {j  : xj  > 0}. 
+Proof:  For  both  directions,  we  prove  the  contrapositive. 
+:  Assuming  x  is  not  a  vertex  implies  that  ∃y  = 0 :  x + y , x − y  ∈  P .  Therefore  A(x + y) = 
+⇐
+b, A(x − y) =  b,  which  implies  that  Ay  =  0.  However,  because  membership  in  P  requires  points  to 
+be  non-negative,  we  have  that  if  xj  =  0  then  yj  =  0.  Thus,  if  we  let  w  =  yJ  (i.e.  w  corresponds 
+to  the  components  of  y  in  J ),  we  see  that  w  =  0  and 
+AJ w  =  0,  which  implies  that  AJ  has  linearly 
+dependent  columns. 
+: If AJ  has linearly dependent columns, then ∃w = 0 : AJ w = 0.  This implies you can construct 
+⇒
+a  y  via  zero padding  such  that  y = 0  and Ay = 0, yj  = 0  for  j  �∈ J .  Thus, A(x + �y) = A(x − �y) = b 
+for  any  � ∈ R.  We  also  note  that 
+xj  ± �yj  ≥ 0  if  � ≤  xj  , which  is  strictly  greater  than  0.  Therefore, 
+|yj | 
+xj  ,  we  have  that  x ± �y ∈ P ,  and  thus  x  is  a  not  a  vertex  of  P . 
+� 
+if  we  choose  � =  min 
+|yj |
+
+j :yj =0
+
+We  can  take  the  notions  in  this  lemma  a  step  further  by  introducing  the  notions  of  a  basis,  a 
+basic  solution,  and  a  basic  feasible  solution.  For  what  follows,  we  assume  that  rank(A) =  m  (if 
+that’s not  the  case,  then  either  there  is no  solution  to Ax = b  and our problem  is  infeasible,  or  there 
+exists  a  redundant  constraint  (possibly more  than  one)  in  Ax = b  which  can  be  removed). 
+Deﬁnition  1  For  a  polyhedral  set  P  =  {x  :  Ax  =  b, x  ≥  0},  a  basis  B  is  a  subset  of  {1...n}  such 
+that  |B | = m  and  AB  is  invertible  (i.e.  rank(AB ) = m). 
+Deﬁnition  2  x  is  a  basic  solution  of  P  if  ∃  basis  B  : xB  = A−1 b, xN  = 0  for  N  = {1...n} \ B .
+B 
+Note  that  by  this  deﬁnition,  AB xB  + AN xN  =  b  must  be  true,  but  x  could  be  negative  and 
+therefore  infeasible. 
+Deﬁnition  3  x  is  a  basic  feasible  solution  (bfs)  if  it  is  a  basic  solution  such  that  x ≥ 0. 
+
+We  are  now  ready  to  prove  the  following  theorem  relating  vertices  to  basic  feasible  solutions. 
+
+10-4 
+
+�
+�
+�
+�
+�
+Theorem  3  Given  a  polyhedral  set  P  =  {x  :  Ax =  b, x ≥  0}  such  that  rank(A) = m,  and  a  point 
+x ∈ P ,  x  is  a  vertex  of  P  if  and  only  if  it  is  a  basic  feasible  solution  of  P . 
+
+� 
+
+Proof:  Will  be  provided  in  Lecture  11. 
+There  are  several  notable  remarks  to  make  pertaining  to  this  theorem: 
+•	 The  vertex  to  basic  feasible  solution  relationship  is  one-to-many,  or  in  other words,  there may 
+be  multiple  basic  feasible  solutions  that  correspond  to  a  single  vertex. 
+�  � 
+•	 The number of vertices of P  is less than or equal to the number of bases of P .  This follows from 
+the  ﬁrst  remark,  and  the  fact  that  some  bases  may  be  infeasible.  Therefore,  the  number  of 
+� 
+� 
+vertices of P  is upper bounded by  m  .  However, a stricter upper bound has been shown using 
+n
+a more  detailed  analysis,  namely  the  number  of  vertices  of P  is  upper  bounded  approximately 
+by  n−  2 
+m
+.m 
+2 
+We now know that ﬁnding basic feasible solutions of P  is equivalent to ﬁnding vertices of P .  Why 
+is this important?  Because there must an optimum solution to our linear programming problem that 
+is  a  vertex  of  the  polyhedral  set  deﬁned  by  the  linear  constraints.  More  formally, 
+Theorem  4  Given  a  polyhedral  set  P  =  {x  :  Ax  =  b, x  ≥  0},  if  min{cT x  :  x  ∈  P }  is  ﬁnite  (the 
+program  is  feasible  and  bounded),  and  x ∈ P ,  then  ∃  vertex  x� of P  : cT x�  ≤ cT x. 
+
+Proof:  Will  be  provided  in  Lecture  11. 	
+
+� 
+
+This  theorem  directly  leads  us  to  the  insight  behind  the  Simplex  Method  for  solving  linear 
+programs  by  ﬁnding  the  best  vertex. 
+
+3 
+
+Sketch  of  the  Simplex  Method 
+
+Here  is  a  very  basic  sketch  of  how  the  simplex method  works. 
+
+= B \ {j } ∪ {k}
+
+1.  Choose  a  basic  feasible  solution  x  corresponding  to  the  basis  B . 
+2.  While x  is  not  an  optimal  solution,  choose  j  and  k  such  that  the  new  basis B � 
+forms  a  bfs  x�  with  c x ≤ c x. 
+T	
+T
+There  are  several  important  remarks  to make  about  this method: 
+•	 It  is  not  clear  that  j  and  k  will  always  exist.  But  they  do,  and  this  can  be  shown. 
+•	 As  deﬁned,  x  and  x�  will  either  be  equal  or  will  be  ’adjacent’  vertices  on  P . 
+•	 The  reason  it  is  called  a  ’method’  and  not  an  algorithm  is  because  we  haven’t  speciﬁed  yet 
+how to choose j  and k  if several choices exist.  The choice of j  and k  is referred to as a pivoting 
+rule;  many  pivoting  rules  have  been  proposed. 
+•	 As  such,  there  is  no  guarantee  that  cT x�  < cT x,  namely  we  could  have  cT x�  =  cT x;  in  fact 
+we  could  even  have  x�  =  x  since  we  could  switch  from  one  basis  to  another  representing  the 
+same  vertex.  There  is  therefore  the  risk  that  we  repeat  the  same  basis  and  the  algorithm 
+never  terminates.  And  this  can  happen  for  some  of  the  pivoting  rules.  There  exist  however 
+anticycling  pivoting  rules which  guarantee  that  the  same  basis  is  never  repeated.  With  such  a 
+rule,  the  simplex method  will  terminate  since  there  are  ﬁnitely many  bases. 
+•	 The  running  time  of  the  simplex  method  depends  on  the  number  of  bases  considered  before 
+ﬁnding  an  optimal  one. 
+
+10-5 
+
+•	 For all currently known pivoting rules, there is at least one instance that will cause the simplex 
+method  to  run  in  exponential  time.  (This  is  in  contrast  with  the  simplex  method  in  practice 
+for which the number of iterations is usually good.  A partial explanation of this sharp contrast 
+between  the worst-case behavior  and  a  typical behavior  is highlighted  in  the work  of Spielman 
+and  Teng  on  smoothed  analysis.) 
+
+We  will  cover  other  algorithms  that  will  guarantee  a  polynomial  running  time  in  the  worst-case; 
+they  will  however  not  proceed  from  vertex  to  vertex  of  the  polyhedral  set. 
+There  is  a  lower bound  on  the number  of  iterations  of  the  Simplex Method, which  is  the  number 
+of  edges  in  the  path  from  the  starting  vertex  of  P  to  the  optimum  vertex  of  P .  For  a  given  P ,  this 
+lower  bound  will  be  the  diameter  of  P ,  the  maximum  over  all  pairs  of  vertices  of  the  length  of  the 
+shortest  path  between  them.  In  1957,  Hirsch  conjectured  that  the  diameter  of  a  polyhedral  set  is 
+upper  bounded  by n − d, where  d  is  the  dimension  of  the  space,  and n  is  the  number  of  hyperplanes 
+deﬁning  P .  While  this  has  not  been  proven  true  in  the  general  case,  the  following  results  have  been 
+found: 
+•	 The  conjecture  is  not  true  in  the  unbounded  case,  namely  there  exist  unbounded  polyhedra 
+5 �. 
+with  diameter  n − d + � d 
+•	 No  polynomial  bound  on  the  diameter  is  known  for  the  general  case  (even  for  just  bounded 
+polyhedra). 
+•	 Kalai  and  Kleitman  derived  a  subexponential  bound  nO(log d)  on  the  diameter. 
+•	 If  the  Hirsch  Conjecture  can  be  proven  for  n = 2d,  then  the  conjecture  holds  for  all  n. 
+•	 The  Hirsch  Conjecture  is  true  for  polytopes  with  all  their  vertces  in  {0, 1}d . 
+
+10-6 
+
+

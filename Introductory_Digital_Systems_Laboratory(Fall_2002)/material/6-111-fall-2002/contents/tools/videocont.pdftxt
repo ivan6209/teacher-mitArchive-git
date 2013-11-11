@@ -1,0 +1,149 @@
+Massachusetts Institute of Technology 
+Department of Electrical Engineering and Computer 
+Science 
+6.111 - Introductory Digital Systems Laboratory 
+Using the MC6847 Video Controller  
+
+Brief Description 
+
+The 6847 is a video display controller. It reads data from a RAM or PROM, converts this 
+data to a pattern of dots (pixels or pels), and generates the correct video signal to send to 
+a video monitor. The 6847 can provide color or monochrome displays in a variety of 
+resolutions. It can also display text data in some graphics modes. The 6847 also generates 
+synchronization signals for the TV monitor. 
+
+MC6847 data sheet: See p. 15, Figure 17a  
+The selected mode determines the display characteristics. This mode defines the size, 
+number, and sometimes the color of the display elements. It determines the number of 
+memory locations read and how the data is interpreted. The mode is specified by nine 
+inputs to the 6847. 
+
+Choose an appropriate mode for your project display requirements, you don't have to use 
+every available feature of the MC 6847! 
+Text or Graphics 
+
+The 6847 can be used for text or graphics. In the text modes, the screen contains 16 rows, 
+each containing 32 characters. Each position corresponds to a location in display 
+memory. Memory addresses 00 - 1F contain the data for the first row, 20 - 3F for the 
+second row, etc. The displayed character is determined by the value stored in memory. 
+You can use an external PROM or the internal ROM to create the character images. In 
+the graphics modes, the display is made up of an array of boxes, each box being off or on. 
+Each box is controlled by one or more bits in display memory. Text and graphics can be 
+mixed by changing the mode ``on the fly". This is accomplished by defining the G/A 
+input as a logical function of the 6847's address lines. 
+
+Resolution 
+
+Resolution, the number of boxes on the display, is an issue where people tend to go 
+overboard in their design. The rule here is ``No more than necessary". Higher resolution 
+means more memory to modify, more address lines to multiplex, and just more headaches 
+in general. 64 x 64 seems like a very low resolution, but it is adequate for many 6.111 
+projects. High resolution is most useful for line drawing. It is difficult to calculate and 
+draw more than a few lines in the retrace periods when display memory can be accessed. 
+A fast moving, low resolution, color display probably has the greatest aesthetic appeal. 
+
+Color 
+
+Color is available in a variety of ways with the 6847. In data sheet jargon, ``resolution 
+graphics" means a box is off (black) or on (white). One bit in memory controls each box's 
+state. In ``color graphics", two bits control each box providing off or one of three colors. 
+This complicates the bit manipulation of display memory, but not excessively. Semi-
+graphics modes provide one of eight colors, but the bit manipulation is more complicated. 
+Semi-graphics modes are good when you're moving a lot of predefined patterns from rom 
+to display memory. Certainly four colors are more aesthetic than black and white. 
+
+Interfacing to the Monitor 
+
+A diagram of a test circuit for the MC6847 is attached. By changing the switch settings, 
+the mode byte can be specified for internal or external character generation or for 
+Semigraphics 4. Measured timing diagrams are given for the character modes. 
+
+We recommend that you build this test circuit (or a similar one) first so that you can 
+resolve the interfacing to the MC6847 and verify the control signals that your project will 
+provide. The mode inputs should be configured as they will be for your project. 
+
+The test diagram also includes a circuit for an amplifier which will drive either a 
+monochrome monitor or and RGB monitor. Since there is only one output, one can only 
+realize a single color on the RGB monitor. The 3.3K potentiometer should be adjusted so 
+that the lowest point on the output waveform (the sync pulse) is at zero volts. Be sure and 
+leave pins 1, 5, and 8 of the LF357 unconnected. 
+
+When using the RGB monitor, one must also wire up the horizontal and vertical sync 
+inputs as shown on the diagram. Unfortunately, the 6847 produces vertical blanking 
+pulses instead of vertical sync. Therefore, we recommend using a one shot to produce a 
+vertical sync pulse which is delayed so that your display will not be shifted on the screen. 
+
+It is more difficult to use the Y, PHI A, and PHI B outputs of the MC6847 to actually 
+produce a color display. A ``digital" approach is outlined with a circuit diagram 
+appended. The basic idea is to use comparators to convert the MC6847 analog outputs to 
+digital signals and then combinational logic to produce RGB. 
+
+The levels from the MC6847 are digitized as follows: 
+
+XH = 1 if phiX > 1.75 volts 
+XL = 1 if phiX < 1.25 volts 
+
+If you are willing to have ORANGE and Yellow appear as the same color, then the 
+digital TTL outputs can be used to drive the RGB monitor directly by selecting that 
+switch position on the RGB monitor. If you really want a separate ORANGE then you 
+should select the analog position and use the extra 1/4 74S38 to diminish the GREEN 
+voltage as shown which should produce an ORANGE. The logic of this has been verified 
+but there may be minor display aberations due to timing problems with the comparator 
+outputs. 
+
+After the interface to the monitor is debugged, wire up the address and data lines to the 
+display memory. To debug this memory, substitute an EPROM with a ``test pattern" for 
+the RAM. This allows you to fully test the video display ``module" independent of the 
+circuitry that calculates the pattern to be displayed. 
+
+Bits 4, 5, and 6 determine the color for Semigraphics 4 mode. The values given for Y, 
+phiA, and phiB were measured. The * in the column for L means that it may be either 1 
+or 0 as the Y voltage is close to the threshold. 
+
+Input           Measured     Comp. outputs  To the TV Monitor 
+ 
+D6 D5 D4 Color  Y phiA phiB  L Ah Al Bh Bl  R G B     A = 1 if Y < .6 
+ 
+ 0  0  0  GRN  .58  1    1   *  0  1  0  1  0  1  0   Ah = 1 if 
+ 0  0  1  YEL  .48  1.5  1   1  0  0  0  1  1  1  0      phiA > 1.75 
+ 0  1  0  BLU  .66  1.5  2   *  0  0  1  0  0  0  1   Al = 1 if 
+ 0  1  1  RED  .66  2    1.5 *  1  0  0  0  1  0  0      phiA < 1.25 
+ 1  0  0 BUFF  .48  1.5  1.5 1  0  0  0  0  1  1  1 
+ 1  0  1 CYAN  .58  1    1.5 *  0  1  0  0  0  1  1   Bh = 1 if 
+ 1  1  0  MAG  .58  2    2   *  1  0  1  0  1  0  1      phiB > 1.75 
+ 1  1  1  ORN  .58  2    1   *  1  0  0  1  0 .5  0   Bl = 1 if 
+          BLK  .72  1.5  1.5 0  0  0  0  0  0  0  0      phiB < 1.25 
+
+Application Examples 
+
+A block diagram of a bit mapped display using the MC6847 is shown below. The user 
+circuitry is allowed to access the video memory for reads or writes only when 
+/access_enable is asserted low. The mode control consists of the 8 signals G/A, S/A, 
+EXT/INT, GM2-0, CSS, and INV. Functions of these signals are specified in section 5.  
+
+Character Oriented Display Generator with an External EPROM 
+     This block diagram allows the construction of a character based 
+display consisting of 16 lines each containing 32 characters.  The 
+characters are 8 bits wide by 12 bits high.  The character coding is 
+shown to the right. 
+ 
+ 
+ 
+ 
+The ROW counter (LS161)                  ROW ADDRESS  DATA 
+counting 0 thru 11 is                     binary HEX  HEX 
+used to provide the low         ---XX---    0000  0    18 
+4-bits of the EPROM             --X--X--    0001  1    24 
+address.  The RAM provides      --X--X--    0010  2    24 
+the character code which is     ---XX---    0011  3    18 
+used as the EPROM's high        ---XX--X    0100  4    19 
+address bits.  The LS163 is     --XXXXX-    0101  5    3E 
+loaded with a 9 at the start    -X-XX---    0110  6    58 
+of every frame to ensure that   -X-XX---    0111  7    58 
+the count will start at zero    --XXX---    1000  8    38 
+after the top border lines      --X-X---    1001  9    28 
+have been skipped. See Figure   --X--X--    1010  A    24 
+13 on the previous page.        -XX--XX-    1011  B    66 
+ 
+
+

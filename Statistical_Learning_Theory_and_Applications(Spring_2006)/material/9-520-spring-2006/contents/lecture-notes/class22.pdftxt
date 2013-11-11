@@ -1,0 +1,855 @@
+Active Learning
+
+9.520 Class 22, 03 May 2006
+Claire Monteleoni
+MIT CSAIL
+
+Outline
+
+Motivation
+Historical framework: query learning
+Current framework: selective sampling
+Some recent results 
+Open problems
+
+Active learning motivation
+
+Machine learning applications, e.g.
+Medical diagnosis
+Document/webpage classification
+Speech recognition
+
+Unlabeled data is abundant, but labels are expensive.
+
+Active learning is a useful model here.
+Allows for intelligent choices of which examples to label.
+
+Label-complexity: the number of labeled examples required to 
+learn via active learning 
+(cid:198) can be much lower than the PAC sample complexity!
+
+Supervised learning
+
+Given access to labeled data (drawn iid from an unknown underlying 
+distribution P), want to learn a classifier chosen from hypothesis class H, 
+with misclassification rate <ε. 
+
+Sample complexity characterized by d = VC dimension of H.
+If data is separable,need roughly d/ε labeled samples.
+Slide credit: Sanjoy Dasgupta
+
+Active learning
+
+In many situations unlabeled data is easy to come by, but there 
+is a charge for each label.
+
+What is the minimum number of labels needed to achieve the 
+target error rate?
+
+Slide credit: S. Dasgupta
+
+Active learning variants
+There are several models of active learning: 
+Query learning (a.k.a. Membership queries)
+Selective sampling
+Active model selection 
+Experiment design
+
+Various evaluation frameworks:
+Regret minimization
+Minimize label-complexity to reach fixed error rate
+Label-efficiency (fixed label budget)
+
+We focus on classification, though regression AL exists too.
+
+Membership queries
+Earliest model of active learning in theory work [Angluin 1992]
+
+X = space of possible inputs, like {0,1}n
+H = class of hypotheses
+
+Target concept h* ∈ H to be identified exactly.
+You can ask for the label of any point in X: no unlabeled data.
+
+H0 = H
+For t = 1,2,…
+pick a point x ∈ X and query its label h*(x)
+let Ht = all hypotheses in Ht-1 consistent with (x, h*(x))
+
+What is the minimum number of “membership queries” needed to 
+reduce H to just {h*}?
+
+Slide credit: S. Dasgupta
+
+Membership queries: example
+
+X = {0,1}n
+H = AND-of-positive-literals, like x1 ∧ x3 ∧ x10
+
+S = { }  (set of AND positions)
+For i = 1 to n:
+ask for the label of (1,…,1,0,1,…,1) [0 at position i]
+if negative: S = S ∪ {i}
+
+Total: n queries 
+
+General idea: synthesize highly informative points.
+Each query cuts the version space -- the set of consistent hypotheses -
+- in half.
+
+Slide credit: S. Dasgupta
+
+Problem
+
+Many results in this framework, even for complicated 
+hypothesis classes.
+
+[Baum and Lang, 1991] tried fitting a neural net to handwritten 
+characters.
+Synthetic instances created were incomprehensible to humans!
+
+[Lewis and Gale, 1992] tried training text classifiers.
+“an artificial text created by a learning algorithm is unlikely to 
+be a legitimate natural language expression, and probably would 
+be uninterpretable by a human teacher.”
+
+Slide credit: S. Dasgupta
+
+Selective sampling
+[Cohn, Atlas & Ladner, 1992]
+Selective sampling:
+Given: pool (or stream) of unlabeled examples, x, drawn i.i.d. 
+from input distribution.
+Learner may request labels on examples in the pool/stream.
+(Noiseless) oracle access to correct labels, y.
+Constant cost per label
+The error of any classifier h is measured on distribution P:
+err(h) = P(h(x) ≠ y)
+
+Goal: minimize label-complexity to learn the concept to a 
+fixed accuracy.
+
+Can adaptive querying really help?
+
+[CAL92, D04]: Threshold functions on the real line 
+hw(x) = 1(x ≥ w),     H = {hw: w ∈ R}
+
+-
+
++
+
+w
+
+Start with 1/ε unlabeledpoints
+
+Binary search – need just log 1/ε labels, from which the rest can be 
+inferred! Exponential improvement in sample complexity.
+Slide credit: S. Dasgupta
+
+More general hypothesis classes
+
+For a general hypothesis class with VC dimension d, is a 
+“generalized binary search” possible?
+
+Random choice of queries
+Perfect binary search
+
+d/ε labels
+d log 1/ε labels
+
+Where in this large range does the label complexity of active 
+learning lie?
+
+We’ve already handled linear separators in 1-d…
+
+Slide credit: S. Dasgupta
+
+[1] Uncertainty sampling
+
+Maintain a single hypothesis, based on labels seen so far.
+Query the point about which this hypothesis is most “uncertain”.
+
+Problem: confidence of a single hypothesis may not accurately 
+represent the true diversity of opinion in the hypothesis class.
+
+X
+
+-
+
++
+
++
+
++
++
+
+-
+
++
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Slide credit: S. Dasgupta
+
+[2] Region of uncertainty
+
+Current version space: portion of H consistent with labels so far.
+“Region of uncertainty” = part of data space about which there is 
+still some uncertainty (ie. disagreement within version space)
+
+Suppose data lies 
+on circle in R2; 
+hypotheses are 
+linear separators.
+(spaces X, H 
+superimposed)
+
++
+
+current version space
+
++
+
+region of uncertainty 
+in data space
+Slide credit: S. Dasgupta
+
+[2] Region of uncertainty
+
+Algorithm [CAL92]:
+of the unlabeled points which lie in the region of uncertainty, 
+pick one at random to query.
+
+Data and 
+hypothesis spaces, 
+superimposed:
+(both are the 
+surface of the unit 
+sphere in Rd)
+
+current version space
+
+region of uncertainty 
+in data space
+Slide credit: S. Dasgupta
+
+[2] Region of uncertainty
+
+Number of labels needed depends on H and also on P.
+
+Special case: H = {linear separators in Rd}, P = uniform 
+distribution over unit sphere. 
+
+Theorem [Balcan, Beygelzimer & Langford ICML ‘06]:  
+Õ(d2 log 1/ε) labels are needed to reach a hypothesis with error 
+rate < ε.
+
+Supervised learning: Θ(d/ε) labels.
+
+Slide credit: S. Dasgupta
+
+[3] Query-by-committee
+
+[Seung, Opper, Sompolinsky, 1992; Freund, Seung, Shamir, Tishby 1997]
+
+First idea: Try to rapidly reduce volume of version space?
+Problem: doesn’t take data distribution into account.
+
+H:
+
+Which pair of hypotheses is closest? Depends on data distribution P.
+Distance measure on H: d(h,h’) = P(h(x) ≠ h’(x))
+
+Slide credit: S. Dasgupta
+
+[3] Query-by-committee
+
+First idea: Try to rapidly reduce volume of version space?
+Problem: doesn’t take data distribution into account.
+
+To keep things simple, say d(h,h’) ∝ Euclidean distance in this 
+picture.
+
+H:
+
+Error is likely to 
+remain large!
+
+Slide credit: S. Dasgupta
+
+[3] Query-by-committee
+
+Elegant scheme which decreases volume in a manner which is 
+sensitive to the data distribution.
+
+Bayesian setting: given a prior π on H
+
+H1 = H
+For t = 1, 2, 
+receive an unlabeled point xt drawn from P
+[informally: is there a lot of disagreement about xt in Ht?]
+choose two hypotheses h,h’ randomly from (π, Ht)
+if h(xt) ≠ h’(xt): ask for xt’s label
+set Ht+1
+
+Slide credit: S. Dasgupta
+
+[3] Query-by-committee
+
+For t = 1, 2, …
+receive an unlabeled point xt drawn from P
+choose two hypotheses h,h’ randomly from (π, Ht)
+if h(xt) ≠ h’(xt): ask for xt’s label
+set Ht+1
+
+Observation: the probability of getting pair (h,h’) in the inner 
+loop (when a query is made) is proportional to π(h) π(h’) d(h,h’).
+
+vs.
+
+Ht
+
+Slide credit: S. Dasgupta
+
+[3] Query-by-committee
+
+Label bound, Theorem [FSST97] : 
+For H = {linear separators in Rd}, P = uniform distribution, then Õ(d 
+log 1/ε) labels to reach a hypothesis with error < ε.
+
+Implementation: need to randomly pick h according to (π, Ht).
+
+e.g. H = {linear separators in Rd}, π = uniform distribution:
+
+Ht
+
+How do you pick a 
+random point from a 
+convex body?
+
+See e.g. [Gilad-Bachrach, Navot & 
+Tishby NIPS ‘05]
+Slide credit: S. Dasgupta
+
+Online active learning
+
+Under Bayesian assumptions, QBC can learn a half-space 
+through the origin to generalization error ε, using 
+Õ(d log 1/ε) labels.
+
+(cid:198) But not online: space required, and time complexity of 
+the update both scale with number of seen mistakes!
+
+Online algorithms:
+See unlabeled data streaming by, one point at a time
+Can query current point’s label, at a cost
+Can only maintain current hypothesis (memory bound)
+
+Online learning: related work
+
+Standard (supervised) Perceptron: a simple online
+algorithm:
+If yt ≠ SGN(vt · xt), then:
+vt+1 = vt + yt xt
+
+Filtering rule
+Update step
+
+Distribution-free mistake bound O(1/γ2), if exists margin γ.
+
+Theorem [Baum‘89]: Perceptron, given sequential labeled 
+examples from the uniform distribution, can converge to 
+generalization error ε after Õ(d/ε2) mistakes.
+
+Fast online active learning
+[Dasgupta, Kalai & M, COLT ‘05]
+A lower bound for Perceptron in active learning context of 
+Ω(1/ε2) labels.
+
+A modified Perceptron update with a Õ(d log 1/ε) mistake
+bound.
+
+An active learning rule and a label bound of Õ(d log 1/ε).
+
+A bound of Õ(d log 1/ε) on total errors (labeled or not). 
+
+Selective sampling, online constraints
+
+Sequential selective sampling framework:
+Unlabeled examples, xt, are received one at a time, 
+sampled i.i.d. from the input distribution.
+Learner makes a prediction at each time-step. 
+A noiseless oracle to label yt, can be queried at a cost.
+
+Goal: minimize number of labels to reach error ε.
+ε is the error rate (w.r.t. the target) on the input distribution.
+
+Online constraints:
+Space:  Learner cannot store all previously seen examples (and 
+then perform batch learning).
+Time: Running time of learner’s belief update step should not 
+scale with number of seen examples/mistakes.
+
+AC Milan vs. Inter Milan
+
+Problem framework
+
+Target:
+Current hypothesis:
+
+Error region:
+
+Assumptions:
+Separability
+u is through origin
+x~Uniform on S
+error rate:
+
+vt
+
+u
+
+θt
+
+ξt
+
+OPT
+
+Fact: Under this framework, any algorithm requires 
+Ω(d log 1/ε) labels to output a hypothesis within 
+generalization error at most ε.
+
+Proof idea: Can pack (1/ε)d spherical
+caps of radius ε on surface of unit
+ball in Rd. The bound is just the 
+number of bits to write the answer.
+
+ε
+
+Perceptron
+
+Perceptron update: vt+1 = vt + yt xt
+
+→ error does not decrease monotonically.
+
+vt
+
+u
+
+vt+1
+
+xt
+
+Lower bound on labels for Perceptron
+Theorem [DKM05]: The Perceptron algorithm, using any 
+active learning rule, requires Ω(1/ε2) labels to reach 
+generalization error ε w.r.t. the uniform distribution.
+
+Proof idea: Lemma: For small θt, the Perceptron update will 
+increase θt unless kvtk
+vt+1
+is large: Ω(1/sin θt).
+
+But, kvtk growth rate:
+
+vt
+
+u
+
+So need t ≥ 1/sin2θt.
+
+xt
+
+Under uniform,
+εt ∝ θt ≥ sin θt.
+
+A modified Perceptron update
+Standard Perceptron update:
+vt+1 = vt + yt xt
+
+Instead, weight the update by “confidence” w.r.t. current 
+hypothesis vt:
+vt+1 = vt + 2 yt |vt · xt| xt
+
+(v1 = y0x0)   
+
+(similar to update in [Blum et al.‘96] for noise-tolerant learning)
+
+Unlike Perceptron:
+Error decreases monotonically:
+cos(θt+1) = u · vt+1 = u · vt + 2 |vt · xt||u · xt|
+≥ u · vt = cos(θt)
+kvtk =1 (due to factor of 2)
+
+A modified Perceptron update
+
+Perceptron update: vt+1 = vt + yt xt
+
+Modified Perceptron update:  vt+1 = vt + 2 yt |vt · xt| xt
+
+vt+1
+vt
+
+u
+
+vt+1
+
+vt+1
+
+vt
+
+xt
+
+Mistake bound
+Theorem [DKM05]: In the supervised setting, the modified 
+Perceptron converges to generalization error ε after 
+Õ(d log 1/ε) mistakes.
+
+Proof idea: The exponential convergence follows from a 
+multiplicative decrease in θt:
+
+On an update, 
+
+→ Lower bound 2|vt · xt||u · xt|, with high probability, using 
+distributional assumption.
+
+Mistake bound
+Theorem 2: In the supervised setting, the modified 
+Perceptron converges to generalization error ε after 
+Õ(d log 1/ε) mistakes.
+
+Lemma (band): For any fixed a: kak=1, γ · 1 and for x~U on S:
+a
+
+{k
+Apply to |vt · x| and |u · x| ⇒ 2|vt · xt||u · xt| is
+large enough in expectation (using size of ξt).
+
+{x : |a · x| · k} =
+
+Active learning rule
+Goal: Filter to label just those points in the error region.
+→ but θt, and thus ξt unknown!
+
+Define labeling region:
+
+Tradeoff in choosing threshold st:
+If too high, may wait too long for an error.
+If too low, resulting update is too small.
+st
+{
+
+makes 
+
+L
+
+vt
+
+u
+
+constant.
+
+→ But θt unknown!  
+
+Active learning rule
+Choose threshold st adaptively: 
+Start high. 
+Halve, if no error in R consecutive labels.
+
+Start with threshold st high: 
+
+After R consecutive labeled points,
+if no errors: 
+
+vt
+
+u
+
+st
+{
+
+L
+
+Label bound
+
+Theorem [DKM05]: In the active learning setting, the 
+modified Perceptron, using the adaptive filtering rule, will 
+converge to generalization error ε after Õ(d log 1/ε)
+labels.
+
+Corollary [DKM05] : The total errors (labeled and 
+unlabeled) will be Õ(d log 1/ε).
+
+Proof technique
+Proof outline:  We show the following lemmas hold with 
+sufficient probability:
+
+Lemma 1. st does not decrease too quickly: 
+
+Lemma 2. We query labels on a constant fraction of ξt.
+
+Lemma 3. With constant probability the update is good.
+
+By algorithm, ~1/R labels are mistakes. ∃ R = Õ(1).
+
+⇒ Can thus bound labels and total errors by mistakes.
+
+[DKM05] in context
+samples        mistakes         labels       total errors     online?
+Õ(d/ε)  
+Ω(d/ε)
+
+PAC
+complexity
+[Long‘03]
+[Long‘95]
+
+Perceptron
+[Baum‘97]
+
+CAL
+[BBL‘06]
+
+QBC
+[FSST‘97]
+
+[DKM‘05]
+
+Õ(d/ε2)
+Ω(1/ε2)
+Ω(1/ε2)
+Õ(d2 log 1/ε) Õ(d2 log 1/ε)
+
+Õ(d/ε3)
+Ω(1/ε2)
+Õ((d2/ε) 
+log 1/ε)
+Õ(d/ε log 1/ε) Õ(d log 1/ε) Õ(d log 1/ε)
+
+Õ(d/ε log 1/ε) Õ(d log 1/ε) Õ(d log 1/ε) Õ(d log 1/ε)
+
+(cid:57)
+
+(cid:178)
+
+(cid:178)
+
+(cid:57)
+
+Lower bounds on label complexity
+For linear separators in R1, need just log 1/ε labels.
+Theorem [D04]: when H = {non-homogeneous linear separators in 
+R2}:  some target hypotheses require 1/ε labels to be queried!
+h3
+h2
+
+Consider anydistribution 
+over the circle in R2.
+
+Need 1/ε labels to distinguish 
+between h0, h1, h2, …, h1/ε !
+
+→ Leads to analagous bound: 
+Ω(1/ε) for homogeneous linear 
+separators in Rd.
+
+h1
+
+ε fraction of distribution
+
+h0
+
+Slide credit: S. Dasgupta
+
+A fuller picture
+
+For non-homogenous linear separators in R2: some bad target 
+hypotheses which require 1/ε labels,
+but “most” require just O(log 1/ε) labels…
+
+good
+
+bad
+
+Slide credit: S. Dasgupta
+
+A view of the hypothesis space
+
+H = {non-homogeneous linear separators in R2}
+
+All-positive
+hypothesis
+
+Good region
+
+All-negative
+hypothesis
+
+Bad regions
+
+Slide credit: S. Dasgupta
+
+Geometry of hypothesis space
+
+H = any hypothesis class, of VC dimension d < ∞.
+P = underlying distribution of data.
+
+h’
+
+h
+
+H
+
+x
+(i) Non-Bayesian setting: no probability measure on H
+(ii) But there is a natural (pseudo) metric: d(h,h’) = P(h(x) ≠ h’(x))
+(iii) Each point x defines a cut through H
+
+Slide credit: S. Dasgupta
+
+Label upper bounding technique
+[Dasgupta NIPS‘05]
+
+H
+
+h0
+
+(h0 = target hypothesis)
+Proof technique: analyze how many labels until the diameter of 
+the remaining version space is at most ε.
+
+Slide credit: S. Dasgupta
+
+Searchability index [D05]
+
+Accuracy ε
+Data distribution P
+Amount of unlabeled data
+
+Each hypothesis h ∈ H has a 
+“searchability index” ρ(h)
+ε · ρ(h) · 1, bigger is better
+
+Example: linear separators in R2, data on a circle: 
+
+1/3
+
+1/4
+1/5
+ε
+
+1/2
+
+H
+
+All positive 
+hypothesis
+
+ε
+1/5
+1/4
+
+1/3
+
+ρ(h) ∝ min(pos mass of h, neg mass of h), but never < ε
+Slide credit: S. Dasgupta
+
+Searchability index [D05]
+
+Accuracy ε
+Data distribution P
+Amount of unlabeled data
+
+Each hypothesis h ∈ H has a 
+“searchability index” ρ(h)
+
+Searchability index lies in the range: ε · ρ(h) · 1
+Upper bound. For any H of VC-dim d<∞, there is an active 
+learning scheme* which identifies (within accuracy · ε) any 
+h ∈ H, with a label complexity of at most:                             
+
+Lower bound. For any h ∈ H, any active learning scheme for the 
+neighborhood B(h, ρ(h)) has a label complexity of at least: 
+[When ρ(h) À ε: active learning helps a lot.]
+
+Slide credit: S. Dasgupta
+
+Example: the 1-d line
+
+Searchability index lies in range: ε · ρ(h) · 1
+Theorem [D05]:           · # labels needed ·
+
+Example: Threshold functions on the line
+
+-
+
++
+
+w
+Result: ρ = 1/2 for any target hypothesis and any input 
+distribution
+
+Slide credit: S. Dasgupta
+
+Open problem: efficient, general AL
+[M, COLT Open Problem ‘06]: Efficient algorithms for 
+active learning under general input distributions, D.
+→ Current UB’s for general distributions are based on 
+intractable schemes!
+
+Provide an algorithm such that w.h.p.:
+1. After L label queries, algorithm's hypothesis v obeys:
+Px ∼ D[v(x) ≠ u(x)] < ε.
+2. L is at most the PAC sample complexity, and for a general 
+class of input distributions, L is significantly lower.
+3. Total running time is at most poly(d, 1/ε).
+
+Specific variant: homogeneous linear separators, realizable case, 
+D known to learner.
+
+Open problem: efficient, general AL
+[M, COLT Open Problem ‘06]: Efficient algorithms for 
+active learning under general input distributions, D.
+
+Other open variants:
+Input distribution, D, is unknown to learner.
+Agnostic case, certain scenarios ([Kääriäinen, NIPS 
+Foundations of Active Learning workshop ‘05]: negative   
+result for general agnostic setting).
+Add the online constraint: memory and time complexity 
+(of the online update) must not scale with number 
+of seen labels or mistakes.
+Same goal, other concept classes, or a general concept 
+learner.
+
+Other open problems
+Extensions to DKM05:
+Relax distributional assumptions.
+Uniform is sufficient but not necessary for proof.
+Relax realizable assumption.
+Analyze margin version
+for exponential convergence, without d dependence.
+
+Testing issue: Testing the final hypothesis takes 1/ε labels! 
+→ Is testing an inherent part of active learning?
+
+Cost-sensitive labels
+
+Bridging theory and practice.
+How to benchmark AL algorithms?
+
+Thank you!
+
+

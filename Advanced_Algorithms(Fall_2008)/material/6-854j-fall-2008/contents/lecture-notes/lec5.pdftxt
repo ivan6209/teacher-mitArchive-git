@@ -1,0 +1,273 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+September  17,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  5 
+
+Today,  we  continue  the  discussion  of  the  minimum  cost  circulation  problem.  We  ﬁrst  review  the 
+Goldberg-Tarjan  algorithm,  and  improve  it  by  allowing  more  ﬂexibility  in  the  selection  of  cycles. 
+This  gives  the Cancel-and-Tighten  algorithm.  We  also  introduce  splay  trees,  a data  structure which 
+we  will  use  to  create  another  data  structure,  dynamic  trees,  that  will  further  improve  the  running 
+time  of  the  algorithm. 
+
+1  Review  of  the  Goldberg-Tarjan  Algorithm 
+
+Recall  the  algorithm  of  Golberg  and  Tarjan  for  solving  the  minimum  cost  circulation  problem: 
+1.  Initialize  the  ﬂow  with  f  = 0. 
+2.  Repeatedly  push  ﬂow  along  the  minimum  mean  cost  cycle  Γ  in  the  residual  graph  Gf ,  until 
+no  negative  cycles  exist. 
+We  used  the  notation 
+
+c(Γ) 
+µ(f ) =  min 
+|
+cycle  Γ⊆Ef  Γ|
+to  denote  the  minimum  mean  cost  of  a  cycle  in  the  residual  graph  Gf .  In  each  iteration  of  the 
+algorithm,  we  push  as  much  ﬂow  as  possible  along  the minimum  mean  cost  cycle,  until  µ(f ) ≥ 0. 
+We  used  �(f )  to  denote  the  minimum  �  such  that  f  is  �-optimal.  In  other  words 
+→ 
+R  such  that  cp (v , w) ≥ −�  for  all  edges  (v , w) ∈ Ef }.
+�(f ) = min{�  : ∃  potential  p  : V 
+We  proved  that  for  all  circulations  f , 
+
+�(f ) = −µ(f ). 
+A  consequence  of  this  equality  is  that  there  exists  a  potential  p  such  that  any  minimum  mean  cost 
+cycle  Γ  satisﬁes  cp (v , w) =  −�(f ) =  µ(f )  for  all  (v , w)  ∈  Γ,  since  the  cost  of  each  edge  is  bounded 
+below  by mean  cost  of  the  cycle. 
+
+1.1  Analysis  of  Goldberg-Tarjan 
+Let us recall the analysis of the above algorithm.  This will help us to  improve the algorithm  in order 
+to  achieve  a  better  running  time.  Please  refer  to  the  previous  lecture  for  the  details  of  the  analysis. 
+We  used  �(f )  as  an  indication  of  how  close we  are  to  the  optimal  solution.  We  showed  that  �(f ) 
+is  a  non-increasing  quantity,  that  is,  if  f �  is  obtained  by  f  after  a  single  iteration,  then  �(f � ) ≤ �(f ). 
+It  remains  to  show  that  �(f )  decreases  “signiﬁcantly”  after  several  iterations. 
+�
+�1 
+Lemma  1  Let  f  be  any  circulation,  and  f �  be  the  circulation  obtained  after  m  iterations  of  the 
+Goldberg-Tarjan  algorithm.  Then 
+�(f � ) ≤  1 − 
+n 
+We showed that if the costs are all integer valued, then we are done as soon as we reach �(f ) <  1 . n 
+Using  these  two  facts,  we  showed  that  the  number  of  iterations  of  the  above  algorithm  is  at  most 
+O(mn log(nC )).  An  alternative  analysis  using  �-ﬁxed  edges  provides  a  strongly  polynomial  bound 
+of O(m2n log n)  iterations.  Finally,  the  running  time  per  a  single  iteration  is O(mn)  using  a  variant 
+of  Bellman-Ford  (see  problem  set). 
+
+�(f ). 
+
+5-1 
+
+1.2  Towards  a  faster  algorithm 
+In  the  above  algorithm,  a  signiﬁcant  amount  of  time  is  used  to  compute  the  minimum  cost  cycle. 
+This  is  unnecessary,  as  our  goal  is  simply  to  cancel  enough  edges  in  order  to  achieve  a  “signiﬁcant” 
+improvement  in  �  once  every  several  iterations. 
+We  can  improve  the  algorithm  by  using  a more  ﬂexible  selection  of  cycles  to  cancel.  The  idea  of 
+the  Cancel-and-Tighten  algorithm  is  to  push  ﬂows  along  cycles  consisting  entirely  of  negative  cost 
+edges.  For  a  given  potential  p,  we  push  as  much  ﬂow  as  possible  along  cycles  of  this  form,  until  no 
+more  such  cycles  exist,  at  which  point  we  update  p  and  repeat. 
+
+2  Cancel-and-Tighten 
+
+2.1  Description  of  the  Algorithm 
+Deﬁnition  1  An  edge  is  admissible  with  respect  to  a  potential  p  if  cp (v , w)  <  0.  A  cycle  Γ  is 
+admissible  if  al l  the  edges  of  Γ  are  admissible. 
+
+Cancel  and  Tighten  Algorithm  (Goldberg  and  Tarjan): 
+1.  Initialization:  f  ← 0,  p ← 0,  � ← max(v ,w)∈E  c(v , w),  so  that  f  is  �-optimal  respect  to  p. 
+2.  While  f  is  not  optimum,  i.e.,  Gf  contains  a  negative  cost  cycle,  do: 
+(a)  Cancel:  While Gf  contains  a  cycle Γ which  is  admissible with  respect  to  p,  push  as much 
+� 
+� 
+ﬂow  as  possible  along  Γ. 
+(b)  Tighten:  Update  p  to  p�  and  �  to  �� ,  where  p�  and  ��  are  chosen  such  that  cp� (v , w) ≥ −�� 
+for  all  edges  (v , w) ∈ Ef  and  ��  ≤  1 −  n 
+1  �. 
+Remark  1  We do not update the potential p every time we push a ﬂow.  The potential p gets updated 
+in  the  tighten  step  after  possibly  several  ﬂows  are  pushed  through  in  the  Cancel  step. 
+Remark  2  In  the  tighten  step,  we  do  not  need  to  ﬁnd  p�  and  ��  such  that  ��  is  as  smal l  as  possible; 
+it  is  only  necessary  to  decrease  �  by  a  factor  of  at  least  1 −  1 .  However,  in  practice,  one  tries  to 
+n 
+decrease  �  by  a  smal ler  factor  in  order  to  obtain  a  better  running  time. 
+Why  is  it  always  possible  to  obtain  improvement  factor  of  1 −  1  in  each  iteration?  This  is 
+n 
+guaranteed  by  the  following  result,  whose  proof  is  similar  to  the  proof  used  in  the  analysis  during 
+the  previous  lecture. 
+Lemma  2  Let  f  be  a  circulation  and  f �  be  the  circulation  obtained  by  performing  the  Cancel  step. 
+� 
+� 
+Then  we  cancel  at  most  m  cycles,  and 
+1 
+�(f � ) ≤  1 − 
+�(f ). 
+n
+
+Proof:  Since  we  only  cancel  admissible  edges,  after  any  cycle  is  canceled  in  the  Cancel  step: 
+•	 All new edges in the residual graph are non-admissible, since the edge costs are skew-symmetric; 
+•	 At  least  one  admissible  edge  is  removed  from  the  residual  graph,  since  we  push  the maximum 
+possible  amount  of  ﬂow  through  the  cycle. 
+
+5-2 
+
+Since we begin with at most m admissible edges, we cannot cancel more than m cycles, as each cycle 
+canceling  reduces  the  number  of  admissible  edges  by  at  least  one. 
+After  the  cancel  step,  every  cycle  Γ  contains  at  least  one  non-admissible  edge,  say  (u1 , v1 )  ∈  Γ 
+� 
+� 
+� 
+� 
+with  cp (u1 , v1 ) ≥ 0.  Then  the  mean  cost  of  Γ  is 
+1  � 
+cp (u, v) ≥ −(|Γ| − 1) 
+1 
+c(Γ) 
+1
+1 − 
+�(f ) ≥ − 
+�(f ) = −  1 − 
+≥ |Γ| 
+�(f ). 
+|Γ| 
+|Γ| 
+|Γ|
+� 
+� 
+n 
+(u1 ,v1 )=(u,v)∈Γ 
+Therefore,  �(f � ) = −µ(f � ) ≤  1 −  n 
+1  �(f ). 
+
+� 
+
+Implementation  and  Analysis  of  Running  Time 
+2.2 
+2.2.1  Tighten  Step 
+� 
+� 
+We  ﬁrst  discuss  the Tighten  step  of  the Cancel-and-Tighten  algorithm.  In  this  step, we wish  to  ﬁnd 
+a  new  potential  function  p�  and  a  constant  ��  such  that  cp� (v , w)  ≥ −��  for  all  edges  (v , w)  ∈  Ef 
+and  ��  ≤  1 −  n 
+1  �.  We  can  ﬁnd  the  smallest  possible  ��  in  O(mn)  time  by  using  a  variant  of  the 
+Bellman-Ford  algorithm.  However,  since  we  do  not  actually  need  to  ﬁnd  the  best  possible  �� ,  it  is 
+possible  to  vastly  reduce  the  running  time  of  the  Tighten  step  to  O(n),  as  follows. 
+When  the  Cancel  step  terminates,  there  are  no  cycles  in  the  admissible  graph  Ga  = (V , A),  the 
+subgraph  of  the  residual  graph  with  only  the  admissible  edges.  This  implies  that  there  exists  a 
+topological  sort  of  the  admissible  graph.  Recall  that  a  topological  sort  of  a  directed  acyclic  graph 
+is  a  linear  ordering  l  : V  → {1, . . . , n}  of  its  vertices  such  that  l(v) < l(w)  if  (v , w)  is  an  edge  of  the 
+graph;  it  can be  achieved  in O(m)  time using a  standard  topological  sort algorithm  (see,  e.g., CLRS 
+page  550).  This  linear  ordering  enables  us  to  deﬁne  a  new  potential  function  p�  by  the  equation 
+p� (v) = p(v) − l(v)�/n.  We  claim  that  this  potential  function  satisﬁes  our  desired  properties. 
+Claim  3  The new  potential  function  p� (v) = p(v) − l(v)�/n  satisﬁes  the  property  that  f  is  �� -optimal 
+with  respect  to  p�  for  some  constant  ��  ≤ (1 − 1/n)�. 
+Proof:  Let  (v , w) ∈ Ef ,  then 
+cp� (v , w) = c(v , w) + p� (v) − p� (w) 
+= c(v , w) + p(v) − l(v)�/n − p(w) + l(w)�/n 
+= cp (v , w) + (l(w) − l(v))�/n. 
+We  consider  two  cases,  depending  on  whether  or  not  l(v) < l(w). 
+
+Case  1:  l(v) < l(w).  Then 
+
+cp� (v , w) = cp (v , w) + (l(w) − l(v))�/n 
+≥ −� + �/n 
+= −(1 − 1/n)�. 
+
+Case  2:  l(v) > l(w),  so  that  (v , w)  is  not  an  admissible  edge.  Then 
+cp� (v , w) = cp (v , w) + (l(w) − l(v))�/n 
+≥ 0 − (n − 1)�/n 
+= −(1 − 1/n)�. 
+In  either  case,  we  see  that  f  is  �� -optimal  with  respect  to  p� ,  where  ��  ≤ (1 − 1/n)�. 
+
+� 
+
+5-3 
+
+�
+2.2.2  Cancel  Step 
+We  now  shift  our  attention  to  the  implementation  and  analysis  of  the Cancel  step.  Na¨ıvely,  it  takes 
+O(m)  time  to  ﬁnd  a  cycle  in  the  admissible  graph Ga  = (V , A)  (e.g.,  using Depth-First  Search)  and 
+push ﬂow along  it.  Using a more  careful  implementation of  the Cancel  step, we  shall  show  that  each 
+cycle  in  the  admissible  graph  can  be  found  in  an  “amortized”  time  of  O(n). 
+We  use  a  Depth-First  Search  (DFS)  approach,  pushing  as  much  ﬂow  as  possible  along  an  ad­
+missible  cycle  and  removing  saturated  edges,  as  well  as  removing  edges  from  the  admissible  graph 
+whenever  we  determine  that  they  are  not  part  of  any  cycle.  Our  algorithm  is  as  follows: 
+Cancel(Ga  = (V , A)):  Choose  an  arbitrary  vertex  u ∈ V ,  and  begin  a  DFS  rooted  at  u. 
+1.  If  we  reach  a  vertex  v  that  has  no  outgoing  edges,  then  we  backtrack,  deleting  from  A  the 
+edges  that we backtrack along, until we ﬁnd an ancestor  r  of v  for which  there  is another  child 
+to explore.  (Notice  that every edge we backtrack along cannot be part of any cycle.)  Continue 
+the  DFS  by  exploring  paths  outgoing  from  r . 
+
+2.  If  we  ﬁnd  a  cycle  Γ,  then  we  push  the  maximum  possible  ﬂow  through  it. 	 This  causes  at 
+least  one  edge  along  Γ  to  be  saturated.  We  remove  the  saturated  edges  from  A,  and  start 
+the depth-ﬁrst-search  from  scratch using G�
+a  = (V , A� ), where A�  denotes A with  the  saturated 
+edges  removed. 
+
+Every  edge  that  is  not  part  of  any  cycle  is  visited  at  most  twice  (since  it  is  removed  from  the 
+admissible  graph  the  second  time),  so  the  time  taken  to  remove  edges  that  are  not  part  of  any  cycle 
+is  O(m).  Since  there  are  n  vertices  in  the  graph,  it  takes  O(n)  time  to  ﬁnd  a  cycle  (excluding  the 
+time  taken  to  traverse  edges  that  are  not  part  of  any  cycle),  determine  the  maximum  ﬂow  that 
+we  can  push  through  it,  and  update  the  ﬂow  in  each  of  its  edges.  Since  at  least  one  edge  of  A  is 
+saturated  and  removed  every  time  we  ﬁnd  a  cycle,  it  follows  that  we  ﬁnd  at  most m  cycles.  Hence, 
+the  total  running  time  of  the  Cancel  step  is  O(m + mn) = O(mn). 
+
+2.2.3  Overall  Running  Time 
+From  the  above  analysis,  we  see  that  the  Cancel  step  requires  O(mn)  time  per  iteration,  whereas 
+the  Tighten  step  only  requires  O(m)  time  per  iteration.  In  the  previous  lecture,  we  determined 
+that  the  Cancel-and-Tighten  algorithm  requires  O(min(n log(nC ), mn log n))  iterations.  Hence  the 
+overall  running  time  is  O(min(mn2  log(nC ), m2n2  log n)). 
+Over  the  course  of  the  next  few  lectures,  we  will  develop  data  structures  that  will  enable  us  to 
+reduce the running time of a single Cancel step  from O(mn) to O(m log n).  Using dynamic trees, we 
+can  reduce  the  running  time  of  the Cancel  step  to  an  amortized  time  of O(log n)  per  cycle  canceled. 
+This  will  reduce  the  overall  running  time  to  O(min(mn log(nC ) log n, m2n log2 n)). 
+
+3  Binary  Search  Trees 
+
+In  this  section,  we  review  some  of  the  basic  properties  of  binary  search  trees  and  the  operations 
+they  support,  before  introducing  splay  trees.  A  Binary  Search  Tree  (BST)  is  a  data  structure  that 
+maintains  a  dictionary.  It  stores  a  collection  of  ob jects  with  ordered  keys.  For  an  ob ject  (or  node) 
+x,  we  use  key [x]  to  denote  the  key  of  x. 
+
+Property  of  a  BST.  The  following  invariant must  always  be  satisﬁed  in  a  BST: 
+•  If  y  lies  in  the  left  subtree  of  x,  then  key [y ] ≤ key [x] 
+•  If  z  lies  in  the  right  subtree  of  x,  then  key [z ] ≥ key [x] 
+
+5-4 
+
+Operations  on  a  BST.  Here  are  some  operations  typically  supported  by  a  BST: 
+•	 Find(k):  Determines whether  the BST  contains an ob ject x with key [x] = k ;  if  so,  returns  the 
+ob ject,  and  if  not,  returns  false. 
+•	 Insert(x):  Inserts  a  new  node  x  into  the  tree. 
+•	 Delete(x):  Deletes  x  from  the  tree. 
+•	 Min:  Finds  the  node  with  the  minimum  key  from  the  tree. 
+•	 Max:  Finds  the  node  with  the  minimum  key  from  the  tree. 
+•	 Successor(x):  Find  the  node  with  the  smallest  key  greater  than  key [x]. 
+•	 Predecessor(x):  Find  the  node  with  the  greatest  key  less  than  key [x]. 
+•	 Split(x):  Returns  two  BSTs:  one  containing  all  the  nodes  y  where  key [y ]  <  key [x],  and  the 
+other  containing  all  the  nodes  z  where  key [z ] ≥ key [x]. 
+•	 Join(T1 , x, T2 ):  Given  two  BSTs  T1  and  T2 ,  where  all  the  keys  in  T1  are  at  most  key [x],  and 
+all  the  keys  in  T2  are  at  least  key [x],  returns  a  BST  containing  T1 , x  and  T2 . 
+
+For  example,  the  procedure  Find(k)  can  be  implemented  by  traversing  through  the  tree,  and 
+branching  to  the  left  (resp.  right)  if  the  current  node  has  key  greater  than  (resp.  less  than)  k .  The 
+running  time  for  many  of  these  operations  is  linear  in  the  height  of  the  tree,  which  can  be  as  high 
+as  O(n)  in  the  worst  case,  where  n  is  the  number  of  nodes  in  the  tree. 
+A  balanced  BST  is  a  BST  whose  height  is  maintained  at  O(log n),  so  that  the  above  operations 
+can  be  run  in  O(log n)  time.  Examples  of  BSTs  include  Red-Black  trees,  AVL  trees,  and  B-trees. 
+In  the  next  lecture,  we  will  discuss  a  data  structure  called  splay  trees,  which  is  a  self-balancing 
+BST  with  amortized  cost  of  O(log n)  per  operation.  The  idea  is  that  every  time  a  node  is  accessed, 
+it  gets  pushed  up  to  the  root  of  the  tree. 
+The  basic  operations  of  a  splay  tree  are  rotations.  They  are  illustrated  the  following  diagram. 
+
+5-5 
+
+ABCxyABCxyzig(rightrotation)zag(leftrotation)

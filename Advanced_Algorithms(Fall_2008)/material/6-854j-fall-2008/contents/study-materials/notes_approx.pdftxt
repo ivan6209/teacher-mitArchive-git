@@ -1,0 +1,1931 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+1  18.415/6.854 A d v a n c e d   A l g o r i t h m s   	
+Approximat ion Algorithms 
+Lecturer:  Michel  X .   Goemans 
+
+November  1994 
+
+Introduction 
+
+Many  of  t h e   optimization  problems  we  would  like  t o   solve  are  NP-hard.  There  are 
+several  ways  of  coping  with  this  apparent  hardness.  For  most  problems,  there   are 
+straightforward  exhaustive search  algorithms,  and one  could  t r y   t o  speed up  such an  
+algorithm.  Techniques which  can  be  used  include  divide-and-conquer  (or t h e  refined 
+branch-and-bound  which  allows t o  eliminate par t   of  t h e  search tree  by  computing,  a t  
+every node, bounds on  t h e  optimum value), dynamic programming  (which sometimes 
+leads  t o  pseudo-polynomial  algorithms), cutting plane  algorithms  (in which  one tries 
+t o  refine  a  linear programming  relaxation  t o  be t ter   match  t h e  convex hull  of  integer 
+solutions),  randomization,  e tc .   Instead  of  trying  t o   obtain  an   op t imum  solution, we 
+could  also  settle  for  a  suboptimal  solution.  The   la t te r   approach  refers  t o   heuristic 
+or  "rule  of  thumb"  methods.  The  most  widely  used  such methods  involve  some sort 
+of  local  search  of  t h e   problem  space,  yielding  a  locally  optimal  solution.  In  fac t ,  
+heuristic  methods  can  also  be  applied  t o   polynomially  solvable problems  for  which 
+existing  algorithms  are  not  "efficient"  enough.  A  @(n1O) algorithm  (or even  a  linear 
+t ime   algorithm with  a  constant  of  10 lo0) ,  although  efficient from  a  complexity point 
+of  view, will probably  never  get  implemented because  of  i ts  inherent  inefficiency. 
+The   drawback  with  heuristic  algorithms  is  t h a t   i t   is  difficult  t o   compare  them .  
+Which  is  be t te r ,   which  is  worse?  For  this  purpose,  several  kinds  of  analyses  have 
+been  introduced. 
+
+1.  E m p i r i c a l   a n a l y s i s .   	 Here  t h e   heuristic  is  tested  on  a  bunch  of  (hopefully 
+meaningful) instances, but  there  is no guarantee t h a t  t h e  behavior of  t h e  heuris- 
+t ic  on  these  instances will  be  LLtypical" (what  does  it  mean  t o  be   typical?). 
+
+2 .   	 A v e r a g e - c a s e   a n a l y s i s ,  dealing with  t h e  average-case behavior  of  a  heuristic 
+over  some distribution of  instances.  The  difficulty with  this  approach  is t h a t   i t  
+can be difficult t o  find a distribution t h a t  matches t h e  real-life d a t a  an  algorithm 
+will face.  Probabilistic  analyses  tend  t o  be  quite hard .  
+
+3 .   	 W o r s t - c a s e   a n a l y s i s .   Here,  one  tries  t o   evaluate  t h e   performance  of  t h e  
+heuristic  on  t h e   worst  possible  instance.  Although  this  may  be  overly  pes- 
+simistic,  i t   gives  a  stronger  guarantee  about  an  algorithm's behavior.  This  is 
+t h e  type  of  analysis we  will  be   considering in  these  notes. 
+
+To  this  end, we  introduce t h e  following definition: 
+
+Approx-1 
+
+Definition  1 The performance  guarantee  of  a heuristic  algorithm for  a m in im iza t ion  
+(max im iza t ion)  problem  is a  if  the  algorithm  is  guaranteed  to  deliver  a solution  whose 
+value  is   at  most  (at  least)  a  t ime s   the  optimal  value. 
+
+Definition  2  A n   a-approx ima t ion   algorithm  is  a polynomial  t ime   algorithm  with  a 
+performance  guarantee  of  a .  
+
+Before presenting  techniques t o   design  and  analyze  approximation  algorithms  as 
+well as specific approximation algorithms, we  should first  consider which performance 
+guarantees  are unlikely  t o  be  achievable. 
+
+Negative  Resu l ts  
+
+For  some hard optimization problems, i t  is possible t o  show a limit on t h e  performance 
+guarantee  achievable  in  polynomial-time  (assuming P #  N P ) .   A  s tandard   method 
+for  proving  results  of  this  form  is  t o   show  t h a t   the   existence of  an   a-approximation 
+algorithm would  allow you t o  solve some NP-complete decision problem in  polynomial 
+time.  Even  though  NP-complete  problems  have  equivalent  complexity  when  exact 
+solutions  are  desired,  t h e  reductions  don't  necessarily preserve  approximability.  The  
+class  of  NP-complete  problems  can  be  subdivided  according  t o   how  well  a  problem 
+can  be  approximated. 
+As  a first  example, for  t h e  traveling salesman problem  (given nonnegative  lengths 
+on  t h e   edges  of  a  complete graph,  find  a  tour  - a  closed walk  visiting  every  vertex 
+exactly  once - of  minimum  to ta l   leng th) ,   there   is  no  a-approximation  for  any  a 
+unless  P = NP .   Indeed  such an   algorithm  could be  used  t o  decide whether  a  graph 
+(V, E )  has  an   Hamiltonian  cycle  (simply give  every  edge  e  a  length  of  1 and  every 
+non-edge a  very high  or  infinite  length  ) .  
+As  another  example,  consider  t h e   bin  packing  problem.  You  have  an   integer  T 
+and   weights  X I , .  . . , x ,   E  [0,T I ,  and  you  want  t o   par t i t ion   them   into  as  few  sets 
+("bins")  as  possible  such  tha t   t h e   sum  of  t h e  weights  in  each  set  is  a t  most  T.  I t   is 
+NP-complete t o   decide whether  k  bins  are  sufficient. 
+In fac t ,  there   is no  a-approximation  algorithm for  this  problem, for  any  a < 312. 
+To  see  th is ,   consider  t h e  partition  problem:  given  weights X I , .  . . ,x,  E  [0,S] whose 
+to ta l   sum is 2S,is  there  a  partition  of  t h e  weights  into two  sets  such t h a t   t h e  sum in 
+each  set  is  S?   This  is  the   same as  asking:  are  two  bins  sufficient when  each bin  has 
+capacity  S? If  we  had  an   a-approximation  algorithm  (a < 3 /2 ) ,  we  could  solve t h e  
+partition  problem1.  In  general,  if  t h e  problem  of  deciding whether  a value  is  a t  most 
+k  is  NP-complete  then   there   is  no  a-approximation  algorithm  with  a < 
+for  t h e  
+problem  of  minimizing  t h e  value unless P = N P .  
+
+l ~ u twait, you exclaim -isn't there a polynomial-time approximation scheme for the  bin packing 
+problem?  In fac t ,  very  good  approximation algorithms can  be obtained for  this problem  if  you  allow 
+additive as well  as multiplicative  constants in your  performance guarantee.  I t  is our more restrictive 
+model  t h a t   makes  this  negative  result  possible.  See Section  6  for more details. 
+
+Until 1992, pedestrian  arguments such as th is  provided  essentially t h e  only known 
+examples  of  non-approximability  results.  Then  came a  string of  papers  culminating 
+in  t h e  result  of  Arora,  Lund, Motwani,  Sudan, and  Szegedy[l] (based on  t h e  work  of 
+Arora  and  Safra  121).  They introduced  a new  characterization of  N P  in terms  of  prob- 
+abilistically  checkable proofs  ( PC P ) .  In  t h e  new  characterization,  for  any language  L 
+in  N P ,  given  t h e  inpu t   x  and  a  "proof"  y  of  polynomial  length  in  x ,  t h e  verifier will 
+toss  O(1og n )  coins  (where n  is t h e  size of  x )  t o  determine k  = O(1) positions  or  bits 
+in  t h e   string  y  t o  probe;  based  on  t h e  values  of  these  k  bits,  the  verifier  will  answer 
+LLyes"or  "no".  The  new  characterization  shows t h e  existence of  such a  verifier V  and 
+a proof  y  such t h a t   ( i )  if  x  E L  then  there  exists a proof  y  such t h a t   V  ou tpu ts   LLyes" 
+independently of  t h e  random b i ts ,   (ii) if  x  f- L  then  for every proof  y ,  V  ou tpu ts   "no" 
+with  probability  a t   least  0.5. 
+From  this  characterization,  they   deduce  t h e   following  negative  result  for  MAX 
+3SAT:  given  a  set  of  clauses with  a t   most  3  literals  per  clause,  find  an   assignment 
+maximizing  t h e  number  of  satisfied  clauses.  They  showed  t h e  following: 
+
+Theorem  1  For  s om e   E  > 0,  there   i s   no   1 - E -app rox ima t ion  a lgo r i thm2  for  M A X  
+3SAT  un less   P = N P .  
+
+The   proof  goes  as  follows.  Take  any  NP-comp le te   language  L.  Consider  t h e  
+verifier  V  given  by  t h e   characterization  of  Arora  et  al.  The   number  of  possible 
+ou tpu t   of  t h e  O(1og n )  toin  cosses  is  S = 2'('"gn)  which  is  polynomial  in  n .   Consider 
+any  outcome  of  these  coin  tosses.  This  gives  k  bits,  say  i l , .  . . , i k  t o  examine in  t h e  
+proof  y.  Based  on  these  k  b i ts ,   V  will  decide  whether  t o   answer  yes  or  no.  The  
+condition  t h a t   i t   answers yes  can  be  expressed  as  a  boolean  formula on  these  k  bits 
+(with  t h e  Boolean  variables  being  t h e   bits  of  y ) .   This  formula  can  be  expressed  as 
+t h e   disjunction  ("or")  of  conjunctions  ("and")  of  k  literals,  one  for  each  satisfying 
+assignment.  Equivalently,  it  can  be  written  as  the   conjunction  of  disjunction  of  k 
+literals  (one for each rejecting  assignment).  Since k  is 0(1),this la t te r  k-SAT formula 
+with  a t  most  2k clauses can be  expressed as  a  3-SAT formula with  a  constant  number 
+of  clauses  and  variables  (depending  exponentially  on  k) .   (More precisely, using  t h e  
+classical reduction  from  SAT  t o  3-SAT, we  would  get  a  3-SAT formula with  a t   most 
+k 2 k   clauses  and  variables.)  Call  th is   constant  number  of  clauses M  5  k2k   = O(1) .  
+If  x E L ,  we  know  t h a t   there  exists  a  proof  y  such  t h a t   all  SM  clauses  obtained  by 
+concatenating  the   clauses for  each  random outcome is  satisfiable.  However, if  x  f- L ,  
+for  any  y ,   t h e   clauses  corresponding  t o   a t   least  half  t h e   possible  random  outcomes 
+cannot  be  all  satisfied.  This  means  t h a t   if  x  6 L ,   a t   least  S / 2   clauses  cannot  be 
+satisfied.  Thus  either  all  SM  clauses  can  be  satisfied  or  a t   most  SM  - $  clauses 
+can  be  satisfied.  If  we  had  an  approximation  algorithm  with  performance  guarantee 
+be t ter   than   1 - E  where  E  = & we  could decide whether  x  E  L or  no t ,  in polynomial 
+
+2 ~ nour  definition  of  approximation  algorithm,  the   performance  guarantee  is  less  th an   1 for 
+maxzmixatzon  problems. 
+
+t ime   (since our  construction  can  be  carried out  in polynomial  t ime ) .  This proves  t h e  
+theorem. 
+The  above theorem  implies a host  of  negative results, by  considering t h e  complex- 
+i ty   class MAX-SNP. defined  by  Papadimitriou  and Yannakakis  [21]. 
+
+Corollary  2  For  any  MAX-SNP-comp le te   problem,  there  is  an   absolute  constant 
+6  > 0  such  that  there  is  no  (1- 6)-approximation algorithm  unless P = N P .  
+
+The   class  of  MAX-SNP  problems  is  defined  in  t h e   next  section  and  t h e   corollary 
+is  derived  there.  We  first  give  some  examples  of  problems  t h a t   are  complete  for 
+MAX-SNP. 
+
+1.  MAX  2-SAT:  Given  a  set  of  clauses with  one  or  two  literals  each,  find  an  as- 
+signment t h a t   maximizes  t h e  number  of  satisfied  clauses. 
+
+2.  MAX  k-SAT:  Same as MAX  2-SAT, bu t   each  clause has  up   t o   k  literals. 
+
+3.  	 MAX CUT: Find  a subset  of  t h e  vertices of  a graph  t h a t  maximizes t h e  number 
+of  edges  crossing  t h e  associated  cu t .  
+
+4. 	 The   Travelling  Salesman  Problem  with  t h e   triangle  inequality  is  MAX-SNP- 
+hard.  (There  is  a  technical  snag  here:  MAX-SNP  contains  only maximization 
+problems,  whereas  TSP   is  a minimization problem.) 
+
+MAX-SNP  Complete Problems 
+Let's consider  an   alternative  definition  of  N P   due  t o  Fagin  [9].  NP ,   instead  of  being 
+defined  computationally,  is  defined  as  a  set  of  predicates  or  functions  on  structures 
+G: 
+
+where  $  is  a  quantifier  free  expression.  Here  S corresponds  t o   t h e   witness  or  t h e  
+proof. 
+Consider for  example t h e  problem  SAT. We  are  given  a  set  of  clauses, where each 
+clause is  t h e  disjunction of  literals.  (A   literal is  a  variable  or  i ts  negation.)  We  want 
+t o  know  if  there  is  a  way  t o   set  t h e  variables  t r u e  or  false,  such  t h a t   every  clause  is 
+true .   Thus  here  G  is  t h e   set  of  clauses,  S is  t h e   set  of  literals  t o   be   set  t o   t rue ,   x 
+represents  the   clauses,  y  represents  t h e  literals,  and 
+
+Where P ( G ,  y ,  x )  is t rue  iff  y  appears positively  in  clause x ,  and  N (G ,  y ,  x )  is t rue  iff 
+y  appears negated  in  clause x .  
+
+Strict  NP  is  the   set  of  problems  in  NP  t h a t   can  be   defined without  t h e  t h e  third 
+quantifier : 
+
+where $ is  quantifier  free. 
+An  example  is  3-SAT,  t h e   version  of  SAT  in  which  every  clause  has  a t   most  3 
+literals.  Here  x  = ( x l ,  x 2 ,x3)  (all possible  combinations of  three  variables)  and  G  is 
+t h e   set  of  possible  clauses;  for  example  (x l  V  x2  V  x3) ,  (G V  5 2  V E ) ,and  so  forth. 
+Then  $  is  a  huge  conjunction  of  s ta temen ts   of  the   form:  If  ( x l ,  $ 2 ,   x3)  appears  as 
+(qV  x2  V q),then   x1  $ S V  x2  E S V  5 3  $ S .  
+Instead  of  asking  t h a t   for  each  x  we  get  $ ( x ,  G, S) ,we  can  ask  t h a t   t h e  number 
+of  x's for  which  $ ( x ,  G ,  S )  is  t rue  be maximized: 
+
+In  this  way,  we  can  derive  an   optimization  problem  from  an  SNP  predicate.  These 
+maximization  problems  comprise  t h e   class  MAX-SNP  (MAXimization,  Strict  NP) 
+defined  by  Papadimitriou  and Yannakakis  1211.  Thus, MAX  3SAT  is  in MAX-SNP. 
+Papadimitriou and Yannakakis then  introduce an  L-reduction  (L  for linear), which 
+preserverses  approximability.  In  particular,  if  P L-reduces t o  PI, and  there  exists  an  
+a-approximation  algorithm  for  P', then   there  exists  a  .ya-approximation  algorithm 
+for  P, where y is  some constant  depending on  the   reduction. 
+Given L-reductions, we  can define MAX-SNP complete problems  t o  be  those P E 
+MAX-SNP for which  Q  S L  P for  all Q  E  MAX-SNP.  Some examples of  MAX-SNP 
+complete  problems  are  MAX  3SAT,  MAX  2SAT  (and   in  fact  MAX  kSAT  for  any 
+fixed  k  > I ) ,  and  MAX-CUT. The  fact  t h a t   MAX  3SAT  is MAX-SNP-complete and 
+Theorem  1 implies t h e  corollary mentioned previously. 
+For  MAX  3SAT,  E  in  t h e   s ta temen t   of  Theorem  1 can  be  chosen  can  be  set  t o  
+1/ 74  (Bellare and  Sudan  [5]). 
+Minimization problems may not  be  able t o  be expressed so t h a t   they  are in  MAX-
+SNP ,  bu t   they  can  still be  MAX-SNP hard .   Examples of  such problems  are: 
+
+TSP   with  edge weights  1 and  2  (i.e.,  d ( i , j) E  {1 ,2}  for  all  i , j ) .   In  this  case, 
+there  exists  a  716-approximation  algorithm  due  t o   Papadimitriou  and  Yan-
+nakakis. 
+
+Steiner tree  with  edge weights  1 and  2. 
+
+Minimum Vertex  Cover.  (Given  a  graph  G  =  (V, E ) ,  a  vertex  cover  is  a  set 
+S & V  such t h a t   ( u , v )  E E j u  E S or  v E S . )  
+
+The Design of  Approximation Algorithms 
+
+We  now  look  a t   key  ideas  in  t h e   design  and  analysis  of  approximation  algorithms. 
+We  will  concentrate on  minimization  problems,  bu t   t h e   ideas  apply  equally  well  t o  
+maximization  problems.  Since we  are  interested  in  the  minimization  case, we  know 
+t h a t   an   a-approximation  algorithm H has  cost  CH 5 aCOpTwhere COPTis  t h e  cost 
+of  t h e  optimal solution, and  a 2 1. 
+Relating  CH t o   COPTdirectly  can  be  difficult.  One  reason  is  t h a t   for  NP-hard 
+problems,  t h e  optimum  solution  is  not  well  characterized.  So  instead  we  can  relate 
+t h e  two  in  two  steps: 
+
+Here L B  is  a  lower  bound  on  t h e  optimal solution. 
+
+Relating  t o  Optimum Directly 
+
+This is not  always necessary, however.  One algorithm whose  solution  is easy t o  relate 
+directly  t o   t h e   optimal  solution  is  Christofides'  [6] algorithm  for  t h e   TSP   with  t h e  
+triangle  inequality  ( d ( i ,  j) + d ( j , k )  5 d ( i , k )  for  all  i ,  j, k ) .   This  is  a  :-approximation 
+algorithm, and  is  the  best  known  for  this  problem.  The  algorithm  is  as  follows: 
+
+1. Compute the  minimum  spanning  tree  T of  the  graph  G = (V, E ) .  
+
+2 .   	 Let  0 be  t h e  odd  degree vertices  in  T.  One  can  prove t h a t   101  is'  even. 
+
+3 .   	 Compute a  minimum cost  perfect  matching M  on  t h e  graph  induced by  0 .  
+
+4. 	 Add the  edges in M t o  E .  Now  t h e  degree of  every vertex of  G is even.  Therefore 
+G has an Eulerian tour .   Trace the  tour ,  and take shortcuts when t h e  same vertex 
+is  reached  twice.  This  cannot  increase  t h e   cost  since  the   triangle  inequality 
+holds. 
+
+We  claim  tha t   Zc  5  :ZTSP,  where  Zc  is  t h e   cost  of  t h e   tour   produced  by 
+Christofides'  algorithm,  and  ZTsP  is  the   cost  of  t h e   optimal  solution.  The   proof 
+is  easy: 
+
+Here ZT is  t h e  cost  of  t h e  minimum spanning tree  and  ZM is t h e  cost of  t h e  matching. 
+Clearly  ZT  5  ZTSP,since  if  we  delete  an  edge  of  the   optimal  tour   a  spanning  tree  
+results,  and  the   cost  of  t h e  minimum  spanning  tree   is  a t   most  t h e   cost  of  t h a t   tree. 
+Therefore  -$&5 1. 
+
+To  show  & 5  $ consider  t h e   optimal  tour   visiting  only  the   vertices  in  0 .  
+Clearly by  t h e  triangle  inequality  this  is  of  length  no more  t h a n   ZTSP. There  are  an  
+even number  of  vertices  in  th is   tour ,   and   so  also  an   even number  of  edges,  and  t h e  
+tour  defines two  disjoint matchings on  t h e  graph  induced  by  0 .  At  least  one of  these 
+has  cost  5 $ZTSP, and  t h e  cost  of  ZM is  no  more  than   this. 
+
+3.2  Using  Lower  Bounds 
+
+Let 
+
+A  lower bound  on  COPTcan be obtained  by  a  so-called re laxa t ion .   Consider a related 
+optimization  problem  L B  = minxER g ( x ) .   Then  L B  is  a  lower  bound  on  COPT(and 
+t h e  optimization problem is called a relaxation of  t h e  original problem) if  t h e  following 
+conditions  hold: 
+
+(2)  
+
+g ( x )  5 f ( x )  for  all  x  E S. 
+
+Indeed  these  conditions  imply 
+
+L B  = m i n g ( x )  5 min f ( x )  = COPT. 
+X ER  
+XES  
+
+Most  classical  relaxations  are  obtained  by  using  linear  programming.  However, 
+there  are  limitations  as  t o   how  good  an   approximation  LP  can  produce.  We  next 
+show how  t o  use  a linear  programming relaxation  t o  get  a 2-approximation algorithm 
+for  Vertex  Cover,  and  show  t h a t   this  particular  L P   relaxation  cannot  give  a  be t ter  
+approximation  algorithm. 
+
+An  L P   Relaxation  for  Minimum  Weight  Vertex  Cover 
+
+A  vertex  cover  U in  a graph  G = (V,E) is  a  subset  of  vertices  such t h a t   every edge is 
+incident  t o  a t   least  one vertex  in  U .   The  vertex  cover  problem  is  defined  as  follows: 
+Given a  graph  G = (V,E) and weight  w(v)  2 0  for  each vertex  v, find  a  vertex  cover 
+U  V minimizing w(U)  = 
+w ( v ) .   (Note t h a t   t h e  problem  in which nonpositive 
+weight  vertices  are allowed  can be handled  by  including  all such vertices in t h e  cover, 
+deleting  them   and  t h e   incident  edges,  and  finding  a  minimum  weight  cover  of  t h e  
+remaining graph.  Although  this  reduction  preserves optimality, i t   does not  maintain 
+approximability;  consider,  for  example, t h e   case  in  which  t h e  optimum vertex  cover 
+has  0  cost  (or even negative cost) .) 
+
+This  can  be  expressed  as  an  integer  program  as  follows.  Let  x ( v )  = 1 if  v  E  U 
+and  x ( v )  = 0 otherwise.  Then 
+COPT= min C W ( V ) X ( V )  
+x E S   vEV  
+
+where 
+
+We  now  relax  S, turning  t h e  problem  into  a  linear  program: 
+
+L B  = min  w (v )x (v )  
+x E R   V E V  
+
+In   order  t o   show  t h a t   R  is  a  relaxation, we  must  show  t h a t   i t   satisfies  conditions  1 
+and  2.  Condition  1 clearly  holds,  as  0 , l  2 0.  Furthermore,  condition  2  also  holds, 
+since t h e  objective function  is  unchanged.  Thus, we  can  conclude  t h a t   L B  5 COPT, 
+and  we  can  prove  t h a t   an  algorithm  H  is  an  a-approximation  algorithm  for  VC  by 
+showing  CH 5 a L B .  
+The  limitation of  this  relaxation  is  t h a t   there  are  instances where  L B  N  +COPT. 
+This  implies  tha t   it  cannot  be  used  t o   show  any  a  <  2 ,   since  if  we  could  then  
+H  would  give  a  be t ter   answer  than   t h e   optimum.  One  such  instance  is  K,: 
+t h e  
+complete graph on  n  vertices,  with  all vertices weight  1. All  the  nodes  but  one must 
+be  in t h e  cover (otherwise there  will be an  edge between two t h a t   are no t ,  with neither 
+in  the   cover  se t ) .   Thus,  COPT= n - 1. The  relaxation,  on  the   other  hand ,   can have 
+;, 5
+V .EYV,f 
+f COPT. 
+
+x ( v )  =
+Thus, L B  
+which  means  L B  
+
+How  t o  use  Relaxations 
+
+There  are  two  main  techniques  t o   derive  an  approximately  optimal  solution  from  a 
+solution  t o  t h e  relaxed  problem. 
+
+1. Rounding 
+Find  an  optimal  solution  x* t o   t h e   relaxation.  Round  x*  E R  t o   an   element 
+x' E  S. Then  prove f (x')  5 a g ( x * )  which  implies 
+
+Often  randomization  is  helpful,  as  we  shall  see  in  later  sections.  In  this  case 
+x* E R  is  randomly rounded  t o  some element  x'  E S so t h a t   E [f(x')] 5 a g ( x * ) .  
+These  algorithms  can  sometimes  be  derandomized, in  which  case one  finds  an  
+x"  such t h a t   f ( x N )  5 E [ f ( x ' ) ] .  
+
+2. 	 Primal-Dual 
+
+Consider  some weak  dual of  the   relaxation:  
+
+
+Construct  x  E  S  from y  E D  such  t h a t  
+
+Notice  t h a t   y  can  be   any  element  of  D ,  not  necessarily  an   optimal  solution  t o  
+t h e  dual. 
+
+We  now  illustrate  these  techniques on  t h e  minimum weight  vertex cover problem. 
+
+3 .4 .1   Rounding  applied  t o  VC 
+
+This  is  due  t o  Hochbaum  [16]. Let  x* be  t h e  optimal  solution  of  t h e   LP  relaxation. 
+Let 
+
+We  claim  U  is  a  2-approximation  of  the  minimum weight  VC.  Clearly  U  is  a  vertex 
+cover, because  for  ( u ,  v)  E E we  have  x * ( u )  + x*(v)  2 1, which  implies x * ( u )  2 112 
+or  x* (v )  2 112.  Also  x W ( V )   5 x w ( v ) ~ x * ( v )= 2LB  
+vEU 
+vEV  
+since 2x*(v)  2 1 for  a11  v E U .  
+
+3 .4 .2   Primal-Dual  applied  to  VC 
+
+This  is  due  t o   Bar-Yehuda  and   Even  [4].  First  formulate  t h e   dual  problem.  Let 
+y  are  y(e)  for  e = ( u ,  v) E E.  The   dual is: 
+y  E  ~ 
+1 
+~  the  elements of 
+1
+; 
+
+Initialize C  ( t h e  vertex cover) t o  the  emp ty  se t ,  y  = 0  and  F = E .  The  algorithm 
+proceeds  by  repeating  the  following  two  steps while F # 0: 
+1.  Choose  some  e = ( u ,  v)  E F.  Increase  y (e )  as  much  as  possible,  until  inequal- 
+i ty   (3)  becomes tight  for  u  or  v.  Assume WLOG   it  is  tight  for  u. 
+
+2.  Add  u  t o  C  and  remove all edges  incident  t o  u  from F. 
+
+Clearly  C  is  a  vertex  cover.  Furthermore  
+
+
+The Min-Cost  Perfect  Matching Problem 
+
+In  this section, we  illustrate t h e  power  of  t h e  primal-dual  technique t o  derive approx- 
+ima t  ion algorithms.  We  consider t h e  following problem. 
+
+Definition  3  The  Minimum-Cost  Perfect  Matching  Problem  (MCPMP )   is  as  fol- 
+lows:  Given  a  complete  graph  G  =  (V,E )   with  IVI  even  and  a  nonnegative  cost 
+function  c,  2 0  on  the  edges  e  E  E, find  a  perfect  matching  M  such  that  the  cost 
+c (M )   is minimized,  where  c (M )  = CeEMCe. 
+
+The  first polynomial t ime  algorithm for this problem was  given by Edmonds  [8] and 
+has  a  running  t ime  of  O ( n 4 )  where n  = IVI.  To  da te ,  t h e  fastest  strongly polynomial 
+t ime   algorithm  is  due  t o   Gabow  [ l o ]   and  has  a  running  t ime   of  O ( n (m  + n 1g n ) )  
+where  m  = IEl.  For  dense  graphs,  m  = O ( n 2 ) ,  this  algorithm  gives  a  running  t ime  
+of  O (n3 ) .   The   best  weakly  polynomial  algorithm  is  due  t o   Gabow  and  Tarjan  [12] 
+where  C  is  a  bound  on  t h e   costs  c,. 
+and  runs  in  t ime   0(md-lognC) 
+For  dense graphs  with  C = O ( n ) ,  this  bound  gives  an  O * ( n 2 - 5 )  running  time. 
+As  you  might  suspect  from these  bounds,  t h e  algorithms  involved  are fairly  com- 
+plicated.  Also, these algorithms are too  slow for many of  the  instances of  t h e  problem 
+t h a t   arise in practice.  In this  section, we  discuss an  approximation algorithm by  Goe- 
+mans  and  Williamson  1131  t h a t   runs  in  t ime   O ( n 2  l g n ) .   (This  bound  has  recently 
+been  improved  by  Gabow,  Goemans  and  Williamson  [ l l ]  t o   O ( n ( n  + J-)).) 
+Although  MCPMP  itself  is  in  PT IME ,   this  algorithm  is  sufficiently general  t o   give 
+approximations for  many  NP-hard  problems  as well. 
+The  algorithm  of  Goemans  and Williamson  is  a  2-approximation  algorithm - i t  
+ou tpu ts   a  perfect  matching with  cost  not  more t h a n   a factor  of  2 larger t h a n  t h e  cost 
+of  a minimum-cost  perfect  matching.  This  algorithm  requires  t h a t   t h e  costs  c,  make 
+up  a  metric,  t h a t   is,  c,  must  respect  the   triangle  inequality:  cij + cjk  2 cik  for  all 
+triples  i , j ,  k  of  vertices. 
+
+A  linear  programming  formulation 
+
+The   basic  idea  used  in  t h e   2-approximation  algorithm  of  Goemans  and  Williamson 
+is  linear  programming  and  duality.  The  min-cost  perfect  matching  problem  can  be 
+formulated  as  a  linear  program.  The   algorithm  does  not  directly  solve  t h e   linear 
+program,  but  during  i t s   operation,  it  can  compute  a  feasible  solution  t o   t h e   dual 
+program.  This  dual feasible solution  actually  certifies t h e  factor  of  2  approximation. 
+Before writing  down  t h e  linear  program, we  s ta r t  with  an  observation. 
+Consider a matching M and a set  S c V of  vertices with  IS1  odd.  If  M is a perfect 
+matching,  then   since  IS1  is  odd,  there  must  be  some edge  in  t h e  matching  t h a t   has 
+one endpoint  inside S and  the  other outside.  In  other  symbols, let  6 (S )  be  t h e  set  of 
+edges in E with exactly one endpoint  in S; if  M is  a perfect  matching and  IS1  is odd, 
+then  M n 6 ( S )  # @ .  
+
+W i th   th is  observation, we  can  now  formulate M C PM P   as  a  linear  program: 
+
+Z  = M i n x  cex,  
+
+subject  to:  x xe  2 1 
+e E E   
+
+~EG(S) 
+
+for  all  S  c V  with  IS1  odd 
+
+for  all  e  E E. 
+
+We  can  now  see t h a t   t h e  value Z of  th is  linear  program  is  a  lower bound  on  t h e  cost 
+of  any  perfect  matching.  In  particular,  for  any  perfect  matching M ,  we  let 
+
+1  if  e  E  M;  
+0  otherwise. 
+
+Clearly, this  assignment  is  a  feasible solution  t o  t h e  linear  program,  so we  know  t h a t  
+Z  5 c (M ) .   This  bound  also  applies  t o  a  minimum-cost  perfect  matching M* ,  so we 
+have Z Ic (M * ) .  
+Note  t h a t   th is   is  a  huge  linear  program  having  one  constraint  for  each  S c V  of 
+odd  cardinality.  Though  it  is  too  large  t o  be  solved in polynomial  t ime  by  any  of  t h e  
+linear  programming algorithms we  have  seen, t h e  ellipsoid method  can  actually solve 
+this  program  in  polynomial  t ime .   We  do not  consider this  solution  technique; ra ther  
+we  let  t h e   linear  program  and  i t s   dual  serve  as  a  tool  for  developing  and  analyzing 
+t h e  algorithm. 
+We  now  consider t h e  dual linear  program: 
+Z = M a x   	 x ys 
+
+s c v ,   
+
+IS1  odd 
+
+subject  to:  	
+
+for  all  e  E E 
+
+for  all  S  c V  with  IS1  odd. 
+
+Note  t h a t   by  strong  duality,  the   value  Z  of  this  dual  linear  program  is  t h e   same  as 
+t h e  value  Z of  t h e  primal program. 
+This  dual  linear  program  is  used  t o   verify  t h a t   t h e   perfect  matching  ou tpu t   by 
+the   algorithm  is  actually  within  a factor  of  2  of  optimal.  The  algorithm  ou tpu ts   two 
+things: 
+
+1. a  perfect  matching MI, and 
+
+2.  a  dual feasible solution  y  such t h a t  
+c (M t )  I 2  C Ys. 
+scv, 
+IS1  odd 
+
+Approx-11 
+
+Since y  is  dual feasible, we  know  t h a t  
+
+YS 5  5 c (M )  
+scv, 
+IS1  odd 
+
+where M  is  any  perfect  matching.  Thus we  have 
+
+where M* is  a  min-cost  perfect  matching.  The   algorithm  is  therefore  (given t h a t   i t  
+runs  in  polynomial  t ime)  a  2-approximat ion  algorithm for  MCPMP .  
+To  be   precise,  t h e   algorithm  need  not  actually  ou tpu t   t h e   dual  feasible  solution 
+y  - i t   is  only  needed  as  an   analysis  tool  t o   prove  the   factor  of  2  approximation 
+bound.  In  spite of  t h e  fact  t h a t   there  are an  exponential number  of  y s  variables,  t h e  
+algorithm  could  actually  compute  and  ou tpu t   the   y s   values  since  i t   turns   out  tha t  
+only  a  polynomial  number  of  them   are non-zero.  When  we  finally get  t o  exhibiting 
+t h e  algorithm, we  will  include t h e  computation of  the   y s  values. 
+
+From  forest  t o  perfect  matching 
+Ra ther  t h a n  directly compute t h e  perfect  matching M', t h e  algorithm first  computes 
+a  forest  F' from  which  M'  can  be  derived.  In   the   forest  F', all  components  have 
+even  size, and   furthermore, F' is  edge-minimal in   the   sense t h a t   if  any  edge of  F' is 
+removed, then   t h e  resulting forest  has  an  odd  size component.  Additionally,  t h e  cost 
+of  F' is  bounded  by  twice  t h e  value of  t h e  dual  feasible solution; t h a t   is, 
+c (F ' )  5 2  C Ys. 
+s cv, 
+IS1  odd 
+
+We  now  show  how  t o   convert  F' in to   a  perfect  matching M'  such  t h a t   c (M r )  5 
+c ( F r ) .  The  idea  is as  follows.  Starting from  the  forest  F', consider  any  vertex  v with 
+degree  a t   least  3 .   Take  two  edges  ( u ,  v)  and  (v ,  w);  remove  them   and  replace  them  
+with  the   single  edge  ( u ,  w).  Since  t h e   edge  costs  obey  t h e   triangle  inequality,  t h e  
+resulting forest  must  have a  cost  not  more than   c (F ' ) .  Thus ,  if  we  can  i tera te  on  this 
+operation  until  all vertices  have  degree  1, then  we  have our  perfect  matching  M'. 
+The  only  thing  t h a t   can get  in  t h e  way  of  t h e  operation  just  described  is  a  vertex 
+of  degree 2.  Fortunately, we  can  show  tha t   all vertices  of  F' have odd  degree.  Notice 
+then   tha t   this property  is preserved  by  t h e  basic  operation we  are using.  (As a  direct 
+consequence, t h e  property  t h a t   all components  are even is also preserved.)  Therefore, 
+if  all vertices  of  F' have odd  degree, we  can  iteration  t h e  basic  operation  t o  produce 
+a  perfect  matching M'  such  t h a t   c(M')  5  c ( F r ) .  Notice  t h a t   M'  is  produced  after 
+O ( n ) iterations. 
+
+Lemma 3  All  v e r t i c e s   of  F' h a v e   odd  d e g r e e .  
+
+Approx- 12 
+
+Proof: 
+Suppose  there   is  a  vertex  v with  even  degree,  and  let  v  be  in  component 
+A of  F' .   Removing v and  all i t s  incident edges partitions  A  into an  even number  k  of 
+smaller  components Al, A2, . . . ,Ak .  If  all  k  of  these  components have odd  size, then  
+i t   must  be  t h e   case  t h a t   A  has  odd  size.  Bu t   we  know  t h a t   A  has  even  size -- all 
+components of  F' have even size -- so  there  must  be  a  component  Ai  with  even size. 
+Let  vi  denote t h e  vertex  in Ai  such t h a t   ( v , vi) is  an  edge of  F ' .   Now  if  we  s ta r t   from 
+F'  and  remove t h e   edge  (v , vi), we  separate  A  into  two  even  size  components.  This 
+contradicts  t h e  edge-minimality of  F ' .  
+
+The  algorithm 
+The  algorithm must now  ou tpu t   an  edge-minimal forest F'  with even size components 
+and  be   able  t o  compute a  dual feasible solution  y  such t h a t   c ( F f )I2 C y s .  
+At  the  highest  level, t h e  algorithm  is: 
+1.  S ta r t  with  F = 0. 
+
+2.  As  long  as  there  exists an   odd  size  component  of  F, add  an   edge between  two 
+components  ( a t  least  one  of  which  has  odd  size). 
+
+Note  t h a t   t h e  set  of  components of  F is  initially just  t h e  set  of  vertices  V. 
+The  choice of  edges is guided  by  t h e  dual  linear  program  shown earlier.  We  s ta r t  
+with  all  t h e   dual  variables  equal  t o   zero;  y s   =  0.  Suppose  a t   some  point  in   t h e  
+execution  we  have  a  forest  F  as  shown  below  and  a  dual  solution  y .   Look  a t   t h e  
+
+components  S  of  odd  cardinality  (components  1, 4,  6  and  7,  in  this  case).  For  these 
+components,  increase  y s   by  some 6 ,  leaving  all  other  values  of  y s   unchanged.  Tha t  
+l Y s+ 6 
+is, 
+Y s  + 
+
+if  S is  an  odd  size component  of  F 
+, 7otherwise. 
+Make  6  as  large  as  possible while  keeping  y s   dual  feasible.  By  doing  th is ,  we  make 
+the   constraint  on  some edge  e  t igh t ;  for  some e  t h e  constraint 
+
+becomes 
+
+This is t h e  edge e  t h a t  we  add  t o  F .   (If more than  one edge constraint  becomes tight 
+simultaneously,  then  just  arbitrarily  pick  one of  t h e  edges  t o  add .)  
+We  now  s ta te   the   algorithm  t o   compute  F'.  The   steps  t h a t   compute  t h e   dual 
+feasible solution  y  are commented  out  by  placing  t h e  tex t   in   curly  braces. 
+
+F  + 0 
+
+C  t { { i )  I  i  E  V )  
+{ T h e  components  of  F )   
+
+{L e t  ys  t 0  for  all  S   with  IS1  odd.)  
+
+V i  E V  do  d ( i )+ 0 
+{ d ( i )= Cs3 iy s )   
+
+while  3C  E  C  with  ICI  odd  do 
+
+Find  edge  e = ( i ,  j )   such  t h a t   i  E C,,  j  E C,,  p  f q 
+which minimizes 6 = c e - d ( i ) - d ( j )  
+~ ( C P ) + ~ ( C , )  
+where  X (C )  = { 
+( i .e . ,  t h e  parity  of  C ) .
+/ ~ ~ ~ w ~ s ~  
+F  -+F  U { e )  
+VC  E C  with  ICI  odd  do 
+Y i  E C  do  d ( i ) t d ( i )  + 6  
+{L e t  Yc  + Yc + 6 . )  
+c + c \ {CP,C , )  u { C ,  u C , )  
+F'  t edge-minimal F 
+
+'
+
+Analysis  of the   algorithm 
+Lemma 4  The  values  of  the  variables ys  computed  b y  the  above  algorithm  constitute 
+a  dual feasible  solution. 
+
+Proof:  We  show  this  by  induction  on  t h e   while  loop.  Specifically, we  show  t h a t  
+a t   t h e  s ta r t   of  each  i tera t ion ,  t h e  values  of  t h e  variables  ys  are  feasible for  t h e   dual 
+linear  program.  We  want  t o  show  t h a t   for  each  edge  e  E E ,  
+
+scv, 
+e € S ( S )  
+
+The   base  case  is  trivial  since  all  variables  ys  are  initialized  t o   zero  and  t h e   cost 
+function  c,  is nonnegative.  Now  consider  an  edge  e'  = ( i f ,  j')   and  an  iteration.  There 
+are two  cases  t o  consider. 
+In  t h e   first  case,  suppose  bo th   i'  and  j'  are  in  t h e   same  component  a t   t h e   s ta r t  
+of  t h e   iteration.  In  this  case,  there  is  no  component  C  E  C  for  which  e'  E  S ( C ) .  
+Therefore, since t h e  only way  a  variable  ys  gets  increased  is when  S  is  a  component, 
+none of  t h e  variables ys  with e'  E 6 ( S )get increased a t  this iteration.  By the  induction 
+
+hypothesis, we  assume  the   iteration  s ta r t s  with 
+
+scv ,  
+e 1 € S ( S )  
+
+and  therefore,  since t h e   left-hand-side of  this  inequality  does  not  change  during  t h e  
+i tera t ion ,  this  inequality  is  also  satisfied a t   t h e  s ta r t   of  t h e  next  iteration. 
+In  t h e   second  case,  suppose  i'  and  j'  are  in  different  components;  i'  E  Cpl and 
+j'  E  Cql a t   the   s ta r t   of  t h e  iteration.  In  this  case, we  can  write 
+C Ys = CYS+ C y s  
+scv ,  
+scv ,  
+sc v ,  
+
+where  d ( i ) is  defined  by 
+
+d ( i ) =  C y s .  
+scv ,  
+i E S  
+The  equality follows because  since i1and j'  are in  different components, if  S contains 
+bo th   i'  and  j ' ,   then   S is  not  and  never  has  been  a  component; hence,  for  such  a  set 
+S, we  have ys  = 0.  We  know  t h a t   during  this iteration  d ( i l )will be  incremented by  6 
+if  and  only  if  ycp1is  incremented by  6 ,  and  th is  occurs  if  and  only  if  X(C,t)  = 1. Let 
+d ' ( i l )and  d ' ( j t )  be  the  new  values of  d ( i l )and  d ( j l )  after  this  iteration.  Then we  have 
+d1 ( i ' )= d ( i l )+ 6X (C p ! ) ,  and 
+d t ( j t )  = d ( j l )  + SX(C,l). 
+Now,  by  the  way  6 is  chosen, we  know  tha t  
+
+Thus ,  a t   t h e  beginning  of  the  next  iteration we  have 
+
+Finally,  for  completeness  sake,  we  note  t h a t   t h e   constraint  ys  2 0  is  satisfied 
+because  ys  = 0  initially  and  6  > 0. 
+
+Approx-15 
+
+As  a  final  observation, we  note  tha t   when  the   algorithm  selects  an  edge  e',  the  
+corresponding  constraint  in the  dual linear program  becomes  tight.  This means  tha t  
+for  all edges  e E  F ,  we  have 
+C Ys  = c e *  
+SCV*  
+e €G ( S )  
+
+A  simulated  run  of the  algorithm 
+Since the   algorithm  as  given  can  be  difficult  t o  visualize, here  is  an  example of  how 
+i t  would  execute.  See Figure  1 .  
+
+Figure 1: A  sample run of  the   algorithm.  The  various values of  d ( i ) are indicated b y  
+the  shaded  regions  around  the  components. 
+
+We'll assume a Euclidean distance metric t o  ease visualization.  Now,  initially, all 
+points (1through 8 ) are in separate components, and d ( i ) is 0 for all i.  Since the  metric 
+is Euclidean distance, the  first edge to  be found will be (7,8).  Since both  components 
+are of  odd size, 6will be half  the  distance between them  ( ( c ,  - 0 - 0 ) / ( 1 +  1 ) ) .  Since, 
+in  fact,  all  components are of  odd  size,  every d(i) will  be  increased by  this  amount, 
+as  indicated  by  the   innermost  white  circle  around  each  point.  The  set  { 7 , 8 )  now 
+becomes  a  single component  of  even size. 
+In general, we  can see the  next edge t o  be chosen by finding the  pair of  components 
+whose  boundaries  in  the   picture  can  be  most  easily made  to   touch.  Thus,  the  next 
+edge is ( 3 , 5 ) ,  since the  boundaries of  their regions are closest, and the  resulting values 
+
+Approx-16 
+
+of  d ( i ) are represented  by  t h e  dark  gray bands  around  points  1 through  6.  Note  t h a t  
+t h e  component  {7 ,8}  does not  increase  i t s  d ( i ) values  since it  is  of  even size. 
+We  continue  in  this  way,  expanding  t h e   "moats"  around  odd-sized  components 
+until  all  components  are  of  even  size.  Since there  is  an   even number  of  vertices  and 
+we  always expand  odd-sized  components, we  are guaranteed  t o  reach  such  a  point. 
+
+Final  Steps of Algorithm  and  Proof  of  Correctness 
+Let  F'  = { e  E  F  : F  \ { e )  has  an  odd  sized component}.  We will show t h a t   t h e  F'  so 
+obtained  is  a  forest with  components of  even cardinality  and  t h a t   i t   is edge minimal 
+with  respect  t o   this  property.  I t   is  obvious t h a t   F'  is  a  forest  since F'  c F  and  F  is 
+a  forest.  We  will  also  show  t h a t   t h e   cost  of  th is  forest  ( F ' ) ,is  less  than   or  equal  t o  
+twice  t h e  dual  solution.  In  section  4.2  we  showed  how  t o  build  a matching  from this 
+forest with  t h e  cost  of  t h e  matching less  than  or  equal t o  t h e  cost  of  t h e  forest.  Thus, 
+this gives us  a 2-approximation algorithm for matching.  As  an  example see t h e  figure 
+given below. 
+
+Figure  2:  Example  showing how  t o  get  F'  from F .  
+
+Theorem  5  Let  F'  = { e  E F  : F  \ { e )  has  an  odd  sized  componen t) .   Then  
+
+1 .   	 every  component  of  F'  has  an  even  number  of  vertices  and  F'  is  e d g e   minimal 
+with  respect  to  this property.. 
+
+Proof: 
+Let  us  first  show  t h a t   every  component  of  F'  has  an  even  number  of  vertices. 
+Suppose  not.  Then  consider  the   components  of  F .   Every  component  of  F  has  an  
+even number of  vertices by  design of  t h e  algorithm.  Consider a component of  F'  which 
+has  an   odd  number  of  vertices  and  let  us  denote  i t   as  T:.  Let  Tibe  t h e   component 
+
+t h a t   T,! belongs  t o   in  F .  Let  Nl, . . . ,Ni  be  t h e  components of  F within  Ti obtained 
+by  removing T:  (see figure 3 ) .   Ti has  an  even number  of  vertices.  N k  with  1 5 k  5 j 
+has  an  even  number  of  vertices  because,  otherwise,  t h e   edge  from  N k   t o   T;I  would 
+belong  t o  F' by  definition.  But  this  implies t h a t   T,! is even, which  is a  contradiction. 
+
+Figure  3:  Every  component  of  F' has  an   even # of  vertices. 
+
+A  simple proof  by  contradiction  shows t h a t  F' is edge minimal.  Suppose F' is not 
+edge minimal.  Then there  is an  edge or set of  edges which can be  removed which leave 
+even sized  components.  Consider one  such edge  e.  I t   falls into one of  two  categories: 
+
+1. I ts   removal  divides  a  component  into  two  even  sized  components.  Bu t   this 
+means  t h a t   e  was  already  removed by  t h e  definition  of  F ' .  
+
+2.  	 I ts   removal  divides  a  component  into  two  odd  sized  components.  Despite  t h e  
+fact  t h a t  other edges may be removed, as well, an two odd  sized component  will 
+remain  in  t h e  forest.  Thus ,  e  cannot  be  removed. 
+
+Now  let  us  prove  t h e  second portion  of  t h e  theorem.  In what  follows,  though  we 
+do  not  explicitly no ta te   i t ,  when  we  refer  t o   a  set  S of  vertices, we  mean  a  set  S of 
+vertices with  IS1 odd.  We  observe t h a t   by  t h e  choice of  t h e  edges  e  in  F, we  have 
+
+for  all  e  E F .  Thus, 
+
+Thus we  need  t o   show, 
+
+I ~ ' n 6 ( ~ ) l ~ 2 6 l { C ~ C , l c l o d d ) l  
+
+We  will  show  this  by  induction.  In  what  follows, bear  in  mind  t h a t   F'  is  what 
+we  have,  a t   t h e  end  of  t h e  algorithm.  We will  show  t h e  above relation  holds  a t   every 
+iteration. 
+Initially, ys  = 0.  Thus t h e  LHS  and RHS are bo th  zero.  Thus ,  this is t r u e  initially. 
+Let  us  suppose i t  is t rue  a t  any intermediate stage in  t h e  algorithm.  We will  show 
+t h a t   it will  remain t r u e  in t h e  next  iteration.  From one iteration  t o  t h e  next  t h e  only 
+ys   t h a t   change  are  those  with  C  E C with  ICI  odd.  Thus  if  we  show  t h e   increase  in 
+t h e  LHS  is  less  t h a n   t h e  RHS we  are done.  i.e. 
+6  C 
+c~c,lclodd 
+x  I F ' n S ( C ) I I 2 1 { C E C , I C I o d d ] l  
+c~c,lclodd 
+Now,  define  a  graph  H with  C  E C as  vertices, with  an  edge  between  Cp and  C,  if 
+there  exists an  edge in F'  n {6(Cp)n 6 (C q ) ) .  We  can partition  these vertices  into two 
+groups  based  on  their  cardinality.  Those  t h a t   have  even  cardinality  and  those  t h a t  
+have odd  cardinality.  Remove from th is  graph  all vertices  t h a t   have even cardinality 
+and  are  isolated  ( they  have no  edges incident  t o  them ) .  We  will  denote  t h e  resulting 
+set  of  vertices  of  odd  and  even cardinality  by  Odd  and  E v e n   respectively. 
+C c ~ c , ~ c ~I  F'  n 6 (C ) l  corresponds  t o  the  sum of  t h e  degrees of  vertices  in 
+odd 
+Odd  in  t h e  graph  H.  And,  I{C  E  C, ICI  odd) l ,   corresponds  t o  t h e  number  of  vertices 
+in  odd.  Thus we  need  t o   show: 
+
+where  dH (v )  denotes  the   degree of  node  v in  the  graph  H.  Since F'  is  a  forest, H is 
+also a forest  and  we  have: 
+Number  of  edges  in H 5 number  of  vertices  in H.  Or 
+
+We now  claim t h a t  if  v E E v e n  then  v is not  a leaf.  If  this is t r u e  then  (2 -dH ( v ) )  5 
+0  for  v E E v e n   and  so we  are  done. 
+Suppose  there  is  a  vi  E  E v e n   which  is  a  leaf.  Consider  t h e   component  C  in  H 
+t h a t   vi is  contained  in.  By  t h e  construction  of  H ,  each  tree  in  F'  is  either contained 
+solely  in   the  vertices  represented  by  C  or  i t   is  strictly outside  C .   Since each  tree   in 
+F'  contains  an  even  number  of  vertices  C  does  (w .r . t .   t h e  original  graph) ,   as  well. 
+So  vi  and  C - vi  each  contains an  even number of  vertices.  As  a result,  removing t h e  
+
+edge  between  vi  and  G - vi  would  leave even  sized  components,  thus  contradicting 
+t h e  minimality of  F ' .  
+
+Figure 4:  dH(v)  2 2  for  v  E Even  
+
+Some  implementation  details 
+The   algorithm  can  be  implemented  in   O ( n 2l o g n ) .   For  this  purpose,  notice  tha t  
+the   number  of  iterations  is  a t   most  n  - 1 since  F  is  a  forest.  The   components 
+of  F  can  be  maintained  as  a  union-find  s truc ture   and ,   therefore,  all  mergings  of 
+components  take  O ( n a ( n ,n ) )  where  a  is  t h e   inverse Ackermann  function.  In  order 
+t o  get  t h e  O ( n 2log n )  bound, we  shall show t h a t   every  iteration  can  be  implemented 
+in  O ( n  log n )  time. 
+In  order  t o  find  t h e  edge  e  t o  add  t o  F, we  maintain  a  priority  queue containing 
+t h e  edges between different components of  F. This initialization of  this priority queue 
+takes  0 ( n 2log n )  time.  In  order  t o  describe  t h e  key  of  an  edge, we  need  t o  introduce 
+a  notion  of  t ime .   The  t ime  is  initially  set  t o  zero and  increases by  6 in each  iteration 
+( t h e  t ime   can  be  seen  t o   be  t h e  maximum of  di  over  all  vertices  i ) .   The  key  of  an  
+edge  e  =  ( i , j )  is  equal  t o   the   t ime   a t   which  we  would  have  c,  =  di  + d j   if  t h e  
+parity  of  the   components  containing  i  and  j  don't  change.  The  edge  t o   be  selected 
+is  therefore  t h e   edge  with  minimum  key  and  can  be   obtained  in   O ( n  log n ) .   When 
+two components merge, we  need  t o  upda te  t h e  keys of  edges incident  t o  t h e  resulting 
+component  (since t h e  parity  might  have  changed).  By  keeping track of  only one edge 
+between  two  components  ( t h e  one with  smallest  key), we  need  t o  upda te   t h e  keys  of 
+O ( n )  edges  when  two  components merge.  This  can  be  done  in  O ( n  log n )   (O(1ogn )  
+per  upda te ) .  
+To  complete t h e   discussion,  we  need  t o   show  how  t o   go  from  F t o   F ' .   By  per-
+forming  a  post-order  traversal  of  t h e   tree   and  computing  t h e   parity  of  t h e   subtrees 
+encountered  (in a  recursive manner) ,  this  step  can  be  implemented in  O ( n )  time. 
+
+Approximating MAX-CUT 
+
+In this section, we  illustrate the  fact  tha t   improved approximation algorithms can be 
+obtained by  considering relaxations more sophisticated than linear ones.  At  the  same 
+time, we  will  also illustrate the fact  tha t   rounding  a solution from the  relaxation in a 
+randomized fashion can  be very  useful.  For  this purpose, we  consider  approximation 
+algorithms for  the  MAX-CUT problem.  The unweighted version of  this problem is as 
+follows: 
+Given:  A graph  G = (V, E ) .   
+
+Find:  A partition  (S,S) such  tha t   d (S )  := IS(S)I  is maximized. 
+
+It  can  be  shown  tha t   this  problem  is  NP-hard  and  MAX  SNP-complete and  so 
+we  cannot  hope  for  an approximation algorithm with guarantee arbitrarily close to   I 
+unless  P = NP .   In  the  weighted version  of  the problem  each  edge has  a weight  w i j  
+and we  define d (S )  by, 
+4s)=  C 
+(6,3) E E : ~ E S ,  
+j $ S  
+For  simplicity we  focus on  the  unweighted  case.  The results tha t   we  shall obtain  will 
+also apply to  the  weighted case. 
+Recall  tha t   an  a-approximation  algorithm  for  MAX-C U T   is  a  polynomial  time 
+algorithm which  delivers  a  cut  6 (S )  such  tha t   d (S )  2 a z ~ cwhere  ZMC  is  the  value 
+of  the   optimum  cut.  Until  1993 the   best  known  a  was  0.5  but  now  it  is  0.878  due 
+to  an approximation algorithm of  Goemans and Williamson [14]. We  shall first  of  all 
+look  at  three  (almost identical) algorithms which  have  an approximation ratio of  0.5. 
+
+1. Randomized  construction. We  select S uniformly from all subsets of  V .   i.e. 
+For  each  i  E  V  we  put  i  E  S  with probability  i (independently of  J'  # i) .  
+E [d(S)I  	 =  z ( i , j ) E ~P r [ ( i , j ) E  b(S)1 
+by  linearity of  expect ations 
+=  C ( i , j ) E E P r [ i ~ S , j $ S O r i $ S , j ~S] 
+=  i IE l .  
+
+But clearly ZMC  5 IEl  and so we have E [d(S)]2 $zMc.  Note tha t  by comparing 
+our  cut  to   IEl, the  best  possible  bound  tha t   we  could obtain  is  $  since for  K ,
+-
+(the complete graph on  n vertices) we  have  E 1  = (:) 
+I 	
+and  z ~ c  n2
+= 7 .  
+2 .   	 Greedy procedure.  Let  V = {1 ,2 , .  . . , n )  and let E j  = {i : ( i ,j )  E E and  i < 
+j}.  It  is  clear  tha t   { E j  : j = 2, . . . , n}  forms a  partition  of  E.  The  algorithm 
+is: 
+
+Set  S = (1) 
+For  j = 2  t o n  do 
+if  lSnEjI 5 ~
+I
+E
+~
+I 
+then  S  + S U  {j). 
+
+If  we  define  Fj  = Ej  n 6 ( S ) then   we  can  see  t h a t   {Fj : j  = 2 , .  . . , n )   is  a 
+partition  of  S ( S ) .  By  definition  of  t h e  algorithm  i t   is  clear  t h a t   IFjI  2 9.By 
+summing over  j  we  get  d ( S )  2  2 y .  In   fac t ,   the   greedy  algorithm  can 
+be obtained  from the  randomized  algorithm by  using  t h e  method  of  conditional 
+expectations. 
+
+3 .   Local  search.  Say  t h a t   6 ( S )is  locally optimum if  'di E S  : d ( S  - { i ) )5 d ( S )  
+and  'di $  S  : d ( S  U { i ) )5 d ( S ) .  
+Lemma 6  if S ( S )  is  locally  optimum  then d ( S ) 2 F. 
+
+Proof: 
+
+d ( S )   =  A x i n u m b e r  of  edges  in  cut  incident  t o   i )  
+iEv 
+
+The   inequality  is  t rue  because  if  IS(S) n  S ( i )1  <  IS(i)1  for  some  i  then   we  can 
+move  i  t o   the   other  side  of  t h e   cut  and  get  an   improvement.  This  contradicts 
+local opt imality. 
+
+In local search we move one vertex a t  a t ime  from one side of  t h e  cut  t o  t h e  other 
+until  we  reach  a  local  optimum.  In  t h e   unweighted  case  this  is  a  polynomial 
+t ime  algorithm since t h e  number of  different values t h a t   a cut  can take is O ( n 2 ) .  
+In the  weighted case t h e  running  t ime  can be exponential.  Haken and Luby  [15] 
+have  shown  t h a t   this  can  be  t rue   even  for  4-regular  graphs.  For  cubic  graphs 
+t h e  running  t ime  is  polynomial  [22]. 
+
+Over  t h e  last  15-20 years  a number  of  small improvements were made in  t h e  approxi-
+mation  ratio obtainable for MAX-CUT.  The  ra t io  increased  in t h e  following manner: 
+
+where m  = IEI  and  n  = IVI, but  asymptotically  th is  is  still 0.5. 
+
+Randomized  0.878 Algorithm 
+
+The  algorithm  tha t   we  now  present  is  randomized  but  i t   differs  from  our  previous 
+randomized algorithm in  two  important ways. 
+
+a  The event  i E  S  is  not  independent  from the  event  j  E  S .  
+
+We  compare the  cut  tha t  we  obtain t o  an upper  bound which is better  tha t   IEl. 
+
+Figure 5 :   The sphere S,. 
+
+Suppose tha t   for each vertex  i E V we have a vector vi  E R n (where n = IVI).  Let 
+Sn be  the  unit  sphere {x  E R n : 1 lx 1 1   = 1). Take  a  point  r  uniformly  distributed  on 
+Sn and  let  S = {i E V  : vi  r  2 0 )   (Figure 5 ) .   (Note tha t   without  loss  of  generality 
+llvill  = 1.) Then by  linearity of  expectations: 
+E  [ d ( S ) ]=  C  P r  [sign(vi  r )  f sign(vj  r ) ]. 
+EE 
+
+Lemma 7 
+
+P r  [sign(vi  r )  # sign(vj . r ) ]   =  Pr [random hyperplane  separates vi  and vj] 
+a- --
+7T 
+where  a = arccos(vi - v j )  (the  angle  between  vi  and vj). 
+
+Proof: 
+Thisresultiseasytoseebutitisalittledifficulttoformalize.LetPbethe 
+2-dimensional plane  containing vi  and  v j .   Then  P n Sn is  a circle.  W i th  probability 
+1, H  = {x  : x  *  r  = 0)  intersects  this  circle in  exactly  two  points  s  and  t  (which are 
+diametrically opposed).  See figure 6.  By  symmetry s and  t are uniformly distributed 
+on the  circle.  The  vectors vi  and  v j  are  separated  by  the  hyperplane H  if  and  only  if 
+either 3 or  t  lies on  the  smaller arc between vi  and  vj.  This happens with  probability 
+2a - 2-
+27r  - 7 r *  
+
+Figure 6:  The plane P. 
+
+From  equation 5  and  lemma 7 we  obtain: 
+
+Observe tha t   E [ d ( S ) ]5 z ~ cand  so 
+
+where we  maximize over  all  choices  for  the   vi7s. We  actually  have ma%, E  [ d ( S ) ]= 
+z ~ c
+ 
+ZM C   Let  S ( T )be  a cut  such tha t   d ( T )= 
+and let  e  be the  unit  vector whose first 
+component is  1 and whose  other  components are 0.  If  we  set 
+
+Vi = 
+
+i f i ~ T  
+e 
+-e  otherwise. 
+
+then  S ( S )= S ( T )with probability  1.  This means  tha t   E [ d ( S ) ]= z
+
+~
+
+c
+
+ 
+
+Corollary  8 
+
+Unfortunately this is as difficult to  solve as  the original problem and so  at first glance 
+we  have not  made any progress. 
+
+Choosing a good  set  of  vectors 
+Let  f  : [- 1,1]+ [0,1] be   a  function  which  satisfies  f ( - 1) = 1, f (1) = 0.  Consider 
+t h e  following program: 
+
+Max 
+
+subject  to: 
+
+If  we  denote  t h e  optimal value  of  this  program  by  z p   then  we  have  z ~ c5 z p .   This 
+is  because  if  we  have  a  cut  6 (T )  then  we  can  le t ,  
+vi  = {  - e  
+e 
+Hence C( i , j)EEf (v i   vj) = d (T )  and  z ~ c5 z p   follows immediately. 
+
+i f i E T
+otherwise. 
+
+5 . 3   The  Algorithm 
+The   framework  for  t h e   0.878  approximation  algorithm  for  MAX-CUT  can  now  be 
+presented. 
+1. Solve  (P) t o  get  a  set  of  vectors  {v;,  . . . ,v:). 
+
+2 .   Uniformly select  r  E S,. 
+3 .   Set  S  = {i  : v b - r  > 0) .  
+Theorem 9 
+
+wh e r e ,  
+
+Proof: 
+
+a =  min 
+-15.51 
+
+arccos(x) 
+? r f (x )   ' 
+
+( i , j ) €E  
+=  a z p  
+
+We must  now  choose f  such tha t   (P )can be solved in polynomial  t ime  and a is as 
+large  as possible.  We  shall show  t h a t   (P)can be  solved in polynomial  t ime  whenever 
+f  is  linear  and  so  if  we  define, 
+
+1 - x
+f (4= -2 
+then   our  first  criterion  is  satisfied.  (Note t h a t   f (-1)  = 1 and  f (1) = 0.)  W i th   this 
+choice of  f ,  
+
+2 arccos ( x )  
+a  =  min 
+- 1 5 x 5 1   T ( 1  - x )  
+
+(See figure 7.) 
+
+Figure  7:  Calculating  a .  
+
+Solving  ( P )  
+
+We  now  tu rn   our  a t ten t ion  t o   solving: 
+Man  C  l v i - v j )  
+( i , j ) €E  
+subject  to: 
+
+Let  Y = ( y i j )   where  y i j  = vi  vj.  Then ,  
+llvill = 1 + yii  = 1 for  all  i. 
+y i j   = vi  vj  +=Y  k 0,  where  Y  k 0  means  t h a t   Y  is  positive  semi-definite: 
+Vx : xTYx 2 0 .)   This  is  t r u e  because, 
+
+Conversely  if  Y  k 0  and  yii  = 1 for  all  i  then   it  can be  shown  t h a t   there  exists  a  set 
+of  vi's such  t h a t   y i j  = vi  vj.  Hence  (P) is  equivalent  to ,  
+
+Max 
+
+subject  to: 
+
+Note  t h a t   Q  := { Y :  Y  > 0,yii = 1) is  convex.  (If A 
+0  and  B > 0 then   A +  B > 0 
+>  0.)  I t   can  be  shown  t h a t   maximizing  a  concave  function  over  a 
+and  also 
+convex  set  can  be  done  in  polynomial  time.  Hence we  can  solve  ( P I )   in   polynomial 
+t ime  since linear  functions are concave.  This  completes  t h e  analysis of  t h e  algorithm. 
+
+5 . 5   Remarks 
+
+1.  The  optimum Y  could be  irrational bu t   in  this  case we  can find a  solution with 
+an   arbitrarily  small error  in  polynomial  time. 
+
+2.  To  solve  (P')in  polynomial  t ime  we  could use  a  variation  of  t h e  interior  point 
+method for  linear  programming. 
+
+3.  Given Y ,  vi  can  be  obtained  using  a  Cholesky factorization  (Y  = VVT ) .  
+
+4.  The  algorithm  can  be  derandomized  using  t h e  method  of  conditional expecta-
+tions.  This  is  quite intricate. 
+
+5.  The   analysis  is  very  nearly  t igh t .   For  t h e   5-cycle  we  have  z ~ cand  z p   = 
+(1+ cos t ) = 
+= 0.88445. 
+which  implies t h a t  
+
+2P 
+
+Bin Packing and  P  1 1   Cmax 
+One can push  t h e  notion  of  approximation algorithms a bit  fur ther  t h a n  we  have been 
+doing  and  define t h e  notion  of  approximation  schemes: 
+
+D e f i n i t i o n   4  A  polynomial  approximation  scheme  (pas)  is  a family  of  algorithms 
+A,  : t > O  such  that  for  each  t > 0,  A,  is  a  (1 + t)-approximation  algorithm  which 
+runs  in  polynomial  t ime   in   input  size  for  fixed  t. 
+
+D e f i n i t i o n   5  A  fully polynomial  approximation  scheme (fpas)  is  a pas  with  running 
+t ime   which  is polynomial  both  in   input  size  and  l / t .  
+
+It  is known t h a t   if  n is a strongly NP-comp le te  problem, then  n has no fpas  unless 
+P = N P .   From  t h e   result  of  Arora  et  al.  described  in  Section  2 ,   we  also  know  t h a t  
+there  is no  pas  for  any  M A X   - SN P  hard  problem  unless P = N P .  
+We  now  consider  two  problems  which  have  a  very  similar  flavor;  in  fac t ,   they  
+correspond  t o  t h e  same NP-comp le te  decision  problem.  However, they   considerably 
+differ  in  terms  of  approximability:  one  has  a  pas,  t h e  other  does  not. 
+
+a 	 B i n   P a c k i n g :   Given  i tem   sizes  a l ,  a z , .  . . , a ,   2 0  and  a  bin  size of  T ,  find  a 
+partition  of  11,. . . ,Ikof  1 , .  . . ,n ,   such  t h a t   CiEI,ai  5  T  and  k  is  minimized 
+( t h e  i tems  in  Ii are assigned  t o  bin  1 ) .  
+a 	 P  1 1   C,,,:  Given  n  jobs  with  processing  times  p l ,  . . . ,p,  and  m  machines, 
+find  a  partition  {Il,. . . ,I,)  of  (1, . . . ,n},  such  t h a t   t h e  makespan  defined  as 
+maxi (CjEI,  p j )  is  minimum.  (The  makespan  represents  t h e  maximum comple- 
+tion  t ime   on  any  machine  given  t h a t   t h e   jobs  in  I,  are  assigned  t o   machine 
+i ) . 
+
+The  decision versions of  t h e  two problems are identical and NP-complete.  However 
+when we  consider approximation  algorithms for  t h e  two problems we  have completely 
+different results.  In  the   case of  t h e  bin  packing  problem  there  is  no  a-approximation 
+algorithm with  a < 312,  unless P = NP .  
+
+P r o p o s i t i o n   10  There  is  no  a-approximation  algorithm with a < 312,  for  bin pack- 
+ing,  unless P = NP ,   as  seen  in  Section  2. 
+However, we  shall  see, for  P  1 1   C,,,  we  have  a-approximation  algorithms  for  any 
+
+D e f i n i t i o n   6  A n   algorithm A  has  an   asymptotic performance  guarantee  of  a  if 
+
+a  2 lim sup a k  
+k+m  
+
+where 
+
+sup 
+at;:= 
+I 
+\ 
+I : O P T ( I ) = k  O P T ( I )  
+a n d   O P T ( I )  d e n o t e s   t h e   v a l u e   o f   i n s t a n c e  I a n d  A ( I )  d e n o t e s   t h e   v a l u e   r e t u r n e d   b y  
+a l g o r i t h m  A .  
+For  P  1 1   Cmax ,  there  is  no  difference between  an   asymptotic performance  and  a  per- 
+formance  guarantee.  This  follows  from  t h e   fact  t h a t   P  1 1   Cmaxsatisfies  a  scaling 
+property  :  an  instance with value P O P T ( I )  can be  constructed  by  multiplying every 
+processing  t ime  p j   by  P .  
+Using  this  definition  we  can  analogously  define  a  p o l y n o m i a l   a s y m p t o t i c   a p p r o x -  
+i m a t i o n   s c h e m e   ( p a a s ) .   And  a  f u l l y   p o l y n o m i a l   a s y m p t o t i c   a p p r o x i m a t i o n   s c h e m e  
+( f p a a s ) .  
+Now  we  will  s t a t e   some  results  t o   illustrate  t h e   difference  in  t h e   two  problems 
+when we  consider approximat ion algorithms. 
+
+1 .   For  bin  packing,  there  does  not  exist  an  a-approximation  algorithm  with  a < 
+312, unless P = N P .   Therefore  there is no  p a s   for bin packing unless P = N P .  
+2.  For  P  1 1   Cmaxthere  exists  a  p a s .   This  is  due  t o   Hochbaum  and  Shmoys  [17]. 
+We  will  s tudy  this  algorithm  in more detail in  today's lecture. 
+
+3.  For  bin  packing  there  exists a  p a a s .   (Fernandez de la Vega  and  Lueker  [7]). 
+4. 	 For P  1 1   Cmaxthere exists no f p a a s   unless P = N P .   This is because t h e  existence 
+of  a f p a a s   implies t h e  existence of  a f p a s   and  the  existence of  a f p a s   is  ruled  out 
+unless P = N P  because,  P  1 1   Cmax  is  strongly NP-complete. 
+5. 	 For  bin  packing  there  even  exists  a  f p a a s .   This  was  shown  by  Karmarkar  and 
+Karp  [ l a ] .  
+
+Approximat ion  algorithm  for  PI  [C,,, 
+We  will  now  present  a  polynomial  approximation  scheme for  t h e  P I  I  Cmaxscheduling 
+problem. 
+We  analyze  a  pas  for  PI  ICmax,discovered by  Hochbaum  and  Shmoys  [17].  The  
+idea  is  t o   use  a  relation  similar  t o   the   one  between  an   optimization  problem  and 
+i ts   decision  problem.  Tha t   is,  if  we  have  a  way  t o   solve  decision  problem,  we  can 
+use  binary  search  t o   find  the   exact  solution.  Similarly, in  order  t o   obtain  a  (1 + 6 ) -
+approximation  algorithm,  we  are  going  t o   use  a  so-called  (1 + €)-relaxed  decision 
+version of  t h e  problem  and  binary  search. 
+Definition  7  (1+ 6) - r e l a x e d   d e c i s i o n   v e r s i o n   o f  PI  I  Cmaxi s   a   p r o c e d u r e   t h a t   g i v e n   t 
+a n d   a   d e a d l i n e   T ,   r e t u r n s   e i t h e r :  
+
+1 
+
+2 Pj 
+
+I
+
+I 
+
+max p i  
+
+Figure  8:  List  scheduling. 
+
+" N O "   - if  there  does  not  exist  a  schedule  with  makespan  5 T ,  or 
+" Y E S "   - i f  a  schedule  with  makespan  5 ( 1  + c)T  exists. 
+
+In   case  of  "yes",  the  actual  schedule  mus t   also  be   provided. 
+
+Notice  tha t   in   some cases  bo th   answers  are valid.  In  such a  case, we  do not  care 
+if  the  procedure ou tpu ts   "yes"  or  "no".  Suppose we  have  such a procedure.  Then we 
+use  binary  search  t o  find  t h e   solution.  To  begin  our  binary  search, we  must  find  an  
+interval where optimal Cmaxis  contained.  Notice  t h a t   (x ip j )/ m  is  an  average load 
+per  machine  and  m a x j p j   is  t h e   length  of  t h e   longest  jbbl  w e  can  pu t   a  bound  on 
+op t imum  Cmaxas  follows: 
+
+Lemma  11  Let 
+
+then  L  5 Cmax< 2L .  
+
+Since t h e  longest  job  must  be  completed, we  have m a x j p j   5 Cmax.Also, 
+Proof: 
+since  (xjPj)  / r n  is  the   average load, we  have  (zjpj)  / m  5 Cmax.Thus,  L  5 Cmm. 
+The  upper  bound  relies on t h e  concept of  list  scheduling, which dictates t h a t   a job 
+is never processed on  some machine, if  i t  can be processed earlier on another machine. 
+Tha t   is,  we  require  t h a t   if  there  is  a  job  waiting,  and  an   idle machine, we  must  use 
+this machine t o   do  the  job.  We  claim  t h a t   for  such  a  schedule Cmax< 2L .   Consider 
+t h e  job  t h a t   finishes las t ,   say  job  k .   Notice  t h a t   when  it  s ta r t s ,   all  other  machines 
+are  busy.  Moreover, the   t ime   elapsed  up  t o   t h a t   point  is  no  more  than   t h e   average 
+
+load  of  t h e  machines  (see Figure  8).  Therefore, 
+m  + Plc 
+~ m a x  I  C j#k  Pj 
+
+Now  we  have  an   interval  on  which  t o   do  a  (logarithmic) binary  search  for  Cmax. 
+By  TI  and  T2 we  denote  lower  and  upper  bound  pointers  we  are going  t o  use  in  our 
+binary  search.  Clearly, T = d m  is  t h e  midpoint  in  t h e   logarithmic  sense.  Based 
+on  Lemma  11, we  must  search  for  t h e   solution  in  t h e   interval  [L , . . . ,2L ] .   Since 
+we  use  logarithmic  scale,  we  set  log TI  = log,  L ,   log T2 = log,  L  + 1 and  log T  = 
+$(log, TI + log,  T2). 
+When  do we  stop?  The  idea  is t o  use  different value of  6 .   Tha t   is, t h e  approxima-
+tion  algorithm proceeds  as follows.  Every  t ime ,  t h e  new  interval is  chosen depending 
+on  whether  t h e   procedure  for  t h e   (1+ €12)-relaxed  decision  version  returns  a  "no" 
+or  (in  case  of  "yes")  a  schedule  with  makespan  5  (1 + E / ~ ) T ,where  T  = d m  
+and  [TI,. . . ,T2]is  t h e  current  interval.  The  binary  search continues un t i l  t h e  bounds 
+5 (1+ c ) ,   or  equivalently  2 5 s.The  number 
+TI, T2 satisfy  t h e  relation 
+of  iterations required  t o  satisfy  th is  relation  is  O ( l g ( l / € ) ) . Notice t h a t   th is  value is  a 
+constant  for  a  fixed  E .   At  termination,  t h e  makespan  of  t h e   schedule  corresponding 
+t o  T2 will be  within  a  factor of  (1  + E )   of  t h e  optimal makespan. 
+In  order  t o   complete  the   analysis  of  the   algorithm,  i t   remains  t o   describe  t h e  
+procedure  for  the   (1 + €12)-relaxed  decision  procedure  for  any  t.  Intuitively,  if  we 
+look  a t   what  can  go wrong  in  list  scheduling, we  see  t h a t   i t   is  "governed"  by  "long" 
+jobs,  since  small jobs  can  be  easily  accommodated.  This  is  t h e   approach  we  take, 
+when  designing  procedure  t h a t   solves  t h e   (1 + €12)-relaxed  decision  version  of  t h e  
+problem.  For  t h e  rest  of  our  discussion we  will  denote  €12  by  t'. 
+Given  {p j ) ,  6'  and  T ,  t h e  procedure  operates  as  follows: 
+
+Step  1: Remove  all  (sma l l)  jobs  with p j  5 E'T. 
+Step 2:  Somehow  ( to  be   specified  later)  solve  the  (1+ €')-relaxed  decision  version  of  the 
+problem  for  the  remaining  (big) jobs. 
+
+Step 3:  I f  answer  i n  step  2  is  "no",  then   return  tha t  there  does  not  exist  a schedule  with 
+makespan  5 T .  
+If  answer  i n  step  2  is   "yes",  then   with  a  deadline  of  (1+ E')Tput  back  all  small 
+jobs  using  list  scheduling  ( i .e .   greedy  strategy),  one  at  a  t im e .   If  all  jobs  are 
+
+deadline 
+
+(l+&)T 
+deadline 
+
+Figure  9:  Scheduling  "small" jobs. 
+
+accommodated  then   return  that  schedule,  else  return  that  there  does  not  exist  a 
+schedule  with  makespan  5 T .  
+
+Step 3  of  t h e  algorithm  gives  t h e  final  answer of  t h e  procedure.  In  case of  a  "yes"  i t  
+is clear t h a t   t h e  answer is correct.  In  case of  a  "no"  t h a t   was  propagated  from Step 2 
+i t   is  also  clear  t h a t   t h e  answer  is  correct.  Finally,  if  we  fail t o  pu t   back  all  the   small 
+jobs  we  must  also  show  t h a t   t h e   algorithm  is  correct.  Let  us  look  a t   a  list  schedule 
+in which  some small jobs  have been  scheduled bu t   others  couldn't  (see Figure  9 ) .  
+If  we  cannot  accomodate  all  small  jobs  with  a  deadline  of  (1+ $)T ,   i t   means 
+t h a t   all  machines  are  busy  a t   t ime  T  since  the   processing  t ime   of  each  small job  is 
+-< t 'T .  Hence, t h e  average load  per  processor  exceeds T .   Therefore, t h e  answer  "no" 
+is  correct. 
+Now,  we  describe  Step  2  of  t h e   algorithm  for  pj  >  t l T .   Having  eliminated  t h e  
+small jobs,  we  obtain  a  constant  (when  t  is  fixed)  upper  bound  on  t h e   number  of 
+jobs  processed  on  one  machine.  Also,  we  would  like  t o   have  only  a  small  number 
+of  distinct  processing  times  in  order  t o  be   able  t o  enumerate  in  polynomial  t ime   all 
+possible schedules.  For  this purpose, t h e  idea is t o  use rounding.  Let  qj  be t h e  largest 
+number  of  the   form  E'T+ ~ E ' ~ T5 pj  for  some  k  E  N .   A  refinement  of  Step 2  is  t h e  
+following. 
+
+2 . 1   	 Address t h e  decision problem:  Is there  a  schedule for  { q j )  with makespan  5 T?  
+
+2.2  	 If  the   answer  is  "no",  then   re turn   t h a t   there   does  not  exist  a  schedule with 
+makespan  5 T .  
+If  t h e  answer  is  "yes",  then   re turn   t h a t   schedule. 
+
+The  Lemma  t h a t   follows justifies  t h e  correctness  of  t h e  refined  Step 2. 
+
+L e m m a   12   Step  2  of  the  algorithm  is   correct. 
+
+Proof: 
+If  Step  2.1  returns  "no",  then   i t   is  clear  t h a t   t h e  final  answer  of  Step  2 
+should  be  "no",  since qj 5 p j .  
+If  Step  2.1  returns  "yes",  then   t h e   to ta l   increase  of  t h e   makespan  due  t o   t h e  
+replacement  of  q j   by  p j   is  no  greater  than   ( 1 / c t ) c t 2 ~= ctT.  This  is  t rue ,   because 
+we  have  a t   most  T/(clT)  = 1/c1 jobs  per  machine,  and  because  p j   5  q j  + c 1 2 ~by 
+definition.  Thus ,   t h e   to ta l   length  of  t h e   schedule  with  respect  t o  
+is  a t   most 
+T + €'T  = (1+ cl)T. 
+It  remains t o  show how  t o  solve t h e  decision problem  of  Step 2.1.  We  can  achieve 
+this  in  polynomial  t ime   using  dynamic  programming.  Note  t h a t   t h e   inpu t   t o   this 
+decision  problem  is  "nice":  We  have  a t   most  P  =  L l / ~ ' jjobs  per  machine,  and  a t  
+most  Q  =  1 + IF]distinct  processing  times.  Since  c'  is  considered  t o   be  fixed, 
+we  essentially  have  a  constant  number  of  jobs  per  machine  and  a  constant  number 
+q;,  . . . ,qb  of  processing times.  Let  n'  = i n l , .  . . ,nQ ) ,  where ni  denotes the  number of 
+jobs  whose processing t ime  is qi.  We use t h e  fact t h a t  t h e  decision problems of  PI  I  C,,, 
+and  t h e  bin  packing problems  are equivalent.  Let  f ( n ' )  denote  t h e  minimum number 
+of  machines  needed  t o   process  n'  by  t ime   T.  Finally,  let  R  = { r '  = ( r l ,  . . . ,r Q )   : 
+xZ1riqi  5 T, ri  5 n i ,  ri  E W.  R  represents  t h e  sets of  jobs  t h a t   can  be  processed  on 
+a  single machine with  a  deadline of  T .   The  recurrence for  t h e  dynamic programming 
+formulation of  t h e  problem  is 
+
+namely we  need one machine t o  accomodate t h e  jobs  in  r' E R  and  f (n' - f )machines 
+t o  accomodate  t h e  remaining jobs.  In  order  t o  compute this  recurrence we  first  have 
+t o   compute t h e   a t   most  QP  vectors  in  R.  The  upper  bound  on  t h e   size of  R  comes 
+from the  fact  t h a t   we  have a t  most  P jobs  per  machine and  each job  can have one of 
+a t   most  Q  processing  times.  Subsequently,  for  each  one  of  t h e  vectors  in  R  we  have 
+t o   i te ra te  for  nQ times,  since  ni  5  n  and  there   are  Q  components  in   Z.  Thus,  t h e  
+running  t ime  of  Step  2.1 is  0 ( n 1 1 f t 2( ~ / c ' ~ ) ( ~ / " ) ) .  
+From  this  point  we  can  derive  t h e   overall  running  t ime  of  t h e  pas  in   a  straight-
+forward manner.  Since Step 2  iterates  O ( l g ( l / t ) )  times and  since t = 2 t t ,  t h e  overall 
+running  t ime  of  t h e  algorithm  is  0(n1lf  (1/ t 2 )('If) lg (1/ t )) . 
+
+Randomized Rounding for Multicommodity Flows 
+
+In  this  section, we  look  a t   using  randomness  t o   approximate  a  certain  kind  of  mul-
+ticommodity  flow  problem.  The   problem  is  as  follows:  given  a  directed  graph  G  = 
+(V ,E ) ,  with  sources  si  E  V  and  sinks  t i   E  V  for  i  =  1 , .  . . ,k,  we  want  t o   find  a 
+pa th   Pi  from  s i   t o   ti   for  1 5  i  5  k  such  t h a t   t h e   "width"  or  "congestion"  of  any 
+edge  is  as  small  as  possible.  The   "width"  of  an  edge  is  defined  t o  be  t h e  number  of 
+pa ths  using t h a t   edge.  This multicommodity flow  problem  is NP-complete in general. 
+
+The   randomized  approximation  algorithm  t h a t   we  discuss  in  these  notes  is  due  t o  
+Raghavan  and  Thompson  [24]. 
+
+Reformulating the  problem 
+The   multicommodity  flow  problem  can  be  formulated  as  t h e   following  integer  pro- 
+gram: 
+
+Min  W 
+subject  to :  
+
+C xi(V,W )   - C x i(w , V )   = 
+
+w 
+w 
+
+0 
+
+otherwise 
+
+
+(v ,  w)  E E .  
+
+Notice t h a t   constraint  (6)  forces t h e  xi  t o  define a pa th   (perhaps not  simple) from s i  
+t o   t i .   Constraint  ( 7 )  ensures  t h a t   every  edge has  width  no  greater  than   W ,   and  t h e  
+overall integer  program minimizes W .  
+We  can  consider  the  LP  relaxation  of  this  integer  program  by  replacing  t h e   con- 
+s tra in ts   x i (v ,  w )   E  { 0 , 1 )   with  x i ( v ,  w)  2 0.  The   resulting  linear  program  can  be 
+solved  in  polynomial  t ime   by  using  interior  point  methods  discussed  earlier  in  t h e  
+course.  The  resulting  solution  may  not  be  integral.  For  example, consider t h e  multi- 
+commodity flow problem with one source and sink, and  suppose t h a t  there  are exactly 
+i edge-disjoint pa ths  between t h e  source and  sink.  If  we  weight  t h e  edges of  each pa th  
+(i.e.  set  x ( v ,  w) =  for each edge of  each p a t h ) ,  then  W L p= +. The  value W L p  
+by 
+can  be  no  smaller:  since  there  are  i  edge-disjoint  pa ths ,   there   is  a  cut  in  the   graph 
+with  i  edges.  The  average flow  on  these edges will be  f , so  t h a t   the  width  will be  a t  
+least  +. 
+The  fractional  solution  can be  decomposed into pa ths  using flow decomposition, a 
+s tandard   technique from network  flow  theory.  Let  x  be  such  t h a t   x  2 0 and 
+if  v = s;
+a 
+
+C X ( V ,   W )   - C X ( W ,   V )   = 
+otherwise. 
+0 
+w 
+W 
+Then we  can  find  paths  P I , .  . . ,Pi from si  t o  ti  such  t h a t  
+
+To  see why  we  can  do  this,  suppose  we  only  have  one  source  and  one  sink,  s  and  t .  
+Look  a t   t h e   "residual  graph"  of  x:  t h a t   is,  all  edges  ( v ,  w)  such  t h a t   x ( v ,  w)  >  0. 
+Find  some pa th   PI  from s  t o  t  in  th is  graph.  Let  a1  = min(,,,)Ep,  x ( v , w ) .  Set 
+
+( v ,  W )   E Pl 
+otherwise. 
+
+We  can  now  solve t h e  problem recursively with  a'  = a - a l .  
+
+7.2  The  algorithm 
+
+We  now  present  Raghavan  and  Thompson's randomized  algorithm for  this  problem. 
+
+1.  Solve t h e  LP  relaxation, yielding WLP .  
+2.  	 Decompose t h e  fractional solution into pa ths ,  yielding pa ths  Pij for  i = 1,. . . , k 
+and  j  = 1 , . . . ,ji  (where Pij  is  a  pa th   from  si  t o   t i ) ,and  yielding aij  > 0  such 
+aij  = 1 and 
+tha t  
+
+3 .   	 (Randomization  s tep)  For  all  i ,  cast  a ji-faced  die with face probabilities aij . If 
+t h e  outcome is  face  f , select pa th   Pij  as  t h e  pa th   Pi  from si  t o   t i .  
+
+We will show, using  a Chernoff  bound, t h a t  with high probability we will get  small 
+congestion.  Later  we  will  show  how  t o  derandomize  th is   algorithm.  To  carry  out  t h e  
+derandomization  it  will be  impor tan t   t o  have  a  strong handle on  the  Chernoff  bound 
+and  i ts   derivation. 
+
+Chernoff  bound 
+
+For  completeness, we  include t h e  derivation  of  a  Chernoff  bound,  although  i t  already 
+appears in  the   randomized  algorithms  chapter. 
+
+Lemma  13   Let  X i   be   independent  Bernoulli  random  variables  with  probability  of 
+success  p i .   Then ,  for  all  a > 0  and  all  t  > 0 ,   we  have 
+
+Proof: 
+
+for  any  u  >  0 .   Moreover,  this  can  be  written  as  P r [ Y   >  a ]  with  Y  2 0 .   From 
+Markov's inequality we  have 
+
+for  any  nonnegative  random variable.  Thus, 
+
+P r   [ ~ f = ~Xi > t ]   -<  e -" tE   [eaxi 
+-- e-*t n f = ,  E  [emxi] because  of  independence. 
+
+The  equality  then   follows from the   definition of  expectation. 
+Setting t = (1+ P ) E [ C ,Xi] for  some P  > 0  and  u = ln (1  + P ) ,  we  obtain: 
+Corollary  14   Le t   Xi  be   independen t   Be rnou l l i   r a n d om   variables  w i th  probability  of 
+XI]  C i = ,p i .   T h e n ,  for  all  ,6  > 0 ,   we  have  
+E [ c ~ = ~   =  k
+success  pi,  and  let  M  = 
+I 
+< [ ( 1+ P ) ( l + P )  I " .  
+< (1+ ~ ) - ( ' + " l " n ~
+k 
+eP 
+> (1 + P ) M  
+[(1
+i=l 
+The  second inequality of  t h e  corollary follows  from t h e  fact  t h a t  
+
+i=l 
+
+7 .4   Analysis  of  the   R-T  algorithm 
+Raghavan  and  Thompson  show t h e  following theorem. 
+
+Theorem   1 5   G i v e n   e  > 0 ,   if  the   op t ima l   so lu t ion   t o   the   m u l t i c omm o d i t y  flow  prob-
+l em   W *  ha s   value  W *  =  fl(1og n )   where  n  =  IVI,  t h e n   the   a lgor i thm   produces  a 
+so lu t ion   of  w id th   W  5 W *+ c
+J m  w i th  probability  1 - e  (where  c  and  the   con-
+s tan t   i n  fl(1ogn)  depends  o n  e,  see  the   p roo f ) .  
+
+Proof: 
+Fix  an  edge  ( v , w )  E  E.  Edge  ( v , w )  is  used  by  commodity  i  with  proba-
+C j : ( u , w ) ~ p i ,  
+a i j .   Let  Xi  be  a  Bernoulli  random  variable  denoting whether
+bility  pi  = 
+or  not  ( v , w )  is  in  pa th   Pi.Then  W ( v , w )  = 
+Xi, where  W ( v , w )  is  t h e  width  of 
+edge  ( v , w ). Hence, 
+
+Now  using  t h e  Chernoff  bound  derived earlier, 
+
+Assume t h a t   p  5 1. Then ,  one  can  show  t h a t  
+
+Therefore, for 
+
+we  have  t h a t  
+
+P.[W(v,  w) 2 (1+ P)W*]I& 
+,. 
+
+n
+Notice  t h a t   our  assumption  t h a t   5 1 is  met  if 
+
+W*  2 61nn  - 3 1 n ~ .  
+
+For  this  choice of  ,B,  we  derive  tha t  
+
+(1+ p )W *  = W* + +W * l n - .   & 
+n 2
+
+We  consider now  t h e  maximum  congestion.  We  have 
+
+proving  t h e  result. 
+
+Derandomization 
+
+We  will use  t h e  method  of  conditional  probabilities.  We  will need  t o  supplement  this 
+technique,  however, with  an   additional  trick  t o   carry  through  t h e   derandomization. 
+This  result  is  due  t o  Raghavan  [23]. 
+We  can  represent  the   probability  space  using  a  decision  tree.  At  t h e   root  of  t h e  
+t ree  we  haven't made any decisions.  As we  descend t h e  tree  from t h e  root  we represent 
+t h e   choices  first  for  commodity  1, then   for  commodity 2 ,   etc.  Hence t h e  root  has  jl 
+children representing the  jl  possible pa ths  for  commodity 1. Each  of  these nodes  has 
+j2 children,  one  for  each  of  the   j2 possible  paths  for  commodity  2.  We  continue  in 
+t h e  manner ,  until  we  have  reached  level  k .   Clearly  t h e   leaves  of  th is   tree   represent 
+all  t h e  possible choices of  paths  for  t h e   k  commodities. 
+A  node  a t   level  i  ( t h e  root  is  a t   level  0 )   is  labeled  by  t h e   i  choices of  pa ths   for 
+commodities  1 . .. i  : Il  . . . I;.  Now  we  define: 
+I 
+Il  for commodity 1 -
+12 for commodity 2 
+g ( l 1 . l ) = P r   max  W ( v , w ) >  ( l + , B )W *   . 
+(v,w) €E  
+
+1;  for commodity i  -
+
+By  conditioning  on  t h e  choice of  t h e  pa th   for  commodity  i ,  we  obtain  t h a t  
+
+If  we  could  compute g ( l l ,  12 ,   . . . )  efficiently, we  could  s ta r t   from  g (0 )  and   by  select- 
+ing  t h e   minimum  a t   each  stage  construct  a  sequence  g (0 )   >  g ( l l )   >  g ( l l ,  12)  > 
+. . . > g ( l l ,  12 ,   . . . , l k ) .  Unfortunately  we  don't know  how  t o  calculate these quantities. 
+Therefore we  need  t o  use  an  additional  trick. 
+Instead  of  using  t h e   exact  value  g ,   we  shall  use  a  pess im is t ic   e s t im a t o r   for  t h e  
+probability  of  failure.  From  t h e  derivation  of  the  Chernoff  bound  and  t h e  analysis  of 
+the   algorithm, we  know  t h a t  
+
+where t h e  superscript on Xi denotes  t h e  dependence on t h e  edge ( v ,w ) ,  i.e. x!"'~)1= 
+if  ( v ,w)  belongs  t o   the   pa th   Pi.  Letting  h ( l l ,  . . . ,1;)  be  t h e   RHS  of  (10) when  we 
+condition  on  selecting pa th   Pjrl for  commodity j, j = 1, . . . ,i ,  we  observe t h a t :  
+1.  h ( l l ,  . . . , li)  can  be  easily  computed, 
+2 .   g ( l l ,  . . . , 1;)  5 h ( l l ,  . . . , li)  and 
+
+Therefore,  selecting  t h e  minimum  in  t h e   last  inequality  a t   each  stage,  we  construct 
+a  sequence  such  t h a t   1 > E  >  h ( 0 )   >  h ( l l )   >_  h ( l l ,  12 )   >_  . . . >  h ( l l ,  12,. . . , l k )  > 
+g ( h ,  12,. . . , l k ) .  Since g ( l l ,  1 2 ,   . . . , l k )  is either 0 or 1 ( there  is no randomness involved), 
+we must have t h a t  the  choice of  paths of  this deterministic algorithm gives a maximum 
+congestion less  than   (1+ P )W * .  
+
+Mult icommodity  Flow 
+
+Consider  an  undirected  graph  G = (V, E )  with  a  capacity  u, on  each  edge.  Suppose 
+t h a t   we  are given  k  commodities  and  a  demand  for  f i  units  of  commodity  i  between 
+two points  si and t i .   In t h e  area of  multicommodity flow, one is interested in knowing 
+whether  all  commodities  can  be  shipped  simultaneously.  Tha t   is,  can  we  find  flows 
+of  value  f i  between  si  and  t i   such  t h a t   t h e   sum  over  all  commodities of  t h e  flow  on 
+each  edge  (in either direction)  is  a t   most  t h e  capacity  of  t h e  edge. 
+There are several variations  of  t h e  problem.  Here, we  consider the  concurrent flow 
+problem:  Find  a* where a* is  t h e  maximum a  such  t h a t   for  each  commodity we  can 
+
+ship afiunits from si t o  ti. This problem  can  be  solved by  linear  programming  since 
+all  the   constraints  are  linear.  Indeed, one  can  have  a  flow  variable  for  each  edge and 
+each  commodity  (in  addition  t o   the   variable  a ) , and  t h e   constraints  consist  of  t h e  
+flow  conservation  constraints  for  each  commodity as well  as  a  capacity  constraint  for 
+every  edge.  An  example is  shown  in  figure  8.  The   demand  for  each  commodity is  1 
+unit  and  t h e  capacity on  each edge is  1 un i t .   It  can  be  shown  t h a t   a* = 2. 
+
+Figure  10:  An  example of  t h e  multi-commodity flow  problem. 
+
+When there  is only one commodity, we  know  t h a t  t h e  maximum flow value is equal 
+t o   t h e  minimum  cut  value.  Let  us  investigate whether  there   is  such  an   analogue  for 
+multicommodity flow.  Consider  a  cut  (S, S). As  usual  S (S )  is  t h e   set  of  edges  with 
+exactly one endpoint  in   S .  Let, 
+
+Since all  flow  between  S and  S must  pass  along  one  of  t h e   edges  in   S (S )  we  must 
+have, 
+
+where  u (S (S ) )  = xeE6(S)The   multicommodity  cut  problem  is  t o   find  a  set  S
+tie.  
+
+which  minimizes #.  We  let  B*  be  t h e  minimum value  a t ta inab le  and  so we  have 
+u(S S
+
+a* 5 p * .   B u t ,  in  general,  we  don't  have  equality.  For  example, in  Figure  8 ,  we  have 
+p*  = 1.  In  fac t ,  i t   can  be  shown  t h a t   t h e  multicommodity  cut  problem  is  NP-hard. 
+We  shall consider t h e  following two  related  questions. 
+1. In  t h e  worst  case, how  large  can  5be? 
+2 .   	 Can  we  obtain  an   approximation  algorithm  for  the  multicommodity  cut  prob- 
+lem? 
+
+In  special cases, answers have been given t o  these questions by  Leighton and Rao  [19] 
+and  in  subsequent  work  by  many  other  authors.  In  this  section, we  describe  a  very 
+recent,  elegant  and  general  answer  due  t o  Linial,  London  and  Rabinovitch  [20].  The  
+technique they used  is t h e  embedding of  metrics.  The  application t o  multicommodity 
+flows  was  also independently  obtained by  Aumann  and  Rabani  [3 ] .  
+We  first  describe  some background  material  on metrics  and  their  embeddings. 
+Definition  8  (X ,d)  is  a  metric  space  or d  is  a  metric  on  a  set  X  if 
+
+2.  'v'x, y  : d ( x , y )  = d ( y , x ) .  
+3 .   'v'x,y ,  z  : d (x , y )  + d(y ,  z )  2 d ( x ,  z ) .  
+Strictly  speaking  we  have  defined  a  semi-metric since we  do  not  have  t h e   condition 
+d ( x , y )  = 0 +-x = y.  We  will be  dealing mostly with  finite metric spaces, where X  is 
+finite.  In  R n  then  t h e  following are  all metrics: 
+
+d ( x , y )   =  Ilx-yll2  =  d ~ ( x i - y i ) ~  e2me t r ic  
+el  me tr ic  
+d ( x , y )   =  l l x - y l l l   =  C I x i - y i I  
+t,  metric
+maxi1xi - y i l  
+= 
+d ( ~ , ~ )  l l x - y l lm  
+= 
+~ ( x , Y )=  IIx  - Y I
+I P  
+=  (  x i  - yi 1 
+)  6 me tr ic  
+Definition  9  (X ,d)  can  be   embedded  into  (Y,t)  if  there  exists  a  mapping (o  : X + Y 
+which  satisfies  'v'x,y  : l ( ( o ( x ) ,( o ( y ) )   = d ( x , y )  . 
+
+Definition  10  (X ,d)  can  be   embedded  into  (Y , t )  with  distortion  c  if  there  exists  a  
+mapping  cp  : X  -+Y  which  satisfies  Vx, y  : d ( x , y )   5 t ( ( o ( x ) ,( o ( y ) )   5 cd(x ,  y ) .  
+
+The   following  are  very  na tura l   and  central  questions  regarding  t h e   embedding  of 
+metrics. 
+I S IT - 4 :   Given  a  finite metric  space  (X ,d ) ,  can  it  be  embedded  into  ( W n ,  4 )for 
+some n ?  
+EMBED-lp:  Given  a  finite metric  space  (X ,d)  and  c 2 1, find  an  embedding of 
+(X,d)  in to   ( W n , t p )   with  distortion  a t   most  c  for  some n .  
+As we  will  see in  t h e  following theorems, t h e  complexity of  these questions  depend 
+critically on  t h e  metric themselves. 
+Theorem  16  A n y   (X ,d)  can  be   embedded  into  (R n ,t,)  where  n  = 1x1.  (Thus ,   the 
+is  always  "yes".) 
+answer  to  ISIT-t, 
+Proof:  We  define  a  coordinate  for  each  point  z  E  X.  Let  d ( x , z )  be  t h e   z 
+coordinate  of  x .   Then ,  
+
+because  of  the   triangle  inequality. 
+
+Theorem  17   ISIT- l2  E  P .   (i.e.,  ISIT- l2  can  be  answered  in  polynomial time.) 
+
+Proof:  Assume t h a t  there exists an  embedding of  { 1 , 2 ,  . . . ,n }  in to  {vl  = 0 ,  v2,  . . . ,v,}. 
+Consider one  such embedding.  Then ,  
+d  ( i )  = v  - v  = (vi - vj)(vi - v j )  = vf  - 2vi  - vj + v j .  
+2 
+2
+2 
+
+But  v:  = d2(1,i )  and  v:  = d2(1,j) which means  t h a t ,  
+
+We  now  construct  M = (m i j )  where, 
+
+Hence  if  M  is  not  positive  semi-definite then   there  is  no  embedding in to  12 .  If  M  is 
+positive  semidefinite  then   we  carry  out  a  Cholesky  decomposition  on  M  t o   express 
+M as M = V V ~ .From t h e  rows  of  V we  can obtain an  embedding in to  (R n ,1 2 ) .  
+
+Theorem  18  ISIT- l l   is NP-complete. 
+
+This  theorem  is  given without  proof.  The  reduction  is  from MAX  CUT ,  since as we 
+will  see  la ter   there  is  a  very  close  relationship  between  11-embeddable metrics  and 
+cuts.  We  also  omit  t h e  proof  of  t h e  following theorem. 
+
+Theorem  19  Let X  & R n .   (X ,12)can  be  embedded  into  (Rm ,e l )  fo r   some m .  
+
+The   converse  of  this  theorem  is  not  t rue   as  can  be   seen  from  t h e   me tr ic   space 
+( N O ?  o ) ,  (-1,  O ) ?   (17 01, (07 l ) } ? l l ) .  
+
+Reducing mult icommodity flow/cut  questions t o  embed-
+ding  questions 
+
+In  th is   section, we  relate a* and  ,4?*  through  t h e  use  of  metrics. 
+
+Claim  20  
+
+Proof: 
+
+& , ~ ) E E   ~ x y t ( x ,Y 
+min 
+f i l ( ~ it i )  
+ll-embeddable  metrics  (V,l) 
+
+' 
+
+(2)Given S, let 
+
+Let  l be  t h e  ll me tr ic  on  t h e  line, i.e. l ( a ,  6)  = la  - bl.  Then ,   
+
+u ( b (S ) )   =  C 
+uXY% 
+(x ,Y )EE  
+k  
+
+f (s) =  C f i l ( s i   t i )  
+i=  1 
+
+Y ) 
+
+
+since l ( x ,  y )   = 1 if  and  only  if  z  is  separated from y  by  S and  0  otherwise. 
+
+( 5 )We  can view any ll embeddable metric l as a combination of  cuts.  See figure 11 
+for  t h e  2-dimensional case. 
+
+Figure  11:  Viewing an  &-me tr ic  as  a  combination of  cuts. 
+
+For  any  set  S define  a metric  is by, 
+
+{  0 
+1  if  x ,  y  are  separated by  S 
+
+Is  = 
+otherwise. 
+
+
+Then we  can write l as,  
+
+
+where  t h e  a i ' s  are nonnegative.  Hence, 
+
+C ( x , y ) E ~uxyl(x, Y )   Ci a i ~ ( b ( S i ) )2 min u ( b ( S ) ) 
+
+-
+aif (si) 
+f (S )   ' 
+~ j " = 1fiP(si  t i )  
+
+Claim 21  
+
+& , ~ ) E E   ~ x Y d ( x 7y )  
+a* = 
+min 
+l ,  -embeddable  metrics  (V ,d )   Ci f i d ( s i   t i )  
+
+Note  t h a t   by  theorem  16  we  actually minimize over  all metrics. 
+Proof:  
+
+( 5 )For any metric d let t h e  volume of  an edge ( x ,  y )  be u X y d ( x ,y ) .  The  to ta l  volume 
+of  t h e  graph is C ( x , y ) E E  
+y ) .   If  we  send a fraction a of  t h e  demand then  t h e  
+u X y d ( x ,  
+amount  of  volume t h a t  we  use is a t   least  a X i  f i d ( s i , t i ) .Hence a X i  f i  d ( s i ,t i )5 
+C ( x , y ) E ~  
+Y ) -
+~ X y d ( x ,  
+(2)We  use  t h e   strong  duality  of  linear  programming.  a* can  be  formulated  as  a 
+linear program in several different ways.  Here we  use a formulation which works 
+well  for  the   purpose  of  this  proof  although  it  is  quite  impractical.  Enumerate 
+t h e  pa ths   from  si  t o   t i , let  Pij  be  t h e  j t h   such  pa th   and  let  xij  be   t h e  flow  on 
+P i j .   The  linear  program  corresponding  t o  multicommodity flow  is, 
+
+Max  a 
+
+subject  to:  
+
+
+The  dual of  this  linear program  is: 
+Min  x u e l e  
+e E E  
+subject  to: 
+
+The   second  constraint  in  t h e  dual  implies  t h a t   hi  is  a t   most  t h e   shortest  pa th  
+length between si  and  t i with respect  t o  l , .   By strong duality if  l is an optimum 
+
+solution  t o  t h e  dual then ,  
+
+C ( i , j ) E Eu i j d ( i ,  j )
+Cf=1fid(si  t i )   ' 
+where  d ( a , b)   represents  the   shortest  pa th   length  with  respect  t o   l,. The  first 
+f ih i   is  constrained  t o  be  a t   least  1. 
+inequality holds  because 
+
+2 
+
+Linial, London, and Rabinovitch and Aumann and  Rabani use t h e  following s t ra t -
+egy  t o  bound  5 and  approximate t h e  minimum multicommodity  cu t .  
+1. Using  linear  programming, find  a *  and   t h e   corresponding  metric d  as  given  in 
+claim  21. 
+2.  Embed  d  into  (Rm ,e l )  with  distortion  c. Let  l be  t h e  resulting metric. 
+By  claim 20  this  shows  t h a t   55 c  since, 
+C ( x , y ) E ~~X y l ( x ,Y )   < c C ( ~ , ~ ) E E~X y d ( x ,Y )
+-
+Cf=1fie(si  ti) 
+Cf=1f id(s i ,  t i )  
+In  order  t o   approximate t h e  minimum multicommodity  cu t ,  we  can  use  t h e  proof  of 
+claim  20  t o   decompose !into  cuts.  If  S is  t h e  best  cut  among  them   then ,  
+
+P*  5 
+
+= CQ*.
+
+u ( ~ ( S ) )< C ( x , y ) ~ ~
+Y )  
+UXY!(X~ 
+- Cf=1fie(si  t i )  
+f (S) 
+Our  remaining two  questions  are: 
+
+' 
+
+a  How  do we  get  an  embedding of  d  into  !?  Equivalently, how  can  we  embed !, 
+into ll. 
+
+a  Wha t   is  c? 
+
+Embedding metrics  into  el 
+The  following  theorem  is  due  t o  Bourgain. 
+Theorem 2 2   For  all  metrics  d  on  n  points,  there  exists  an  embedding  of  d  into  el 
+which  satisfies: 
+
+4 x 7  Y )   I IIx  - Y  Ill  I O(1og n ) d ( x , y ) .  
+
+Approx-44 
+
+Let  k  range  over  { 1 , 2 , 4 , 8 , . . . , 2 j , .  . . ,2P}  where p  =  llog n ] .  Hence we 
+Proof: 
+have  p  + 1 = O(1og n )  different  values  for  k.  Now  choose  n k   sets  of  size  k .   At  first 
+take  all  sets  of  size k ,  i.e., n k  = (L). Introduce a  coordinate  for  every  such  set.  This 
+implies t h a t   points  are mapped  in to  a  space of  dimension C:=,  n z l  < 2n .   For  a  set  A 
+of  size k  t h e  corresponding  coordinate  of  a  point  x  is, 
+
+where  d ( x ,A )  = minzEAd ( x ,  z )  and  a  is  a  constant  which  we  shall  determine la ter .  
+Suppose tha t   d ( x ,  A )  = d ( x ,  s )  and   d ( y,A )  = d ( y,t ) ,where  s  and   t  are in  A.  Then ,  
+
+Exchanging  t h e  roles of  x  and  y ,  we  deduce t h a t   l d ( x ,A ) - d ( y,A ) I  Id ( x , y ).  Hence, 
+
+We  now  want  t o  prove  t h a t   1  lx - y  1 
+
+l l   2 d ( x ,  y ) .   Fix  two  points  x  and  y  and  define, 
+
+B ( x , r )   =  { z :  d ( x , z )  5 r } ,  
+B ( X , T )   =  { z :  d ( x , z )  < r ) ,  
+po  =  0 ,  
+pt  =  i n f i r   : I B ( x , r ) l  > 2 t ,  l B ( y , r ) l  > 2 t ) .  
+Let  l be  the  least  index such t h a t   p l   2 y.Redefine p' 
+so  t h a t   it  is equal t o  y. 
+Observe  t h a t   for  all  t  either  I B ( x , p t )  1  <  2t  or  I B ( y , p t )  1  <  2 t .   Since B ( x , p l - 1 )   n 
+B ( y ,p l - 1 )   = PI  we  have 2'-I  +2'-l  5 n  +-l 5 p.  Now  fix k  = 2j  where p- 1 2 j  2 p - l  
+and   let  t  = p  - j  ( thus ,  1 It  5  I ) .   By  our  observation  we  can  assume  without  loss 
+of  generality  t h a t   I B ( X ,   p t )  I  < 2 t .   Let  A be   a  set  of  size  k  and  consider the  following 
+two  conditions. 
+
+If  1.  and  2.  hold  then   d ( x , A ) 2 pt  and  d ( y , A )  5 p t - ,   and  so  l d ( x , A ) - d ( y , A ) I   2 
+pt  - pt-1.  Let 
+
+Rk= { A : IAl  = k  and  A  satisfies conditions  1.  and  2 . )  
+
+Lemma  2 3   For  some  constant  P  > 1  (independent  of  k ) ,   there  are  at  least  7 sets 
+of  size  k  which  satisfy  conditions  1 .   and  2)  i.e.  lRkl 2 7 .  
+From  this  lemma we  derive, 
+
+1  2 d ( x , y ) . We  now  have  t o  prove 
+
+Hence if  we  choose a = 4P  then   we  have  1  lx - y  1 
+lemma 23. 
+Proof  of  lemma  23:  Since  I B ( x , p t ) l   <  2 t ,   I B ( y ,  p t - l ) l   2 2t-1  and   we  are 
+considering  all  sets  of  size  k  t h e   following  is  a  restatement  of  t h e   lemma:  Given 
+disjoint  sets  P  and  Q  with  a  = lPl  < z t   and  b  = IQI  2 2 t-1 ,   if  E  is  t h e   event  t h a t  
+a  uniformly  selected  A  misses P  and  intersects  Q  then   P r [ E ]  2 $.  We  calculate  this 
+probability  as  follows: 
+
+As  an   approximation  ( th is  can  be  made formal), we  replace  ( 1  - *)b y  e-"in,  and 
+( 1  - *) 
+by  e - (a+b ) /n .  Thus, 
+n-3 
+
+This for example shows t h a t  if  a ,  b  and  k  are all fithen  this probability is a constant, 
+which  may  seem  a  bit  paradoxical.  Using  our  bounds  on  a  and  b,  we  get 
+
+We  now  choose 3 z  (:-' 
+( 1  - em $ ) ) - '   and  t h e  proof  is  complete. 
+Bourgain's  proof  is  not  quite  algorithmic  since  t h e   dimension  is  exponential. 
+Linial,  London  and  Rabinovitch just  sample uniformly with  n k  = O(1og n )  and  show 
+t h a t   with  high  probability  t h e  embedding has  t h e   required  properties.  This  follows 
+from a  Chernoff  bound. 
+We  have  thus  shown  t h a t   t h e   distortion  c  can  be   chosen  t o  be  O(1og n ) .  We  can 
+do  even  be t ter   by  proving  t h e  following variant  t o  Bourguain's theorem. 
+
+Theorem  24   Le t   d  be  a  m e t r i c   o n   a  se t   V  of  n  po in ts .   Suppose   t h a t   T  &  V  and 
+IT1  = k .   T h e n  there   ex is ts   a n   embedding  of  d  i n t o  el which  sa t is f ies:  
+
+In  order  t o   prove  th is   theorem  we  restrict  t h e   metric  t o   T  and  then   embed  t h e  
+restricted  metric.  If  we  look  a t   the   entire  vertex  set  V  then   t h e   first  par t   of  t h e  
+original  proof  still works. 
+This  new  theorem  is  enough  t o   show  t h a t   5 5 O(1og k )   and  t o  approximate t h e  
+multicommodity  cut  t o  within  O(1og k ) .  This result  is best  possible in  t h e  sense t h a t  
+we  can have  5= @(logk ) .  
+
+References 
+
+[ I ]  S.  Arora,  C.  Lund,  R. Motwani,  M.  Sudan,  and  M.  Szegedy.  Proof  verification 
+and  hardness  of  approximation  problems.  In  Proceedings  of  the   33rd  A n n u a l  
+S ym p o s i um   o n  Founda t ion s   of  C om p u t e r   Sc ience ,  pages  14-23,  1992. 
+
+[ 2 ]  S.  Arora  and  S.  Safra.  Probabilistic  checking  of  proofs.  In  Proceedings  of  the  
+33rd  A n n u a l   S ym p o s i um  o n  Founda t ion s   of  C om p u t e r  Sc ience ,  pages  2-13,  1992. 
+
+[ 3 ]  Y. Aumann and Y. Rabani.  An O(1og k )  approximate min-cut max-flow theorem 
+and  approximation  algorithm.  Manuscript,  1994. 
+
+[ 4 ]  R.  Bar-Yehuda  and  S.  Even.  A  linear  t ime   approximation  algorithm  for  t h e  
+weighted vertex  cover problem.  Jou rna l   of  A lgo r i thm s ,   2:198-203,  1981. 
+
+[5] M. Bellare and M.  Sudan.  Improved non-approximability results.  In  Proceedings 
+of  the  26th  Annual  ACM Symposium  on  Theory  of  Computing, pages  184-193, 
+1994. 
+
+[6] N .  Christofides. Worst-case analysis of  a new heuristic for t h e  travelling  salesman 
+problem.  Technical Report  388,  Gradua te   School of  Industrial  Administration, 
+Carnegie Mellon University, P i t tsburgh ,   PA,  1976. 
+[7] W. F.  de la  Vega  and  G.  S. Luecker. Bin  packing  can be  solved within  (1+ t) in 
+linear  time.  Combinatorica,  1(4) ,  1981. 
+
+[8]  J.  Edmonds.  Maximum matching  and  a  polyhedron  with  0,l-vertices.  Jou rna l  
+of  Research  of  the  National  Bureau  of  Standards B,  69B:125-130,  1965. 
+
+[9] R. Fagin.  Generalized first-order spec tra ,  and  polynomial-time recognizable sets. 
+In  R .  Karp ,  editor,  Complexity  of  Computations.  AMS,  1974. 
+
+[ l o ]   H .  N .   Gabow. Da ta  structures for weighted matching and nearest  common ances- 
+tors with  linking.  In  Proceedings  of  the  1s t  ACM-SIAM Symposium  on  Discrete 
+Algorithms, pages  434-443,  1990. 
+
+[ l l ] 	H.  N .   Gabow,  M.  X .   Goemans,  and  D .   P.  Williamson.  An  efficient  approxima- 
+tion  algorithm  for  t h e  survivable network  design  problem.  In  Proceedings of  the 
+Third  MPS   Conference  on  Integer  Programming  and  Combinatorial  Optimiza- 
+tion,  pages  57-74,  1993. 
+
+[12] H. 	 N .   Gabow  and  R.  E.  Tarjan.  Faster  scaling  algorithms  for  general  graph 
+matching  problems.  Technical  Report  CU-CS-432-89,  University  of  Colorado, 
+Boulder,  1989. 
+
+[13] M.  X.  Goemans  and  D .   P.  Williamson.  A  general  approximation  technique  for 
+constrained forest  problems.  In  Proceedings of  the  3rd Annual ACM-SIAM Sym- 
+posium  on  Discrete  Algorithms, pages  307-31  6,  1992. 
+
+[14] M. 	 X.  Goemans  and  D .   P.  Williamson.  Improved  approximation  algorithms 
+for  maximum  cut  and  satisfiability  problems  using  semidefinite  programming. 
+In  Proceedings  of  the  26th  Annual  ACM Symposium  on  Theory  of  Computing, 
+pages  422-431,  1994. 
+
+[15] A .  Haken and M .  Luby.  Steepest descent can take  exponential t ime  for symmetric 
+connection  networks.  Complex  Systems, 2: 191-196,  1988. 
+
+[16] D .  Hochbaum.  Approximation algorithms for  set  covering and vertex cover prob- 
+lems.  SIAM  Jou rna l  o n   Computing, 11:555-556,  1982. 
+
+[17] D .  Hochbaum  and D.  Shmoys. Using dual approximation algorithms for  schedul- 
+ing problems:  theoretical  and practical  results.  Jou rna l   of  the   A C M ,  34(1), Jan .  
+1987. 
+
+[18] N .   Karmarkar  and  R.  Karp.  An  efficient  approximation  scheme  for  t h e   one- 
+dimensional bin-packing problem.  In  Proceedings  of  the   23rd  A n n u a l   S ym p o s i um  
+o n  Founda t ion s   of  C om p u t e r   Sc ience ,   1982. 
+
+[I91  T .  Leighton and  S. Rao.  An  approximate max-flow min-cut  theorem for uniform 
+mult icommodity  flow  problems  with  applications  t o   approximat ion  algorithms. 
+In  Proceedings  of  the   29 th   A n n u a l   S ym p o s i um   o n  Founda t ion s   of  C om p u t e r   Sc i -  
+ence, pages  422-431,  1988. 
+
+[20] N .   Linial,  E.  London,  and Y.  Rabinovich.  The  geometry  of  graphs  and  some of 
+i ts   algorithmic  applications.  In   Proceedings  of  the   35 th   A n n u a l   S ym p o s i um   o n  
+Founda t ion s   of  C om p u t e r   Sc ience ,   1994. 
+
+[21]  C .   H.  Papadimitriou  and  M.  Yannakakis.  Optimization,  approximation,  and 
+complexity classes. Jou rna l   of  C om p u t e r  and  S y s t e m  Sc ience s ,  43:425-440,  1991. 
+
+[22]  S.  Poljak.  Integer  linear  programs  and  local  search for max-cut.  Prepr in t ,   1993. 
+
+[23]  P.  Raghavan. 	 Probabilistic  construction  of  deterministic  algorithms:  approxi- 
+mating  packing  integer  programs.  Jou rna l   of  C om p u t e r   and  S y s t e m   Sc ience s ,  
+37:130-143,  1988. 
+
+[24] P.  Raghavan  and  	 C .   D .   Thompson.  Randomized  rounding:  a  technique  for 
+provably  good  algorithms  and  algorithmic proofs.  Comb ina to r ica ,  7:365  - 374. 
+1987. 
+
+

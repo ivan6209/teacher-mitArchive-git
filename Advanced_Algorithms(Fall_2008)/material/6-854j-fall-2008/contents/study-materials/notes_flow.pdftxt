@@ -1,0 +1,776 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18 .415 /6 .854   Advanced  Algorithms 
+
+November  1994 
+
+Network  flows 
+Lecturer:  Michel X.  Goeman s  
+
+In  these notes, we  s tudy  some problems  in "Network  Flows".  For  a more compre-
+hensive t rea tmen t ,  t h e  reader is referred t o  t h e  surveys [ 1 2 , 1 ] ,  or t o  t h e  recent book  [2]. 
+Network  flow  problems  arise  in  a  variety  of  settings; t h e  underlying  networks  might 
+be  transpor ta t ion   networks,  communication  networks,  hydraulic networks,  computer 
+chips,  or  some  abstract  network.  The   field  was  born  from  applications  in   t h e   40's 
+and  50's and  has  since  developed  into  a  strong  methodological  core with  numerous 
+algorithmic  issues.  The  first  polynomial  t ime  algorithms  for  network  flow  problems 
+have  been  developed  in  t h e  70's, and  constant  progress  towards  faster  and  faster  al-
+gorithms  has  been  made   in  t h e   80's.  Network  flow  problems  can  be  formulated  as 
+linear  programs  and ,   as  a  result,  all  t h e  methodology  of  linear  programming  can  be 
+applied.  Duality  plays  a  crucial role,  and  t h e  simplex  algorithm  can  take  advantage 
+of  the   s truc ture  of  network  flow  problems  (bases can be  nicely characterized). 
+Some of  t h e   basic  problems  in  this  area  include  t h e   single  source  shortest  pa th  
+problem,  t h e   maximum  flow  problem,  and  t h e   minimum  cost  flow  problem.  F irs t ,  
+we  shall  briefly  review  each  of  them   and  then   we  shall  describe  a  polynomial  t ime  
+algorithm  due t o   Goldberg  and  Tarjan  [14] for  t h e  minimum cost  flow  problem. 
+
+Single  Source Shortest  Path  Problem 
+
+We  are interested in  t h e  following problem: 
+Given 
+
+a  directed  graph  G = (V,E )  where  V  is  t h e   set  of  vertices  and  E  is  the   set  of 
+edges, 
+
+and  a  length  function  I  : E + Z, 
+
+a  distinguished  vertex  s E  V  ( the  source vertex), 
+
+Find  for  all  v  E V  t h e  length  S ( v )  of  t h e  shortest  pa th   from  s  t o  v. 
+This is NP-hard  if  we  allow negative length  cycles (i.e. cycles for which t h e  sum of 
+t h e  lengths of  i t s  edges is negative). However, if  all lengths are nonnegative  ( I ( u , v ) 2 
+0  for  all  edges  ( u , v )  E  E )  then   a  s tandard   algorithm  t h a t   solves  this  problem  is 
+Dijkstra's algorithm  [6] (see also  [4]). The  implementation  of  Dijkstra's algorithm  is 
+based  on  t h e  implementation  of  a priority  queue and  various implementations  of  this 
+priority  queue  lead  t o   different  worst-case  running  times.  Using  a  Fibonacci  heap 
+implementation  [ l o ]  of  t h e  priority  queue,  it  can be  shown  t h a t   t h e  algorithm  has  a 
+
+Flow-1 
+
+to ta l   running  t ime  of  O(rn + n log n )  where  rn  = IE 1  and  n  = IVI.  This  is  t h e   best 
+known strongly polynomial  algorithm for t h e  single-source shortest pa th  problem.  An 
+algorithm  is  said  t o  be  strongly polynomial  if 
+
+1.  I t   performs  a  polynomially  bounded  number  of  operations  in   t h e   number  of 
+input  d a t a  (in th is  case m  and n ) . We  allow t h e  operations +,-,*,< and rational 
+division. 
+
+2.  The   sizes  of  t h e   numbers  occurring  during  t h e   algorithm  are  polynomially 
+bounded  in  t h e  size of  t h e  inpu t .  
+
+There  are  also  single-source shortest  pa th   algorithms which  may  not  be   strongly 
+polynomial,  i.e. algorithms whose running  t ime  depends on L = max Z(u, v ) + l .   These 
+algorithms may  achieve a  be t te r   running  t ime  t h a n  Dijkstra's  algorithm, provided  L 
+is not  too  large.  Listed  below  are four  such  algorithms: 
+O(rn + nL )  
+Dial  [5] 
+Johnson  [16] 
+O (m log log L )  
+Gabow  [I 11 
+O(rn logdL )  where  d = max(2, r r n l n l )  
+O(rn + 7243) 
+Ahuja, Mehlhorn, Orlin, Tarjan   [3] 
+Observe  tha t   all  these  algorithms  except  Dial's algorithm  are  polynomial  since  t h e  
+size of  t h e  input  is  a t   least  log L .  
+If  negative lengths  are allowed then   the  problem  can  still be  solved in polynomial 
+t ime   provided  t h a t   no  negative  length  cycle  exists.  The   algorithm  of  Bellman-Ford 
+solves  th is  problem  in  O ( nm )  time. 
+We  would  like  t o  point  out  t h a t   these  problems  are  defined  on  a  directed  graph. 
+An  undirected  shortest  pa th   problem  can  easily  be   reduced  t o   a  directed  instance 
+by  replacing  every  edge by  bidirected  edges.  This  reduction  is  fine  if  all  lengths  are 
+nonnegative  (in which  case  Dijkstra's  algorithm  can  be  used),  bu t   does  not  work  if 
+there  are edges of  negative length.  In  this  case, indeed, a negative length  cycle would 
+be  created.  However, t h e  undirected  shortest  pa th   problem  on  an   undirected  graph 
+with  possibly  negative  edge  lengths  but  no  negative  length  cycle  can  still be   solved 
+in  polynomial  t ime .   The  algorithm  is, however, fairly  complicated  and  is based  on  a 
+reduction  of  the  problem  t o  nonbipartite matching. 
+
+2 
+
+The Maximum Flow  Problem 
+
+Given 
+
+a  directed  graph  G = (V,E )  where  V  is  t h e   set  of  vertices  and  E  is  t h e  set  of 
+edges, 
+
+capacity  u ( v ,  w )  2 0  for  ( v , w )   E E ,  
+
+source s E V, 
+
+a  sink  t  E V ,  
+
+a  flow  f  is  an   assignment  of  values  t o   t h e  edges which  satisfies f ( v ,  w)  5 u ( v ,  w) for 
+all  edges  ( v ,  w)  and  which  satisfies t h e  flow  conservation  constraints 
+
+for  all  vertices  v  except  s  and  t .   The   goal  is  t o   find  a  flow  such  t h a t   t h e   net  flow 
+cwf ( s ,  w)  out  of  s  (C v : ( s , v ) ~Ef ( s ,  v ) )   is  maximum.  One  can  easily  derive  t h a t   t h e  
+net  flow out of  s is equal t o  t h e  net  flow into t ,  and  thus we  could maximize this la t te r  
+quan t i ty  as well. 
+All  these  constraints  are linear  constraints  and  t h e  objective function  is  linear,  so 
+the  maximum flow  problem  (MAX  FLOW)  is  a  linear  program.  We  could  therefore 
+exploit  t h e  s truc ture  of  the  linear  program  t o  tailor  t h e  simplex algorithm.  This  has 
+been  done  and ,  in fac t ,  although  no version of  t h e  simplex algorithm  is known  t o  run  
+in  polynomial  t ime  for  general  linear  programs,  i t   is  known  t h a t   it  can  be  made  t o  
+run  in  polynomial  t ime   (or even in  strongly  polynomial  t ime)  for  t h e  maximum flow 
+problem.  Goldfarb and Hao  [15] have developed a version of  t h e  simplex which makes 
+a t   most  nrn  pivots  and  run  in   O ( n 2m )  t ime .   However, there  are  some more efficient 
+combinatorial  algorithms  which  exploit  t h e   s truc ture   of  t h e   problem.  Most  known 
+algorithms  are based  on  t h e  concept  of  "augmenting  paths",  introduced  by  Ford  and 
+Fulkerson  [8].  There  are  a  variety  of  algorithms  with  different  running  times.  The  
+best  strongly  polynomial  running  t ime   of  a  max  flow  algorithm  is  O ( nm  log n 2 / m )  
+(due t o  Goldberg  and  Tarjan  [13]). 
+
+Minimum Cost  Circulation Problem 
+
+In  t h e  minimum cost  circulation problem, we  are given  a  directed graph  G = (V,E ) .  
+For  each  arc  ( v ,  w)  E  E ,  we  are  given  a  cost  c(v ,  w) ,   a  lower  bound  l(v ,  w)  and  an  
+upper  bound  u (v ,  w) .   Throughout, we  assume t h a t   1(., .), u ( . ,  .) and  c ( . , .) are integral 
+unless  mentioned  otherwise.  We  will  associate  a  flow  f  with  each  arc  of  t h e   graph. 
+This  flow  will  be  required  t o   satisfy  l (v ,  w)  5 f (v ,  w)  5 u ( v ,  w)  and  t h e   cost  of  t h e  
+flow  on  ( v ,  w)  is  defined t o  be  c(v ,  w) f (v ,  w).  This  is the  classical notation.  However, 
+in our  lectures, we  adopt  Goldberg  and Tarjan's notation  [14] in which every directed 
+arc  ( v ,  w)  is  represented by  arcs  ( v ,  w)  and  (w ,  v)  (see Figure  1 ) .  
+This  will  simplify t h e  proofs  later  on.  In  this  notation,  t h e  flow  f (w, v)  on  (w ,  v) 
+is  assumed  t o  be  equal  t o   -f ( v ,  w) ,  i.e.  t h e   flow  is  antisymmetric.  Using  this  anti- 
+symmetry assumption,  t h e  lower  bound  on  t h e  flow  f ( v ,  w)  is equivalent  t o  an  upper 
+bound  of  - l(v ,   w) on  f (w ,  v) .   Also,  t h e  cost  c(w, v) on  t h e  arc   (w, v) is defined  t o  be 
+-c(v,  w).  This  ensures  t h a t ,  if  we  push  some flow  on  (v ,  w)  and  then   decide  t o  push 
+i t   back  from  w  t o   v,  we  get  a  full  refund  of  t h e   cost  incurred  (i.e.  c(v, w) f ( v ,  w ) ) .  
+Notice  t h a t   t h e   to ta l   cost  of  t h e   flow  on  t h e   arcs  ( v ,w )   and  (w , v )   is  equal  t o  
+
+Figure  1: Standard  notation  vs.  Goldberg-Tarj an   notation. 
+
+C ( V ,   w ) f  (v ,  W )   + C (W ,   v ) f  (w ,  v) = C ( U ,   w ) f  ( v ?W )   - C ( V ,   w ) f  (w ,  v )  = ~ C ( U ?w ) f  ( v ,  W )   = 
+2c(w, v) f (w ,  v) .  
+To  recapitulate, we  are given  a  bidirectedl  graph  G = (V,E ) , a  capacity function 
+u  : E  -+ iZ  and   a  cost  function  c  : E  -+  Ti.  The   cost  function  is  assumed  t o   be 
+antisymmetric: 
+
+c(v, w) = -c(w ,   v) 
+
+V(v, W )   E E. 
+
+A  flow  is  a  function  f  : E +R ,  which  is  assumed 
+
+1.  t o  be  antisymmetric, i.e. f ( v ,  w) = -f (w ,  v ) ,  and 
+
+2.  t o   satisfy  t h e  capacity  constraints:  f (v ,  w)  5 u (v ,  w) for  all  (v ,  w)  E E .  
+
+The  cost  of  a  flow  is  defined  as: 
+
+A  flow  is  said  t o  be  a  c ircu la t ion  if 
+
+for  all  v  E  V.  Using  t h e   antisymmetry  constraints,  this  is  equivalent  t o   saying  t h a t  
+t h e   flow  out  of  vertex  v  minus  the   flow  in to   v  is  equal  t o   0  for  all  v  E  V.  These 
+conditions  are  thus  t h e  flow  conservation  constraints.  The   m i n i m u m   cost  c ircu la t ion  
+problem  is  t h e  problem  of  finding a  circulation of  minimum  cost. 
+A  closely related problem t o  t h e  minimum cost circulation problem is t h e  m i n i m u m  
+cost  flow  problem.  In  this  problem,  we  are  also  given  a  supply  function  b  : V  + Z 
+satisfying CvEV  
+0  and  t h e  flow  is  required  t o  satisfy 
+b(v) = 
+
+for all v  E V.  The  goal is t o  find a flow  satisfying  (1)of  minimum cost.  The  minimum 
+cost  circulation problem  is  clearly  a  special  case of  t h e  minimum  cost  flow  problem 
+(simply take   b(v)  = 0  for  all  v  E  V) .   However,  t h e   converse is  also  true .   Consider 
+
+Figure  2:  How  t o  convert  a  minimum  cost  flow  problem  into  a  minimum  cost  circu- 
+lation problem. 
+
+t h e   following  transformation  t h a t   converts  any  instance  of  t h e   minimum  cost  flow 
+problem  into  an  instance  of  t h e  minimum cost  circulation problem  (see Figure  3 ) .  
+Let  G  = (V', E') be t h e  graph obtained by extending G with one ex t ra  vertex, say 
+s ,  linked t o  all other vertices, i.e. V'  = VU {s} and E' = E U { ( s ,  v) : v E V )  U { ( v ,  s )  : 
+v  E V}.  For  these  new  edges, let  c ( s ,  v) = c(v ,  s )  = 0  and  u ( s ,  v) = b(v) = -u (v ,   s ) ,  
+t h e  other costs and  capacities remaining unchanged.  The  capacities on  t h e  bidirected 
+edges  incident  t o   s  have  been  chosen  in   such  a  way  t h a t ,   for  any  flow  f  on  this 
+extended  graph,  we  have  f ( s ,  v )   = b(v).  Therefore, any  circulation  f  on  G'  induces 
+a  flow  on  G  satisfying  (1) and  vice versa.  Since  th is   circulation on  G'  and  this  flow 
+on  G have  the   same cost, we  can  solve t h e  minimum  cost  flow  problem  by  solving a 
+minimum  cost  circulation problem. 
+In  these  notes,  we  develop  a  purely  combinatorial  algorithm  t o   solve  t h e   mini- 
+mum  cost  circulation problem  and  we  will  also show  t h a t   this problem  can  be  solved 
+in  strongly polynomial  t ime .   (We'd like  t o  point  out  t h a t   for  t h e  minimum cost  flow 
+or  circulation problem,  it  is  not  known whether  t h e  simplex method  can  be  adapted 
+t o  run  in  strongly  polynomial  t ime   (contrary t o  t h e  case for  t h e  maximum flow  prob- 
+lem ) .) 
+In many  situations,  t h e  circulation  is  required  t o  be  integral.  This  additional re- 
+striction is not  restrictive as indicated in  t h e  following Theorem - sometimes referred 
+t o  as  t h e   i n t e g r a l i t y   t h e o r em .  
+
+Theorem  1  If  u (v ,  w)  E Zf o r   all  ( v ,  w)  E E  t h e n  t h e r e   e x i s t s   a n  o p t i m a l  c i r c u l a t i o n  
+( o r  f low )   w i t h   f ( v , w )  E Z. 
+
+Although there  are several ways t o  prove this result, we will deduce i t  later in  t h e  notes 
+from a simple algorithm for t h e  minimum cost circulation problem.  More precisely, we 
+will  show  t h a t ,  a t   every iteration  of  t h e  algorithm,  t h e  current  circulation is  integral 
+and ,  hence,  i t   is  also  integral when  t h e  algorithm  terminates. 
+The  minimum cost  circulation  problem  has  some interesting  special  cases  as  de- 
+scribed  in  t h e   next  sections.  Our  strongly  polynomial  t ime   algorithm  for  t h e  mini- 
+mum   cost  circulation problem will  thus   lead  t o   strongly  polynomial  t ime  algorithms 
+'( v ,w)E E implies (w, v) E E. 
+
+for  these  special  cases  (although more efficient  algorithms  can  be  designed for  these 
+special  cases). 
+
+The Maximum  Flow  Problem 
+The  maximum flow problem is a special case of  t h e  minimum cost circulation problem. 
+Indeed, given  an  instance of  t h e  maximum flow  problem, add  an  edge between  s  and 
+t  (see  Figure  3.1)  and  define  u ( t , s )  = oo, u ( s , t )  = 0,  c ( t , s )  = -1  = - c ( s , t )   and 
+c(v ,  w) = 0 for  all  ( v ,  w) #  ( s ,  t ). 
+
+Figure 3:  How  t o  transform  a maximum flow problem in to  a minimum cost circulation 
+problem. 
+The  capacities on  t h e  bidirected edge  ( s ,  t )  is  such t h a t   f ( t,s )  2 0 ,   implying t h a t  
+t h e  flow  goes  from t  t o  s .   There is  a  one-to-one  correspondence  between  circulations 
+in th is  extended graph and  flows  in t h e  original graph  satisfying  all flow  conservation 
+constraints  in  V \ { s ,  t ) .   Moreover,  t h e  cost  of  any  circulation in th is  extended graph 
+is exactly  equal  t o  minus  the  net  flow  out  of  s  (or into  t ) in   t h e  original graph.  As  a 
+result, t h e  maximum flow  problem  in G is equivalent t o  t h e  minimum cost  circulation 
+problem  in  t h e  extended graph. 
+Using  t h e  integrality  theorem  (Theorem I ) ,  we  obtain  t h a t   t h e  flow  of  maximum 
+value  can  be   assumed  t o  be  integral whenever t h e  capacities are  integral. 
+
+Bipartite  Matching 
+The   maximum  cardinality  matching  problem  on  a  b ipar t i te   graph  G  =  (A , B, E )  
+(A   and  B  denotes  t h e   bipartition  of  t h e   vertex  se t)   is  t h e   problem  of  finding  t h e  
+largest  number  of  disjoint  edges.  This  problem  is  a  special  case  of  t h e   maximum 
+flow  problem  and ,  hence, of  the  minimum cost  circulation problem.  To transform  t h e  
+maximum cardinality b ipar t i te  matching problem in to  a maximum flow  problem  (see 
+Figure  3 . 2 ) ,  we 
+
+1.  direct  all  t h e  edges from A  t o  B, 
+
+2.  add  a  source vertex  s ,  a  sink vertex  t ,  
+
+3 .   	 add  t h e   edges  (s,a )  for  all  vertices  a  E A  and  t h e   edges  ( b ,  t )  for  all  vertices 
+b  E B  and 
+
+4.  define t h e  capacity of  all existing edges t o  be  1 and  t h e  capacity of  their reverse 
+edges t o  be 0  (in other words, t h e  flow on  t h e  existing edges have a lower bound 
+of  0 ) .  
+
+By t h e  integrality theorem, we know t h a t  t h e  flow on any existing edge can be  assumed 
+t o   be   either  0  or  1.  Therefore,  t o   any  flow  f ,  there   corresponds  a  matching  M  = 
+{ (v ,  w)  E  E  : f ( v , W )   = 1) whose  cardinality  is  precisely equal  t o   the  net  amount  of 
+flow  out  of  vertex  s .  
+
+Figure 4:  Maximum cardinality b ipar t i te  matching is a special case of  maximum-flow. 
+
+It  is also easy t o  construct from a matching M a flow of  value  I M I.  As a result, any 
+integral flow of  maximum value will correspond  t o  a matching of  maximum cardinality. 
+In  fac t ,   t h e  minimum weighted b ipar t i te  matching problem  is  also  a  special  case 
+of  t h e  minimum  cost  circulation problem.  We  can  modify  t h e   above  transformation 
+in  t h e   following  way.  Define  the   cost  of  any  edge  of  t h e   original  graph  t o   be  i ts  
+original  cost  and  t h e  cost  of  any  new  edge t o  be  0.  Now, we  can model  three versions 
+of  t h e  minimum weighted b ipar t i te  matching problem  by  appropriately  defining  t h e  
+capacities on  t h e  edges  ( t  ,s )  and  ( s ,  t ): 
+
+1.  If  u ( t , s )  = n  and  u ( s , t )  = -n  where  n  =  IAI  =  IBI,  we  get  t h e   minimum 
+weighted perfect  ( a  perfect  matching is  a matching  t h a t   covers all  t h e  vertices) 
+matching . 
+
+2. 	 If  u ( t  ,S )  = n  and  u ( s ,  t )  = 0 ,  we  obtain  t h e  minimum weighted matching. 
+
+3 .   	 If  u ( t ,  s )  = k  and  u ( s ,  t )  = - k ,   we  obtain  t h e  minimum weighted matching of 
+size E .  
+
+Flow-'7 
+
+Shortest  paths 
+The   single source  shortest  pa th   problem  is  also  a  special  case  of  t h e  minimum  cost 
+flow  problem.  Indeed,  by  setting  l(v ,  w)  = 0  and  u ( v ,  w)  = 1 for  every  edge  (and 
+letting  their  cost  be  t h e   original  cost),  and  introducing  an   edge  from  t  t o   s  with 
+u ( t ,  s )  = l ( t , s )  = 1 and  c ( t ,  s )  = 0, we  obtain  an   equivalent  instance of  t h e  minimum 
+cost  circulation problem. 
+
+Some  Important  Notions 
+
+We  now  go  back  t o   t h e  minimum  cost  circulation  problem,  and  before  describing  a 
+polynomial  t ime  algorithm  for  i t ,  we  present  some useful  tools. 
+
+Residual  Graph 
+Given a minimum cost  circulation problem  and  a circulation f ,  we  define  the  residual 
+graph  Gf  = (V, E f )  with  respect  t o   f  by  Ef  =  { (v ,  w)  : f ( v ,  w)  < u (v ,  w ) ) .   For 
+example,  if  u ( v ,w )   = 5,  u (w , v )   =  -1  and   f ( v , w )   = 3  (hence,  f ( w , v )   =  -3  by 
+antisymmetry) then  bo th   ( v ,  w )  and (w ,  v) will be present  in E j .   However, i f f  (v ,  w) = 
+1 (i.e. f (w , v )   = - I ) ,   only  ( v ,  w)  will  be   in  Ef. W i th   respect  t o   f ,  we  define  the 
+residual  capacity of  t h e  edge  ( v ,  w) by 
+
+Notice  t h a t   t h e  edges  of  t h e  residual  graph  have  a  positive  residual  capacity. 
+
+Potentials 
+We  associate with each vertex v  a vertex potential p (v ) .   The  potential of  a vertex can 
+be  interpreted  as t h e  dual variable  corresponding t o  t h e  flow  conservation  constraints 
+in  the   linear  programming formulation of  t h e  problem.  The   reduced  cost of  t h e  edge 
+( v ,  w) is  then  defined as cp (v ,  w)  := c(v, w) + p ( v )  -p (w ) .  Note t h a t   t h e  reduced  costs 
+are still antisymmetric i.e. cp(w, v) = c(w, v )  + p (w )  -p (v )   = -c(v ,   w) - p ( v )   + p (w )  = 
+-cp(v ,  w).  Note  also  tha t   t h e   cost 
+
+of  a  directed  cycle r is  equal t o   i t s  reduced  cost 
+
+since t h e  vertex potential of  any vertex v on t h e  cycle is added and  sub trac ted  exactly 
+once.  More  generally, we  have  t h e  following result. 
+
+Theorem  2  For  a n y  p  : V  -+ Z and  a n y   c ircu la t ion   f ,   we  have  c . f  = cp  f .  
+
+Proof: 
+
+By  definition, 
+
+since by  definition of  a  circulation 
+
+When  is  a  circulation Optimal? 
+
+The  next  theorem  characterizes  a  circulation of  minimum cost. 
+
+Theorem  3  For  a  c ircu la t ion   f ,   the  following  are  equivalent: 
+
+I .   f  i s   of  m i n i m u m   cost, 
+
+2.  there   are  n o   negative  (reduced)  cost  cycles  i n  the   residual  graph, 
+3.  there   exist  potentials  p  such   t h a t  c,(v, w) 2 0  for  (v , w)  E  Ef. 
+
+This  is  essentially  strong  duality, bu t   we  will  not  refer  t o   linear  programming  in 
+the  proof.  Proof: 
+( 1 2 )  * (11) .  
+Let  I? be  a  negative  cost  cycle in  Ef.Let 
+S =  min  u f ( v , w )  > 0. 
+( v , w ) ~ r  
+By   pushing  S units  of  flow  along  I?, we  mean  replacing  f  by  f where 
+
+f ( . , w ) + S  
+( V , W )   E r
+f ( ~ ,W )   - s  ( w ,  V )   E  r 
+f ( v ,  w) 
+otherwise 
+Notice  t h a t ,   as  defined,  f also  satisfies  t h e   antisymmetry  constraints  and  is  a 
+circulation.  Moreover, c  . f" = c . f  + S  c ( r )  < c . f .   This implies t h a t   f  is  not 
+of  minimum cost . 
+
+ 
+
+2 3 3 .  
+Let  G'  be  obtained  from  t h e  residual  graph  G f by  adding  a  vertex  s  linked  t o  
+all  other  vertices  by  edges  of  cost  0  ( t h e  costs  of  these  edges  do  not  m a t t e r ) .  
+Let  p (v )  be  t h e   length  of  t h e   shortest  pa th   from  s  t o   v  in  G'  with  respect  t o  
+t h e  costs  c ( . ,  .). 
+This  quantities  are  well-defined  since  Gf  does  not  contain  any  negative  cost 
+directed cycle. By definition of  t h e  shortest  pa ths ,  we have p(w)  5 p (v )+ c ( v ,  w) 
+for  all edges  ( v ,w)  E Ef. This  implies t h a t   c,  ( v ,w) 2 0  whenever  (v , w)  E Ef. 
+
+. 3 * 1 .  
+The  proof  is  by  contradiction.  Let  f *  be  a  circulation  such  t h a t   c  f *  < c  f .  
+Consider  f'(v, w) = f * ( v ,w) - f ( v ,  w).  By  definition of  t h e  residual  capacities, 
+f '  is  a  feasible circulation with  respect  t o  u  (. , .).  I ts   cost  is 
+
+since  f t ( v ,w)  >  0  implies  t h a t   ( v ,  w)  E Ef and ,   hence,  cp(v ,w)  2 0.  This 
+contradicts  t h e  fact  t h a t   c .  f '  = c .  f *- c .  f  < 0. 
+
+A problem is well  cha ra c t e r i z ed  if  i ts  decision version belongs t o  N P n c o - N P .  The  
+above theorem gives a good  characterization for t h e  minimum cost circulation problem 
+( t o   be  precise,  we  would  also  need  t o   show  t h a t   t h e   potentials  can  be   compactly 
+encoded).  I t   also  naturally  leads  t o  a  simple  algorithm, first  discovered by  Klein  [17] 
+also known  as  the   'Cycle Cancelling Algorithm' . 
+
+Klein's Cycle Canceling Algorithm 
+Cycle  canceling  algorithm  (Klein): 
+
+1.  Let  f  be  any  circulation. 
+2 .   While  Gf  contains a  negative cycle r do 
+push  6 =  min  u f ( v ,w )  along  I?. 
+( v , w ) ~ r  
+
+Recall  t h a t   in  t h e   previous  code  "push"  means  tha t   we  increase  t h e   flow  by  6 
+along  t h e  well oriented edges  of  I'  and  decrease it  by  6  along  t h e  other  edges  of  I'. 
+In  Step  1, we  will  assume  t h a t   f  = 0  satisfies t h e   capacity  constraints  (i.e. f  = 0 
+is  a  circulation).  If  this  is  not  the   case then   a  circulation  can  be  obtained by  solving 
+
+one  maximum  flow  problem  or  by  modifying  t h e   instance  so  t h a t   a  circulation  can 
+easily be  found. 
+The   cycle  canceling algorithm  can  be  used  t o  prove  Theorem  1.  The  proof  is  by 
+induction.  Assume  t h a t   t h e   initial  circulation  is  chosen  t o   be  integral.  Now,  if  a t  
+iteration  k  t h e  circulation is integral,  then  t h e  residual capacities as well  as S  are also 
+integral.  Therefore, t h e  circulation remains  integral  throughout  the   algorithm. 
+For  t h e   maximum  flow  problem  as  discussed  in  Section  3.1,  any  negative  cost 
+directed cycle must  consist of  a directed pa th  from s t o  t along with t h e  arc ( t ,s )  since 
+t h e  only  negative  cost  arc  is  ( t ,s ) .   Therefore, in  this  special  case, Klein's algorithm 
+reduces  t o  t h e  well-known Ford-Fulkerson's augmenting  pa th   algorithm  [8]. 
+
+Ford-Fulkerson's  augmenting  path  algorithm: 
+
+1.  S ta r t  with  t h e  zero flow:  f  = 0. 
+
+2.  While  Gf  contains a  directed p a t h  P from s t o  t  do 
+push  S  =  min  u f ( v , w )  along P. 
+( v , w ) E ~  
+
+In  t h e  next  Theorem, we  show  t h a t   t h e  cycle canceling algorithm  is correct  if  t h e  
+costs  and  capacities  are  integral. 
+
+Theorem 4  If  c  : E  + Z and  u  : E  + Z then   Klein's  algorithm  term ina tes   after 
+O (mCU )   iterations where  m = IEl, C  is  an  upper  bound  on   the  absolute  value  of  any 
+cost  and  U  is  an  upper  bound  on   the  absolute  value  of  any  capacity.  Moreover,  the 
+resulting  circulation  is  optimal. 
+
+Proof: 
+Since t h e  costs are integral,  any cycle of  negative cost  has  a cost  of  a t  most 
+-1.  Moreover, if  ( v ,w)  E  Gf  then   u  (v , w)  2 1 which  implies  t h a t   S  > 1.  Therefore, 
+a t   each  iteration,  the   cost  of  t h e  current  circulation decreases by  a t   least  1 un i t .   On 
+t h e  other  hand ,   since  ic(v, W )  I  < C and  I f   ( v , W )  I  < U,  t h e   absolute  value of  t h e  cost 
+of  t h e  optimal circulation is  a t  most  mCU .   Therefore,  the  algorithm terminates after 
+O (mCU )  iterations.  At  t h a t   point,  t h e  residual  graph  does  not  contain  any  negative 
+cycle and ,  hence,  by  Theorem  3,  t h e  circulation is  optimal. 
+The  bound  given in Theorem 4  is however not  polynomial.  In  fac t ,  if  t h e  negative 
+cycles (or t h e  directed pa ths  in Ford  and Fulkerson's algorithm) are not  appropriately 
+chosen, t h e  worst-case running  t ime  of  t h e  algorithm  is  exponential.  In  Figure  6 ,  we 
+have  an  instance  of  the  maximum flow  problem  in which  if  we  augment  alternatively 
+along  t h e  pa ths   s - 1 - 2  - t  and  s - 2  - 1- t ,  t h e  number  of  iterations will  be  2C 
+since a t  each iteration we  push  only one additional unit  of  flow  from s  t o  t . If  C = 2n, 
+this  gives  an  exponential  bound. 
+Even  more  surprisingly,  t h e   cycle  canceling  algorithm  and  t h e   augmenting  pa th  
+algorithm without  any specification of  which negative directed cycle or which directed 
+s t - p a t h  t o  select are not  correct  if  t h e  capacities  are  irrational.  In  [9], it is shown t h a t  
+
+Flow-11 
+
+Figure  5:  Numbers  on  t h e   arcs  represent  t h e   capacities.  The  reverse  arcs  have  zero 
+capacities. 
+
+t h e   augmenting  pa th   algorithm  can  converge  t o   a  suboptimal flow  if  t h e   capacities 
+are irrational  and  t h e  directed  pa ths   are  selected in  an  unfortunate  way. 
+To  obtain  a  po lynom ia l   running  t ime ,  we  therefore  need  t o  specify which negative 
+directed  cycle  t o   cancel.  If  t h e   negative  cycle  resulting  in  t h e   maximum  cost  im- 
+provement  is  selected, t h e  number  of  iterations  becomes polynomial.  Unfortunately, 
+finding th is  cycle is NP-hard.  For  t h e  maximum flow problem, however, this selection 
+rule reduces  t o  finding t h e  s t - p a t h  with maximum residual capacity.  Such a pa th   can 
+be  found  in   polynomial  t ime   (for  example,  by  adapting  Dijkstra's  algorithm).  The  
+resulting  algorithm,  due  t o   Edmonds  and  Karp  [7], requires  O (m  log U )  iterations. 
+The  t ime  per  iteration  is  O (m )  (amortized). Hence we  can  implement  t h e  algorithm 
+with  a  to ta l   running  t ime  of  O (m 2  log U )  (Tarjan  [20]). 
+For  a long t ime  t h e  question of  finding a  strongly  polynomial  algorithm  (and  even 
+i t s   existence)  for  t h e   minimum  cost  circulation  problem  was  kept  open.  In  1985, 
+~ v aTardos  [19] devised  t h e  first  such  algorithm.  In   1987, Goldberg  and  Tarjan  [14] 
+produced  an  improved version  t h a t   we  will now  present. 
+
+The Goldberg-Tarjan Algorithm 
+Define  t h e  mean  cost  of  a  cycle r t o  be 
+
+where  ir 1  represents  the   number  of  arcs  in  r .   The  minimum  mean  cost  cycle  of  a 
+graph can be found  in  strongly polynomial  t ime ,  namely in  O ( nm )  t ime ,  by  adapting 
+the  Bellman-Ford  algorithm  for  t h e  all pairs  shortest  p a t h  problem.  Let 
+
+d f ) =   min. 
+c ( r )
+cycles r  in  E~  Ir I 
+denote  t h e  minimum mean  cost  of  all  cycles in  G j .  
+
+Goldberg-Tarjan algorithm  [14]: 
+
+Flow-12 
+
+1.  Let  f  = 0. 
+2.  While  p ( f )  < 0 do 
+push  6 =  min  uf ( v ,w )  along a minimum mean  cost  cycle  of  G f .  
+( v , w ) E ~  
+
+The   Goldberg-Tarjan  algorithm  is  a  cycle  canceling  algorithm  since  Gf  has  a 
+negative directed  cycle iff  p( f )  < 0. 
+For  t h e   maximum  flow  problem,  this  algorithm  reduces  t o   t h e   Edmonds-Karp 
+shortest  augmenting pa th   algorithm  [7] in which  t h e  s t -pa th  with  t h e  fewest  number 
+of  arcs  is  selected.  The  Edmonds-Karp  shortest  augmenting pa th   algorithm  requires 
+O ( m )  t ime   per  augmentation  and  t h e   number  of  augmentations  is  O ( n m ) .   This 
+results  in  a  running  t ime  of  O ( n m 2 ) .  
+
+Analysis  of  the   Goldberg-Tarjan Algorithm 
+
+Before  analyzing  t h e   Goldberg-Tarjan  cycle canceling algorithm,  we  need  some defi-
+n i t ions. 
+
+Definition 1  A  circulation  f 
+for  all  ( v ,W )  E  E f .  
+
+is  E-op t ima l  if  there  exists  p  such  that  c p ( v ,w )  2 - E  
+
+For  E  = 0 ,   this  definition  reduces  t o   t h e  condition  3 of  Theorem  3,  and ,   therefore,  a 
+0-optimal circulation is  a minimum cost  circulation. 
+
+Definition 2  t ( f )  = m i n im um   t  such  that  f 
+
+is  t-op t ima l .  
+
+We now  show t h a t   approximate optimality is sufficient when  t h e  costs are integral. 
+Theorem  5  I f f   is  a  circulation  with  t ( f )  < 
+then   f 
+is  optimal. 
+implies t h a t ,  for  some potentials p,  cp( v ,w )  > -+ for  all  ( v ,w )  E 
+Ef .  Therefore, any  cycle r  of  G  has  reduced  cost  greater  t h a n   - Ir 1  +  2 -1.  Since 
+Proof: 
+t (f )  < 
+the  costs  are integral and   the  cost  of  any  cycle is equal t o  i t s  reduced  cost, we  obtain 
+t h a t   any  directed  cycle  of  Gf  has  nonnegative  cost.  Theorem  3  implies  t h a t   f  is 
+optimal. 
+The  following  Theorem  shows  tha t   t h e  minimum mean  cost  p ( f )  of  all  cycles in 
+Gf  represents how  close the   circulation  f  is  from optimality. 
+Theorem  6  For  any   circulation  f ,  p( f )  = -t(  f ) .  
+Proof: 
+~ (
+f
+)L - t ( f ) .  
+-t( f )  for  all  ( v ,w )  E  E f .  
+By  definition,  there  exists  p  such  t h a t   c p ( v ,w )  
+This  implies t h a t   cp( r)  -t (f )  1 I'  1  for  any  directed  cycle I'  of  Gf .  B u t ,  for  any 
+directed  cycle  r ,  c ( r )  = c p ( r ) .  Therefore,  dividing  by  lrl, we  obtain  t h a t   t h e  
+f  ).  Hence,  p (  f )  2 - E (  
+f  ). 
+mean  cost  of  any  directed  cycle of  Gf  is  a t   least  - E (  
+
+Flow-13 
+
+- 4 f )  2 4 f  ). 
+To  show  t h a t   - p ( f )   2 ~ ( f ) ,we  want  t o   construct  a  function  p  such  t h a t  
+cP (v ,w )  2 p ( f )   for  all  ( v ,w )  E  E f .   Let  E(v,w)  = c ( v ,w )  + ( - p ( f ) )   for  all 
+( v ,w)  E  E f .   Notice  t h a t   Gf  has  no  negative  cost  cycle  with  respect  t o   E(., .) 
+since  t h e  mean  cost  of  any  directed  cycle  of  G  is  increased  by  -p (f ) .  Next, 
+add  a  new  node  s  t o   G f  and  also  arcs  from  s  t o   v  for  all  v  E V .   Let  E ( s ,  v) 
+be  any  value,  say  0 .   Let  ~ ( v )be   t h e   cost  with  respect  t o   E(., .) of  t h e   shortest 
+pa th   from  s t o   v  in  this  augmented  graph.  Hence, for  all  (v , w)  E  Ef , we  have 
+p(w)  Ip (v )  + E(v, w) = p(v)  + c(v , w) - ~ ( f )implying  t h a t   c,(v,  w) 2 p ( f  ) .  
+
+We  are now  ready  t o  analyze  the   algorithm.  F irs t ,  we  show  t h a t ,  using  t ( f )  as  a 
+measure of  near-optimality, the   algorithm produces  circulations  which  are closer  and 
+closer  t o  optimal. 
+Theorem  7  Let  f  be   a  circulation  and  let  f '  be   the  circulation  obtained  b y   canceling 
+the  m in imum  mean  cost  cycle  I' in  Ef .  Then ~ ( f )2 ~ ( f ' ) .  
+Proof: 
+By  definition,  there  exists p  such  t h a t  
+
+for  all  ( v ,  w)  E  Ef .  Moreover,  for  all  ( v ,  w)  E I', we  have  cp(v ,w)  = - t (  f )  since, 
+otherwise, i t s  mean cost would not  be  - c ( f ) .   We  claim t h a t ,  for  t h e  same p,  (2 )  holds 
+for all ( v ,  w)  E  E f t .   Indeed, if  ( v ,  w)  E E f t n E f ,(2)  certainly holds.  If  (v , w) E Eft\Ef  
+then   (w , v )   certainly belongs  t o  I'.  Hence, cp(v ,w) = -cp(w,  v )  = E (  f )  2 0  and  (2) is 
+also  satisfied. 
+Next, we  show  t h a t   E (  f )  decreases after  a  certain number  of  iterations. 
+Theorem  8  Let  f  be   any  circulation  and  let  f '  be   the  circulation  obtained  b y  per-
+forming  m  iterations  of  the  Golberg-Tarjan  algorithm.  Then  
+
+Let  p  be   such  tha t   cp (v ,w)  2 - E (   f )  for  all  (v , w)  E  Ef .  Let  I'i  be  t h e  
+Proof: 
+cycle  canceled  a t   t h e   i t h   iteration.  Let  k  be  t h e   smallest  integer  such  t h a t   there  
+exists  ( v ,w)  E  I'k+l  with  cp (v ,w)  2 0.  We  know  t h a t   canceling  a  cycle  removes  a t  
+least one arc with negative reduced  cost  from t h e  residual graph and creates only arcs 
+with  positive  reduced  cost.  Therefore  k  5  m .   Let  f '  be   t h e   flow  obtained  after  k 
+is equal  t o  t h e  mean  cost  of  Fk+ l  which  is: 
+iterations.  By  Theorem 6 ,   - c ( f l )  
+
+where  1  = Irk+l1 .   Therefore, by  Theorem  7,  after  m  iterations,  t (f )  decreases by  a 
+factor  of  (1 - J-). 
+
+Theorem 9  Let  C  =  max  lc(v, w) 1 .   Then  the  Goldberg-Tarjan  algorithm  finds  a 
+( 2 1 , ~ )EE 
+m in imum   cost  circulation  after  canceling  nm  log (nC )   cycles  (log  = log,). 
+
+Proof: 
+The   initial  circulation  f  =  0  is  certainly  C-optimal  since,  for  p  =  0 ,  
+we  have  c,(v, w)  2 -C .   Therefore,  by  Theorem  8,  t h e   circulation  obtained  after 
+nm  log n C  iterations  is  t-optimal  where: 
+
+where we  have used t h e  fact t h a t   (I-:)"  < e-I  for all n  > 0.  The  resulting circulation 
+is  therefore  optimal by  Theorem  5. 
+The  overall running t ime  of  t h e  Goldberg-Tarjan algorithm is therefore O ( n 2m2log (nC ) )  
+since t h e  minimum mean  cost  cycle can be  obtained  in  O ( nm )  t ime .  
+
+A Faster  Cycle-Canceling Algorithm 
+
+We  can  improve  upon  the   algorithm  presented  in   t h e   previous  sections  by  using  a 
+more  flexible  selection  of  cycles  for  canceling  and  explicitly maintaining  potentials 
+t o  help  identify  cycles  for  canceling.  The   idea  is  t o   use  t h e  potentials  we  get  from 
+t h e  minimum mean  cost  cycle t o  compute t h e  edge costs  c,(v,  w)  and then   push  flow 
+along  all  cycles with  only  negative cost  edges.  The  algorithm  Cancel  and  Tighten  is 
+described  below. 
+
+Cancel  and  Tighten: 
+1.  Cancel:  As  long  as  there  exists  a  cycle I' in   G  with  c,(v,  w)  < 0, V(v, w)  E  I' 
+push  as much flow  as  possible  along r .  
+2.  Tighten:  Compute a minimum mean  cost  cycle in  Gf  and upda te  p. 
+
+We  now  show t h a t  the  Cancel s tep  results in canceling a t  most m cycles each iteration 
+and   t h e  flow  it  gives  is  (1- l / n ) t ( f )  optimal. 
+
+Theorem  10  Let  f  be   a circulation  and  let f '  be   the  circulation  obtained  b y  perform-
+ing  the  Cancel step.  Then  we  cancel  at  most  m  cycles  to  get  f '  and 
+
+Let  p  be  such  t h a t   c,(v,  w)  2 - c (   f )  for  all  (v , w)  E  Ef. Let  I' be  any 
+Proof: 
+cycle  in   f '  and  let  1  be  the   length  of  I'.  We  know  t h a t   canceling  a  cycle  removes 
+a t   least  one  arc with  negative  reduced  cost  from  t h e  residual  graph  and  creates only 
+arcs with positive  reduced  cost.  Therefore we  can  cancel a t   most  m  cycles.  Now  Gf 1 
+
+has  no  negative  cycles therefore  every  cycle in  Gf t  contains  an  edge  (v , w)  such  t h a t  
+cp (v ,w) 2 0.  Hence t h e  mean  cost  of  I'  is  a t   least: 
+
+The  above result  implies t h a t   the  Cancel and  Tighten procedure finds a minimum 
+cost  circulation in   a t  most  n log (nC )  iterations  (by an   analysis which  is a  replication 
+of  Theorem  9 ) .   It  also  takes  us  O ( n )  t ime   t o   find  a  cycle  on  t h e   admissible  graph. 
+This implies t h a t   each  Cancel  s tep  takes  O ( nm )  steps  due t o  t h e  fact  t h a t   we  cancel 
+a t   most  m  cycles  and  thus  a  running  t ime  of  O ( nm )  for  one  iteration  of  t h e  Cancel 
+and  Tighten Algorithm.  Therefore  t h e  overall running  t ime  of  Cancel and  Tighten  is 
+O ( n 2mlog (nC ) )  (i.e.  an  amortized  t ime  of  O ( n )  per  cycle canceled). We  can fur ther  
+improve this  by  using  dynamic  trees  [14] t o   get  an   amortized  t ime   of  O(1og n )   per 
+cycle canceled and  this  results  in  an  O ( nm  log n l o g ( nC ) )  algorithm. 
+
+Alternative  Analysis: 
+Bound 
+
+A  Strongly  Polynomial 
+
+In  this  section,  we  give  another  analysis  of  the   algorithm.  This  analysis  has  t h e  
+advantage  of  showing  tha t   t h e  number  of  iterations  is  strongly  polynomial,  i.e.  t h a t  
+i t  is polynomial  in n  and m  and does not  depend on C .   The  first  strongly polynomial 
+algorithm  for  the  minimum  cost  circulation problem  is  due  t o  Tardos  [19]. 
+
+Definition  3  A n   arc  ( v ,  w)  E  E  is   €-fixed 
+circulations. 
+
+if  f ( v ,  w)  is   the  same  for  all  6-optimal 
+
+There exists  a  simple  criterion for  deciding whet her  an  arc is  t-fixed. 
+
+Theorem  11  Let  t > 0 .   Let  f  be   a  circulation  and  p  be   node  potentials  such  that  f 
+is   t -op t ima l  with  respect  to  p .   If  I c p ( u ,W )  I  2 2 n t   then   (v , w) is  t-fixed. 
+
+The   proof  is  by  contradiction.  Let  f '  be  an   t-optimal  circulation  for 
+Proof: 
+which  f ' (v ,  w)  #  f (v , w).  Assume  t h a t   lcp(v,w) 1  2 2 n t .   Without  loss  of  generality, 
+we  can  assume  by  antisymmetry  t h a t   cp (v ,w)  5  - 2 n t .   Hence  ( v ,w)  $  E f ,  i.e. 
+f ( v ,w)  = U ( V ,  w).  This  implies  t h a t   f'(v, w)  < f (v , w).  Let  E< =  { ( x ,y )   E  E  : 
+f ' ( x ,  y )   < f ( x ,d l .  
+Claim  1 2   There  exists  a  cycle  r  i n   (V ,E,) 
+
+tha t   contains  (v , w ) .  
+
+Flow-16 
+
+Since (v , w)  E  E<, i t   is sufficient  t o  prove t h e  existence of  a  directed pa th  
+Proof: 
+from w t o  v in  (V, E < ) .  Let  S C V be t h e  nodes reachable from w  in  (V, E < ) .  Assume 
+v 6 S. By  flow  conservation, we  have 
+
+However, f ( v ,  w) - f'(v, w) > 0, i.e.  f ( w , v )  - f ' (w ,v )   < 0 ,  and  by  assumption w E S 
+and v  6 S. Therefore, there must exists x  E S and y  $ S such t h a t   f ( x , y )  - f ' (x ,  y )   > 
+0,  implying  t h a t   ( x ,  y )   E  E < .  This  contradicts  t h e  fact  t h a t   y  6 S. 
+By  definition of  E< ,we  have t h a t   E<  E j l .   Hence, t h e  mean  cost  of  r is a t   least 
+p ( f f )  = - t ( f f )  = - t .   On  the  other  hand ,   t h e  mean  cost  of  r is  (1 = I r l ) :  
+
+a  contradiction. 
+
+Theorem  13   The  Goldberg-Tarjan  algorithm  terminates  after  O (m 2 nlog n )   itera-
+tions. 
+
+If  an   arc becomes fixed during t h e  execution of  t h e  algorithm,  then   it  will 
+Proof: 
+remain fixed since t (f )  does not  increase.  We claim t h a t ,  as long as t h e  algorithm has 
+not  term ina ted ,   one  additional  arc  becomes  fixed  after  O (m n log n )   iterations.  Let 
+f  be   t h e   current  circulation  and  let  r  be  t h e   first  cycle  canceled.  After  mn  log(2n) 
+iterations, we  obtain  a  circulation  f '  with 
+
+by  Theorem  10.  Let  p'  be  potentials  for  which  f '  satisfies  t h e   t ( f f ) -op t ima l i ty  con-
+s tra in ts .   By  definition of  I?, 
+
+Hence, 
+
+Therefore, there   exists  ( v ,  w)  E  I' such  t h a t   lcpl(v,w) 1  > -2724  f ' ) .   By  t h e   previous 
+Theorem,  ( v ,  w)  is  t (f ')-fixed.  Moreover,  ( v ,w)  is  not  t (f )-fixed  since  canceling 
+I'  increased  t h e   flow  on  ( v ,  w).  This  proves  t h a t ,   after  mn log (2n )   iterations,  one 
+additional  arc becomes fixed  and  therefore  t h e   algorithm  terminates  in  m2n log (2n )  
+iterations. 
+
+Flow-1 7  
+
+Using  t h e  O (m n )  algorithm for  t h e  minimum mean  cost  cycle problem, we  obtain 
+a  O (m3n2  log n )   algorithm  for  t h e   minimum  cost  circulation  problem.  Using  t h e  
+Cancel  and  Tighten  improvement  we  obtain  a  running  t ime   of  O (m 2 n 2  log n ) .   And 
+if  we  implement Cancel  and  Tighten with  t h e  dynamic  trees  d a t a   s truc ture  we  get  a 
+running  t ime  of  0 (m 2 n l o g 2 n ) .  
+The  best  known  strongly  polynomial  algorithm  for  t h e  minimum cost  circulation 
+problem  is  due  t o   Orlin  [18] and  runs  in  O (m  log n (m  + n log n ) )   = O (m 2  log n  + 
+mn  log2 n )  t ime .  
+
+References 
+
+[l]R.  K. Ahuja, T .  L.  Magnanti,  and  J. B .  Orlin.  Some recent  advances in  network 
+flows.  SIAM  Review,  33:175-219,  1991. 
+
+[2] R .  K .  Ahuja, T .  L .  Magnanti, and  J .  B. Orlin. Networkflows:  Theory,  algorithms, 
+and  applications.  Prentice Hall,  1993. 
+
+[3] R .  K .   Ahuja, K. Mehlhorn, J .  B.  Orlin, and  R .  E.  Tarjan.  Faster  algorithms for 
+t h e  shortest  pa th   problem.  Jou rna l  of  the  ACM,  37:213-223,  1990. 
+
+[4] T .  Cormen, C. Leiserson, and  R. Rivest.  Introduction  to Algorithms. MIT Press, 
+Cambridge, MA,  1990. 
+
+[5]  R .  Dial.  Shortest  pa th   forest  with  topological  ordering.  Communications  of  the 
+ACM,  12:632-633,  1969. 
+
+[6] E.  W.  Dijkstra.  A  note  on  two  problems  in   connection  with  graphs.  Numer. 
+Math.,  1:269-271,  1959. 
+
+[7] J. Edmonds and  R .  M. Karp.  Theoretical improvements in algorithmic efficiency 
+for  network flow  problems.  Jou rna l  of  the  ACM,  19:248-264,  1972. 
+
+[8] L.  R.  Ford  and  D.  R.  Fulkerson.  Maximal  flow  through  a  network.  Canad.  J .  
+Math.,  8:399-404,  1956. 
+
+[9] L.  R.  Ford  and  D.  R.  Fulkerson.  Flows  in  Networks.  Princeton  Univ.  Press, 
+Princeton,  N J ,   1963. 
+
+[ l o ]  M.  L.  Fredman  and  R.  E.  Tarjan.  Fibonacci  heaps  and  their  uses  in  improved 
+network  optimization problems.  Jou rna l  of  the  ACM,  34:569-615,  1987. 
+
+[ l l ] 	H .   N .   Gabow.  Scaling  algorithms  for  network  problems.  Jou rna l   of  Computer 
+and  System Sciences, 31: 148-168,  1985. 
+
+[12] A .   V.  Goldberg,  E.  Tardos,  and  R.  E.  Tarjan.  Network  flow  algorithms.  In 
+B.  Korte,  L.  Lovasz,  H.  J .   Promel,  and  A.  Schrijver,  editors,  Paths,  f low s ,  
+and  VLSI-layout,  volume  9  of  Algorithms  and  Combinatorics,  pages  101-164. 
+Springer-Verlag, 1990. 
+
+[13]  A .   V.  Goldberg  and  R .  E. Tarjan.  A new  approach  t o  t h e  maximum flow  prob- 
+lem.  Jou rna l  of  the  ACM,  35:921-940,  1988.  Preliminary  version in   Proc.  18th 
+Symposium on  Theory of  Computing, pages  136-146,  1986. 
+
+[14] A .  V.  Goldberg  and R. E. Tarjan.  Finding minimum-cost  circulations by  cancel- 
+ing negative cycles.  Jou rna l  of  the  A CM, 36:873-886,  1989.  Preliminary version 
+in  Proceedings  of  t h e   20th  Annual  ACM  Symposium on  Theory  of  Computing, 
+pages  388-397,  1987. 
+
+[15] D .   Goldfarb  and  J. Hao.  A primal  simplex  algorithm  t h a t   solves t h e  maximum 
+flow problem in a t  most  nrn pivots and o ( n 2m )  time. Mathematical Programming, 
+47:353-365,  1990. 
+
+[16] D .   Johnson.  A priority  queue in which  initialization  and  queue operations  take  
+O(log1og D) .   Math.  Systems  Theory,  15:295-309,  1982. 
+
+[17] M.  Klein.  A ~ r i m a l  method  for  minimal  cost  flows  with  applications  t o   t h e  as- 
+signment  and  transportation  problems.  Management  Science,  14:205-220,  1967. 
+
+[18]  J.  B .   Orlin.  A  faster  strongly  polynomial  minimum  cost  flow  algorithm.  In 
+Proceedings of  the 20th Annual ACM Symposium on  Theory of  Computing, pages 
+377-387,  1988. 
+
+[ I  91 	 E.  Tardos.  A strongly  polynomial  minimum  cost  circulation  algorithm.  Combi- 
+natorica,  5:247-255,  1985. 
+
+[20] R. E. Tarj an. Algorithms for maximum network flow. Mathematical Programmzng 
+Study, 26:l-11,  1986. 
+
+

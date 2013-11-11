@@ -1,0 +1,504 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+6.005
+elements of
+software
+construction 
+
+coding the photo organizer
+ 
+Daniel Jackson 
+
+topics for today
+ 
+how to implement an object model
+ 
+‣  key idea: transform to allocate state 
+‣  basic patterns 
+‣  navigation direction 
+‣  derived components 
+‣  maintaining invariants 
+
+© Daniel Jackson 2008 
+
+2 
+
+starting point: object model
+ 
+
+additional constraints 
+‣  all albums reachable from root (implies acyclic) 
+Album in Root .*subs 
+‣  implicit photos are inserted photos plus photos in subalbums 
+all a: Album | a.photos = a.inser ted + a.subs.photos 
+
+changes 
+‣  globally unique names; added File; renamed Collection to Album 
+3 
+© Daniel Jackson 2008 
+
+AlbumUserDeﬁnedsubsPhotoinserted,photosRootSelectedImage!Namename!!File!?ﬁleimage?implementing the OM
+ 
+
+basic strategy
+ 
+object model can be implemented in many ways
+ 
+‣  key issue: where state resides 
+
+eg, where does relation from A to B go? 
+‣  inside A object, or inside B object 
+‣  or inside a new singleton C object, as Map<A ,B> 
+‣  or nowhere: compute on-the-ﬂy 
+
+considerations 
+‣  ease & efﬁciency of navigation 
+‣  multiplicity (might call for collections) 
+‣  minimizing memory usage 
+‣  exploiting immutability 
+‣  minimizing dependences 
+© Daniel Jackson 2008 
+
+5 
+
+implementing sets
+ 
+
+top-level sets become classes 
+‣  set as class: class Album {...}, class Photo {...} 
+‣  set as built-in class: Name as Str ing 
+
+subset patterns 
+‣  subset as boolean ﬁeld: 	class Photo {boolean selected;} 
+‣	  subset as singleton set: class Catalog {Set<Photo> selected;} 
+class Catalog {Album root ;} 
+
+static subset patterns 
+‣  classiﬁcation of object does not change over time 
+‣  subset as subclass: class	 Root extends Album {...} 
+
+© Daniel Jackson 2008	 
+
+6 
+
+example: Selected
+ 
+
+OR 
+
+© Daniel Jackson 2008 
+
+7
+ 
+
+PhotoSelectedSetCatalogelts!PhotoselectedPhotoBooleanisSelected!example: Root
+ 
+
+OR 
+
+© Daniel Jackson 2008 
+
+8
+ 
+
+AlbumRootAlbumCatalog!rootAlbumRootimplementing relations
+ 
+
+basic patterns (function) 
+‣  relation as ﬁeld: class Album {Name name;} 
+‣  relation as map: class Catalog {Map<Album, Name> name;} 
+
+basic patterns (one-to-many) 
+‣  relation as ﬁeld: class Album {Set<Album> subs;} 
+‣  relation as map: class Catalog {Map<Album, Set<Album>> subs;} 
+
+how to choose? 
+‣  efﬁciency: relation as ﬁeld uses marginally less time and space 
+‣  immutability: relation as map is preferable if Album otherwise immutable 
+‣  encapsulation: choose so that OM invariant can be a rep invariant 
+
+© Daniel Jackson 2008 
+
+9 
+
+example: name
+ 
+
+OR 
+
+© Daniel Jackson 2008 
+
+10
+ 
+
+Album!Namename?Album!Stringname?AlbumStringCatalogMapEntrynamemap!entrieskeyval!!??example: subs
+ 
+
+OR
+ 
+
+OR
+ 
+
+© Daniel Jackson 2008 
+
+11 
+
+AlbumUserDeﬁned!subsAlbumSetsubs!?eltsAlbumSetCatalogMapEntrysubMap!entrieskeyval!!??eltsAlbumCatalogMapEntryparentMap!entrieskeyval!!??relation direction
+ 
+navigation direction 
+‣	  direction of relation in object model is semantic 
+‣	  navigation direction depends on operations 
+‣	  for relation R: can implement R, transpose of R, or both 
+
+implementation must support navigation 
+‣	  consider inser ted: Album -> Photo and operation add (a, p) 
+‣	  relation as ﬁeld: class Album {Set<Album> inser tedPhotos;} 
+or  class Photo {Set<Collection> inser tedInto;} 
+‣	  relation as map: class Catalog {Map<Album, Set<Photo>> inser tedPhotos;} 
+or class Catalog {Map<Photo, Set<Album>> inser tedInto;} 
+‣	  for basic add operation, implementing as Album -> Photo is ﬁne 
+‣	  but if add operation removes photo from other collections, 
+will want both directions 
+
+© Daniel Jackson 2008	 
+
+12 
+
+derived components
+ 
+
+derived component 
+‣	  a set or relation that can be derived from others 
+‣	  OM invariant has the form x = ... 
+
+in this case 
+‣	  can choose not to implement at all! 
+‣	  instead, construct value when needed 
+
+examples 
+‣	  UserDeﬁned = Album - Root 
+so to determine if a in UserDeﬁned, can just check a == Root 
+‣	  all a: Album | a.photos = a.inser ted + a.subs.photos 
+so can compute photos set for given a by traversing subcollections 
+
+© Daniel Jackson 2008	 
+
+13 
+
+maintaining OM invariants
+ 
+
+OM invariants 
+‣  called “integrity constraints” for databases 
+‣  become rep invariants or invariants across classes 
+
+to maintain 
+‣  reject inputs that might break invariant (eg, duplicate name for collection) 
+‣  or compensate for bad input (eg, modify name to make it unique) 
+
+to check 
+‣  insert repCheck methods and assertions for cross-class invariants 
+
+© Daniel Jackson 2008 
+
+14 
+
+decisions made
+ 
+
+in implementing the photo organizer, we chose 
+‣	  subset as boolean ﬁeld for Selected (in Thumbnail class) 
+‣	  relation as ﬁeld for name (in Album class), since the relation is immutable 
+‣	  relation as map for subs and inser ted (in Catalog class) 
+‣	  to implement subs in the direction of child to parent 
+(so getChildren method has to iterate-and-check to ﬁnd children) 
+‣	  to compute UserDeﬁned and photos on the ﬂy 
+
+© Daniel Jackson 2008	 
+
+15 
+
+thumbnails 
+architecture of GUI may inﬂuence decisions 
+‣  regard selection and images as part of view, not model 
+‣  and want to avoid back-dependences of model on view 
+
+© Daniel Jackson 2008 
+
+16 
+
+PhotoSelectedImage!File!?ﬁleimagePhotoFile!ﬁleListPreviewPanethumbnailsThumbnaileltsImage!imageBooleanisSelected!photo!??!?!nal code: catalog, album, etc
+ 
+
+public class Catalog {
+ 
+private static final String ROOTNAME = "all photos";
+ 
+ 
+// root album, cannot be deleted
+ 
+ 
+ 
+private final Album root;
+ 
+// map from child album to parent
+ 
+ 
+private final Map<Album, Album> parent;
+ 
+ 
+ 
+// map from albums to photos that were explicitly inserted into them
+ 
+ 
+private final Map<Album, Set<Photo>> inserted;
+ 
+}
+ 
+
+public final class Album {
+ 
+ 
+private String name;
+ 
+}
+ 
+
+public class Photo {
+ 
+ 
+private final File file;
+ 
+}
+ 
+
+© Daniel Jackson 2008 
+
+17 
+
+!nal code: selected, etc
+ 
+
+public class PreviewPane extends JScrollPane {
+ 
+private JPanel content;
+ 
+ 
+ 
+private List<Thumbnail> thumbnails;
+ 
+}
+ 
+
+private Photo photo;
+ 
+
+// the loaded, displayable thumbnail image 
+ 
+private BufferedImage bufferedImage;
+ 
+
+public class Thumbnail extends JComponent {
+
+ 
+public static final int THUMBNAIL_SIZE = 150;
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+
+ 
+
+private int width;
+ 
+private int height;
+ 
+
+private boolean isSelected;
+ 
+
+© Daniel Jackson 2008 
+
+18 
+
+catalog rep invariant 
+
+private void checkRep() {
+ 
+ 
+/* 
+ 
+ 
+
+ *  1) All fields are non-null
+ 
+ *  2) The root has no parent; all other albums have one parent
+ 
+
+ *   all a: albums | parent.get(a) == null iff a == root
+ 
+
+ *  3) Each album has a unique name
+ 
+
+
+ *   all a1, a2: albums | a1.equals(a2) or !a1.getName().equals(a2.getName()) 
+ 
+ *  4) Map of inserted photos has all albums as keys
+ 
+
+ *   inserted.keySet() = parent.keySet() + root
+ 
+
+
+ * 
+where albums is the set of Album objects that are keys or values in the parent map
+ 
+
+ */
+ 
+
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+// checking rep (3)
+ 
+ 
+Set<Album> x = new HashSet<Album>(inserted.keySet());
+ 
+ 
+for (Album a: x) { 
+ 
+ 
+for (Album d: x) {
+ 
+ 
+
+assert (a == d || !a.getName().equals(d.getName())):
+ 
+ 
+
+
+
+
+ 
+"Albums exist with duplicate names";
+ 
+
+ 
+}
+ 
+
+ 
+}
+ 
+} 
+© Daniel Jackson 2008
+
+// checking rep (2,4)
+ 
+assert parent.get(root) == null: "Root cannot have a parent!";
+ 
+Set<Album> a1 = new HashSet<Album>(inserted.keySet());
+ 
+Set<Album> a2 = new HashSet<Album>(parent.keySet());
+ 
+a2.add(root); 
+ 
+assert a1.equals(a2) : "Inconsistent album sets!";
+ 
+
+// checking rep (1)
+ 
+assert root != null: "root cannot be null!";
+ 
+assert parent != null: "parent cannot be null!";
+ 
+assert inserted != null: "inserted cannot be null!";
+ 
+
+19 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+summary: principles
+ 
+
+keep abstract model abstract 
+‣  relations are conceptual; no containment notion 
+
+implementation is OM transformation 
+‣  from abstract to code object model 
+‣  key decision: where state should reside 
+
+consider all criteria 
+‣  use built-in collections when possible 
+‣  consider navigation, encapsulation, immutability 
+
+© Daniel Jackson 2008 
+
+20 
+
+

@@ -1,0 +1,348 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.034 Honors Differential Equations 
+Spring 2009 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+Adaptive  Stepsize Numerical Methods  for  Solving
+
+Ordinary Diﬀerential Equations
+
+
+Oleg Golberg 
+
+May  19,  2007 
+
+1 
+
+Introduction 
+
+Consider  an  initial  value  problem 
+y � (x) = f (x, y(x)),
+
+y(0) = y0 
+
+(1) 
+
+To approximate the value y(t) many numerical algorithms such Runge-Kutta methods make 
+computations  for  a  set  of  points  chosen  on  the  interval  [0, t]. Usually  the  chosen  points  form 
+an arithmetic series with stepsize h. As h decreases, the algorithms yield more precise results. 
+However, in practice it is often needed to ﬁnd the approximation of y(t) with a given precision 
+and  then  the  problem  of  choosing  an  adequate  value  for  h  arises.  A  na¨ıve  approach  when  h 
+is divided by 2  if the  iteration of the algorithm produces an error  larger than allowed usually 
+yields  satisfactory  results.  With  this  approach,  all  information  from  the  previous  iteration 
+is  discarded.  It  is  possible  to  use  that  information  to  predict  the  value  of  h  which  produces 
+an  error  of  an  allowed  magnitude.  Using  an  adaptive  iteration  for  h  it  is  possible  to  make 
+the  use  of  the  algorithm  more  computationally  eﬀective.  For  the  sake  of  simplicity,  we  will 
+show how  to apply  the adaptive  stepsize  technique  to Euler  integration,  even  though  similar 
+methods  exist  for Runge-Kutta and  other numerical  algorithms.  We will  start with deriving 
+an  adaptive  recurrence  relation  for  h  from  estimating  the  error  Euler  integration  produces, 
+and  them  compare  the  computational  eﬃciency  of  the  adaptive  and  na¨ıve  approaches. 
+
+2  Standard  Euler  Integration 
+
+Consider  an  initial  value  problem  of  the  same  form  as  (1).  Suppose  we  are  interested  in 
+approximating  y  at  a point x = t. For  this purpose,  split  the  interval  [0, t]  into n  intervals  of 
+t .  Due  to  the  intermediate  value  theorem  for  every  x  we  have 
+length  h =  n
+
+y(x + h) = y(x) + hf (x, y(x)) + ch2 
+where  for  some  ξ  ∈ (x, x + h)  we  have 
+
+c = 
+
+f � (ξ , y(ξ )) 
+2 
+
+1 
+
+(2) 
+
+(3) 
+
+This  observation  leads  to  Euler  integration,  a  simple  numerical  method  of  solving  ordinary 
+diﬀerential  equations.  Let  tk  =  kh  for  k  = 0, 1, . . . , n.  Then  deﬁne  a  recursive  sequence  as 
+follows 
+k ≥ 0 
+(4) 
+yk+1  = yk  + hf (tk , yk ),
+Due to (2) the error  introduced on each step of (4)  is ch2  where c  is proportional to y �� (ξ ).  In 
+practice, we most often need to approximate the value of y(t) with a given precision.  If we use 
+the  standard  Euler  integration  method  with  a  ﬁxed  stepsize  h,  we  cannot  deduce  anything 
+about  the  error  factor  c.  Therefore,  we  need  to  iterate  the  algorithm  for  larger  values  of  n 
+until  the  resulting  yn  approximates  y(t)  with  the  desired  precision.  In  other  words  we  need 
+(i)  using  the  relations  y0
+(i)  = y0  and 
+to  devise  a  sequence  hi  and  compute  the  value  of  yn 
+(i)
+(i)
+(i)
+(5) 
+yk+1  = yk  + hif (tk , yk  ) 
+for  i = 1, 2, . . .  until  |yni+1  − yni  |  becomes  small  enough.  If  the  implementation  of  the  algo­
+(i+1) 
+(i)
+rithm uses ﬁxed-precision representation of real numbers, which  is often the case  in practice, 
+(i) (t) 
+the complexity of each step of (5) is constant.  Therefore, the complexity of computing yn 
+with an n−step integration is linear in n. Let nmin  be the smallest number of steps necessary 
+to  achieve  the  desired  precision.  Then  our  goal  is  to  reduce  the  total  number  of  iterations 
+of  (5)  and  avoid  values  of  n  that  are  much  larger  than  nmin .  A  natural  way  is  to  double 
+the  number  of  steps  n  on  every  iteration.  In  other  words,  hi  is  given  by  a  simple  recursion 
+hi+1  =  h
+i .  This  way  only  log2 nmin  iterations  of  the  algorithm  are  needed  and  all  n  that  we 
+2 
+use  do  not  exceed  2n. 
+
+3  Adaptive  Stepsize  Method 
+
+It  is  easy  to  notice  that  every  iteration  of  the Euler  integration  algorithm  provides much  in­
+formation that the simple approach when n is doubled on every step does not use.  Moreover, 
+the  desired  precision  level  is  not  used  when  calculating  the  stepsize  on  the  next  iteration. 
+One  solution  to  this  problem  which  allows  to  optimize  the  iteration  algorithm  is  to  look  at 
+the  error  each  step  produces.  We  already  found  that  each  step  of  the  iteration  (5)  produces 
+an error of  ch2  where  the  rate of  change of  c  is proportional  to f ��� (ξ ). Let us deﬁne  the  error 
+of  each  step 
+�(i)  = y(t) − y (i) 
+(6) 
+k 
+k
+Then  we  are  looking  for  |�n
+) | < �  to  hold.  If  we  assume  that  the  error  factor  c  in  (2)  is  con­
+(i
+i 
+stant, it will enable us to devise a sequence hi  that will lead to a more eﬃcient approximation 
+(i)  is 
+of  y(t).  If  c  is  constant,  then  the  accumulated  error  when  calculating  yn 
+t 
+ch2 
+i  = tchi  = ahi 
+h i 
+where  a  is  a  constant.  Consider  two  iterations  with  stepsizes  h1  and  h2 .  Recalling  the 
+deﬁnition  of  the  error  of  each  iteration,  we  have 
+y(t) − yn1 
+(1)  = �(1)  = ah1 
+n1 
+y(t) − y (2)  = �(2)  = ah2 
+n2 
+n2 
+
+�(i)  = nich2 
+i  = 
+ni 
+
+(7) 
+
+(8) 
+(9) 
+
+2 
+
+Subtracting,  we  have 
+
+n2  − yn1  = a(h1  − h2 ) 
+y (2) 
+(1) 
+yn2  − yn1 
+(2) 
+(1) 
+h1  − h2 
+Let  us  ﬁnd  what  is  the  condition  for  h3  needed  for  the  next  iteration  to  produce  an  error 
+within  the  desired  range. 
+
+(10) 
+
+(11) 
+
+a = 
+
+− 
+|
+h3 y (2) 
+y
+n
+2 −
+|h
+h
+1 
+2
+
+1  | 
+(1) 
+n| 
+
+� > |�(3) | = |ah3 | = 
+n3 
+(h1  − h2 )� 
+|yn2  − yn1  | 
+(2) 
+(1)
+This  leads  to  a  simple  adaptive  stepsize  algorithm  determined  by  the  sequence  hi  which  is 
+deﬁned  as 
+(hi  − hi+1 )� 
+hi+2  = q 
+|yni+1  − yni  | 
+(i+1) 
+(i)
+
+h3  > 
+
+(12) 
+
+(14) 
+
+(13) 
+
+for  some  coeﬃcient  q < 1. 
+
+4  Comparison 
+
+Let us compare  the  eﬃciency of Euler  integration using  the na¨ıve doubling  iteration and  the 
+adaptive  stepsize method  shown  by  applying  them  to  the  following  initial  value  problem 
+y � (x) = 1 − 4x + y(x),
+(15) 
+y(0) = 1 
+The goal is to approximate the value y(1) with error less than 10−3 . We will use the following 
+simple  implementation  of  Euler  integration  in  Common  Lisp  using  8-byte  ﬂoating  point 
+numbers. 
+
+( de fun  e u l e r  ( f  t n  n  y 0 ) 
+” A p p r o x im a t e  y ( t n )  w i t h  n− s t e p  E u l e r  m e thod ” 
+( d e c l a r e  ( t y p e  d o u b l e − f l o a t  x  y 0 ) 
+( t y p e 
+i n t e g e r  n ) ) 
+( l e t  ( ( h  ( /  t n  n ) )  ( y  y 0 ) ) 
+( p r o g n 
+i  f r om  0 t o  (−  n  1 ) 
+( l o op  f o r 
+do  ( i n c f  y ( ∗  h ( f u n c a l l  f
+y ) ) ) 
+
+( ∗ 
+
+i  h )  y ) ) ) ) 
+
+The  exact  solution  of  the  initial  value  problem  (15)  is  easy  to  ﬁnd  to  be 
+x 
+3 
+y(x) = −  + + 
+16 
+4 
+
+19  4t 
+e 
+16 
+
+(16) 
+
+3 
+
+y5120  ≈ 64.796 
+(10) 
+y10240  ≈ 64.847 
+(11) 
+y20480  ≈ 64.872 
+(12) 
+y40960  ≈ 64.885 
+(13) 
+y81920  ≈ 64.891 
+(14) 
+y163840  ≈ 64.894 
+(15) 
+y327680  ≈ 64.896 
+(16) 
+y655360  ≈ 64.897 
+(17) 
+
+Then  y(1) ≈ 64.897. Let us  choose  the  initial  stepsize h1  = 0.1  and ﬁnd  the  values  of  yn
+)  for 
+(i
+i 
+the  sequence  hi  deﬁned  by  hi+1  = 2hi  ﬁrst. 
+y10  ≈ 34.411 
+(1) 
+y20  ≈ 45.588 
+(2) 
+y40  ≈ 53.807 
+(3) 
+y80  ≈ 58.916 
+(4) 
+y160  ≈ 61.786 
+(5) 
+y320  ≈ 63.310 
+(6) 
+y640  ≈ 64.095 
+(7) 
+y1280  ≈ 64.494 
+(8) 
+(9)y2560  ≈ 64.695 
+Therefore,  17  iterations  are  needed  and  the  cost  of  computing  the  approximation  is 
+10m + 20m +  + 655360m = 10(216  − 1)m = 1310710m 
+· · · 
+where m is the computational cost of one step of (5) which is constant for our implementation. 
+Now  let us keep the  initial stepsizes h1  = 0.1, h2  = 0.05 but use the adaptive recurrence (14) 
+with  the  coeﬃcient  q = 0.9.  The  ﬁrst  two  approximations  to  y(t)  are  the  same. 
+y (1)  ≈ 34.411  y (2)  ≈ 45.588 
+10 
+20 
+Because  the  allowed  error  � = 0.001,  we  have 
+(0.1 − 0.05) × 0.001 
+≈ 4.026 × 10−6 
+(18) 
+45.588 − 34.411
+|
+| 
+h3  = 0.9
+� = 248378.  As  expected,  the  iteration  yields  error  close  to  the  allowed  limit. 
+(3)y248378  ≈ 64.896 
+
+Then  n3  = � h
+1 
+3 
+
+(17) 
+
+(19) 
+
+For  the  next  iteration  we  have 
+
+Then  n4  =  � h
+1 
+4 
+precision. 
+
+h2  − h3 
+≈ 2.331 × 10−6 
+h4  = 0.9 
+(20) 
+|64.896 − 45.588| 
+�  =  429086.  The  fourth  iteration  yields  an  approximation  with  the  desired 
+(4)y429086  ≈ 64.897 
+(21) 
+Thus,  when  a  simple  adaptive  stepsize  method  is  used,  the  number  of  iterations  needed  is 
+only  4  with  the  total  cost  of  computation 
+
+10m + 20m + 248378m + 429086m = 677494m 
+
+(22) 
+
+which  is  around  half  of  the  cost  of  computing  the  approximation  with  doubling  the  number 
+of  steps. 
+
+4 
+
+5  Conclusion 
+
+We  have  seen  how  to  successfully  apply  the  adaptive  stepsize  methods  to  Euler  integration 
+making  it  more  computationally  eﬀective.  Similar  but  more  advanced  techniques  can  be 
+applied  to more  eﬃcient  numerical methods  such  as Runge-Kutta  to  develop  adaptive  step-
+size algorithms such as Runge-Kutta-Fehlberg and Dormand-Prince methods which are used 
+in  practice.  For  example,  Dormand-Prince  method  is  used  in  one  of  the  Matlab  ordinary 
+diﬀerential  equation  solvers. 
+
+5
+
+
+

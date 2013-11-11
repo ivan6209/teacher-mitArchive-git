@@ -1,0 +1,608 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms	
+
+October 20, 2008 
+
+Lecture  12  - Ellipsoid  algorithm 
+Lecturer:  Michel  X.  Goemans 
+
+In  this  lecture  we  describe  the  ellipsoid  algorithm  and  show  how  it  can  be  applied  to  the  linear 
+programming problem. 
+
+1  Ellipsoid  algorithm 
+
+1.1  Deﬁnitions 
+
+An  el lipsoid  is denoted by 
+
+E (a, A) =  {x ∈ Rn  : (x − a)T A−1 (x − a) ≤ 1}, 
+
+with  center  a ∈ Rn  and  A ∈ Rn×m  that is positive deﬁnite. 
+Recall  that  A is  symmetric  if  A =  AT . A matrix is  positive deﬁnite  if it is symmetric and  ∀x  6= 0, 
+we have  xT Ax  >  0.  The  inverse  of  a  positive  deﬁnite  matrix  is  also  positive  deﬁnite.  Symmetric 
+matrices have only  real  eigenvalues, and positive deﬁnite matrices have only  real positive eigenvalues. 
+
+1.2  Problem  statement 
+Given  P  ⊆ Rn  bounded,  closed,  convex,  ﬁnd  x ∈ P  or  show  that  P  =  ∅. 
+
+1.2.1  Assumption:  Separation  oracle 
+
+The  ﬁrst  issue  is  how  the  convex  set  P  is  given.  We  assume  that  we  have  a  “separation  oracle”  for 
+P  which  does  the  following.  Given  a,  the  oracle  either 
+
+1.	 aﬃrms  that  a ∈ P ,  or 
+
+2.	 outputs  c ∈ Rn  such  that  P  ⊆ {x ∈ Rn  :  cT x < cT a}. 
+
+Think  of  c  as  the  normal  vector  of  the  plane  separating  a  and  P ,  pointing  away  from  P .  Such  a 
+hyperplane  exists  because  P  is  convex  and  closed. 
+An  algorithm for  our problem  would be judged based  on how  many  times it queries the  oracle. 
+We  would like the  number  of queries to be polynomial in terms  of  the input data. 
+
+1.2.2  Assumption:  Outer  ball  and  minimum  volume 
+
+As  such,  the  problem  is  hopeless,  since  we  do  not  know  where  to  search  for  a  point  x  ∈  P ,  and  P 
+may  even  contain just  a  single point  x.  So  we  make  two  further  assumptions.  They  are 
+
+•	 P  ⊆  “big ball”, i.e.  P  ⊆  B (0, R),  a  ball  with  center  0  and  radius  R >  0.  This  tell  us  where 
+out  search  can  be  conﬁned. 
+
+•	 If  P  6=  ∅,  P  has  “suﬃcient”  volume.  Let’s  say  we  are given  r > 0  such  that  we  are guaranteed 
+that  P  contains  some  ball  of  radius  r  if  P  is  non-empty. 
+
+We  consider  the  size  of  our  input  to  be  n + log R − log r. 
+
+12  - Ellipsoid  algorithm-1 
+
+1.3  Sketch  of  the  algorithm 
+
+Here  is  an  outline  of  the  ellipsoid  algorithm: 
+
+•	 Start  with  ellipsoid  E0  = (a0 , A0 ). 
+
+•	 Maintain  an  ellipsoid  Ek  = (ak , Ak ) ⊇ P .  At  iteration  k ,  ask  the  oracle  if  ak  belongs to  P . 
+
+–	 If  answer  is  yes,  then  we  are  done. 
+–	 If  ak  does  not  belong  to  P , then the  oracle provides  a  ck  such  that  P  ⊆ {x ∈ Rn  :  cT x < 
+c T
+k ak }. Thus, the separating hyperplane slices  Ek  and  P  is on one side of  this hyperplane. 
+We  then  determine  a  smaller  ellipsoid  Ek+1  such  that 
+
+k x < cT
+Ek+1  ⊇ Ek  ∩ {x :  c T
+k ak }.	
+
+(1) 
+
+–	 (Refer to Fig.  (1)). 
+–	 Notice  that  Ek  ⊇  P  and  we  iterate  on. 
+If  we  can  show  that  volume  of  Ek+1  decays 
+exponentially, then in  “few”  iterations, we either ﬁnd  a point in  P ,  or  reach  Vol(Ek+1 ) < 
+Vol(B (0, r)) and  conclude  that  P  =  ∅. 
+
+E
+k 
+
+P 
+
+a
+k 
+
+c
+
+k 
+
+E
+k+1 
+
+Figure  1:  Diagram  illustrating  a  single  iteration  of  the  ellipsoid  algorithm. 
+
+1.4  Bounding  volume  of  ellipsoids 
+
+Proposition  1  Given  Ek  =  E (ak , Ak ) and  ck ,  we  can  ﬁnd  Ek+1  such  that  Eq.  (1) is  satisﬁed  and 
+� 
+� 
+1 
+< exp  − 
+2(n + 1) 
+Let  us  ﬁrst  focus  on  the  simple  case  in  which  our  ellipsoid  is  the  unit  ball  centered  at  the  origin. 
+
+Vol(Ek+1 ) 
+Vol(Ek ) 
+
+. 
+
+Claim  2  Proposition  1  holds  for  the  special  case  where  Ek  =  E (0, I ) and  ck  =  −e1 . 
+
+12  - Ellipsoid  algorithm-2 
+
+Proof:  By  symmetry,  Ek+1  is  an  axis-aligned  ellipsoid  with  center  along  the  x1  axis.  It  has  to 
+contain  all  points  with  x1  =  0.  See  Fig.  (2).  Formally,  we  want  Ek+1  ⊇  Ek  ∩ {x  :  x1  ≥  0},  and 
+one  can  show that it is  enough to guarantee that (i)  e1  ∈ Ek+1  and (ii)  for  all  x  with  kxk =  1  and 
+x1  = 0,  we  have  x ∈ Ek+1 . 
+
+=E(0,I) 
+
+E
+k
+
+E
+k+1 
+
+P 
+
+=−e
+
+c
+
+k
+
+1 
+
+0 
+
+Figure  2:  Diagram  illustrating  the  case  where  Ek  =  E (0, I ). 
+
+We propose the following 
+� � 
+n 
+�2 �
+n 2  − 1  �  2
+x1  − 
+xi  ≤ 1 
+Ek+1  =  x : 
+n2 
+i=2 
+� 
+n2  � 
+T �� 
+1 
+. 
+=  E
+e1 e1 
+n2  − 1 
+n + 1 
+It  is  easy  to  verify  that  this  ellipsoid  satisﬁes  the  constraints  above.  Since  the  volume  of  an 
+ellipsoid  is  proportional  to  the  product  of  its  axis  lengths,  we  obtain: 
+
+�2 
+2 
+n + 1 
+
+n + 1 
+n
+
+1 
+n + 1 
+
+� 
+
+I − 
+
+e1 ,
+
++ 
+
+� 
+
+1 
+n2  − 1
+
+n − 1 
+2 
+
+� 
+
+,
+
+0 (for  x = 0  we  have  equality). 
+
+� 
+
+= 
+
+· ( 
+
+n−1 
+)  2 
+
+Vol(Ek+1 ) 
+Vol(Ek )
+
+n2 
+n
+n2  − 1
+n + 1 
+� 
+� 
+1
+< exp  − 
+exp 
+n + 1 
+� 
+� 
+1 
+= exp  − 
+2(n + 1) 
+where  we have  used  the fact that 1 +  x < ex  whenever  x =6
+Next,  we  do  a  slightly  more  general  case. 
+
+Claim  3  Proposition  1  holds  when  Ek  =  E (0, I ),  ck  =  d  and  kdk = 1. 
+
+Proof:  From  the  previous  simple  case,  it  is  clear  that  the  following  Ek+1  works. 
+� 
+�� 
+2  � 
+1 
+n
+ddT 
+Ek+1  =  E  − 
+n2  − 1 
+n + 1
+12  - Ellipsoid  algorithm-3 
+
+2 
+n + 1 
+
+I − 
+
+d, 
+
+. 
+
+Proof  of  Proposition  1: 
+In general,  we  can transform  E (ak , Ak ) to  E (0, I ) and  map  ck  into  some  d.  We  can  then  ﬁnd  an 
+ellipsoid  E  as  in  the  proof  of  Claims  2  and  3,  and  map  it  back  to  obtain  Ek+1 .  Denote  the  linear 
+′
+transformation  that  maps  E (ak , Ak ) into  E (0, I ) as  T .  Here  is  a  picture: 
+
+� 
+
+T 
+Ek  →  E (0, 1) 
+↓ 
+E 
+′ 
+
+T −1 
+Ek+1  ← 
+
+Recall  that  we  have 
+
+E (a, A) =  {x : (x − a)T A−1 (x − a) ≤ 1}. 
+By Cholesky decomposition (since  A is positive deﬁnite), we can write  A =  B T B  for some matrix 
+B .  If  we  let  y = (B−1 )T (x − 1),  then  we  have 
+(x − a)T B−1 (B−1 )T (x − a) ≤ 1 
+y T y ≤ 1, 
+(⇔) 
+so  we  have  a  unit  ball  in  the  y  space.  Thus,  our  linear  transformation  T  and  its  inverse  are: 
+T (x) =  y = (B−1 )T (x − ak ), 
+T −1(y ) =  ak  +  B T y . 
+We  need  an  equivalent  “half-space”  constraint  after  applying  T .  From  Eq.  (1), 
+T 
+T
+ck x < ck ak 
+k (B T y +  ak ) < cT
+c T
+k ak 
+T B T y < 0. 
+ck
+
+Hence, in the  new  space, the  unit  normal  vector  of  the  separating plane is 
+B ck
+d =  � 
+T B T B ck 
+ck
+From Claim 3, we can  ﬁnd an ellipsoid  E  in the y space. For convenience (and  aesthetic pleasure), 
+′
+let  b =  B T d. 
+Apply  T −1  to  E  to  obtain 
+′
+
+. 
+
+Ek+1  =  E (ak+1 , Ak+1 ) 
+1 
+1
+B T d =  ak  − 
+ak+1  =  ak  − 
+b 
+n + 1 
+n + 1 
+� 
+2  � 
+� 
+2  �
+�� 
+n
+n
+ddT 
+bbT 
+I − 
+n2  − 1 
+n2  − 1 
+Since aﬃne transformations preserve the ratios between volumes, we immediately have the desired 
+bound.  Here  are  the  details. 
+
+Ak+1  =  B T 
+
+2 
+n + 1 
+
+B = 
+
+Ak  − 
+
+2 
+n + 1 
+
+. 
+
+Rearranging,  we  have
+
+
+Vol(E (0, I )) = det((B−1 )T )Vol(Ek ) 
+Vol(Ek+1 ) = det(B T )Vol(E ′  ). 
+
+V ol(Ek+1 ) 
+V ol(Ek ) 
+
+= 
+
+V ol(E ′  ) 
+V ol(E (0, I )) 
+
+� 
+1 
+< exp  − 
+2(n + 1) 
+
+�
+
+
+. 
+
+12  - Ellipsoid  algorithm-4 
+
+� 
+
+1.5  Running  time 
+
+. 
+
+� 
+� 
+k 
+From  Proposition  1,  we  know  that  Vol(Ek ) <  Vol(E0 ) exp  − 2(n
++1)  .  If  P  is  nonempty,  then  the 
+ellipsoid  algorithm  terminates  in 
+Vol(E0 )
+Vol(P ) 
+
+� 
+� 
+#  iterations  =  O n log 
+Vol(E0 ) 
+By  our  assumption  on  P  containing  a  ball  of  radius  r  if  non-empty,  we  have  that  Vol(P ) 
+and  thus  the  number  of  iterations  is 
+#  iterations  =  O � n 2 (log R − log r)�  . 
+If  P  is  empty,  by  the  same  number  of  iterations,  we  are  guaranteed  of  its  emptyness. 
+We  conclude  this  section  by  noting  a  small  subtlety.  To  compute  d,  we  have  to  be  able  to  ﬁnd  B 
+such that  A =  B T B .  Cholesky  decomposition  takes  O(n3 ) and  guarantees  that  numbers  in  B  have 
+size  polynomially  bounded  by  the  size  of  numbers  in  A.  But  we have to  take  square  roots (in  the 
+calculation  of  d),  so  we  might  have  to  deal with  irrational  numbers.  As  a  result,  we  may  have  to  do 
+some  rounding  to  make  Ek+1  slightly  bigger.  We  have  to  argue  that  the  volume  decrease  factor  is 
+� 
+� 
+1
+still  reasonable,  say  exp  − 3(n
++1)  ,  but  this  detail  shall  be  omitted. 
+2  Applying  ellipsoid  algorithm  to  linear  programming 
+
+≤ 
+
+� R �n 
+, 
+r 
+
+2.1  Linear  programming  problem 
+
+In the linear programming problem, we are asked  to  ﬁnd 
+min{c T x :  Ax =  b, x ≥ 0} 
+
+with inputs  A, b, c.  The  size  of  the  input,  from  last  lecture,  is 
+
+L =  m +  n + log detmax  + log bmax  + log cmax . 
+
+To  apply  the  ellipsoid  algorithm,  we  will  need  to 
+
+1.  Go  from  an  optimization  problem  to  a  feasibility  problem. 
+
+2.  Show  that  the  initial  convex  set  is  bounded  and  argue  about  how  big  the  bounding  ellipsoid 
+has  to  be.  Argue  about  termination  and  provide  an  inner  ball  if  P  is  nonempty.  i.e.  we  want 
+P  to be  ful l-dimensional. 
+
+2.2  Optimization  to  feasibility 
+
+We  will  convert  the  optimization  problem  to  a  feasibility  problem  as  follows: 
+
+1.  Check  feasibility  of  Ax =  b, x ≥ 0. 
+
+2.  If  answer  is  infeasible,  we  are  done  because  LP  is  infeasible. 
+
+3.  Otherwise,  check  feasibility  of  dual.  Dual  is  max{bT y  :  AT y  ≤  c}.  Check  for  feasibility  of 
+AT y ≤ c. 
+
+•	 If  dual  is  not  feasible,  we  are  done  because  LP  is  unbounded. 
+•	 Otherwise,  both  primal  and  dual  are  feasible.  Their  solutions  have  to  match  by  strong 
+duality.  Hence,  we  check  for  feasibility  of  Ax  =  b, x  ≥  0, AT y  ≤  c, cT x  =  bT y  to  ﬁnd  a 
+solution  for  both  primal  and  dual. 
+
+12  - Ellipsoid  algorithm-5 
+
+2.3  Outer  and  inner  cubes 
+
+Here we describe how to go from a  system of linear inequalities to  an equivalent one (in terms of 
+feasibility)  which  if  non-empty  is  full-diemnsional  and  has  enough  volume. 
+Proposition  4  Let  P  :=  {x  :  Ax  ≤  b}  and  e  be  the  vector  of  al l  ones.  Assume  that  A  has  ful l 
+1 
+L e, −2L  ≤  xj  ≤  2L  for  al l  j }  is 
+column  rank  n1 .  Then  P  is  nonempty  iﬀ  P ′  =  {x  :  Ax  ≤  b +  2
+nonempty. 
+This  proposition  allows  us  to  choose  E0  to  be  a  ball  centered  at  the  origin  containing  the  cube 
+�−2L , 2L�n 
+.  Also,  if  there  exists  a  ˆx  such  that  Axˆ ≤ b  then 
+1  � 
+�  1 
+� 
+� 
+1 
+22L  ≤ b + 
+22L namax  e ≤ 
+A  xˆ ± 
+2L e  where  amax  is  max  entry  of  A. 
+That  gives  us  a  little  cube  around  ˆ The  time  for  ﬁnding  an  x  in  P 
+is  thus  O(n · nL), because 
+′ 
+x. 
+L  �n 
+the  ratio  of  the  volumes  of  �−2L , 2L�n 
+to  �− 22
+1 
+1 
+is 8Ln .  Recall  that  ﬁnding  x  in  P  takes 
+L  , 22
+O(n log  V ol(E0 ) ) iterations.  That  means  LP  takes  polynomial  time  in  L.
+V ol(P ) 
+Proof  of  Proposition  4:  We  ﬁrst  prove  the  forward  direction.  Suppose  P  =6
+∅.  Our  only  worry 
+is  whether  there  is  any  element  in  P  inside the big  box.  This has been done in previous lecture.  We 
+consider  a  vertex  x  in  P  (this  exists  because A  has  full  column  rank).  This  implies  that  x  is deﬁned 
+by  AS x =  bS ,  where  AS  is  a  submatrix  of  A.  Using  Cramer’s  rule,  we  can  write  x  as 
+� 
+� 
+pn 
+q 
+with  |pi | < 2L  and 1  ≤ q < 2L . 
+We  now  work  on  the  converse.  {x  :  Ax  ≤  b}  =  ∅  implies,  by  Farkas’  Lemma,  there  exists  a  y 
+such  that  y  ≥  0,  AT y  =  0,  and  bT y  =  −1.  We  can  choose  a  vertex  of  AT y  = 0,  bT y  =  −1,  y  ≥  0. 
+Rewrite  this  as 
+�  0  � 
+�  AT  �
+bT 
+−1 
+By  Cramer’s  rule,  we  can  bound  the  components  of  a  basic  feasible  solution  y  as: 
+� r1 
+rm � 
+T 
+y  = 
+s 
+s
+�  AT  � 
+with  0  ≤  s, ri  ≤  detmax 
+.  Expanding  the  determinant  along  the  last  row,  we  see  that 
+bT 
+�  AT  � 
+≤  mbmax detmax (A).  Using  the  fact  that  2L  >  2m2n detmax (A)bmax ,  we  obtain 
+detmax 
+bT 
+0  ≤ s, ri  <  2m 2n 2L  ≤  2m+1 2L . 
+m
+m
+Therefore, 
+�T 
+�
+y =  bT y +
+b +
+���� 
+−1 
+(The last inequality holds for  m ≥ 1.)  By  Farkas’  Lemma  again,  this  y  shows  that  there  is  no  x 
+1 
+satisfying  Ax ≤ b +  2
+L  e, i.e.  P ′  is  empty. 
+� 
+
+1 
+2L e T y =  −1 + 
+
+2
+m
+2m+1  < 0. 
+
+, · · ·  ,
+
+, 
+
+x = 
+
+p1  p2 
+, · · ·  , 
+,
+q 
+q
+
+y = 
+
+, y ≥ 0.
+
+1
+2L e
+
+1 Small  detour:  We  have  previously  dealt  with  the  constraint  problem  Ax =  b, x ≥  0.  If  this  is  non-empty,  then 
+we  have  a  vertex  in  the  feasible  solution.  However,  there  is  not  guaranteed  if  the  constraints  are  of  the  form  Ax ≤  b. 
+But  if  we  have  rank(A) =  n,  A  ∈  Rm×n ,  then  a  non-empty  P  will  always  contain  a  vertex.  In  our  case,  since  we 
+convert  from  the  problem  with  constraints  x ≥  0,  we  would  have  inequalities  −I x ≤  0  and  full  column  rank. 
+
+12  - Ellipsoid  algorithm-6 
+
+2.4  Obtaining  a  solution 
+
+There  is  one  last  problem.  If  the  ellipsoid  method  returns  a  x  in  P  ,  x might  not  be  in  P . 
+′
+One  solution  is  to  round  the  coeﬃcients  of  the  inequalities  to  rational  numbers  and  “repair” 
+these  inequalities  to  make  x  ﬁt in  P .  This  is  called  simultaneous  Diophantine  approximations,  and 
+will  not  be  discussed. 
+We  can  solve  this  problem  by  another  method.  We  give  a  general  method  for  ﬁnding  a  feasible 
+solution  of  a  linear  program,  assuming  that  we  have  a  procedure  that  checks  whether  or  not  the 
+linear  program  is  feasible,  e.g.  ellipsoid  algorithm. 
+Assume,  we  want  to  ﬁnd  a  solution  of  Ax  ≤  b.  The  inequalities  in  this  linear  program  can  be 
+i x ≤ bi  for  i = 1, · · ·  , m.  We  use  the  following  algorithm: 
+written  as  aT
+
+1.  I  ← ∅. 
+
+2.  For  i ← 1 to  m  do 
+
+•  If  the  set  of  solutions  of 
+
+� 
+is  nonempty,  then  I  ← I ∪ {i}. 
+
+a x ≤ bj 
+T
+j
+a x =  bj 
+T
+j
+
+∀j  =  i + 1, · · ·  , m  �
+∀j  ∈ I ∪ {i}
+
+3.  Finally,  solve  x  in  aT
+i x =  bi  for  i ∈ I  with  Gaussian  elimination. 
+
+We  assume  that  the  solution  is  a  vertex  and  satisﬁes  some  equalities.  If  at  step  2,  making  in­
+equality  i an equality  makes the problem infeasible, then the vertex cannot depend  on this inequality 
+and  we  can  discard  it. 
+
+12  - Ellipsoid  algorithm-7 
+
+

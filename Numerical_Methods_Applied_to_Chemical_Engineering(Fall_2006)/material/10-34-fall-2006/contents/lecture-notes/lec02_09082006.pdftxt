@@ -1,0 +1,632 @@
+10.34, Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+Lecture 2: Solving Systems of Linear Equations 
+ 
+
+Sample Function and Computing Tips 
+function k = rate(T, params) 
+% computes rate constant given temperature and Arrhenius parameters 
+% Bill Green 9/8/06 
+% inputs: 
+% T [=] Kelvin 
+% params = [A; n; Ea] 
+% A [=] 1/second 
+% n unitless exponent 
+% Ea [=] kj/mole 
+% 
+% output: 
+% k [=] 1/second 
+% 
+% unpack params 
+A=params(1); 
+N=params(2); 
+ 
+Ea=params(3); 
+R = 8.314; % gas constant J/mole-Kelvin 
+Ea=1000.*Ea; 
+K=A.*(T.^n).*exp(-Ea./(R.*T)); 
+ 
+One additional feature is to include input/output example at bottom of code: 
+ 
+%Tvec = linspace(300,1200); 
+%params = [1e9;0.5;82]; 
+%kvec=rate(Tvec,params); 
+%kvec(3) 
+%ans = 6.1551e-004 
+ 
+Use a lot of ‘%’ comments for 
+1)  The graders to give you partial credit 
+2)  To help you understand your programs when you review 
+3)  For your classmates if they need to operate your program 
+
+ 
+TEST your program in pieces!! 
+Otherwise you write a long program and you have no idea where the problem is. 
+“If you’re going to build a laboratory apparatus, you check the power supply, you 
+check if the tubes leak, if the safety features are in place, etc, before you run 
+experiments. It’s the same thing with software.” 
+ 
+In MATLAB you don’t have to describe the dimension of each array. 
+This can be used to your advantage by setting up the function as follows: 
+function k = rate(T, params) or using a semi-colon:  f(x; p) or f(x; θ) 
+ 
+ 
+ 
+ 
+ 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+ 
+
+p
+
+for any p; good for proving bounds 
+
++
+
+||
+
+w
+
+||
+
+p
+
+p
+
+|
+
+v
+
+k
+
+p
+
+|
+
+||
+
+v
+
+||
+
+p
+
+Matrix Algebra 
+ 
+P-norm of a vector: 
+1
+N
+p
+⎤
+⎡
+= ∑
+⎢
+⎥
+⎢
+⎥
+⎣
+⎦
+k
+1
+=
+p = 1    city-block norm 
+p = 2    length, Euclidean norm 
+p = ∞   largest element, useful for error tolerances 
+ 
+Triangle Inequality: 
+w
+v
+v
+||
+||
+||
+||
++
+≤
+ 
+Matrix times a vector: 
+M * v 
+1) Weighted sum of cols of M 
+ 
+∑=
+vM
+*
+ 
+2) Column of dot products 
+ 
+⎛
+⎜
+⎜
+⎜
+⎜⎜
+⎝
+ 
+3) Rotate and Grow/Shrink 
+4) Linear Mapping 
+
+LLLL
+LLLL
+LLLL
+LLLL
+
+⎞
+⎛
+⎟
+⎜
+⎟
+⎜
+⎟
+⎜
+⎟⎟
+⎜⎜
+⎠
+⎝
+
+row
+1
+row
+2
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
+M
+M
+M
+M
+
+r
+i Mv
+
+M
+row
+n
+
+r
+M
+r
+M
+
+x
+1
+x
+
+2
+
+⎞
+⎟
+⎟
+⎟
+⎟
+⎟
+⎠
+
+⎛
+⎜
+⎜
+⎜
+⎜
+⎜
+⎝
+
+•
+•
+
+r
+v
+r
+v
+
+col
+i
+
+ 
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
+⎛
+⎜
+⎜
+⎜
+⎜⎜
+⎝
+
+M
+x
+n
+
+•
+
+r
+v
+
+r
+M
+
+=
+
+⇒
+
+ 
+
+vr  
+
+kM  
+
+1−
+kM  
+
+wr
+
+ 
+
+Figure 1. A linear map. 
+ 
+ 
+All four of these are going on and you can use whichever you want in the current 
+application. 
+ 
+“I teach little tidbits of information. You have to read the textbook if you want 
+details.” 
+
+10.34, Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 1 
+Page 2 of 5 
+
+ 
+ 
+ 
+
+Reactor System Example 
+ 
+Alcohol + Acid (cid:198) Ester + H2O 
+R-OH  +  RCOOH <-> RCOOR + H2O 
+
+ 
+
+4
+
+Reactor
+
+Sep
+
+1 
+
+2 
+
+3
+
+6 
+
+5
+
+100% steam
+
+100% ester
+
+ 
+
+        m2A
+        m4A
+        m2ROH
+x =   m4ROH 
+        m2H2O
+        m4H2O
+
+Figure 2. A reactor for alcohol and acid. 
+ 
+6 streams and four compounds = 24 stream variables (not counting energy balance) 
+ 
+Assumptions: Stream 3 has same composition Alcohol/Acid as Stream 4 
+                       Set BASIS for stream 1 
+Unknowns: Compositions for streams 2, 4        
+ 
+  m1,ACID + m4,ACID = m2,ACID 
+  m1,ROH + m4,ROH = m2,ROH
+  m1,H2O + m4,H2O = m2,H2O 
+ 
+IR Analysis of Streams 4 and 2: 
+mROH / mH2O = 0.43 
+m2,ROH/m2,Acid = 1.4 
+m2,tot = 2.1m1,tot
+ 
+Set up linear matrix of equations as: 
+-1      1     0     0     0     0                    -m1,Acid
+ 0      0    -1     1     0     0                    -m1,ROH
+ 0      0     0     0    -1     1       (x)  =    -m1,H2O
+ 0      0     0     1     0   -.43                   0 
+-1.4   0     1     0     0     0                     0 
+1       0     1     0     1      0                    2.1m1,tot  
+ 
+10.34, Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 1 
+Page 3 of 5 
+
+earrange equations and use elimination to produce upper triangle matrix U 
+R
+xN = vN / UNN  gives you value of last element 
+unknowns  
+Use backward substitution to solve for other 
+ 
+•
+•
+•
+•
+•
+⎛
+⎞
+⎞
+⎛
+⎜
+⎜
+⎟
+⎟
+0
+•
+•
+•
+•
+⎜
+⎟
+⎜
+⎟
+⎜
+⎟
+⎜
+⎟
+00
+•
+•
+•
+⎜⎜
+⎟⎟
+⎜⎜
+⎟⎟
+000
+•
+•
+⎝
+⎝
+⎠
+⎠
+          U                     v 
+ 
+
+       
+
+( )
+x
+
+=
+
+xU
+*
+
+=
+
+x
+1
+
+⎛ •
+⎜
+0
+⎜
+⎜
+0
+⎜⎜
+0
+⎝
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
++
+
+x
+
+2
+
+⎛
+⎜
+⎜
+⎜
+⎜⎜
+⎝
+
+•
+•
+0
+0
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
++
+
+x
+
+3
+
+⎛
+⎜
+⎜
+⎜
+⎜⎜
+⎝
+
+•
+•
+•
+0
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
++
+
+x
+
+4
+
+⎛
+⎜
+⎜
+⎜
+⎜⎜
+⎝
+
+•
+•
+•
+•
+
+⎞
+⎟
+⎟
+⎟
+⎟⎟
+⎠
+
+=
+
+v
+)(
+
+ 
+
+v
+
+4
+
+U
+44
+r
+v
+Ux
+*
+−=
+4
+new
+v
+3
+
+x
+
+4
+
+=
+
+r
+v
+
+new
+
+x
+
+3
+
+=
+
+col
+4
+
+U
+
+33
+
+ 
+C
+an permute the rows. Can permute the columns, if you permute the variables in the 
+x vector. 
+
+MATLAB examples 
+) 
+function x = backsub(U,v
+N =  
+for i=
+1: (N-1) 
+i; 
+      m = N+1 – 
+      x(m) = v(m)/U(
+m,m); 
+      v=v-x(m)*U(: ,m) 
+ 
+U
+se of the colon ‘:’ 
+ 
+M
+ =[1 2 3 4; 5 6 7 8]; 
+v1=M(:,1) 
+    1 
+    5 
+m = M(:
+,1:2) 
+m = 
+     
+   1   2
+ 
+        5   6 
+ 
+fo
+r loop 
+ silly.m 
+Save as:
+function sum = si
+lly 
+sum = 0 
+for i = 2
+:4 
+       sum = 
+sum + i; 
+end 
+10.34, Numerical Methods Applied to Chemical Engineering 
+Prof. William Green 
+ 
+ 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical 
+Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of 
+Technology. Downloaded on [DD Month YYYY]. 
+
+Lecture 1 
+Page 4 of 5 
+
+

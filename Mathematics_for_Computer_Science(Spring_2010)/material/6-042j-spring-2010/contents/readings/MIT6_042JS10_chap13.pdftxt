@@ -1,0 +1,738 @@
+Chapter 13 
+
+Communication Networks 
+
+13.1  Communication Networks 
+
+Modeling  communication  networks  is  an  important  application  of  digraphs  in 
+computer  science.  In  this  such models,  vertices  represent  computers,  processors, 
+and switches; edges will represent wires, ﬁber, or other transmission lines through 
+which data ﬂows.  For some communication networks, like the internet, the corre­
+sponding graph is enormous and largely chaotic.  Highly structured networks, by 
+contrast, ﬁnd application in telephone switching systems and the communication 
+hardware inside parallel computers.  In this chapter, we’ll look at some of the nicest 
+and most commonly used structured networks. 
+
+13.2  Complete Binary Tree 
+
+Let’s  start  with  a  complete  binary  tree.  Here  is  an  example  with  4  inputs  and  4 
+outputs. 
+
+253 
+
+254 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+The kinds of communication networks we consider aim to transmit packets of 
+data between computers, processors, telephones, or other devices. The term packet 
+refers  to  some  roughly  ﬁxed-size  quantity  of  data—  256  bytes  or  4096  bytes  or 
+whatever.  In  this diagram  and many  that  follow,  the  squares  represent  terminals, 
+sources and destinations for packets of data.  The circles represent switches, which 
+direct packets through the network.  A switch receives packets on incoming edges 
+and relays them forward along the outgoing edges.  Thus, you can imagine a data 
+packet hopping through the network from an input terminal,  through a sequence 
+of switches joined by directed edges, to an output terminal. 
+Recall that there is a unique simple path between every pair of vertices in a tree. 
+So  the natural way  to  route  a packet of data  from  an  input  terminal  to  an output 
+in the complete binary tree is along the corresponding directed path.  For example, 
+the route of a packet traveling from input 1 to output 3 is shown in bold. 
+
+13.3  Routing Problems 
+
+Communication  networks  are  supposed  to  get  packets  from  inputs  to  outputs, 
+with each packet entering  the network at  its own  input  switch and arriving at  its 
+own output switch.  We’re going to consider several different communication net­
+work designs, where each network has N  inputs and N  outputs; for convenience, 
+we’ll assume N  is a power of two. 
+Which input is supposed to go where is speciﬁed by a permutation of {0, 1, . . . , N  − 1}. 
+So a permutation, π , deﬁnes a routing problem:  get a packet that starts at input i to 
+output π(i). A routing, P , that solves a routing problem, π , is a set of paths from each 
+input to its speciﬁed output.  That is, P  is a set of n paths, Pi ,  for i  = 0 . . . , N  − 1, 
+where Pi  goes from input i to output π(i). 
+
+INOUTINININOUTOUTOUT0011223313.4.  NETWORK DIAMETER 
+
+255 
+
+13.4  Network Diameter 
+
+The  delay  between  the  time  that  a  packets  arrives  at  an  input  and  arrives  at  its 
+designated  output  is  a  critical  issue  in  communication  networks.  Generally  this 
+delay is proportional to the length of the path a packet follows.  Assuming it takes 
+one  time unit  to  travel  across  a wire,  the delay  of  a packet will  be  the number  of 
+wires it crosses going from input to output. 
+Generally  packets  are  routed  to  go  from  input  to  output  by  the  shortest  path 
+possible.  With  a  shortest  path  routing,  the  worst  case  delay  is  the  distance  be­
+tween  the  input  and  output  that  are  farthest  apart.  This  is  called  the  diameter  of 
+the network.  In other words, the diameter of a network1  is the maximum length of 
+any shortest path between an  input and an output.  For example,  in  the complete 
+binary tree above, the distance from input 1 to output 3 is six. No input and output 
+are farther apart than this, so the diameter of this tree is also six. 
+More generally, the diameter of a complete binary tree with N  inputs and out­
+puts is 2 log N + 2.  (All logarithms in this lecture— and in most of computer science 
+—are base 2.) This is quite good, because the logarithm function grows very slowly. 
+We could connect up 210  =  1024  inputs and outputs using a complete binary tree 
+and  the worst  input-output delay  for any packet would be  this diameter, namely, 
+2 log(210 ) + 2 = 22. 
+
+13.4.1  Switch Size 
+One way to reduce the diameter of a network is to use larger switches.  For exam­
+ple,  in  the  complete  binary  tree, most  of  the  switches  have  three  incoming  edges 
+and  three  outgoing  edges,  which  makes  them  3 ×  3  switches.  If  we  had  4 ×  4 
+switches, then we could construct a complete ternary tree with an even smaller di­
+ameter.  In  principle,  we  could  even  connect  up  all  the  inputs  and  outputs  via  a 
+single monster N  × N  switch. 
+This isn’t very productive, however, since we’ve just concealed the original net­
+work design problem inside this abstract switch.  Eventually, we’ll have to design 
+the internals of the monster switch using simpler components, and then we’re right 
+back where we  started.  So  the  challenge  in  designing  a  communication  network 
+is  ﬁguring  out  how  to  get  the  functionality  of  an N  × N  switch  using  ﬁxed  size, 
+elementary devices, like 3 × 3 switches. 
+
+13.5  Switch Count 
+
+Another goal  in designing a communication network  is  to use as  few switches as 
+· · ·
+possible. The number of switches in a complete binary tree is 1 + 2 + 4 + 8 + + N ,
+since there is 1 switch at the top (the “root switch”), 2 below it, 4 below those, and 
+
+1 The usual deﬁnition  of  diameter  for  a  general  graph  (simple  or directed)  is  the  largest distance  be­
+tween  any  two  vertices,  but  in  the  context  of  a  communication  network  we’re  only  interested  in  the 
+distance between inputs and outputs, not between arbitrary pairs of vertices. 
+
+256 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+so  forth.  By  the  formula  (6.5)  for geometric sums,  the  total number of switches  is 
+2N  − 1, which is nearly the best possible with 3 × 3 switches. 
+
+13.6  Network Latency 
+
+We’ll sometimes be choosing routings through a network that optimize some quan­
+tity  besides  delay.  For  example,  in  the  next  section  we’ll  be  trying  to  minimize 
+packet congestion. When we’re not minimizing delay, shortest routings are not al­
+ways the best, and in general, the delay of a packet will depend on how it is routed. 
+For any  routing,  the most delayed packet will be  the one  that  follows  the  longest 
+path in the routing. The length of the longest path in a routing is called its latency. 
+The  latency  of  a  network  depends  on  what’s  being  optimized.  It  is measured 
+by  assuming  that  optimal  routings  are  always  chosen  in  getting  inputs  to  their 
+speciﬁed outputs. That is, for each routing problem, π , we choose an optimal rout­
+ing  that solves π .  Then network  latency  is deﬁned  to be  the  largest routing  latency 
+among  these  optimal  routings.  Network  latency  will  equal  network  diameter  if 
+routings are always chosen  to optimize delay, but  it may be signiﬁcantly  larger  if 
+routings are chosen to optimize something else. 
+For  the networks we consider below, paths  from  input  to output are uniquely 
+determined  (in  the  case  of  the  tree)  or  all  paths  are  the  same  length,  so  network 
+latency will always equal network diameter. 
+
+13.7  Congestion 
+
+The complete binary tree has a fatal drawback:  the root switch is a bottleneck.  At 
+best, this switch must handle an enormous amount of trafﬁc:  every packet travel­
+ing  from  the  left  side  of  the  network  to  the  right  or  vice-versa.  Passing  all  these 
+packets  through  a  single  switch  could  take  a  long  time.  At  worst,  if  this  switch 
+fails, the network is broken into two equal-sized pieces. 
+For example, if the routing problem is given by the identity permutation, Id (i)::= 
+i, then there is an easy routing, P , that solves the problem:  let Pi  be the path from 
+input  i up  through  one  switch  and  back down  to  output  i.  On  the  other hand,  if 
+the problem was given by π(i) ::= (N  − 1) − i, then in any solution, Q, for π , each 
+path Qi  beginning at input i must eventually loop all the way up through the root 
+switch and then travel back down to output (N  − 1) − i.  These two situations are 
+illustrated below. 
+
+13.8.  2-D ARRAY 
+
+257 
+
+We  can  distinguish  between  a  “good”  set  of  paths  and  a  “bad”  set  based  on 
+congestion.  The congestion of a routing, P ,  is equal to the largest number of paths 
+in P  that pass through a single switch.  For example, the congestion of the routing 
+on  the  left  is  1,  since  at  most  1  path  passes  through  each  switch.  However,  the 
+congestion  of  the  routing  on  the  right  is  4,  since  4  paths  pass  through  the  root 
+switch (and the two switches directly below the root). Generally, lower congestion 
+is better since packets can be delayed at an overloaded switch. 
+By extending the notion of congestion to networks, we can also distinguish be­
+tween “good” and “bad” networks with respect to bottleneck problems.  For each 
+routing problem, π , for the network, we assume a routing is chosen that optimizes 
+congestion, that is, that has the minimum congestion among all routings that solve 
+π .  Then  the  largest  congestion  that  will  ever  be  suffered  by  a  switch  will  be  the 
+maximum congestion among  these optimal routings.  This “maximin” congestion 
+is called the congestion of the network. 
+So for the complete binary tree, the worst permutation would be π(i) ::= (N  −
+1) − i.  Then in every possible solution for π , every packet, would have to follow a 
+path  passing  through  the  root  switch.  Thus,  the max  congestion  of  the  complete 
+binary tree is N  —which is horrible! 
+Let’s tally the results of our analysis so far: 
+
+network  diameter 
+complete binary tree  2 log N  + 2 
+
+switch size  # switches  congestion 
+3 × 3 
+2N  − 1
+N
+
+13.8  2-D Array 
+
+Let’s look at an another communication network. This one is called a 2-dimensional 
+array or grid. 
+
+INOUTINININOUTOUTOUT00112233INOUTINININOUTOUTOUT00112233258 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+Here there are four inputs and four outputs, so N  = 4. 
+The diameter in this example is 8, which is the number of edges between input 
+0 and output 3. More generally, the diameter of an array with N  inputs and outputs 
+is 2N , which is much worse than the diameter of 2 log N + 2 in the complete binary 
+tree.  On  the  other  hand,  replacing  a  complete  binary  tree  with  an  array  almost 
+eliminates congestion. 
+
+Theorem 13.8.1.  The congestion of an N -input array is 2. 
+
+Proof.  First, we  show  that  the  congestion  is  at most  2.  Let π  be  any permutation. 
+Deﬁne a solution, P , for π to be the set of paths, Pi , where Pi  goes to the right from 
+input i to column π(i) and then goes down to output π(i). Thus, the switch in row 
+i and column j transmits at most two packets:  the packet originating at input i and 
+the packet destined for output j . 
+Next,  we  show  that  the  congestion  is  at  least  2.  This  follows  because  in  any 
+routing problem, π , where π(0) = 0 and π(N − 1) = N − 1, two packets must pass 
+� 
+through the lower left switch. 
+
+As with the tree, the network latency when minimizing congestion is the same 
+as the diameter. That’s because all the paths between a given input and output are 
+the same length. 
+Now we can record the characteristics of the 2-D array. 
+
+diameter 
+network 
+complete binary tree  2 log N  + 2 
+2N 
+2-D array 
+
+switch size  # switches  congestion
+3 × 3 
+2N  − 1
+N
+2 × 2 
+2
+N 2
+
+The crucial entry here is the number of switches, which is N 2 . This is a major defect 
+of the 2-D array; a network of size N  = 1000 would require a million 2 × 2 switches! 
+Still,  for  applications where N  is  small,  the  simplicity  and  low  congestion  of  the 
+array make it an attractive choice. 
+
+ININININ0123OUTOUTOUTOUT012313.9.  BUTTERFLY 
+
+13.9  Butterﬂy 
+
+259 
+
+The  Holy  Grail  of  switching  networks  would  combine  the  best  properties  of  the 
+complete  binary  tree  (low  diameter,  few  switches)  and  of  the  array  (low  conges­
+tion). The butterﬂy is a widely-used compromise between the two. 
+A good way to understand butterﬂy networks is as a recursive data type.  The 
+recursive  deﬁnition works  better  if we  deﬁne  just  the  switches  and  their  connec­
+tions,  omitting  the  terminals.  So we  recursively deﬁne Fn  to be  the  switches  and 
+connections of the butterﬂy net with N  ::= 2n  input and output switches. 
+The base  case  is F1  with 2  input  switches and 2 output  switches  connected as 
+in Figure 13.1. 
+
+Figure 13.1: F1 , the Butterﬂy Net switches with N  = 21 . 
+
+In  the  constructor  step,  we  construct  Fn+1  with  2n+1  inputs  and  outputs  out 
+of  two  Fn  nets  connected  to  a  new  set  of  2n+1  input  switches,  as  shown  in  as  in 
+Figure  13.2.  That  is,  the  ith  and  2n  + ith  new  input  switches  are  each  connected 
+to  the  same  two  switches,  namely,  to  the  ith  input  switches  of  each  of  two  Fn 
+components  for  i  = 1, . . . , 2n .  The output switches of Fn+1  are simply  the output 
+switches of each of the Fn  copies. 
+So Fn+1  is  laid  out  in  columns  of  height  2n+1  by  adding  one more  column  of 
+switches  to  the  columns  in  Fn .  Since  the  construction  starts  with  two  columns 
+when  n  = 1,  the  Fn+1  switches  are  arrayed  in  n + 1  columns.  The  total  number 
+of  switches  is  the  height  of  the  columns  times  the  number  of  columns,  namely, 
+2n+1 (n + 1). Remembering that n =  log N , we conclude that the Butterﬂy Net with 
+
+2inputs2 outputsN= 21N= 21260 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+Figure 13.2: Fn+1 , the Butterﬂy Net switches with 2n+1  inputs and outputs. 
+
+N  inputs has N (log N  + 1) switches. 
+Since every path in Fn+1  from an input switch to an output is the same length, 
+namely, n + 1, the diameter of the Butterﬂy net with 2n+1  inputs is this length plus 
+two  because  of  the  two  edges  connecting  to  the  terminals  (square  boxes)  —one 
+edge  from  input  terminal  to  input  switch  (circle)  and  one  from  output  switch  to 
+output terminal. 
+There  is  an  easy  recursive  procedure  to  route  a  packet  through  the  Butterﬂy 
+Net.  In the base case, there is obviously only one way to route a packet from one of 
+the two inputs to one of the two outputs. Now suppose we want to route a packet 
+from  an  input  switch  to  an  output  switch  in  Fn+1 .  If  the  output  switch  is  in  the 
+“top” copy of Fn ,  then the ﬁrst step in the route must be from the input switch to 
+the unique  switch  it  is connected  to  in  the  top copy;  the  rest of  the  route  is deter­
+mined by recursively routing  the rest of  the way  in  the  top copy of Fn .  Likewise, 
+if  the output  switch  is  in  the “bottom”  copy of Fn ,  then  the ﬁrst  step  in  the  route 
+must be to the switch in the bottom copy, and the rest of the route is determined by 
+recursively routing in the bottom copy of Fn .  In fact, this argument shows that the 
+routing is unique:  there is exactly one path in the Butterﬂy Net from each input to 
+each output, which implies that the network latency when minimizing congestion 
+is the same as the diameter. 
+
+⎧⎨F⎨⎩2nFn2n1  tt⎩⎧⎨F2n+1  outputs⎨⎩2nFnFnewinputs⎩Fn+113.10.  BENE ˘S NETWORK 
+N  if N  is an even power of 2 and � 
+√
+√
+The congestion of  the butterﬂy network  is about 
+N , more precisely,  the con­
+N/2 if N  is an odd power of 2.  A 
+gestion is 
+simple proof of this appears in Problem13.8. 
+Let’s add the butterﬂy data to our comparison table: 
+
+261 
+
+switch size 
+3 × 3 
+2 × 2 
+2 × 2 
+
+# switches 
+2N  − 1
+N 2
+N (log(N ) + 1) 
+
+network  diameter 
+complete binary tree  2 log N  + 2 
+2N 
+2-D array 
+log N  + 2 
+butterﬂy 
+
+congestion 
+N  or � 
+N
+2
+N/2
+The  butterﬂy  has  lower  congestion  than  the  complete  binary  tree.  And  it  uses 
+fewer  switches  and  has  lower  diameter  than  the  array.  However,  the  butterﬂy 
+does  not  capture  the  best  qualities  of  each  network,  but  rather  is  a  compromise 
+somewhere between the two.  So our quest for the Holy Grail of routing networks 
+goes on. 
+
+√
+
+13.10  Bene ˘s Network 
+
+In  the  1960’s,  a  researcher  at  Bell  Labs  named  Bene ˘s  had  a  remarkable  idea.  He 
+obtained  a marvelous  communication  network with  congestion  1  by  placing  two 
+butterﬂies back-to-back. This amounts to recursively growing Bene˘s nets by adding 
+both  inputs  and  outputs  at  each  stage.  Now  we  recursively  deﬁne  Bn  to  be  the 
+switches  and  connections  (without  the  terminals)  of  the  Bene ˘s  net with N  ::= 2n 
+input and output switches. 
+The  base  case,  B1 ,  with  2  input  switches  and  2  output  switches  is  exactly  the 
+same as F1  in Figure 13.1. 
+In  the  constructor  step,  we  construct Bn+1  out  of  two Bn  nets  connected  to  a 
+new set of 2n+1  input switches and also a new set of 2n+1  output switches.  This is 
+illustrated in Figure 13.3. 
+Namely, the ith and 2n + ith new input switches are each connected to the same 
+two switches, namely, to the ith input switches of each of two Bn  components for 
+i  = 1, . . . , 2n , exactly as  in the Butterﬂy net.  In addition,  the ith and 2n  + ith new 
+output switches are connected to the same two switches, namely, to the ith output 
+switches of each of two Bn  components. 
+Now Bn+1  is laid out in columns of height 2n+1  by adding two more columns 
+of  switches  to  the  columns  in  Bn .  So  the  Bn+1  switches  are  arrayed  in  2(n + 1) 
+columns.  The total number of switches is the number of columns times the height 
+of the columns, namely, 2(n + 1)2n+1 . 
+All  paths  in  Bn+1  from  an  input  switch  to  an  output  are  the  same  length, 
+namely,  2(n + 1) − 1,  and  the  diameter  of  the  Bene ˘s  net with  2n+1  inputs  is  this 
+length plus two because of the two edges connecting to the terminals. 
+So Bene ˘s has doubled the number of switches and the diameter, of course, but 
+completely eliminates congestion problems! The proof of this fact relies on a clever 
+induction argument that we’ll come to in a moment.  Let’s ﬁrst see how the Bene ˘s 
+
+262 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+Figure 13.3: Bn+1 , the Bene ˘s Net switches with 2n+1  inputs and outputs. 
+
+network stacks up: 
+
+network  diameter 
+2 log N  + 2
+
+complete binary tree 
+2N
+
+2-D array 
+log N  + 2
+
+butterﬂy 
+2 log N  + 1
+
+Bene ˘s 
+
+switch size 
+3 × 3 
+2 × 2 
+2 × 2 
+2 × 2 
+
+# switches 
+2N  − 1
+
+N 2
+
+N (log(N ) + 1)
+
+2N log N
+
+
+congestion 
+N  or � 
+N 
+2 
+N/2 
+1 
+
+√
+
+The  Bene ˘s  network  has  small  size  and  diameter,  and  completely  eliminates  con­
+gestion. The Holy Grail of routing networks is in hand! 
+
+Theorem 13.10.1.  The congestion of the N -input Bene˘s network is 1.
+
+
+Proof.  By induction on n where N  = 2n .  So the induction hypothesis is
+
+
+⎧⎫⎧⎨⎩2n⎫⎪Bn⎩⎧⎪⎬⎪2n+1⎧⎨⎩2n⎪⎭Bn⎩⎭Bnew inputsnew outputsBn+1pp13.10.  BENE ˘S NETWORK 
+
+263 
+
+P (n) ::= the congestion of Bn  is 1. 
+Base case (n = 1): B1  = F1  and the unique routings in F1  have congestion 1. 
+Inductive step:  We assume that the congestion of an N  = 2n -input Bene ˘s net­
+work is 1 and prove that the congestion of a 2N -input Bene ˘s network is also 1. 
+Digression.  Time  out!  Let’s work  through  an  example,  develop  some  intu­
+ition, and then complete the proof.  In the Bene ˘s network shown below with N  = 8 
+inputs and outputs, the two 4-input/output subnetworks are in dashed boxes. 
+
+By the inductive assumption, the subnetworks can each route an arbitrary per­
+mutation with congestion 1. So if we can guide packets safely through just the ﬁrst 
+and last levels, then we can rely on induction for the rest! Let’s see how this works 
+in an example. Consider the following permutation routing problem: 
+
+π(0) = 1 
+π(1) = 5 
+π(2) = 4 
+π(3) = 7 
+
+π(4) = 3 
+π(5) = 6 
+π(6) = 0 
+π(7) = 2 
+
+We  can  route  each  packet  to  its  destination  through  either  the  upper  subnet­
+work or the lower subnetwork. However, the choice for one packet may constrain 
+the  choice  for another.  For  example, we  can not  route both packet 0  and packet 4 
+through the same network since that would cause two packets to collide at a single 
+switch, resulting in congestion.  So one packet must go through the upper network 
+and the other through the lower network. Similarly, packets 1 and 5, 2 and 6, and 3 
+
+OUTOUTOUTOUTOUTOUT01OUT32OUT4567ININININININININ01234567264 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+and 7 must be routed through different networks. Let’s record these constraints in 
+a graph. The vertices are the 8 packets.  If two packets must pass through different 
+networks,  then  there  is  an  edge  between  them.  Thus,  our  constraint  graph  looks 
+like this: 
+
+Notice that at most one edge is incident to each vertex. 
+The output side of the network imposes some further constraints. For example, 
+the  packet  destined  for  output  0  (which  is  packet  6)  and  the  packet  destined  for 
+output  4  (which  is  packet  2)  can  not  both  pass  through  the  same  network;  that 
+would require both packets to arrive from the same switch.  Similarly, the packets 
+destined for outputs 1 and 5, 2 and 6, and 3 and 7 must also pass through different 
+switches. We can record these additional constraints in our graph with gray edges: 
+
+Notice  that  at  most  one  new  edge  is  incident  to  each  vertex.  The  two  lines 
+drawn between vertices 2 and 6 reﬂect the two different reasons why these packets 
+must be routed through different networks. However, we intend this to be a simple 
+graph; the two lines still signify a single edge. 
+Now  here’s  the  key  insight:  a  2-coloring  of  the  graph  corresponds  to  a  solution  to 
+the  routing  problem.  In  particular,  suppose  that we  could  color  each  vertex  either 
+red  or  blue  so  that  adjacent  vertices  are  colored  differently.  Then  all  constraints 
+are  satisﬁed  if we  send  the  red  packets  through  the  upper  network  and  the  blue 
+packets through the lower network. 
+The  only  remaining  question  is  whether  the  constraint  graph  is  2-colorable, 
+which is easy to verify: 
+
+123456701234567013.10.  BENE ˘S NETWORK 
+
+265 
+
+Lemma 13.10.2.  Prove that if the edges of a graph can be grouped into two sets such that 
+every vertex has at most 1 edge from each set incident to it, then the graph is 2-colorable. 
+
+Proof.  Since the two sets of edges may overlap, let’s call an edge that is in both sets 
+a doubled edge. 
+We know  from Theorem 10.6.2  that all we have  to do  is show  that every cycle 
+has even length. There are two cases: 
+Case  1:  [The  cycle  contains  a  doubled  edge.]  No  other  edge  can  be  incident 
+to  either  of  the  endpoints  of  a  doubled  edge,  since  that  endpoint  would  then  be 
+incident to two edges from the same set.  So a cycle traversing a doubled edge has 
+nowhere to go but back and forth along the edge an even number of times. 
+Case  2:  [No  edge  on  the  cycle  is  doubled.]  Since  each  vertex  is  incident  to 
+at  most  one  edge  from  each  set,  any  path  with  no  doubled  edges  must  traverse 
+successive edges that alternate from one set to the other.  In particular, a cycle must 
+traverse a path of alternating edges that begins and ends with edges from different 
+� 
+sets. This means the cycle has to be of even length. 
+
+For example, here is a 2-coloring of the constraint graph: 
+
+The solution to this graph-coloring problem provides a start on the packet rout­
+ing problem: 
+We can complete  the routing  in  the  two smaller Bene ˘s networks by  induction! 
+Back to the proof. End of Digression. 
+Let  π  be  an  arbitrary  permutation  of  {0, 1, . . . , N  − 1}.  Let  G  be  the  graph 
+whose  vertices  are  packet  numbers  0, 1, . . . , N  −  1  and  whose  edges  come  from 
+the union of these two sets: 
+E1 ::= {u—v  | |u − v | = N/2} ,  and 
+E2 ::= {u—w  | |π(u) − π(w)| = N/2} . 
+Now any vertex, u, is incident to at most two edges:  a unique edge u—v ∈ E1  and 
+a  unique  edge  u—w  ∈  E2 .  So  according  to  Lemma  13.10.2,  there  is  a  2-coloring 
+for  the  vertices  of G.  Now  route  packets  of  one  color  through  the  upper  subnet­
+work and packets of the other color through the lower subnetwork.  Since for each 
+
+12345670redblueredredredblueblueblue266 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+edge  in  E1 ,  one  vertex  goes  to  the  upper  subnetwork  and  the  other  to  the  lower 
+subnetwork,  there will  not  be  any  conﬂicts  in  the  ﬁrst  level.  Since  for  each  edge 
+in E2 , one vertex comes from the upper subnetwork and the other from the lower 
+subnetwork,  there will not be any  conﬂicts  in  the  last  level.  We  can  complete  the 
+� 
+routing within each subnetwork by the induction hypothesis P (n). 
+
+13.10.1  Problems 
+Exam Problems 
+
+Problem 13.1. 
+Consider the following communication network: 
+
+(a)  What is the max congestion? 
+
+(b)	 Give an input/output permutation, π0 , that forces maximum congestion: 
+π0 (0) = 
+π0 (1) = 
+π0 (2) = 
+
+(c)  Give an input/output permutation, π1 , that allows minimum congestion: 
+π1 (2) = 
+π1 (1) = 
+π1 (0) = 
+
+(d)  What  is  the  latency  for  the  permutation  π1 ?  (If  you  could  not  ﬁnd  π1 ,  just 
+choose a permutation and ﬁnd its latency.) 
+
+Class Problems 
+
+Problem 13.2. 
+The  Bene ˘s  network  has  a max  congestion  of  1;  that  is,  every  permutation  can  be 
+routed  in such a way  that a single packet passes  through each switch.  Let’s work 
+through an example. A Bene ˘s network of size N  = 8 is attached. 
+(a)  Within  the  Bene ˘s  network  of  size N  = 8,  there  are  two  subnetworks  of  size 
+N  = 4.  Put  boxes  around  these.  Hereafter,  we’ll  refer  to  these  as  the  upper  and 
+lower subnetworks. 
+
+IN0IN1IN2OUT0OUT1OUT213.10.  BENE ˘S NETWORK 
+
+267 
+
+(b)  Now consider the following permutation routing problem: 
+
+π(0) = 3 
+π(1) = 1 
+π(2) = 6 
+π(3) = 5 
+
+π(4) = 2 
+π(5) = 0 
+π(6) = 7 
+π(7) = 4 
+
+Each  packet  must  be  routed  through  either  the  upper  subnetwork  or  the  lower 
+subnetwork.  Construct  a  graph with  vertices  0,  1,  . . . ,  7  and  draw  a  dashed  edge 
+between each pair of packets that can not go through the same subnetwork because 
+a collision would occur in the second column of switches. 
+
+(c)  Add a  solid edge  in your graph between each pair of packets  that  can not go 
+through  the  same  subnetwork because  a  collision would occur  in  the next-to-last 
+column of switches. 
+
+(d)  Color  the  vertices  of  your  graph  red  and  blue  so  that  adjacent  vertices  get 
+different colors. Why must this be possible, regardless of the permutation π? 
+
+(e)  Suppose  that  red  vertices  correspond  to  packets  routed  through  the  upper 
+subnetwork and blue vertices correspond to packets routed through the lower sub­
+network.  On  the  attached  copy  of  the  Bene ˘s  network,  highlight  the  ﬁrst  and  last 
+edge traversed by each packet. 
+
+(f)  All that remains is to route packets through the upper and lower subnetworks. 
+One way  to  do  this  is  by  applying  the  procedure  described  above  recursively  on 
+each subnetwork. However, since the remaining problems are small, see if you can 
+complete all the paths on your own. 
+
+268 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+OUTOUTOUTOUTOUTOUT01OUT32OUT4567ININININININININ0123456713.10.  BENE ˘S NETWORK 
+
+269 
+
+Problem 13.3. 
+A multiple binary-tree network has n inputs and n outputs, where n is a power of 2. 
+Each input is connected to the root of a binary tree with n/2 leaves and with edges 
+pointing  away  from  the  root.  Likewise,  each  output  is  connected  to  the  root  of  a 
+binary tree with n/2 leaves and with edges pointing toward the root. 
+Two edges point from each leaf of an input tree, and each of these edges points 
+to a leaf of an output tree. The matching of leaf edges is arranged so that for every 
+input and output tree, there is an edge from a leaf of the input tree to a leaf of the 
+output tree, and every output tree leaf has exactly two edges pointing to it. 
+(a)  Draw such a multiple binary-tree net for n = 4. 
+
+(b)  Fill in the table, and explain your entries. 
+
+# switches  switch size  diameter  max congestion 
+
+Problem 13.4. 
+The  n-input  2-D  Array  network  was  shown  to  have  congestion  2.  An  n-input  2­
+Layer Array consisting of two n-input 2-D Arrays connected as pictured below for 
+n = 4. 
+
+In general, an n-input 2-Layer Array has two layers of switches, with each layer 
+connected like an n-input 2-D Array. There is also an edge from each switch in the 
+ﬁrst  layer  to  the  corresponding  switch  in  the  second  layer.  The  inputs  of  the  2­
+Layer Array enter  the  left  side of  the ﬁrst  layer,  and  the n outputs  leave  from  the 
+bottom row of either layer. 
+(a)  For any given input-output permutation,  there  is a way to route packets that 
+achieves congestion 1. Describe how to route the packets in this way. 
+
+(b)  What is the latency of a routing designed to minimize latency? 
+
+IN0IN1IN2IN3OUT0OUT1OUT2OUT3270 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+(c)  Explain why the congestion of any minimum latency (CML) routing of pack­
+ets through this network is greater than the network’s congestion. 
+
+Problem 13.5. 
+A 5-path communication network is shown below.  From this, it’s easy to see what 
+an n-path network would be. Fill in the table of properties below, and be prepared 
+to justify your answers. 
+
+5-Path 
+
+network  # switches  switch size  diameter  max congestion 
+5-path 
+n-path 
+
+Problem 13.6. 
+Tired of being a TA, Megumi has decided to become famous by coming up with a 
+new, better communication network design.  Her network has the following spec­
+iﬁcations:  every  input  node will  be  sent  to  a  Butterﬂy  network,  a  Benes  network 
+and a 2D Grid network. At the end, the outputs of all three networks will converge 
+on the new output. 
+In  the Megumi-net  a minimum  latency  routing  does  not  have minimum  con­
+gestion.  The  latency  for min-congestion (LMC) of a net  is the best bound on  latency 
+achievable  using  routings  that  minimize  congestion.  Likewise,  the  congestion  for 
+min-latency  (CML)  is  the best bound on congestion achievable using  routings  that 
+minimize latency. 
+
+IN0IN1IN2IN3IN4OUT0OUT1OUT2OUT3OUT413.10.  BENE ˘S NETWORK 
+
+271 
+
+Fill in the following chart for Megumi’s new net and explain your answers. 
+
+network 
+Megumi’s net 
+
+diameter 
+
+# switches 
+
+congestion 
+
+LMC 
+
+CML 
+
+Homework Problems 
+
+Problem 13.7. 
+Louis Reasoner ﬁgures that, wonderful as the Bene ˘s network may be, the butterﬂy 
+network has a few advantages, namely:  fewer switches, smaller diameter, and an 
+easy  way  to  route  packets  through  it.  So  Louis  designs  an  N -input/output  net­
+work he modestly calls a Reasoner-net with the aim of combining the best features 
+of both the butterﬂy and Bene ˘s nets: 
+
+The ith input switch in a Reasoner-net connects to two switches, ai  and 
+bi ,  and  likewise,  the  j th  output  switch  has  two  switches,  yj  and  zj , 
+connected  to  it.  Then  the Reasoner-net has an N -input Bene ˘s network 
+connected using  the ai  switches as  input switches and  the yj  switches 
+as its output switches.  The Reasoner-net also has an N -input butterﬂy 
+net  connected  using  the  bi  switches  as  inputs  and¡  the  zj  switches  as 
+outputs. 
+
+In  the Reasoner-net a minimum  latency  routing does not have minimum con­
+gestion.  The  latency  for min-congestion (LMC) of a net  is the best bound on  latency 
+achievable  using  routings  that  minimize  congestion.  Likewise,  the  congestion  for 
+min-latency  (CML)  is  the best bound on congestion achievable using  routings  that 
+minimize latency. 
+
+..............................I1I2I3INO1O2O3ONButterflyBenes2-D272 
+
+CHAPTER 13.  COMMUNICATION NETWORKS 
+
+Fill  in  the  following  chart  for  the  Reasoner-net  and  brieﬂy  explain  your  an­
+swers. 
+
+diameter  switch size(s)  # switches  congestion  LMC  CML 
+
+Problem 13.8. 
+Show that the congestion of the butterﬂy net, Fn , is exactly 
+Hint: 
+
+√
+N  when n is even. 
+
+•	 There  is  a unique path  from  each  input  to  each output,  so  the  congestion  is 
+the maximum number of messages passing through a vertex for any routing 
+problem. 
+
+•	 If v  is a vertex  in column  i of  the butterﬂy network,  there  is a path  from ex­
+actly 2i  input vertices to v and a path from v  to exactly 2n−i  output vertices. 
+
+•	 At  which  column  of  the  butterﬂy  network  must  the  congestion  be  worst? 
+What is the congestion of the topmost switch in that column of the network? 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.042J / 18.062J Mathematics for Computer Science 
+Spring 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

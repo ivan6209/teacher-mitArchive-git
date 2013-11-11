@@ -1,0 +1,368 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.006 Introduction to Algorithms 
+Spring 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+6.006 Recitation
+
+Build 2008.25
+
+
+6.006 Proudly Presents
+
+
+• Dijkstra: minimum-cost paths on crack 
+• Algorithm 
+• Concepts 
+• Implementation 
+• Data structures come back from the dead 
+(not talking about the quiz) 
+
+Minimum-Path Problem
+
+• Given: graph G, source vertex s, edge costs
+
+• Want: paths from s to everything else with 
+minimum costs (sum of edge costs) 
+• Approach: let d[v] be upper bounds for the 
+real minimum costs, δ[v] 
+• Start out easy: d[v] = ∞, d[s] = 0 
+• Relax until values in d converge to δ 
+
+Good Dijkstra 
+•  Generic initialization 
+•  U = V
+
+•  Choose v = argmin d[v 
+
+in U], remove v from U 
+•  Notice d[v] = δ[v] 
+•  Relax v’s outgoing edges 
+•  Rinse, repeat 
+
+1 
+
+C 
+
+2
+
+
+4
+
+
+S 
+
+2
+
+
+A 
+
+4
+
+
+3
+
+
+B 
+
+1
+
+
+D 
+
+0
+
+1
+
+
+E 
+
+Bad Dijkstra
+
+•  Generic initialization 
+•  U = V 
+•  Choose v = argmin d[v in 
+
+U], remove v from U 
+
+•  Notice d[v] = δ[v] 
+•  Relax v’s outgoing edges
+
+•  Rinse, repeat
+
+
+2 
+
+1 
+
+A 
+
+4 
+
+S 
+
+-5
+
+B 
+
+D 
+
+C 
+
+1 
+
+1
+
+Dijkstra Overview
+
+
+• Nice and fast (that’s why it’s on crack) 
+• With limitations (crack impacts judgement)
+
+• Doesn’t handle negative-cost edges 
+• DOES handle 0-cost edges 
+• Harder to code than Bellman-Ford 
+
+Dijkstra Works: 
+
+Intuition 
+
+
+Dijkstra Works: 
+
+Formal
+
+
+Making Dijkstra Fast 
+
+(its crack dealer) 
+
+•  Generic initialization: 
+•  Computing argmin 
+d[v]←∞, d[S] = 0 
+•  V times 
+•  Choose v = argmin d[v], 
+by now d[v] = δ[v] 
+•  Relaxing 
+•  E times 
+•  Relax all edges going out 
+of v 
+•  Looks like we need a 
+•  Rinse, repeat 
+Data Structure 
+
+Min-Priority Queues 
+
+• Data Structure 
+• insert(key) : adds to the queue 
+• min() : returns the minimum key 
+• delete-min() : deletes the min key
+
+• delete(key) : deletes the given key 
+• optional (only needed in some apps) 
+
+Priority Queues with  
+
+Min-Heaps
+
+• Costs (see above line for explanations) 
+• insert: O(log(N)) 
+• min: O(1) 
+• delete-min: O(log(N)) 
+• delete: O(log(N)) - only if given the index 
+of the node containing the key 
+
+Priority Queues with  
+
+PS3 
+
+• Is this priority queue monotone?
+
+
+• Proﬁt 
+
+Cool Python: 
+Generators 
+ 1 def counter():
+i = 0
+ 2 
+   
+ 3 
+while True:
+yield i
+ 4 
+ 5 
+i += 1 
+
+       
+
+----
+c = counter()
+c.next() 
+>> 0 
+c.next() 
+>> 1 
+d = counter() 
+d.next()
+>> 0 
+c.next()
+>> 2 
+d.next()
+>> 1 
+c.next()
+>> 3 
+
+1.  Iterators 
+•  used in for loops 
+•  objects implementing 
+next() 
+
+2.  Generators 
+•  express iterator 
+functionality in a 
+cooler way
+
+Dijkstra-Ready Priority 
+
+Queues
+
+
+ 1 class heap_id: 
+
+2 
+def __init__(self):
+
+self.A = [None]
+
+3 
+       
+ 4 
+self.heapsize = 0
+
+       
+self.ID_to_index = {}
+
+ 5 
+       
+ 6 
+self._ID = self._ID_generator() 
+
+       
+def insert(self, key):
+
+7 
+ 8 
+"""Returns an ID that is associated with the item."""
+
+self.heapsize += 1
+
+ 9 
+10 
+ID = self._ID.next()
+
+self.ID_to_index[ID] = self.heapsize 
+
+11 
+12 
+self.A.append( [positive_infinity(), ID] ) 
+
+self.decrease_key(self.heapsize, key)
+
+13 
+14 
+return ID
+
+def _ID_generator(self):
+
+15 
+      
+16 
+ID = 0
+
+while True:
+
+17 
+18 
+yield ID
+
+ID += 1
+
+19 
+
+      
+      
+      
+      
+      
+
+          
+
+Dijkstra-Ready Priority 
+
+Queues II
+
+ 1 class heap_id:
+
+def decrease_key_using_id(self, ID, key): 
+
+ 2 
+3 
+"""Decrease key given ID.""" 
+
+ 4 
+self.decrease_key(self.ID_to_index[ID], key) 
+
+       
+5 
+def extract_min(self):
+
+"""Extracts min and returns key.""" 
+
+ 6 
+7 
+return self.extract_min_with_id()[0] 
+
+def extract_min_with_id(self): 
+
+ 8 
+9 
+"""Extracts min and returns (key,ID) pair."""
+
+if self.heapsize < 1: 
+
+10 
+11 
+print "error: empty heap"
+
+12 
+return
+
+self._swap(1, self.heapsize) 
+
+13 
+self.heapsize -= 1
+
+14 
+15 
+min_pair = self.A.pop() 
+
+del self.ID_to_index[min_pair[1]]
+
+16 
+17 
+self.min_heapify(1) 
+
+return tuple(min_pair)
+
+18 
+
+       
+       
+       
+
+       
+
+

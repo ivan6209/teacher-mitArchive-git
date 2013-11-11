@@ -1,0 +1,249 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Spring 2008
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+Lecture  7	
+
+Hashing  III:  Open  Addressing 
+
+6.006  Spring  2008
+
+
+Lecture  7:  Hashing  III:  Open  Addressing 
+
+Lecture  Overview 
+•	 Open  Addressing,  Probing  Strategies 
+•	 Uniform  Hashing,  Analysis 
+•	 Advanced  Hashing 
+
+Readings 
+
+CLRS  Chapter  11.4  (and  11.3.3  and  11.5  if  interested) 
+
+Open  Addressing 
+
+Another  approach  to  collisions 
+• 
+no  linked  lists 
+•	 all  items  stored  in  table  (see  Fig.  1) 
+
+Figure  1:  Open Addressing Table 
+
+•	 one  item  per  slot  = ⇒  m ≥ n 
+•	 hash  function  speciﬁes  order  of  slots  to  probe  (try)  for  a  key,  not  just  one  slot:  (see 
+Fig.  2) 
+
+Insert(k,v) 
+
+for  i  in  xrange(m): 
+if  T [h(k , i)]  is  None: 
+T [h(k , i)] = (k , v) 
+return 
+raise  ‘full’ 
+
+�  empty  slot 
+�  store  item 
+
+1 
+
+item2item1item3Lecture  7 
+
+Hashing  III:  Open  Addressing 
+
+6.006  Spring  2008
+
+
+Figure  2:  Order  of  Probes 
+
+Example:  Insert  k = 496 
+
+Figure  3:  Insert  Example 
+
+Search(k) 
+
+for  i  in  xrange(m): 
+if  T [h(k , i)]  is  None: 
+return  None 
+elif  T [h(k , i)][φ] == k : 
+return  T [h(k , i)] 
+return  None 
+
+�  empty  slot? 
+�  end  of  “chain” 
+�  matching  key 
+�  return  item 
+˙  �  exhausted  table 
+
+2
+
+
+h(k,3)h(k,1)h(k,4)h(k,2)k<h(k,φ), h(k,1), . . . , h(k, m-1)> h: U x {φ,1, . . . , m-1}  {φ,1, . . . , m-1}  permutationall possible keyswhich probeslot to probecollisionφ1234567m-1collisioninsert586 , . . .133 , . . .204 , . . .496 , . . .481 , . . .probe h(496, φ) = 4probe h(496, 1) = 1probe h(496, 2) = 5Lecture  7	
+
+Hashing  III:  Open  Addressing 
+
+6.006  Spring  2008
+
+
+Delete(k) 
+•	 can’t  just  set  T [h(k , i)] =  None 
+
+•	
+⇒ 
+search(496)  fails
+
+example :  delete(586)  = 
+•	 replace  item  with  DeleteMe,  which  Insert  treats  as  None  but  Search  doesn’t 
+
+Probing  Strategies 
+
+Linear  Probing 
+h(k , i) = (h� (k) +i) mod m  where  h� (k)  is  ordinary  hash  function 
+
+•	 like  street  parking 
+•	 problem:  clustering  as consecutive group of ﬁlled slots grows, gets more  likely to grow 
+(see  Fig.  4) 
+
+Figure  4:  Primary  Clustering 
+
+•	 for  0.01 < α < 0.99  say,  clusters  of  Θ(lg n).  These  clusters  are  known
+
+√
+• 
+n)  These  clusters  are  known
+
+for  α = 1,  clusters  of  Θ(
+
+Double  Hashing 
+
+h(k , i) =(h1 (k) +i.  h2 (k)) mod m  where  h1 (k)  and  h2 (k)  are  two  ordinary  hash  functions. 
+•	 actually  hit  all  slots  (permutation)  if  h2 (k)  is  relatively  prime  to m 
+•	 e.g.  m = 2r , make  h2 (k)  always  odd 
+
+Uniform  Hashing  Assumption 
+
+Each  key  is  equally  likely  to  have  any  one  of  the m!  permutations  as  its  probe  sequence 
+•	 not  really  true 
+•	 but  double  hashing  can  come  close 
+
+3 
+
+h(k,m-1)h(k,0)h(k,2)h(k,1);;;..;Lecture  7 
+
+Hashing  III:  Open  Addressing 
+
+6.006  Spring  2008
+
+
+Analysis 
+Open  addressing  for  n  items  in  table  of  size m  has  expected  cost  of ≤ 
+where  α = n/m(< 1)  assuming  uniform  hashing 
+⇒ 
+Example:  α = 90%  = 
+10  expected  probes 
+
+1
+1 − α 
+
+per  operation, 
+
+Proof: 
+
+Always  make  a  ﬁrst  probe.
+
+With  probability  n/m,  ﬁrst  slot  occupied.
+
+In  worst  case  (e.g.  key  not  in  table),  go  to  next.
+
+n − 1 ,  second  slot  occupied. 
+With  probability 
+m − 1
+n − 2
+Then,  with  probability 
+,  third  slot  full. 
+m − 2
+Etc.  (n  possibilities) 
+
+· · · 
+(
+) 
+
+(1 + 
+
+n − 1 (1 + 
+n − 2
+n
+So  expected  cost  =  1 + 
+m − 1
+m − 2
+m
+n − 1
+≤ 
+· · · 
+, n(≤ m) 
+n
+Now 
+=  α  for  i = φ, 
+m − 1 
+m 
+So  expected  cost  ≤  1 + α(1 + α(1 + α(· · · ))) 
+=  1 + α + α2  + α3  + · · · 
+1 
+= 
+1 − α 
+
+Open  Addressing  vs.  Chaining 
+
+Open  Addressing:  better  cache  performance  and  rarely  allocates memory 
+
+Chaining:  less  sensitive  to  hash  functions  and  α 
+
+4
+
+
+Lecture  7	
+
+Hashing  III:  Open  Addressing 
+
+6.006  Spring  2008
+
+
+Advanced  Hashing 
+
+Universal  Hashing 
+
+Instead  of  deﬁning  one  hash  function,  deﬁne  a  whole  family  and  select  one  at  random 
+•	 e.g.  multiplication method  with  random  a 
+can  prove  P r  (over  random  h)  {h(x) = h(y)} =  1  for  every  (i.e.  not  random)  x = y
+•	
+m 
+• ⇒
+=  O(1)  expected  time  per  operation  without  assuming  simple  uniform  hashing! 
+CLRS  11.3.3 
+
+Perfect  Hashing 
+
+Guarantee  O(1)  worst-case  search 
+idea:  if m = n2  then  E[�  collisions]  ≈  1 
+•	
+2
+
+⇒ 
+= 
+get  φ  after  O(1)  tries  . . . but  O(n2 )  space 
+
+•	 use  this  structure  for  storing  chains 
+
+Figure  5: Two-level Hash Table
+
+•	 can  prove  O(n)  expected  total  space! 
+•	 if  ever  fails,  rebuild  from  scratch 
+
+5
+
+
+k items => m = k 2NO COLLISIONS2 levels[CLRS 11.5]�
+

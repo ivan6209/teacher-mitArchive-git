@@ -1,0 +1,597 @@
+Introduction to Algorithms: 6.006
+Massachusetts Institute of Technology
+Professors Erik Demaine and Srini Devadas
+
+October 24, 2011
+Problem Set 5
+
+Problem Set 5
+Both theory and programming questions are due Monday, October 31 at 11:59PM. Please
+download the .zip archive for this problem set, and refer to the README.txt ﬁle for instructions
+on preparing your solutions.
+We will provide the solutions to the problem set 10 hours after the problem set is due. You will
+have to read the solutions, and write a brief grading explanation to help your grader understand
+your write-up. You will need to submit the grading explanation by Thursday, November 3rd,
+11:59PM. Your grade will be based on both your solutions and the grading explanation.
+
+Problem 5-1.
+[40 points] The Knight’s Shield
+The optimized circuit veriﬁer that you developed on your Amdtel internship was a huge success
+and got you on a sure track to landing a sweet offer. You also got transferred to a research group
+that is working on the Knight’s Shield (KS)1 , a high-stakes project to develop a massive multi-core
+chip aimed at the exploding secure cloud computing market.
+The KS chip packs 16,384 cores in a die that’s the same size as a regular CPU die. However, each
+core is very small, and can only do arithmetic operations using 8-bit or 16-bit unsigned integers
+(see Table 1). Encryption algorithms typically use 2,048-bit integers, so the KS chip will ship with
+software that supports arithmetic on large integers. Your job is to help the KS team assess the
+efﬁciency of their software.
+
+Operation
+ZERO
+ONE
+LSB R1
+MSB R1
+WORD R1
+ADD R1, R2
+SUB R1, R2
+MUL R1, R2
+DIV R1, R2
+MOD R1, R2
+AND R1, R2
+OR R1, R2
+XOR R1, R2
+
+R1 size R2 size Result size Result
+0 (zero)
+8 / 16
+1 (one)
+8 / 16
+8
+R1 % 256 (least signiﬁcant byte)
+R1 / 256 (most signiﬁcant byte)
+8
+R1 (expanded to 16-bits)
+16
+16
+R1 + R2
+R1 − R2 mod 65536
+16
+R1 · R2
+16
+R1 ÷ R2 mod 256
+8
+8
+R1 % R2
+R1 & R2 (bitwise AND)
+8 / 16
+R1 (cid:107) R2 (bitwise OR)
+8 / 16
+8 / 16
+R1 ˆ R2 (bitwise XOR)
+
+16
+16
+8
+8 / 16
+8 / 16
+8
+16
+16
+8 / 16
+8 / 16
+8 / 16
+
+8 / 16
+8 / 16
+8
+8
+8
+8 / 16
+8 / 16
+8 / 16
+
+Table 1: Arithmetic operations supported by the KS chip. All sizes are in bits.
+
+1The code name is Amdtel conﬁdential information. Please refrain from leaking to TechCrunch.
+
+1Problem Set 5
+
+The KS library supports arbitrarily large base-256 numbers. The base was chosen such that each
+digit is a byte, and two digits make up a 16-bit number. Numbers are stored as a little-endian
+sequence of bytes (the ﬁrst byte of a number is the least signiﬁcant digit, for example 65534
+= 0xFFFE would be stored as [0xFE, 0xFF]). For the rest of the problem, assume all the input
+numbers have N digits.
+Consider the following algorithm for computing A + B , assuming both inputs have N digits.
+
+ADD(A, B , N )
+1 C = Z ERO(N + 1) // Z ERO(k) creates a k -digit number, with all digits set to 0s.
+2
+carry = 0
+for i = 1 to N
+3
+digit = WORD(A[i]) + WORD(B [i]) + WORD(carry )
+4
+C [i ] = L SB(digit )
+5
+6
+carry = M SB(digit )
+7 C [N + 1] = carry
+return C
+8
+
+(a) [1 point] What is the running time of ADD?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(b) [1 point] What is the size of ADD’s output?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(c) [1 point] ADD’s output size suggests an easy lower bound for the subroutine. Does
+the running time of ADD match this lower bound?
+1. Yes
+
+2Problem Set 5
+
+2. No
+Consider the following brute-force algorithm for computing A · B , assuming both inputs have N
+digits.
+
+MU LT I P LY(A, B , N )
+1 C = Z ERO(2N )
+for i = 1 to N
+2
+3
+carry = 0
+for j = 1 to N
+4
+digit = A[i] · B [j ] + WORD(C [i + j − 1]) + WORD(carry )
+5
+C [i + j − 1] = L SB(digit )
+6
+carry = M SB(digit )
+7
+8
+C [i + N ] = carry
+return C
+9
+
+(d) [1 point] What is the running time of MU LT I P LY?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(e) [1 point] What is the size of MU LT I P LY’s output?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(f) [1 point] MU LT I P LY’s output size suggests an easy lower bound for the subroutine.
+Does the running time of MU LT I P LY match this lower bound?
+1. Yes
+2. No
+
+3Consider the following brute-force algorithm for computing A ÷ B and A mod B , assuming
+both inputs have N digits. The algorithm uses a procedure CO PY(A, N ) that creates a copy of an
+N -digit number A, using Θ(N ) time.
+
+Problem Set 5
+
+D IVMOD(A, B , N )
+1 Q = Z ERO(N ) // quotient
+2 R = CO PY(A, N ) // remainder
+3 S0 = CO PY(B , N ) // Si = B · 2i
+4
+i = 0
+repeat
+5
+6
+i = i + 1
+7
+Si = ADD(Si -1 , Si -1 , N )
+8 until Si [N + 1] > 0 or CM P(Si , A, N ) = = GR EATER
+for j = i − 1 downto 0
+9
+10
+Q = ADD(Q, Q, N )
+if CM P(R, Sj , N ) ! = SMA LL ER
+11
+12
+R = SUBTRAC T(R, Sj , N )
+Q[0] = Q[0](cid:107)1 // Faster version of Q = Q + 1
+13
+14 return (Q, R)
+
+(g) [1 point] CM P(A, B , N ) returns GR EATER if A > B , EQUA L if A = B , and
+SMA LL ER if A < B , assuming both A and B are N -digit numbers. What is the
+running time for an optimal CM P implementation?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(h) [1 point] SUB TRACT(A, B , N ) computes A − B , assuming A and B are N -digit
+numbers. What is the running time for an optimal SUB TRACT implementation?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+
+4Problem Set 5
+
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(i) [1 point] What is the running time of D IVMOD?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+
+The KS library does not use the D IVMOD implementation above. Instead, it uses Newton’s method
+to implement D IV(A, B , N ) which computes the division quotient A ÷ B , assuming both inputs
+have N digits. D IV relies on the subroutines deﬁned above. For example, it uses MU LT I P LY
+to perform large-number multiplication and ADD for large-number addition. MOD(A, B , N ) is
+implemented using the identity A mod B = A − (A ÷ B ) · B .
+
+(j) [2 points] How many times does D IV call MU LT I P LY?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(k) [2 points] What is the running time of MOD?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+
+5Consider the following brute-force algorithm for computing BE mod M , assuming all the input
+numbers have N digits.
+
+Problem Set 5
+
+POWMOD(B , E , M , N )
+1 R = ON E(N ) // result
+2 X = CO PY(B , N ) // multiplier
+for i = 1 to N
+3
+4
+mask = 1
+for bit = 1 to 8
+5
+if E [i] & mask ! = 0
+6
+7
+R = MOD(MU LT I P LY(R, X, N ), M , 2N )
+X = MOD(MU LT I P LY(X, X, N ), M , 2N )
+8
+mask = L SB(mask · 2)
+9
+10 return R
+
+(l) [2 points] What is the running time for POWMOD?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+
+Assume the KS library swaps out the brute-force MU LT I PLY with an implementation of Karat-
+suba’s algorithm.
+
+(m) [1 point] What will the running time for MU LT I P LY be after the optimization?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(n) [2 points] What will the running time for MOD be after the optimization?
+1. Θ(1)
+
+6Problem Set 5
+
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+(o) [2 points] What will the running time for POWMOD be after the optimization?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+√(cid:98) K A(cid:99) us-
+(p) [20 points] Write pseudo-code for K THROOT(A, K, N ), which computes
+ing binary search, assuming that A and K are both N -digit numbers. The running
+time for K THROOT(A, K, N ) should be Θ(N 2+log2 3 ).
+
+7Problem Set 5
+
+[18 points] RSA Public-Key Encryption
+Problem 5-2.
+The RSA (Rivest-Shamir-Adelman) public-key cryptosystem is a cornerstone of Internet security.
+It provides the “S” (security) in the HTTPS sessions used for e-commerce and cloud services that
+*
+handle private information, such as e-mail. RSA secures SSH sessions (used to connect to Athena,
+for example), and MIT certiﬁcates used to log into Stellar. You ﬁgure that the KS chip must
+perform RSA efﬁciently, since RSA plays such an important role in cloud security. This problem
+will acquaint you with the encryption and decryption algorithms in RSA.
+RSA works as follows. Each user generates two large random primes p and q , and sets his public
+modulus m = p · q . The user then chooses a small number2 e that is co-prime with (p − 1)(q − 1),
+and computes d = e−1 mod (p − 1)(q − 1). The user announces his public key (e, m) to the
+world, and keeps d private. In order to send an encrypted message to our user, another user would
+encode the message as a number smaller than n, and encrypt it as c = E (n) = ne mod m. Our
+user would decode the message using D(c) = cd mod m. Assume that keys can be generated
+reasonably fast and that D(E (n)) = n, for all but a negligible fraction of values of n.
+
+(a) [1 point] What is the running time of an implementation of D(n) that uses the KS li-
+brary in Problem 1, with the optimized version of MU LT I P LY (Karatsuba’s algorithm),
+assuming that n, d and m are N -byte numbers?
+1. Θ(1)
+2. Θ(log N )
+3. Θ(N )
+4. Θ(N 2 )
+5. Θ(N 2 log N )
+6. Θ(N log2 3 )
+7. Θ(N log2 6 )
+8. Θ(N 3 )
+
+You’re thinking of using RSA to encrypt important sensitive images, such as last night’s picture of
+you doing a Keg stand. Formally, a picture has R × C pixels (R rows, C columns), and each pixel
+is represented as 3 bytes that are RGB color space coordinates3 . The RSA key is (e, m), where m
+is an N -byte number. An inefﬁcient encryption method would process each row of pixel data as
+follows:
+1.Break the 3C bytes of pixel data into groups of N − 1 bytes
+2.Pad the last group with 0 bytes up to N − 1 bytes
+3.Encrypt each group of N − 1 bytes to obtain an N -byte output
+4.Concatenate the N -byte outputs
+
+265,537 is a popular choice nowadays
+3 see http://en.wikipedia.org/wiki/RGB_color_space
+*
+Athena is MIT's UNIX-based computing environment. OCW does not provide access to it.
+
+8Problem Set 5
+
+(b) [1 point] How many calls to the RSA encryption function E (n) are necessary to
+encrypt an R × C -pixel image?
+1. Θ(1)
+2. Θ(RC )
+3. Θ( RC )N
+4. Θ( RN )C
+5. Θ( CN )R
+(c) [1 point] What is the running time for decrypting an R × C -pixel image that was en-
+crypted using the method above, using the KS library in Problem 1, with the optimized
+version of MU LT I P LY (Karatsuba’s algorithm)?
+1. Θ(N )
+2. Θ(N 2 )
+3. Θ(N 2 log N )
+4. Θ(N log2 3 )
+5. Θ(N log2 6 )
+6. Θ(RCN )
+7. Θ(RCN 2 )
+8. Θ(RCN 2 log N )
+9. Θ(RCN log2 3 )
+10. Θ(RCN log2 6 )
+11. Θ(RN )
+12. Θ(RN 2 )
+13. Θ(RN 2 log N )
+14. Θ(RN log2 3 )
+15. Θ(RN log2 6 )
+(d) [5 points] A ﬁxed point under RSA is a number n such that E (n) ≡ n mod m, so
+RSA does not encrypt the number at all. Which of the following numbers are ﬁxed
+points under RSA? (True / False)
+1. 0
+2. 1
+3. 2
+4. 3
+5. m − 2
+6. m − 1
+(e) [5 points] What other weaknesses does the RSA algorithm have? (True / False)
+1. E (−n) ≡ −E (n) mod m
+
+9Problem Set 5
+
+2. E (n1 ) + E (n2 ) ≡ E (n1 + n2 ) mod m
+3. E (n1 ) − E (n2 ) ≡ E (n1 − n2 ) mod m
+4. E (n1 ) · E (n2 ) ≡ E (n1 · n2 ) mod m
+5. E (n1 )n2 ≡ E (nn2
+1 ) mod m
+(f) [5 points] Amdtel plans to use RSA encryption to secretly tell Gopple when its latest
+smartphone CPU is ready to ship. Amdtel will send one message every day to Gopple,
+using Gopple’s public key (eG , mG ). The message will be NO (the number 20079
+when using ASCII), until the day the CPU is ready, then the message will change
+to Y E S (the number 5858675 when using ASCII). You pointed out to your manager
+that this security scheme is broken, because an attacker could look at the encrypted
+messages, and know that the CPU is ready when the daily encrypted message changes.
+This is a problem of deterministic encryption. If E (20079) always takes the same
+value, an attacker can distinguish E (20079) from E (5858675). How can the problem
+of deterministic encryption be ﬁxed? (True / False)
+1. Append the same long number (the equivalent of a string such as ’XXXPADDINGXXX’)
+to each message, so the messages are bigger.
+2. Append a random number to each message. All random numbers will have the
+same size, so the receiver can recognize and discard them.
+3. Use a different encryption key to encrypt each message, and use Gopple’s public
+exponent and modulus to encrypt the decryption key for each message.
+4. Use an uncommon encoding, such as UTF-7, so that the attacker will not know
+the contents of the original messages.
+5. Share a “secret” key with Gopple, so that the attacker can’t use the knowledge on
+Gopple’s public exponent and modulus.
+
+10Problem Set 5
+
+[42 points] Image Decryption
+Problem 5-3.
+Your manager wants to show off the power of the Knight’s Shield chip by decrypting a live video
+stream directly using the RSA public-key crypto-system. RSA is quite resource-intensive, so most
+systems only use it to encrypt the key of a faster algorithm. Decrypting live video would be an
+impressive technical feat!
+Unfortunately, the performance of the KS chip on RSA decryption doesn’t come even close to
+what’s needed for streaming video. The hardware engineers said the chip deﬁnitely has enough
+computing power, and blamed the problem on the RSA implementation. Your new manager has
+heard about your algorithmic chops, and has high hopes that you’ll get the project back on track.
+The software engineers suggested that you benchmark the software using images because, after
+all, video is just a sequence of frames.
+The code is in the rsa directory in the zip ﬁle for this problem set.
+
+(a) [2 points] Run the code under the python proﬁler with the command below, and
+identify the method inside bignum.py that is most suitable for optimization. Look
+at the methods that take up the most CPU time, and choose the ﬁrst method whose
+running time isn’t proportional to the size of its output.
+python -m cProfile -s time rsa.py < tests/1verdict 32.in
+Warning: the command above can take 1-10 minutes to complete, and bring the CPU
+usage to 100% on one of your cores. Plan accordingly. If you have installed PyPy
+successfully, you should replace python with pypy in the command above for a
+2-10x speed improvement.
+What is the name of the method with the highest CPU usage?
+(b) [1 point] How many times is the method called?
+(c) [1 point] The troublesome method is implementing a familiar arithmetic operation.
+What is the tightest asymptotic bound for the worst-case running time of the method
+that contains the bottleneck? Express your answer in terms of N , the number of digits
+in the input numbers.
+1. Θ(N ).
+2. Θ(N log n)
+3. Θ(N log2 n)
+4. Θ(N log2 3 )
+5. Θ(N 2 )
+6. Θ(N log2 7 )
+7. Θ(N 3 )
+(d) [1 point] What is the tightest asymptotic bound for the worst-case running time of di-
+vision? Express your answer in terms of N , the number of digits in the input numbers.
+1. Θ(N ).
+
+11Problem Set 5
+
+2. Θ(N log n)
+3. Θ(N log2 n)
+4. Θ(N log2 3 )
+5. Θ(N 2 )
+6. Θ(N log2 7 )
+7. Θ(N 3 )
+
+e have implemented a visualizer for your image decryption output, to help you debug your code.
+W
+he visualizer will also come in handy for answering the question below. To use the visualizer,
+T
+rst produce a trace.
+ﬁ
+RACE=jsonp python rsa.py < tests/1verdict 32.in > trace.jsonp
+T
+n Windows, use the following command instead.
+O
+sa jsonp.bat < tests/1verdict 32.in > trace.jsonp
+r
+hen use Google Chrome to open visualizer/bin/visualizer.html
+T
+
+(e) [6 points] The test cases that we supply highlight the problems of RSA that we dis-
+cussed above. Which of the following is true? (True / False)
+1. Test 1verdict 32 shows that RSA has ﬁxed points.
+2. Test 1verdict 32 shows that RSA is deterministic.
+3. Test 2logo 32 shows that RSA has ﬁxed points.
+4. Test 2logo 32 shows that RSA is deterministic.
+5. Test 5future 1024 shows that RSA has ﬁxed points.
+6. Test 5future 1024 shows that RSA is deterministic.
+(f) [1 point] Read the code in rsa.py. Given a decrypted image of R × C pixels
+(R rows, C columns), where all the pixels are white (all the image data bytes are
+255), how many times will powmod be called during the decryption operation in
+decrypt image?
+1. Θ(1)
+2. Θ(RC )
+3. Θ( RC )N
+4. Θ( RN )C
+5. Θ( CN )R
+(g) [30 points] The multiplication and division operations in big num.py are im-
+plemented using asymptotically efﬁcient algorithms that we have discussed in class.
+However, the sizes of the numbers involved in RSA for typical key sizes aren’t suit-
+able for complex algorithms with high constant factors. Add new methods to BigNum
+implementing multiplication and division using straight-forward algorithms with low
+constant factors, and modify the main multiplication and division methods to use the
+
+12Problem Set 5
+
+simple algorithms if at least one of the inputs has 64 digits (bytes) or less. Please note
+that you are not allowed to import any additional Python libraries and our test will
+check this.
+
+The KS software testing team has put together a few tests to help you check your code’s cor-
+rectness and speed. big num test.py contains unit tests with small inputs for all BigNum
+public methods. rsa test.py runs the image decryption code on the test cases in the tests/
+directory.
+You can use the following command to run all the image decryption tests.
+python rsa test.py
+To work on a single test case, run the simulator on the test case with the following command.
+python rsa.py < tests/1verdict 32.in > out
+Then compare your output with the correct output for the test case.
+diff out tests/1verdict 32.gold
+For Windows, use fc to compare ﬁles.
+fc out tests/1verdict 32.gold
+While debugging your code, you should open a new Terminal window (Command Prompt in
+Windows), and set the KS DEBUG environment variable (export KS DEBUG=true; on Win-
+dows, use set KS DEBUG=true) to use a slower version of our code that has more consistency
+checks.
+When your code passes all tests, and runs reasonably fast (the tests should complete in less than
+90 seconds on any reasonably recent computer using PyPy, or less than 600 seconds when using
+CPython), upload your modiﬁed big num.py to the course submission site. Our automated
+grading code will use our versions of test rsa.py, rsa.py and ks primitives.py /
+ks primitives unchecked.py, so please do not modify these ﬁles.
+
+13MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

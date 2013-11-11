@@ -1,0 +1,318 @@
+Lecture 32
+
+32.1 Classi(cid:12)cation problem.
+
+Suppose that we have the data (X1 ; Y1 ); : : : ; (Xn ; Yn) that consist of pairs (Xi ; Yi)
+such that Xi belongs to some set X and Yi belongs to a set Y = f+1; (cid:0)1g. We will
+think of Yi as a label of Xi so that all points in the set X are divided into two classes
+corresponding to labels (cid:6)1: For example, Xi s can be images or representations of
+images and Yi s classify whether the image contains a human face or not. Given this
+data we would like to (cid:12)nd a classi(cid:12)er
+
+f : X ! Y
+which given a point X 2 X would predict its label Y : This type of problem is called
+classi(cid:12)cation problem. In general, there may be more than two classes of points which
+means that the set of labels may consist of more than two points but, for simplicity,
+we will consider the simplest case when we have only two labels (cid:6)1:
+We will take a look at one approach to this problem called boosting and, in
+particular, prove one interesting property of the algorithm called AdaBoost.
+Let us assume that we have a family of classi(cid:12)ers
+
+H = fh : X ! Y g:
+Suppose that we can (cid:12)nd many classi(cid:12)ers in H that can predict labels Yi better than
+"tossing a coin" which means that they predict the correct label at least half of the
+time. We will call H a family of weak classi(cid:12)ers because we do not require much of
+them, for example, all these classi(cid:12)ers can make mistakes on, let’s say, 30% or even
+45% of the sample.
+The idea of boosting consists in trying to combine these weak classi(cid:12)ers so that
+the combined classi(cid:12)er predicts the label correctly most of the time. Let us consider
+one particular algorithm called Adaboost.
+
+128
+
+LECTURE 32.
+
+129
+
+Given weights w(1); : : : ; w(n) that add up to one we de(cid:12)ne the weighted classi(cid:12)-
+cation error of the classi(cid:12)er h by
+
+w(1)I (h(X1 ) 6= Y1 ) + : : : + w(n)I (h(Xn) 6= Yn ):
+AdaBoost algorithm. We start by assigning equal weights to the data points:
+
+w1 (1) = : : : = w1 (n) =
+
+1
+n
+
+:
+
+Then for t = 1; : : : ; T we repeat the following cycle:
+
+1. Find ht 2 H such that weighted error
+"t = wt (1)I (ht (X1 ) 6= Y1 ) + : : : + wt (n)I (ht (Xn ) 6= Yn )
+is as small as possible.
+
+2 log 1(cid:0)"t
+2. Let (cid:11)t = 1
+"t
+
+and update the weights:
+
+wt+1 (i) = wt (i)
+
+e(cid:0)(cid:11)t Yiht (Xi )
+Zt
+
+;
+
+where
+
+n
+Xi=1
+is the normalizing factor to ensure that updated weights add up to one.
+
+wte(cid:0)(cid:11)t Yiht (Xi )
+
+Zt =
+
+After we repeat this cycle T times we output the function
+
+f (X ) = (cid:11)1h1 (X ) + : : : + (cid:11)T hT (X )
+
+and use sign(f (X )) as the prediction of label Y .
+First of all, we can assume that the weighted error "t at each step t is less than 0:5
+since, otherwise, if we make a mistake more than half of the time we should simply
+predict the opposite label. For "t (cid:20) 0:5 we have,
+1 (cid:0) (cid:15)t
+1
+(cid:15)t (cid:21) 0:
+2
+
+(cid:11)t =
+
+log
+
+Also, we have
+
+Yiht (Xi ) = (cid:26) +1
+(cid:0)1
+
+if ht (Xi ) = Yi
+if ht (Xi ) 6= Yi :
+
+LECTURE 32.
+
+130
+
+Therefore, if ht makes a mistake on the example (Xi ; Yi) which means that ht (Xi ) 6= Yi
+or, equivalently, Yiht (Xi ) = (cid:0)1 then
+e(cid:0)(cid:11)tYiht (Xi )
+Zt
+
+wt+1 (i) =
+
+wt (i) =
+
+e(cid:11)t
+Zt
+
+wt (i):
+
+On the other hand, if ht predicts the label Yi correctly then Yiht (Xi ) = 1 and
+
+wt (i):
+
+wt (i) =
+
+wt+1 (i) =
+
+e(cid:0)(cid:11)t Yiht (Xi )
+e(cid:0)(cid:11)t
+Zt
+Zt
+Since (cid:11)t (cid:21) 0 this means that we increase the relative weight of the ith example if we
+made a mistake on this example and decrease the relative weight if we predicted the
+label Yi correctly. Therefore, when we try to minimize the weighted error at the next
+step t + 1 we will pay more attention to the examples misclassi(cid:12)ed at the previous
+step.
+Theorem: The proportion of mistakes made on the data by the output classi(cid:12)er
+sign(f (X )) is bounded by
+n
+T
+Xi=1
+Yt=1 p4"t (1 (cid:0) "t ):
+Remark: If the weighted errors "t will be strictly less than 0:5 at each step meaning
+that we predict the labels better than tossing a coin then the error of the combined
+classifer will decrease exponentially fast with the number of rounds T . For example,
+if "t (cid:20) 0:4 then 4(cid:15)t (1 (cid:0) (cid:15)t ) (cid:20) 4(0:4)(0:6) = 0:96 and the error will decrease as fast as
+0:96T :
+Proof. Using that I (x (cid:20) 0) (cid:20) e(cid:0)x as shown in (cid:12)gure 32.1 we can bound the
+indicator of making an error by
+
+I (sign(f (Xi ))) 6= Yi) (cid:20)
+
+1
+n
+
+I (sign(f (Xi )) 6= Yi) = I (Yif (Xi ) (cid:20) 0) (cid:20) e(cid:0)Yi f (Xi ) = e(cid:0)Yi PT
+t=1 (cid:11)tht (Xi ) :
+Next, using the step 2 of AdaBoost algorithm which describes how the weights
+are updated we can express the weights at each step in terms of the weights at the
+previous step and we can write the following equation:
+
+(32.1)
+
+wT +1 (i) =
+
+=
+
+e(cid:0)(cid:11)T YihT (Xi )
+wT (i)e(cid:0)(cid:11)T Yi hT (Xi )
+ZT
+ZT
+= repeat this recursively over t
+e(cid:0)(cid:11)T (cid:0)1 YihT (cid:0)1 (Xi )
+e(cid:0)(cid:11)T Yi hT (Xi )
+ZT (cid:0)1
+ZT
+
+: : :
+
+=
+
+wT (cid:0)1(i)e(cid:0)(cid:11)T (cid:0)1 YihT (cid:0)1 (Xi )
+ZT (cid:0)1
+
+e(cid:0)(cid:11)1 Yih1 (Xi )
+Z1
+
+w1 (i) =
+
+1
+n
+
+:
+
+e(cid:0)Yi f (Xi )
+QT
+t=1 Zt
+
+LECTURE 32.
+
+131
+
+I(X)
+
+e−x
+
+Figure 32.1: Example.
+
+This implies that
+
+1
+n
+
+e(cid:0)Yi f (Xi ) = wT +1 (i)
+
+Zt :
+
+T
+Yt=1
+
+Combining this with (32.1) we can write
+n
+n
+Xi=1
+Xi=1
+Next we will compute
+
+I (sign(f (Xi ) 6= Yi )) (cid:20)
+
+1
+n
+
+1
+n
+
+e(cid:0)Yi f (Xi ) =
+
+Zt
+
+T
+Yt=1
+
+n
+Xi=1
+
+wT +1 (i) =
+
+T
+Yt=1
+
+Zt :
+
+(32.2)
+
+n
+Xi=1
+As we have already mentioned above, Yiht (Xi ) is equal to (cid:0)1 or +1 depending on
+whether ht makes a mistake or predicts the label Yi correctly. Therefore, we can
+write,
+
+wt (i)e(cid:0)(cid:11)t Yiht (Xi ) :
+
+Zt =
+
+Zt =
+
+wt (i)I (Yi 6= ht (Xi ))e(cid:11)t
+
+n
+Xi=1
+= e(cid:0)(cid:11)t (1 (cid:0)
+
+n
+n
+Xi=1
+Xi=1
+wt (i)e(cid:0)(cid:11)t Yiht (Xi ) =
+wt (i)I (Yi = ht (Xi ))e(cid:0)(cid:11)t +
+n
+n
+Xi=1
+Xi=1
+) + e(cid:11)t
+wt (i)I (Yi 6= ht (Xi ))
+wt (i)I (Yi = ht (Xi ))
+|
+|
+{z
+{z
+}
+}
+"t
+"t
+= e(cid:0)(cid:11)t (1 (cid:0) "t ) + e(cid:11)t "t :
+Up to this point all computations did not depend on the choice of (cid:11)t but since we
+bounded the error by QT
+t=1 Zt we would like to make each Zt as small as possible and,
+therefore, we choose (cid:11)t that minimizes Zt : Simple calculus shows that we should take
+2 log 1(cid:0)"t
+(cid:11)t = 1
+which is precisely the choice made in AdaBoost algorithm. For this
+"t
+
+LECTURE 32.
+
+132
+
+choice of (cid:11)t we get
++ "tr 1 (cid:0) (cid:15)t
+Zt = (1 (cid:0) "t )r (cid:15)t
+= p4"t (1 (cid:0) "t )
+1 (cid:0) (cid:15)t
+(cid:15)t
+and plugging this into (32.2) (cid:12)nishes the proof of the bound.
+
+

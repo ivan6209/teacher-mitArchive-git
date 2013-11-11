@@ -1,0 +1,298 @@
+Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+Lecture 10: Hashing III: Open Addressing
+
+Lecture Overview
+
+• Open Addressing, Probing Strategies
+• Uniform Hashing, Analysis
+• Cryptographic Hashing
+
+Readings
+
+CLRS Chapter 11.4 (and 11.3.3 and 11.5 if interested)
+
+Open Addressing
+
+Another approach to col lisions:
+
+no chaining; instead all items stored in table (see Fig. 1)
+
+•
+
+Figure 1: Open Addressing Table
+
+• one item per slot =⇒ m ≥ n
+• hash function speciﬁes order of slots to probe (try) for a key (for insert/search/delete),
+not just one slot; in math. notation:
+
+We want to design a function h, with the property that for all k
+
+:∈ U
+
+(cid:104)h(k , 0), h(k , 1), . . . , h(k , m − 1)(cid:105)
+1
+
+item2item1item3h:U×{0,1,...,m−1}→{0,1,...,m−1}universe of keys trial count slot in table Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+is a permutation of 0, 1, . . . , m − 1. i.e. if I keep trying h(k , i) for increasing i,
+I will eventually hit all slots of the table.
+
+Figure 2: Order of Probes
+
+Insert(k,v) : Keep probing until an empty slot is found. Insert item into that slot.
+
+for i in xrange(m):
+if T [h(k , i)] is None:
+T [h(k , i)] = (k , v)
+return
+raise ‘full’
+
+(cid:93) empty slot
+(cid:93) store item
+
+Example: Insert k = 496
+Search(k): As long as the slots you encounter by probing are occupied by keys = k ,
+keep probing until you either encounter k or ﬁnd an empty slot—return success or
+failure respectively.
+
+for i in xrange(m):
+T [h(k , i)] is None:
+if
+return None
+elif T [h(k , i)][∅] == k :
+return T [h(k , i)]
+return None
+
+(cid:93) empty slot?
+(cid:93) end of “chain”
+(cid:93) matching key
+(cid:93) return item
+(cid:93) exhausted table
+
+˙
+
+2
+
+Ø 1 m-1 (cid:54)
+Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+Figure 3: Insert Example
+
+Deleting Items?
+
+• can’t just ﬁnd item and remove it from its slot (i.e. set T [h(k , i)] = None)
+• example : delete(586) =⇒ search(496) fails
+• replace item with special ﬂag: “DeleteMe”, which Insert treats as None but
+Search doesn’t
+
+Probing Strategies
+
+Linear Probing
+h(k , i) = (h(cid:48) (k) +i) mod m where h(cid:48) (k) is ordinary hash function
+
+• like street parking
+• problem? clustering—cluster: consecutive group of occupied slots
+as clusters become longer, it gets more likely to grow further (see Fig. 4)
+
+• can be shown that for 0.01 < α < 0.99 say, clusters of size Θ(log n).
+
+Double Hashing
+
+h(k , i) =(h1 (k) +i·h2 (k)) mod m where h1 (k) and h2 (k) are two ordinary hash func-
+tions.
+
+3
+
+586	  133	  204	  496	  481	  collision collision free spot! Ø1 m-1 2 3 4 5 6 7 collision Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+Figure 4: Primary Clustering
+
+• actually hit all slots (permutation) if h2 (k) is relatively prime to m for all k
+why?
+
+h1 (k) + i · h2 (k) mod m = h1 (k) + j · h2 (k) mod m ⇒ m div ides (i − j )
+
+• e.g. m = 2r , make h2 (k) always odd
+
+Uniform Hashing Assumption (cf. Simple Uniform Hashing
+Assumption)
+
+Each key is equally likely to have any one of the m! permutations as its probe sequence
+
+• not really true
+• but double hashing can come close
+
+Analysis
+
+Suppose we have used open addressing to insert n items into table of size m. Under
+1
+the uniform hashing assumption the next operation has expected cost of ≤
+− α
+where α
+= n/m(< 1).
+Example: α = 90% =⇒ 10 expected probes
+
+1
+
+,
+
+4
+
+Ø 1 m-1 cluster if h(k,0) is any of these, the cluster will get bigger Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+Proof:
+
+Suppose we want to insert an item with key k . Suppose that the item is not in the
+table.
+• probability ﬁrst probe successful: m−n =: p
+m
+(n bad slots, m total slots, and ﬁrst probe is uniformly random)
+m−1 ≥ m−n = p
+• if ﬁrst probe fails, probability second probe successful: m−n
+m
+(one bad slot already found, m − n good slots remain and the second probe is
+uniformly random over the m − 1 total slots left)
+• if 1st & 2nd probe fail, probability 3rd probe successful: m−n
+m−2 ≥ m−n = p
+m
+(since two bad slots already found, m− n good slots remain and the third probe
+is uniformly random over the m − 2 total slots left)
+• ...
+⇒ Every trial, success with probability at least p.
+Expected Number of trials for success?
+
+1
+p
+
+=
+
+1
+1 − α
+
+.
+
+With a little thought it follows that search, delete take time O(1/(1 − α)). Ditto if
+we attempt to insert an item that is already there.(cid:4)
+
+Open Addressing vs. Chaining
+
+Open Addressing: better cache performance (better memory usage, no pointers
+needed)
+
+Chaining: less sensitive to hash functions (OA requires extra care to avoid clustering)
+and the load factor α (OA degrades past 70% or so and in any event cannot
+support values larger than 1)
+
+Cryptographic Hashing
+
+A cryptographic hash function is a deterministic procedure that takes an arbitrary
+block of data and returns a ﬁxed-size bit string, the (cryptographic) hash value, such
+that an accidental or intentional change to the data will change the hash value. The
+data to be encoded is often called the message, and the hash value is sometimes called
+the message digest or simply digest.
+
+5
+
+Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+The ideal cryptographic hash function has the properties listed below. d is the
+number of bits in the output of the hash function. You can think of m as being 2d . d
+is typically 160 or more. These hash functions can be used to index hash tables, but
+they are typically used in computer security applications.
+
+Desirable Properties
+1. One-Way (OW): Infeasible, given y ∈ {0, 1}d
+to ﬁnd any x s.t. h(x) = y .
+R
+This means that if you choose a random d-bit vector, it is hard to ﬁnd an
+input to the hash that produces that vector. This involves “inverting” the hash
+function.
+2. Collision-resistance (CR): Infeasible to ﬁnd x, x(cid:48) , s.t. x = x(cid:48) and h(x) =
+h(x(cid:48) ). This is a collision, two input values have the same hash.
+3. Target collision-resistance (TCR): Infeasible given x to ﬁnd x(cid:48) = x s.t.
+h(x) = h(x(cid:48) ).
+
+TCR is weaker than CR. If a hash function satisﬁes CR, it automatically satisﬁes
+TCR. There is no implication relationship between OW and CR/TCR.
+
+Applications
+
+1. Password storage: Store h(P W ), not P W on computer. When user inputs
+P W (cid:48) , compute h(P W (cid:48) ) and compare against h(P W ). The property required of
+the hash function is OW. The adversary does not know P W or P W (cid:48) so TCR
+or CR is not really required. Of course, if many, many passwords have the
+same hash, it is a problem, but a small number of collisions doesn’t really aﬀect
+security.
+
+2. File modiﬁcation detector: For each ﬁle F , store h(F ) securely. Check if F
+is modiﬁed by recomputing h(F ). The property that is required is TCR, since
+the adversary wins if he/she is able to modify F without changing h(F ).
+
+3. Digital signatures: In public-key cryptography, Alice has a public key P KA
+and a private key SKA . Alice can sign a message M using her private key
+to produce σ = sign(SKA , M ). Anyone who knows Alice’s public key P KA
+and verify Alice’s signature by checking that verif y(M , σ, P KA ) is true. The
+adversary wants to forge a signature that veriﬁes. For large M it is easier to
+sign h(M ) rather than M , i.e., σ = sign(SKA , h(M )). The property that we
+
+6
+
+(cid:54)
+Lecture 10
+
+Hashing III: Open Addressing
+
+6.006 Fall 2011
+
+require is CR. We don’t want an adversary to ask Alice to sign x and then claim
+that she signed x(cid:48) , where h(x) = h(x(cid:48) ).
+
+Implementations
+
+There have been many proposals for hash functions which are OW, CR and TCR.
+Some of these have been broken. MD-5, for example, has been shown to not be CR.
+There is a competition underway to determine SHA-3, which would be a Secure Hash
+Algorithm certiﬁed by NIST. Cryptographic hash functions are signiﬁcantly more
+complex than those used in hash tables. You can think of a cryptographic hash as
+running a regular hash function many, many times with pseudo-random permutations
+interspersed.
+
+7
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

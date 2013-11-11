@@ -1,0 +1,828 @@
+The  Learning  Problem  and  Regularization 
+
+9.520  Class  02,  13  February  2006 
+
+
+Tomaso  Poggio
+
+
+Plan
+
+•  Learning  as  function  approximation 
+•  Empirical  Risk  Minimization 
+•  Generalization  and  Well-posedness 
+•  Regularization 
+•  Appendix:  Sample  and  Approximation  Error
+
+
+About  This  Class
+
+
+Theme  We  introduce  the  learning  problem  as  the  problem 
+of  function  approximation  from  sparse  data.  We  deﬁne 
+the  key  ideas  of  loss  functions,  empirical  error  and  gen-
+eralization  error.  We  then  introduce  the Empirical Risk 
+Minimization  approach  and  the  two  key  requirements 
+on  algorithms  using  it:  well-posedness  and  consistency. 
+We  then  describe  a  key  algorithm  –  Tikhonov  regular-
+ization  –  that  satisﬁes  these  requirements. 
+
+Math  Required  Familiarity  with  basic  ideas  in  probability 
+theory. 
+
+Data  Generated  By  A  Probability
+
+Distribution
+
+
+We  assume  that X  and  Y  are  two  sets  of  random  variables.
+
+We  are  given  a  training  set  S  consisting  n  samples  drawn
+
+i.i.d.  from  the  probability  distribution  μ(z) on  Z  = X × Y :
+
+
+(x1 , y1), . . . , (xn, yn) 
+
+that  is  z1, . . . , zn 
+
+We  will  make  frequent  use  of  the  conditional  probability 
+of  y  given  x,  written  p(y |x): 
+μ(z) = p(x, y) = p(y |x) · p(x)
+
+
+It  is  crucial  to  note  that  we  view  p(x, y) as  ﬁxed  but  un-
+known. 
+
+Probabilistic  setting 
+
+
+Y 
+
+P(y|x) 
+
+X 
+
+P(x) 
+
+Hypothesis  Space
+
+The  hypothesis  space H  is  the  space  of  functions  that we 
+allow  our  algorithm  to  provide.  For  many  algorithms  (such 
+as  optimization  algorithms)  it  the  space  the  algorithm  is 
+allowed  to  search.  As  we  will  see,  it  is  often  important  to 
+choose  the  hypothesis  space  as  a  function  of  the  amount 
+of  data  available. 
+
+Learning  As  Function  Approximation  From
+
+
+Samples:  Regression  and  Classiﬁcation
+
+
+The basic goal of supervised  learning  is to use the training 
+set  S  to  “learn”  a  function  fS  that  looks  at  a  new  x  value 
+xnew  and  predicts  the  associated  value  of  y : 
+
+ypred  = fS (xnew) 
+
+If  y  is  a  real-valued  random  variable,  we  have  regression.
+
+
+If  y  takes  values  from  an  unordered  ﬁnite  set,  we  have 
+pattern  classiﬁcation.  In  two-class  pattern  classiﬁcation 
+problems,  we  assign  one  class  a  y  value  of  1,  and  the  other 
+class  a  y  value  of  −1. 
+
+Loss  Functions
+
+
+In  order  to  measure  goodness  of  our  function,  we  need  a 
+loss  function  V .  In  general,  we  let  V (f , z) =  V (f (x), y) 
+denote  the  price  we  pay  when  we  see  x  and  guess  that  the 
+associated  y  value  is  f (x)  when  it  is  actually  y . 
+
+Common  Loss  Functions  For  Regression
+
+
+For  regression,  the  most  common  loss  function  is  square 
+loss  or  L2  loss: 
+
+V (f (x), y) = (f (x) − y)2 
+
+We  could  also  use  the  absolute  value,  or  L1  loss: 
+|
+
+V (f (x), y) =  f (x) − y
+|
+
+Vapnik’s  more  general  -insensitive  loss  function  is: 
+V (f (x), y) = (|f (x) − y | − )+ 
+
+Common  Loss  Functions  For  Classiﬁcation
+
+
+For  binary  classiﬁcation,  the  most  intuitive  loss  is  the  0-1  loss: 
+V (f (x), y) = Θ(−yf (x)) 
+where  Θ(−yf (x))  is  the  step  function.  For  tractability  and  other  rea-
+sons,  we  often  use  the  hinge  loss  (implicitely  introduced  by  Vapnik)  in 
+binary  classiﬁcation: 
+
+V (f (x), y) = (1 − y · f (x))+ 
+
+The  learning  problem:  summary  so  far
+
+
+There  is an unknown probability  distribution  on  the prod-
+uct  space  Z  =  X × Y ,  written  μ(z) =  μ(x, y).  We  assume 
+that  X  is  a  compact  domain  in  Euclidean  space  and  Y  a 
+closed  subset  of  IR. 
+{
+The  training  set  S  = (x1, y1), ..., (xn , yn)} =  z1, ...zn}
+{
+consists  of  n  samples  drawn  i.i.d.  from  μ. 
+H is the hypothesis  space,  a space of  functions f  : X Y .
+→
+A  learning  algorithm  is  a  map  L  :  Z n  → H that  looks 
+at  S  and  selects  from  H a  function  fS  :  x  → y  such  that 
+fS (x) ≈ y  in  a  predictive  way. 
+
+Empirical  error,  generalization  error,
+
+
+generalization
+
+
+Given  a  function  f ,  a  loss  function  V ,  and  a  probability  distribution  μ 
+� 
+over  Z , the  expected  or  true  error  of  f  is: 
+
+I [f ] = IEz V [f , z ] = 
+
+V (f , z)dμ(z) 
+
+Z 
+
+which  is  the  expected  loss  on  a  new  example  drawn  at  random  from 
+μ. 
+
+We  would  like  to  make  I [f ]  small,  but  in  general  we  do  not  know  μ. 
+
+Given  a  function  f ,  a  loss  function  V ,  and  a  training  set  S  consisting 
+of  n  data  points,  the  empirical  error  of  f  is: 
+� 
+1 
+V (f , zi) 
+n 
+
+IS [f ] = 
+
+Empirical  error,  generalization  error,
+
+
+generalization
+
+
+A  very  natural  requirement  for  fS  is  distribution  independent  general-
+ization 
+
+∀μ,  lim  IS [fS ] − I [fS ] = 0  in  probability 
+|
+|
+n→∞ 
+
+In  other words,  the  training  error  for  the  solution must  converge  to  the 
+expected  error  and  thus  be  a  “proxy”  for  it.  Otherwise  the  solution 
+would  not  be  “predictive”. 
+
+A  desirable  additional  requirement  is  universal  consistency 
+� 
+� 
+I [fS ] >  inf  I [f ] + ε  = 0. 
+f ∈H 
+
+∀ε > 0  lim  sup IPS
+n→∞ 
+μ
+
+Remark:  We  will  add  in  future  classes  the  requirement  of  uniform 
+convergence  in  both  deﬁnitions. 
+
+A  reminder:  convergence  in  probability
+
+Let  {Xn}  be  a  sequence  of  bounded  random  variables.  We 
+say  that 
+
+n→∞ 
+lim  Xn  = X  in  probability 
+
+∀ε > 0  lim  IP{|Xn − X | ≥ ε} = 0. 
+n→∞ 
+
+if
+
+
+or 
+
+if  for  each  n  there  exists  a  εn  and  a  δn  such  that 
+IP {|Xn − X | ≥ εn} ≤  δn, 
+with  εn  and  δn  going  to  zero  for  n → ∞. 
+
+3.  ERM  and  conditions  for  generalization
+
+(and  consistency)
+
+Given  a  training  set  S  and  a  function  space  H,  empirical  risk  minimiza-
+tion  (Vapnik)  is  the  algorithm  that  looks  at  S  and  selects  fS  as 
+
+fS  = arg min IS [f ] 
+f ∈H 
+
+The  solution  to  this  problem  does  not  in  general  exhibit  generalization 
+and  the  problem  may  be  ill-posed,  depending  on  the  choice  of  H. 
+If  the  minimum  does  not  exist  we  can  work  with  the  inﬁmum. 
+
+Notice:  For  ERM  generalization  and  consistency  are  equivalent 
+
+Generalization  and  Well-posedness  of
+
+Empirical  Risk  Minimization
+
+
+For  the  solution  of  ERM  to  be  useful  in  the  context  of 
+learning,  the  solution  must 
+
+•  “generalize” 
+
+•  exist,  be  unique  and  be  “stable”  (well-posedness).
+
+
+Here  is  a  graphical  example  for
+
+generalization:  given  a  certain  number  of
+
+samples...
+
+
+f(x) 
+
+x 
+
+suppose  this  is  the  “true”  solution...
+
+
+f(x) 
+
+x 
+
+...  but  suppose  ERM  gives  this  solution!
+
+
+f(x) 
+
+x 
+
+How  can  I  guarantee  that  for  a  suﬃcient
+
+number  of  examples  the  ERM  solution  will
+
+converge  to  the  true  one?
+
+
+f(x) 
+
+x 
+
+Classical  conditions  for  consistency  of  ERM
+
+
+Uniform  Glivenko-Cantelli  Classes 
+L = {H ◦ V }  is  a  (weak)  uniform  Glivenko-Cantelli  (uGC)  class 
+if 
+
+� 
+� 
+∀ε > 0  lim  sup IPS  sup  I [(cid:5)] − IS [(cid:5)] > ε  = 0. 
+|
+|
+→∞ 
+(cid:5)∈L 
+n
+μ 
+
+Theorem  [Vapnik  and  ˇ
+e,  and  Zinn 
+Cervonenkis  (71),  Alon  et  al  (97),  Dudley,  Gin´
+(91)] 
+A  necessary  and  suﬃcient  condition  for  consistency  of  ERM  is  that  L  is  uGC. 
+Thus,  as  we  will  see  later,  a  proper  choice  of  the  hypothesis  space  H  ensures  gen-
+eralization  of  ERM  (and  consistency  since  for  ERM  generalization  is  necessary  and 
+suﬃcient  for  consistency  and  viceversa).  We  will  be  exploring  the  uGC  deﬁnition 
+(and  equivalent  deﬁnitions)  in  detail  in  9.520. 
+
+Well-posedness  of  ERM
+
+
+ERM  is  in  general  an  ill-posed  problem.  It  can  be  made 
+well-posed  by  an  appropriate  choice  of  H. 
+
+As  we  will  see  later,  well-posedness  is  mainly  used  to  mean 
+stability  of  the  solution:  fS  depends  continuously  on  the 
+training  set  S .  In  particular,  changing  one  of  the  training 
+points  should  aﬀect  less  and  less  the  solution  as  n  goes  to 
+inﬁnity. 
+
+General  deﬁnition  of  Well-Posed  and 
+
+Ill-Posed  problems
+
+
+A  problem  is  well-posed  if  its  solution: 
+• 
+exists
+•  is  unique 
+•  depends  continuously  on  the  data  (e.g.  it  is  stable)
+
+
+A  problem  is  ill-posed  if  it  is  not  well-posed. 
+
+Here  is  a  graphical  example  for  stability:
+
+given  10  samples...
+
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1 
+
+...we  can  ﬁnd  the  smoothest  interpolating 
+
+polynomial  (which  degree?).
+
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1
+
+
+But  if  we  perturb  the  points  slightly...
+
+
+1
+
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1
+
+
+...the  solution  changes  a  lot.
+
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1 
+
+If  we  restrict  ourselves  to  degree  two
+
+polynomials...
+
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1 
+
+...the  solution  varies  only  a  small  amount
+
+under  a  small  perturbation.
+
+
+1 
+
+0.9 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9  1 
+
+Regularization 
+
+
+The  basic  idea  of  regularization  (originally  introduced  in 
+-
+dependently  of  the  learning  problem)  is  to  restore  well
+-
+posedness  of  ERM  by  constraining  the  hypothesis  space
+
+H.  The  direct  way  –  minimize  the  empirical  error  subject 
+to  f  in  a ball in an appropriate  H  –  is  called  Ivanov  reg-
+ularization.  The  indirect  way  is  Tikhonov  regularization 
+(which  is  not  ERM). 
+
+Ivanov  and  Tikhonov  Regularization
+
+ERM  ﬁnds  the  function  in  (H, (cid:10) · (cid:10))  which  minimizes 
+n1  � 
+V (f (xi), yi) 
+n i=1 
+which  in  general  –  for  arbitrary  hypothesis  space  H  – is 
+ill-posed.  Ivanov  regularizes  by  ﬁnding  the  function  that 
+minimizes 
+n1  � 
+V (f (xi), yi) 
+n i=1 
+
+while  satisfying 
+
+(cid:10)f (cid:10)2  ≤ A 
+
+Alternatively,  Tikhonov  regularization  minimizes  over  the 
+hypothesis  space  H,  for  a  ﬁxed  positive  parameter  λ, the 
+regularized  functional 
+n1  � 
+V (f (xi), yi) + γ (cid:10)f (cid:10)
+2
+(1) 
+K , 
+n i=1 
+where  (cid:10)f (cid:10)  is  the  norm  in  H  –  the  Reproducing  Kernel 
+Hilbert  Space  (RKHS),  deﬁned  by  the  kernel  K . 
+
+Well-posed  and  Ill-posed  problems
+
+Hadamard  introduced  the  deﬁnition  of  ill-posedness.  Ill-posed  prob-
+lems  are  typically  inverse  problems. 
+
+As  an  example,  assume  g  is  a  function  in  Y  and  u  is  a  function  in 
+X , with  Y  and  X  Hilbert  spaces.  Then  given  the  linear,  continuous 
+operator  L,  consider  the  equation 
+
+g = Lu. 
+The  direct  problem  is  is  to  compute  g  given  u;  the  inverse  problem  is 
+to  compute  u  given  the  data  g .  In  the  learning  case  L  is  somewhat 
+similar  to  a  “sampling”  operation. 
+
+The  inverse  problem  of  ﬁnding  u  is  well-posed  when 
+•  the  solution  exists, 
+•  is  unique  and 
+•  is  stable,  that  is  depends  continuously  on  the  initial  data  g . 
+
+Ill-posed  problems  fail  to  satisfy  one  or  more  of  these  criteria.  Often 
+the  term  ill-posed  applies  to  problems  that  are  not  stable, which  in  a 
+sense  is  the  key  condition. 
+
+Tikhonov  Regularization
+
+
+As  we  will  see  in  future  classes
+
+
+•	 Tikhonov  regularization  ensures  well-posedness  eg  ex-
+istence,  uniqueness  and  especially  stability  (in  a  very 
+strong  form)  of  the  solution 
+
+•	 Tikhonov  regularization  ensures  generalization 
+
+
+•	 Tikhonov  regularization  is  closely  related  to  –  but  dif-
+ferent  from  –  Ivanov  regularization,  eg  ERM  on  a  hy-
+pothesis  space  H  which  is  a  ball  in  a  RKHS. 
+
+Next  Class
+
+
+•	 In  the  next  class  we  will  introduce  RKHS:  they  will  be 
+the  hypothesis  spaces  we  will  work  with. 
+
+•	 We  will  also  derive  the  solution  of  Tikhonov  regular-
+ization. 
+
+Appendix:  Target  Space,  Sample  and
+
+Approximation  Error
+
+In  addition  to  the  hypothesis  space  H, the  space we allow 
+our  algorithms  to  search,  we  deﬁne... 
+The  target  space T  is a  space of  functions,  chosen  a priori 
+in any given problem,  that  is assumed to contain the “true” 
+function  f0  that  minimizes  the  risk.  Often,  T  is  chosen  to 
+be  all  functions  in L2,  or  all  diﬀerentiable  functions.  Notice 
+that the “true”  function  if  it exists  is deﬁned by μ(z), which 
+contains  all  the  relevant  information. 
+
+Sample  Error  (also  called  Estimation  Error)
+
+Let  fH  be  the  function  in  H  with  the  smallest  true  risk. 
+We  have  deﬁned  the  generalization  error  to  be  IS [fS ] − I [fS ]. 
+We  deﬁne  the  sample  error  to  be  I [fS ] − I [fH],  the  diﬀerence  in  true 
+risk  between  the  best  function  in  H  and  the  function  in  H  we  actually 
+ﬁnd.  This  is  what  we  pay  because  our  ﬁnite  sample  does  not  give  us 
+enough  information  to  choose  to  the  “best”  function  in  H.  We’d  like 
+this  to  be  small.  Consistency  –  deﬁned  earlier  –  is  equivalent  to  the 
+sample  error  going  to  zero  for  n → ∞. 
+A  main  topic  of  this  course  is  “bounding”  the  generalization  error. 
+Another  topic  –  the  main  one  in  classical  learning  theory  and  statis-
+tics  –  is  bounding  the  sample  error,  that  is  determining  conditions 
+under  which  we  can  state  that  I [fS ] − I [fH]  will  be  small  (with  high 
+probability). 
+As  a  simple  rule,  we  expect  that  if  H  is  “well-behaved”,  then,  as  n 
+gets  large  the  sample  error  will  become  small. 
+
+Approximation  Errror
+
+Let  f0  be  the  function  in  T  with  the  smallest  true  risk. 
+We  deﬁne  the  approximation  error  to  be  I [fH] − I [f0],  the 
+diﬀerence  in  true  risk  between  the  best  function  in  H and 
+the  best  function  in  T .  This  is  what  we  pay  because  H is 
+smaller  than  T .  We’d  like  this  error  to  be  small  too.  In 
+much  of  the  following  we  can  assume  that  I [f0] = 0. 
+
+We  will  focus  less  on  the  approximation  error  in  9.520,  but 
+we  will  explore  it. 
+As  a  simple  rule,  we  expect  that  as  H grows  bigger,  the 
+approximation  error  gets  smaller.  If  T ⊆ H  – which  is  a 
+situation  called  the  realizable  setting  –the  approximation 
+error  is  zero. 
+
+Error
+
+We  deﬁne  the  error  to  be  I [fS ] − I [f0],  the  diﬀerence  in 
+true  risk  between  the  function  we  actually  ﬁnd  and  the 
+best  function  in  T .  We’d  really  like  this  to  be  small.  As  we 
+mentioned,  often  we  can  assume  that  the  error  is  simply 
+I [fS ]. 
+
+The  error  is  the  sum  of  the  sample  error  and  the  approxi-
+mation  error: 
+I [fS ] − I [f0] = (I [fS ] − I [fH]) + (I [fH] − I [f0]) 
+
+If  we  can  make  both  the  approximation  and  the  sample 
+error  small,  the  error  will  be  small.  There  is  a  tradeoﬀ 
+between  the  approximation  error  and  the  sample  error... 
+
+The  Approximation/Sample  Tradeoﬀ
+
+It  should  already  be  intuitively  clear  that  making  H  big 
+makes  the  approximation  error  small.  This  implies  that  we 
+can  (help)  make  the  error  small  by  making  H  big. 
+On  the  other  hand,  we  will  show  that  making  H  small  will 
+make  the  sample  error  small.  In  particular  for  ERM,  if  H is 
+a  uGC  class,  the  generalization  error  and  the  sample  error 
+will  go  to  zero  as  n → ∞,  but  how  quickly  depends  directly 
+on  the  “size”  of  H.  This  implies  that  we  want  to  keep  H 
+as  small  as  possible.  (Furthermore,  T  itself  may  or  may 
+not  be  a  uGC  class.) 
+
+Ideally,  we  would  like  to  ﬁnd  the  optimal  tradeoﬀ  between 
+these  conﬂicting  requirements. 
+
+Error  Deﬁnition:  a  caveat 
+
+We deﬁne  the error  to be  I [fS ]−I [f0].  In  the  literature,  the 
+true  risk  of  the  function  we  ﬁnd,  I [fS ]  is  sometimes  called 
+the  error.  In  the  case  where  I [f0] = 0,  the  two  deﬁnitions 
+are  equivalent. 
+
+...mapping  notation  and  results  in
+
+CuckerSmale...
+
+
+(f ) ←→ 
+
+I (f )
+
+z (f ) ←→ 
+
+IS (f )
+
+Lz  ←→ I (f ) − IS (f ) 
+
+Thus 
+
+For  ERM 
+
+fS←→ 
+fz 
+Theorem  B  (for  H  compact)  ←→  generalization,  see  Theorem  b  (Na-
+ture;  for  general  algorithms  and  general  H ) 
+Theorem  C  (eg  H (fz )  →  0)  ←→  Theorem  a  (Nature;  consistency  of 
+ERM)  where  H (f ) =  (f ) − (fH ), 
+
+

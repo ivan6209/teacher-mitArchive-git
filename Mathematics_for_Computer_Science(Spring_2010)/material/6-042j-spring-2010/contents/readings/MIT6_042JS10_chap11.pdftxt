@@ -1,0 +1,1229 @@
+Chapter 11 
+
+Recursive Data Types 
+
+Recursive data types play a central role in programming. From a mathematical point 
+of view, recursive data types are what induction is about. Recursive data types are 
+speciﬁed  by  recursive  deﬁnitions  that  say  how  to  build  something  from  its  parts. 
+These deﬁnitions have two parts: 
+
+•  Base case(s) that don’t depend on anything else. 
+
+•  Constructor case(s) that depend on previous cases. 
+
+11.1  Strings of Brackets 
+
+Let brkts be  the set of all strings of square brackets.  For example,  the  following 
+two strings are in brkts: 
+[ ] ] [ [ [ [ [ ] ]  and  [ [ [ ] ] [ ] ] [ ] 
+
+(11.1) 
+
+Since we’re  just  starting  to  study  recursive  data,  just  for  practice we’ll  formulate 
+brkts as a recursive data type, 
+
+Deﬁnition  11.1.1.  The  data  type,  brkts,  of  strings  of  brackets  is  deﬁned  recur­
+sively: 
+
+•  Base case: The empty string, λ, is in brkts. 
+•  Constructor case:  If s ∈ brkts, then s]  and s[  are in brkts. 
+Here we’re writing s]  to  indicate the string that  is the sequence of brackets (if 
+any) in the string s, followed by a right bracket; similarly for s[ . 
+A  string,  s  ∈  brkts,  is  called  a  matched  string  if  its  brackets  “match  up”  in 
+the usual way.  For example, the left hand string above is not matched because its 
+second right bracket does not have a matching left bracket. The string on the right 
+is matched. 
+
+207 
+
+208 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+We’re going  to  examine  several different ways  to deﬁne  and prove properties 
+of matched strings using recursively deﬁned sets and functions.  These properties 
+are  pretty  straighforward,  and  you might wonder whether  they  have  any  partic­
+ular  relevance  in  computer  scientist  —other  than  as  a  nonnumerical  example  of 
+recursion.  The  honest  answer  is  “not much  relevance,  any more.”  The  reason  for 
+this is one of the great successes of computer science. 
+
+Expression Parsing 
+
+During the early development of computer science in the 1950’s and 60’s, creation 
+of effective programming language compilers was a central concern. A key aspect 
+in processing a program for compilation was expression parsing. The problem was 
+to take in an expression like 
+
+x + y ∗ z 2  ÷ y + 7 
+
+and put in the brackets that determined how it should be evaluated —should it be 
+[[x + y ] ∗ z 2  ÷ y ] + 7,  or, 
+x + [y ∗ z 2  ÷ [y + 7]],  or, 
+[x + [y ∗ z 2 ]] ÷ [y + 7], 
+
+or . . . ? 
+The  Turing  award  (the  “Nobel  Prize”  of  computer  science)  was  ultimately  be­
+stowed  on  Robert  Floyd,  for,  among  other  things,  being  discoverer  of  a  simple 
+program that would insert the brackets properly. 
+In  the  70’s  and  80’s,  this  parsing  technology  was  packaged  into  high-level 
+compiler-compilers  that  automatically  generated  parsers  from  expression  gram­
+mars. This automation of parsing was so effective that the subject needed no longer 
+demanded attention.  It largely disappeared from the computer science curriculum 
+by the 1990’s. 
+
+One precise way to determine if a string is matched is to start with 0 and read 
+the  string  from  left  to  right,  adding  1  to  the  count  for  each  left  bracket  and  sub­
+tracting 1  from  the count  for each right bracket.  For example, here are  the counts 
+
+11.1.  STRINGS OF BRACKETS 
+
+209 
+
+for the two strings above 
+] 
+[
+]
+0  −1
+1
+
+0
+
+[
+1
+
+[ 
+2 
+
+0
+
+[
+3
+
+[
+0
+
+]
+2
+
+[
+1
+
+]
+1
+
+[
+2
+
+[
+2
+
+[
+3
+
+]
+1
+
+[
+4
+
+]
+0
+
+]
+3
+
+[
+1
+
+]
+2
+
+]
+1
+
+] 
+0 
+
+] 
+0 
+
+A string has a good count if its running count never goes negative and ends with 0. 
+So the second string above has a good count, but the ﬁrst one does not because its 
+count went negative at the third step. 
+
+Deﬁnition 11.1.2.  Let 
+GoodCount ::= {s ∈ brkts  | s has a good count} . 
+The  matched  strings  can  now  be  characterized  precisely  as  this  set  of  strings 
+with good counts.  But  it  turns out  to be really useful  to characterize  the matched 
+strings in another way as well, namely, as a recursive data type: 
+
+Deﬁnition 11.1.3.  Recursively deﬁne the set, RecMatch, of strings as follows: 
+•  Base case:  λ ∈ RecMatch. 
+•  Constructor case:  If s, t ∈ RecMatch, then 
+[ s ] t ∈ RecMatch. 
+
+Here  we’re  writing  [ s ] t  to  indicate  the  string  that  starts  with  a  left  bracket, 
+followed  by  the  sequence  of  brackets  (if  any)  in  the  string  s,  followed  by  a  right 
+bracket, and ending with the sequence of brackets in the string t. 
+Using this deﬁnition, we can see that λ ∈ RecMatch by the Base case, so 
+[ λ] λ = [ ]  ∈ RecMatch 
+by the Constructor case.  So now, 
+[ λ] [ ]  = [ ] [ ]  ∈ RecMatch 
+[ [ ] ] λ = [ [ ] ]  ∈ RecMatch 
+[ [ ] ] [ ]  ∈ RecMatch 
+are  also  strings  in  RecMatch  by  repeated  applications  of  the  Constructor  case.  If 
+you  haven’t  seen  this  kind  of  deﬁnition  before,  you  should  try  continuing  this 
+example to verify that [ [ [ ] ] [ ] ] [ ]  ∈ RecMatch 
+Given the way this section is set up, you might guess that RecMatch = GoodCount, 
+and  you’d  be  right,  but  it’s  not  completely  obvious.  The  proof  is  worked  out  in 
+Problem 11.6. 
+
+(letting s = λ, t = [ ] ) 
+(letting s = [ ] , t = λ) 
+(letting s = [ ] , t = [ ] ) 
+
+210 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+11.2  Arithmetic Expressions 
+
+Expression evaluation is a key feature of programming languages, and recognition 
+of expressions as a recursive data type is a key to understanding how they can be 
+processed. 
+To  illustrate  this  approach we’ll work with  a  toy  example:  arithmetic  expres­
+sions like 3x2 + 2x + 1 involving only one variable, “x.” We’ll refer to the data type 
+of such expressions as Aexp. Here is its deﬁnition: 
+
+Deﬁnition 11.2.1. 
+
+•  Base cases: 
+
+1.  The variable, x, is in Aexp. 
+2.  The arabic numeral, k, for any nonnegative integer, k , is in Aexp. 
+•	 Constructor cases:  If e, f  ∈ Aexp, then 
+3.	 (e + f ) ∈ Aexp. The expression (e + f ) is called a sum. The Aexp’s e and 
+f  are called the components of the sum; they’re also called the summands. 
+4.	 (e ∗ f )  ∈  Aexp.  The  expression  (e ∗ f )  is  called  a  product.  The Aexp’s 
+e and f  are called the components of the product;  they’re also called the 
+multiplier and multiplicand. 
+5.	 −(e) ∈ Aexp. The expression −(e) is called a negative. 
+Notice  that Aexp’s  are  fully  parenthesized,  and  exponents  aren’t  allowed.  So 
+the  Aexp  version  of  the  polynomial  expression  3x2  + 2x + 1  would  ofﬁcially  be 
+written as 
+((3 ∗ (x ∗ x)) + ((2 ∗ x) + 1)).	
+(11.2) 
+These parentheses and ∗’s clutter up examples,  so we’ll often use simpler expres­
+sions  like  “3x2  + 2x + 1”  instead  of  (11.2).  But  it’s  important  to  recognize  that 
+3x2  + 2x + 1 is not an Aexp; it’s an abbreviation for an Aexp. 
+
+11.3  Structural Induction on Recursive Data Types 
+
+Structural induction is a method for proving some property, P , of all the elements 
+of a recursively-deﬁned data type. The proof consists of two steps: 
+
+•	 Prove P  for the base cases of the deﬁnition. 
+
+•	 Prove P  for the constructor cases of the deﬁnition, assuming that it is true for 
+the component data items. 
+
+A  very  simple  application  of  structural  induction  proves  that  the  recursively 
+deﬁned matched  strings  always have  an  equal number of  left  and  right brackets. 
+To do this, deﬁne a predicate, P , on strings s ∈ brkts: 
+P (s) ::=  s has an equal number of left and right brackets. 
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+211 
+
+Proof.  We’ll prove that P (s) holds for all s ∈ RecMatch by structural induction on 
+the deﬁnition that s ∈ RecMatch, using P (s) as the induction hypothesis. 
+Base  case:  P (λ)  holds  because  the  empty  string  has  zero  left  and  zero  right 
+brackets. 
+Constructor case: For r = [ s ] t, we must show that P (r) holds, given that P (s) 
+and P (t) holds.  So let ns , nt  be, respectively, the number of left brackets in s and t. 
+So the number of left brackets in r is 1 + ns  + nt . 
+Now from the respective hypotheses P (s) and P (t), we know that the number 
+of right brackets in s is ns , and likewise, the number of right brackets in t is nt .  So 
+the number of right brackets  in r  is 1 + ns  + nt , which  is  the same as  the number 
+of  left brackets.  This proves P (r).  We  conclude by  structural  induction  that P (s) 
+holds for all s ∈ RecMatch. 
+� 
+
+11.3.1  Functions on Recursively-deﬁned Data Types 
+Functions  on  recursively-deﬁned data  types  can  be deﬁned  recursively using  the 
+same cases as the data type deﬁnition.  Namely, to deﬁne a function, f , on a recur­
+sive data  type, deﬁne  the value of f  for  the base cases of  the data  type deﬁnition, 
+and then deﬁne the value of f  in each constructor case in terms of the values of f 
+on the component data items. 
+For  example,  from  the  recursive  deﬁnition  of  the  set,  RecMatch,  of  strings  of 
+matched brackets, we deﬁne: 
+Deﬁnition 11.3.1.  The depth, d(s), of a string, s ∈ RecMatch, is deﬁned recursively 
+by the rules: 
+•  d(λ) ::= 0. 
+•  d([ s ] t) ::= max {d(s) + 1, d(t)} 
+
+Warning:  When  a  recursive  deﬁnition  of  a  data  type  allows  the  same  element  to 
+be  constructed  in  more  than  one  way,  the  deﬁnition  is  said  to  be  ambiguous. A 
+function deﬁned recursively from an ambiguous deﬁnition of a data type will not 
+be well-deﬁned unless  the values  speciﬁed  for  the different ways  of  constructing 
+the element agree. 
+
+We were  careful  to  choose  an  unambiguous  deﬁnition  of  RecMatch  to  ensure 
+that functions deﬁned recursively on the deﬁnition would always be well-deﬁned. 
+As an example of the trouble an ambiguous deﬁnition can cause, let’s consider yet 
+another deﬁnition of the matched strings. 
+Example 11.3.2.  Deﬁne the set, M  ⊆ brkts recursively as follows: 
+•  Base case:  λ ∈ M , 
+•  Constructor cases:  if s, t ∈ M , then the strings [ s ]  and st are also in M . 
+
+212 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+Quick Exercise: Give an easy proof by structural induction that M  = RecMatch. 
+
+Since  M  =  RecMatch,  and  the  deﬁnition  of  M  seems  more  straightforward, 
+why didn’t we use it? Because the deﬁnition of M  is ambiguous, while the trickier 
+deﬁnition of RecMatch is unambiguous.  Does this ambiguity matter?  Yes it does. 
+For suppose we deﬁned 
+
+f (λ) ::= 1, 
+f ( [ s ]  ) ::= 1 + f (s), 
+f (st) ::= (f (s) + 1) · (f (t) + 1) 
+for st =� λ. 
+Let  a be  the  string  [ [ ] ]  ∈  M  built by  two  successive  applications of  the ﬁrst 
+M  constructor starting with λ. Next let b ::= aa and c ::= bb, each built by successive 
+applications of the second M  constructor starting with a. 
+Alternatively, we can build ba from the second constructor with s = b and t = a, 
+and then get to c using the second constructor with s = ba and t = a. 
+Now by  these rules, f (a) = 2, and f (b)  =  (2 + 1)(2 + 1)  =  9.  This means  that 
+f (c) = f (bb) = (9 + 1)(9 + 1) = 100. 
+But also f (ba) = (9+ 1)(2+ 1) = 27, so that f (c) = f (ba a) = (27+ 1)(2+ 1) = 84. 
+The outcome is that f (c) is deﬁned to be both 100 and 84, which shows that the 
+rules deﬁning f  are inconsistent. 
+On  the  other  hand,  structural  induction  remains  a  sound  proof method  even 
+for ambiguous recursive deﬁnitions, which  is why  it was easy  to prove  that M  = 
+RecMatch. 
+
+11.3.2  Recursive Functions on Nonnegative Integers 
+The nonnegative integers can be understood as a recursive data type. 
+Deﬁnition 11.3.3.  The set, N, is a data type deﬁned recursivly as: 
+•  0 ∈ N. 
+•  If n ∈ N, then the successor, n + 1, of n is in N. 
+This of course makes it clear that ordinary induction is simply the special case 
+of  structural  induction  on  the  recursive  Deﬁnition  11.3.3,  This  also  justiﬁes  the 
+familiar  recursive  deﬁnitions  of  functions  on  the  nonnegative  integers.  Here  are 
+some examples. 
+
+The Factorial function.  This function is often written “n!.”  You will see a lot of it 
+later in the term. Here we’ll use the notation fac(n): 
+
+•  fac(0) ::= 1. 
+•  fac(n + 1) ::= (n + 1)  fac(n) for n ≥ 0.
+· 
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+213 
+
+The Fibonacci numbers.  Fibonacci  numbers  arose  out  of  an  effort  800  years  ago 
+to  model  population  growth.  They  have  a  continuing  fan  club  of  people 
+captivated by their extraordinary properties.  The nth Fibonacci number, ﬁb, 
+can be deﬁned recursively by: 
+
+ﬁb(0) ::= 0, 
+ﬁb(1) ::= 1, 
+ﬁb(n) ::= ﬁb(n − 1) + ﬁb(n − 2) 
+
+for n ≥ 2. 
+
+Here  the  recursive  step  starts  at  n  = 2 with  base  cases  for  0  and  1.  This  is 
+needed since the recursion relies on two previous values. 
+What is ﬁb(4)? Well, ﬁb(2) = ﬁb(1) + ﬁb(0) = 1, ﬁb(3) = ﬁb(2) + ﬁb(1) = 2, 
+�
+so ﬁb(4) = 3. The sequence starts out 0, 1, 1, 2, 3, 5, 8, 13, 21, . . . . 
+n 
+Sum-notation.  Let  “S (n)”  abbreviate  the  expression  “ 
+=1 f (i).”  We  can  recur­
+i
+sively deﬁne S (n) with the rules 
+
+•  S (0) ::= 0. 
+•  S (n + 1) ::= f (n + 1) + S (n) for n ≥ 0. 
+
+Ill-formed Function Deﬁnitions 
+
+There  are  some  blunders  to  watch  out  for  when  deﬁning  functions  recursively. 
+Below are some function speciﬁcations that resemble good deﬁnitions of functions 
+on the nonnegative integers, but they aren’t. 
+
+f1 (n) ::= 2 + f1 (n − 1). 
+
+(11.3) 
+
+This “deﬁnition” has no base case.  If some function, f1 , satisﬁed (11.3), so would a 
+function obtained by adding a constant to the value of f1 .  So equation (11.3) does 
+not uniquely deﬁne an f1 . 
+� 
+0, 
+if n = 0,
+f2 (n) ::= 
+f2 (n + 1)  otherwise. 
+
+(11.4)
+
+This  “deﬁnition”  has  a  base  case,  but  still  doesn’t  uniquely  determine  f2 .  Any 
+function that is 0 at 0 and constant everywhere else would satisfy the speciﬁcation, 
+so (11.4) also does not uniquely deﬁne anything. 
+In  a  typical  programming  language,  evaluation  of  f2 (1)  would  begin  with  a 
+recursive call of f2 (2), which would lead to a recursive call of f2 (3), . . . with recur­
+sive calls continuing without end. This “operational” approach interprets (11.4) as 
+deﬁning a partial function, f2 , that is undeﬁned everywhere but 0. 
+
+214 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+⎧ ⎪⎨ ⎪⎩ 
+0, 
+if n is divisible by 2, 
+f3 (n) ::= 
+1, 
+if n is divisible by 3, 
+2,  otherwise. 
+This  “deﬁnition”  is  inconsistent:  it  requires  f3 (6)  =  0  and  f3 (6)  =  1,  so  (11.5) 
+doesn’t deﬁne anything. 
+
+(11.5) 
+
+A Mysterious Function 
+
+⎧ ⎪⎨ ⎪⎩ 
+Mathematicians have been wondering about this function speciﬁcation for a while: 
+if n ≤ 1, 
+1, 
+f4 (n) ::= 
+if n > 1 is even, 
+f4 (n/2) 
+f4 (3n + 1) 
+if n > 1 is odd. 
+For example, f4 (3) = 1 because 
+f4 (3) ::= f4 (10) ::= f4 (5) ::= f4 (16) ::= f4 (8) ::= f4 (4) ::= f4 (2) ::= f4 (1) ::= 1. 
+
+(11.6) 
+
+The  constant  function  equal  to  1 will  satisfy  (11.6),  but  it’s  not  known  if  another 
+function  does  too.  The  problem  is  that  the  third  case  speciﬁes  f4 (n)  in  terms  of 
+f4  at  arguments  larger  than  n,  and  so  cannot  be  justiﬁed  by  induction  on  N.  It’s 
+known that any f4  satisfying (11.6) equals 1 for all n up to over a billion. 
+Quick exercise: Why does the constant function 1 satisfy (11.6)? 
+
+11.3.3  Evaluation and Substitution with Aexp’s 
+Evaluating Aexp’s 
+
+Since  the  only  variable  in  an  Aexp  is  x,  the  value  of  an  Aexp  is  determined  by 
+the value of x.  For  example,  if  the value  of x  is  3,  then  the value of  3x2  + 2x + 1 
+is  obviously  34.  In  general,  given  any  Aexp,  e,  and  an  integer  value,  n,  for  the 
+variable, x, we can evaluate e to ﬁnds  its value, eval(e, n).  It’s easy, and useful,  to 
+specify this evaluation process with a recursive deﬁnition. 
+Deﬁnition  11.3.4.  The  evaluation  function,  eval  :  Aexp × Z  →  Z,  is deﬁned  recur­
+sively on expressions, e ∈ Aexp, as follows. Let n be any integer. 
+
+•  Base cases: 
+
+1.  Case[e is x]
+
+
+eval(x, n) ::= n.
+
+
+(The value of the variable, x, is given to be n.) 
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+215 
+
+2.  Case[e is k]
+
+
+eval(k, n) ::= k .
+
+
+(The value of the numeral k is the integer k , no matter what value x has.) 
+
+•  Constructor cases: 
+
+3.  Case[e is (e1  + e2 )] 
+
+eval((e1  + e2 ), n) ::= eval(e1 , n) + eval(e2 , n). 
+4.  Case[e is (e1  ∗ e2 )] 
+eval((e1  ∗ e2 ), n) ::= eval(e1 , n)  eval(e2 , n).
+· 
+5.  Case[e is −(e1 )]
+
+
+eval(−(e1 ), n) ::= − eval(e1 , n). 
+
+
+For  example,  here’s  how  the  recursive  deﬁnition  of  eval  would  arrive  at  the 
+value of 3 + x2  when x is 2: 
+eval((3 + (x ∗ x)), 2) = eval(3, 2) + eval((x ∗ x), 2) 
+= 3 + eval((x ∗ x), 2) 
+· 
+= 3 + (eval(x, 2)  eval(x, 2)) 
+· 
+= 3 + (2  2) 
+= 3 + 4 = 7. 
+
+(by Def 11.3.4.3) 
+(by Def 11.3.4.2) 
+(by Def 11.3.4.4)
+(by Def 11.3.4.1)
+
+Substituting into Aexp’s 
+
+Substituting expressions  for variables  is a  standard,  important operation.  For ex­
+ample the result of substituting the expression 3x for x in the (x(x − 1)) would be 
+(3x(3x − 1). We’ll use the general notation subst(f , e) for the result of substituting 
+an Aexp, f , for each of the x’s in an Aexp, e.  For instance, 
+subst(3x, x(x − 1)) = 3x(3x − 1). 
+
+This substitution function has a simple recursive deﬁnition: 
+Deﬁnition 11.3.5.  The  substitution  function  from Aexp × Aexp  to Aexp  is deﬁned 
+recursively on expressions, e ∈ Aexp, as follows. Let f  be any Aexp. 
+
+•  Base cases: 
+
+1.  Case[e is x]
+
+
+subst(f , x) ::= f .
+
+
+(The result of substituting f  for the variable, x, is just f .) 
+
+216 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+2.  Case[e is k]
+
+
+subst(f , k) ::= k.
+
+
+(The numeral, k, has no x’s in it to substitute for.) 
+
+•  Constructor cases: 
+
+3.  Case[e is (e1  + e2 )] 
+
+subst(f , (e1  + e2 ))) ::= (subst(f , e1 ) + subst(f , e2 )). 
+4.  Case[e is (e1  ∗ e2 )] 
+subst(f , (e1  ∗ e2 ))) ::= (subst(f , e1 ) ∗ subst(f , e2 )). 
+5.  Case[e is −(e1 )] 
+
+subst(f , −(e1 )) ::= −(subst(f , e1 )). 
+
+Here’s how the recursive deﬁnition of the substitution function would ﬁnd the 
+result of substituting 3x for x in the x(x − 1): 
+subst(3x, (x(x − 1))) = subst(3x, (x ∗ (x + −(1)))) 
+(unabbreviating) 
+= (subst(3x, x) ∗ subst(3x, (x + −(1)))) 
+(by Def 11.3.5 4) 
+= (3x ∗ subst(3x, (x + −(1)))) 
+(by Def 11.3.5 1) 
+= (3x ∗ (subst(3x, x) + subst(3x, −(1)))) 
+(by Def 11.3.5 3) 
+= (3x ∗ (3x + −(subst(3x, 1)))) 
+(by Def 11.3.5 1 & 5) 
+= (3x ∗ (3x + −(1))) 
+(by Def 11.3.5 2) 
+= 3x(3x − 1) 
+(abbreviation) 
+Now  suppose we  have  to  ﬁnd  the  value  of  subst(3x, (x(x − 1))) when  x  = 2. 
+There are two approaches. 
+First, we  could  actually do  the  substitution  above  to  get  3x(3x − 1),  and  then 
+we  could evaluate 3x(3x − 1) when x  = 2,  that  is, we  could  recursively  calculate 
+eval(3x(3x − 1), 2)  to  get  the  ﬁnal  value  30.  In  programming  jargon,  this  would 
+be  called  evaluation  using  the  Substitution  Model.  Tracing  through  the  steps  in 
+the evaluation, we ﬁnd that the Substitution Model requires two substitutions for 
+occurrences of x and 5  integer operations:  3  integer multiplications,  1  integer ad­
+dition, and 1  integer negative operation.  Note  that  in  this Substitution Model  the 
+· 
+multiplication  3 2 was performed  twice  to get  the value of  6  for  each of  the  two 
+occurrences of 3x. 
+The other approach is called evaluation using the Environment Model.  Namely, 
+we evaluate 3x when x = 2 using just 1 multiplication to get the value 6.  Then we 
+evaluate x(x − 1) when x has  this value 6  to arrive at  the value 6  5 = 30.  So  the 
+· 
+Environment Model  requires  2  variable  lookups  and  only  4  integer  operations:  1 
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+217 
+
+· 
+multiplication to ﬁnd the value of 3x, another multiplication to ﬁnd the value 6 5,
+along with 1 integer addition and 1 integer negative operation. 
+So the Environment Model approach of calculating 
+eval(x(x − 1), eval(3x, 2)) 
+
+instead of the Substitution Model approach of calculating 
+eval(subst(3x, x(x − 1)), 2) 
+
+is  faster.  But  how  do  we  know  that  these  ﬁnal  values  reached  by  these  two  ap­
+proaches  always  agree?  We  can  prove  this  easily  by  structural  induction  on  the 
+deﬁnitions of the two approaches. More precisely, what we want to prove is 
+Theorem 11.3.6.  For all expressions e, f  ∈ Aexp and n ∈ Z, 
+
+eval(subst(f , e), n) = eval(e, eval(f , n)). 
+
+(11.7) 
+
+Proof.  The proof is by structural induction on e.1 
+Base cases: 
+
+•  Case[e is x] 
+The  left  hand  side  of  equation  (11.7)  equals  eval(f , n)  by  this  base  case  in 
+Deﬁnition  11.3.5  of  the  substitution  function,  and  the  right  hand  side  also 
+equals eval(f , n) by this base case in Deﬁnition 11.3.4 of eval. 
+
+•  Case[e is k]. 
+The  left  hand  side  of  equation  (11.7)  equals  k  by  this  base  case  in  Deﬁni­
+tions 11.3.5 and 11.3.4 of the substitution and evaluation functions. Likewise, 
+the right hand side equals k by two applications of this base case in the Deﬁ­
+nition 11.3.4 of eval. 
+
+Constructor cases: 
+
+•  Case[e is (e1  + e2 )] 
+By  the  structural  induction  hypothesis  (11.7),  we  may  assume  that  for  all 
+f  ∈ Aexp and n ∈ Z, 
+
+eval(subst(f , ei ), n) = eval(ei , eval(f , n)) 
+for i = 1, 2. We wish to prove that 
+
+(11.8) 
+
+eval(subst(f , (e1  + e2 )), n) = eval((e1  + e2 ), eval(f , n)) 
+
+(11.9) 
+
+1 This  is  an  example  of why  it’s  useful  to  notify  the  reader what  the  induction  variable  is—in  this 
+case it isn’t n. 
+
+218 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+But the left hand side of (11.9) equals 
+eval( (subst(f , e1 ) + subst(f , e2 )), n) 
+by Deﬁnition 11.3.5.3 of substitution into a sum expression. But this equals 
+eval(subst(f , e1 ), n) + eval(subst(f , e2 ), n) 
+by  Deﬁnition  11.3.4.3  of  eval  for  a  sum  expression.  By  induction  hypothe­
+sis (11.8), this in turn equals 
+eval(e1 , eval(f , n)) + eval(e2 , eval(f , n)). 
+Finally,  this  last  expression  equals  the  right  hand  side  of  (11.9)  by  Deﬁni­
+tion 11.3.4.3 of eval for a sum expression. This proves (11.9) in this case. 
+•  e is (e1  ∗ e2 ).  Similar. 
+•  e is −(e1 ). Even easier. 
+This covers all  the constructor cases,  and  so completes  the proof by  structural 
+induction. 
+� 
+
+11.3.4  Problems 
+Practice Problems 
+
+Problem 11.1. 
+
+Deﬁnition.  Consider a new recursive deﬁnition, MB0 , of the same set of “match­
+ing” brackets strings as MB  (deﬁnition of MB  is provided in the Appendix): 
+•  Base case:  λ ∈ MB0 . 
+•  Constructor cases: 
+(i)  If s is in MB0 , then [s] is in MB0 . 
+(ii)  If s, t ∈ MB0 , s =� λ, and t =� λ, then st is in MB0 . 
+(a)  Suppose  structural  induction was being used  to prove  that MB0  ⊆  MB .  Cir­
+cle  the  one  predicate  below  that  would  ﬁt  the  format  for  a  structural  induction 
+hypothesis in such a proof. 
+•  P0 (n) ::= |s| ≤ n IM P L I E S  s ∈ MB . 
+•  P1 (n) ::= |s| ≤ n IM P L I E S  s ∈ MB0 . 
+•  P2 (s) ::= s ∈ MB . 
+•  P3 (s) ::= s ∈ MB0 . 
+•  P4 (s) ::=  (s ∈ MB  IM P L I E S  s ∈ MB0 ). 
+(b)  The recursive deﬁnition MB0  is ambiguous.  Verify this by giving two different 
+derivations for the string ”[ ][ ][ ]” according to MB0 . 
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+219 
+
+Class Problems 
+
+Problem 11.2. 
+The Elementary 18.01 Functions (F18’s) are the set of functions of one real variable 
+deﬁned recursively as follows: 
+Base cases: 
+•	 The identity function, id(x) ::= x is an F18, 
+•	 any constant function is an F18, 
+•	 the sine function is an F18, 
+Constructor cases: 
+If f , g are F18’s, then so are 
+1.	 f  + g , f g , eg  (the constant e), 
+2.  the inverse function f (−1) , 
+g .◦ 
+3.  the composition f
+(a)  Prove that the function 1/x is an F18. 
+Warning: Don’t confuse 1/x = x−1  with the inverse, id(−1)  of the identity function 
+id(x). The inverse id(−1)  is equal to id. 
+(b)  Prove  by  Structural  Induction  on  this  deﬁnition  that  the  Elementary  18.01 
+Functions  are  closed  under  taking  derivatives.  That  is,  show  that  if  f (x)  is  an  F18, 
+then  so  is  f �  ::= df /dx.  (Just  work  out  2  or  3  of  the most  interesting  constructor 
+cases; you may skip the less interesting ones.) 
+
+Problem 11.3. 
+Here is a simple recursive deﬁnition of the set, E , of even integers: 
+Deﬁnition.  Base case:  0 ∈ E . 
+Constructor cases:  If n ∈ E , then so are n + 2 and −n. 
+�	
+� 
+Provide similar simple recursive deﬁnitions of the following sets: 
+�	
+� 
+(a)  The set S  ::=  2k 3m 5n  | k , m, n ∈ N  . 
+�	
+� 
+(b)  The set T  ::=  2k 32k+m5m+n  | k , m, n ∈ N  . 
+(c)	 The set L ::=  (a, b) ∈ Z2  | 3  | (a − b)  . 
+Let L�  be  the set deﬁned by  the recursive deﬁnition you gave  for L  in  the pre­
+vious part.  Now  if you did  it right,  then L�  =  L, but maybe you made a mistake. 
+So let’s check that you got the deﬁnition right. 
+(d)  Prove by structural induction on your deﬁnition of L�  that 
+L�  ⊆ L. 
+
+220 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+(e)  Conﬁrm that you got the deﬁnition right by proving that 
+L ⊆ L� . 
+
+(f)  See if you can give an unambiguous recursive deﬁnition of L. 
+
+Problem 11.4.
+
+Let p be the string [ ] . A string of brackets is said to be erasable iff it can be reduced
+
+to  the  empty  string  by  repeatedly  erasing  occurrences  of  p.  For  example,  here’s
+
+how to erase the string [ [ [ ] ] [ ] ] [ ] :
+
+→ → 
+→ 
+[ ] 
+[ [ ] ] 
+[ [ [ ] ] [ ] ] [ ] 
+On the other hand the string [ ] ] [ [ [ [ [ ] ]  is not erasable because when we try to 
+erase, we get stuck: 
+
+λ.
+
+[ ] ] [ [ [ [ [ ] ]  → ] [ [ [ [ ]  → ] [ [ [  �→ 
+Let  Erasable  be  the  set  of  erasable  strings  of  brackets.  Let  RecMatch  be  the 
+recursive data type of strings of matched brackets given in Deﬁnition 11.3.7. 
+(a)  Use structural induction to prove that 
+RecMatch ⊆ Erasable. 
+
+(b)  Supply the missing parts of the following proof that 
+Erasable ⊆ RecMatch. 
+Proof.  We  prove  by  induction  on  the  length,  n,  of  strings,  x,  that  if  x  ∈  Erasable, 
+then x ∈ RecMatch. The induction predicate is 
+P (n) ::= ∀x ∈ Erasable. (|x| ≤ n  IM P L I E S  x ∈ RecMatch) 
+
+Base case: 
+What is the base case? Prove that P  is true in this case. 
+Inductive step: To prove P (n + 1), suppose |x ≤ n + 1 and x ∈ Erasable. We need 
+|
+only show that x  ∈  RecMatch.  Now if |x| < n 
++ 1, then the induction hypothesis, 
+P (n), implies that x ∈ RecMatch, so we only have to deal with x of length exactly 
+n + 1. 
+Let’s say that a string y  is an erase of a string z  iff y  is the result of erasing a single 
+occurrence of p in z . 
+Since x ∈ Erasable and has positive length, there must be an erase, y ∈ Erasable, of 
+x.  So  y = n − 1, and since y ∈ Erasable, we may assume by induction hypothesis 
+|
+| 
+∈
+RecMatch. 
+that y
+
+11.3.  STRUCTURAL INDUCTION ON RECURSIVE DATA TYPES 
+
+221 
+
+Now we argue by cases:
+
+Case (y  is the empty string).
+
+Prove that x ∈ RecMatch in this case.
+
+Case (y = [ s ] t for some strings s, t ∈ RecMatch.) Now we argue by subcases.
+
+•	 Subcase (x is of the form [ s�  ] t where s is an erase of s� ). 
+Since s ∈ RecMatch, it is erasable by part (b), which implies that s�  ∈ Erasable. 
+But |s� | < |x|, so by induction hypothesis, we may assume that s�  ∈ RecMatch. 
+This shows that x is the result of the constructor step of RecMatch, and there­
+fore x ∈ RecMatch. 
+•	 Subcase (x is of the form [ s ] t�  where t is an erase of t� ).
+
+Prove that x ∈ RecMatch in this subcase.
+
+•	 Subcase(x = p[ s ] t).
+
+Prove that x ∈ RecMatch in this subcase.
+
+The proofs of the remaining subcases are just like this last one.  List these remain­
+ing subcases. 
+This completes the proof by induction on n, so we conclude that P (n) holds for all 
+n ∈ N. Therefore x ∈ RecMatch for every string x ∈ Erasable. That is, 
+Erasable ⊆ RecMatch and hence Erasable = RecMatch. 
+
+� 
+
+Problem 11.5. 
+
+Deﬁnition.  The  recursive data  type,  binary-2PTG,  of  binary  trees with  leaf  labels, 
+L, is deﬁned recursively as follows: 
+•	 Base case:  �leaf, l� ∈ binary-2PTG, for all labels l ∈ L. 
+•	 Constructor case:  If G1 , G2  ∈ binary-2PTG, then 
+�bintree, G1 , G2 � ∈ binary-2PTG. 
+The size, |G|, of G ∈ binary-2PTG is deﬁned recursively on this deﬁnition by: 
+•	 Base case:
+
+
+|�leaf, l�| ::= 1, 
+
+for all l ∈ L.
+
+
+•	 Constructor case: 
+
+|�bintree, G1 , G2 �| ::= |G1 | + |G2 | + 1. 
+
+222 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+Figure 11.1: A picture of a binary tree w . 
+
+For example, for the size of the binary-2PTG, G, pictured in Figure 11.1, is 7. 
+(a)  Write out (using angle brackets and labels bintree, leaf, etc.)  the binary-2PTG, 
+G, pictured in Figure 11.1. 
+The  value  of  ﬂatten(G)  for G  ∈  binary-2PTG  is  the  sequence  of  labels  in L  of 
+the leaves of G.  For example, for the binary-2PTG, G, pictured in Figure 11.1, 
+
+ﬂatten(G) = (win, lose, win, win). 
+
+(b)  Give a recursive deﬁnition of ﬂatten.  (You may use the operation of concatena­
+tion (append) of two sequences.) 
+
+(c)  Prove by structural induction on the deﬁnitions of ﬂatten and size that 
+2 · length(ﬂatten(G)) = |G| + 1. 
+
+(11.10) 
+
+Homework Problems 
+
+Problem 11.6. 
+
+Deﬁnition  11.3.7.  The  set,  RecMatch,  of  strings  of matching  brackets,  is  deﬁned 
+recursively as follows: 
+•  Base case:  λ ∈ RecMatch. 
+
+GG11winG1,2winlosewin11.4.  GAMES AS A RECURSIVE DATA TYPE 
+
+223 
+
+•	 Constructor case:  If s, t ∈ RecMatch, then 
+[ s ] t ∈ RecMatch. 
+
+There is a simple test to determine whether a string of brackets is in RecMatch: 
+starting with zero, read the string from left to right adding one for each left bracket 
+and -1 for each right bracket.  A string has a good count when the count never goes 
+negative and is back to zero by the end of the string. Let GoodCount be the bracket 
+strings with good counts. 
+(a)  Prove that GoodCount contains RecMatch by structural induction on the def­
+inition of RecMatch. 
+
+(b)  Conversely, prove that RecMatch contains GoodCount. 
+
+Problem 11.7. 
+Fractals  are  example  of  a mathematical  object  that  can  be  deﬁned  recursively.  In 
+this problem, we  consider  the Koch  snowﬂake.  Any Koch  snowﬂake  can be  con­
+structed by the following recursive deﬁnition. 
+•	 Base  Case:  An  equilateral  triangle  with  a  positive  integer  side  length  is  a 
+Koch snowﬂake. 
+
+•	 Recursive  case:  Let K  be  a  Koch  snowﬂake,  and  let  l  be  a  line  segment  on 
+the  snowﬂake.  Remove  the  middle  third  of  l,  and  replace  it  with  two  line 
+segments of the same length as is done below: 
+
+The resulting ﬁgure is also a Koch snowﬂake. 
+√
+Prove by structural induction that the area inside any Koch snowﬂake is of the 
+3, where q  is a rational number. 
+form q
+
+11.4  Games as a Recursive Data Type 
+
+Chess,  Checkers,  and  Tic-Tac-Toe  are  examples  of  two-person  terminating  games  of 
+perfect  information, —2PTG’s  for  short.  These  are  games  in which  two  players  al­
+ternate moves that depend only on the visible board position or state of the game. 
+“Perfect information” means that the players know the complete state of the game 
+at each move.  (Most card games are not games of perfect information because nei­
+ther player can see the other ’s hand.)  “Terminating” means that play cannot go on 
+forever —it must end after a ﬁnite number of moves.2 
+2 Since board positions can repeat in chess and checkers, termination is enforced by rules that prevent 
+any position from being repeated more  than a ﬁxed number of  times.  So  the “state” of  these games  is 
+the board position plus a record of how many times positions have been reached. 
+
+224 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+We will deﬁne 2PTG’s as a recursive data type.  To see how this will work, let’s 
+use the game of Tic-Tac-Toe as an example. 
+
+11.4.1  Tic-Tac-Toe 
+Tic-Tac-Toe  is  a  game  for  young  children.  There  are  two  players who  alternately 
+write  the  letters  “X” and “O”  in  the  empty boxes of a 3 × 3 grid.  Three  copies of 
+the  same  letter ﬁlling a  row,  column,  or diagonal of  the grid  is  called a  tic-tac-toe, 
+and the ﬁrst player who gets a tic-tac-toe of their letter wins the game. 
+We’re now going give a precise mathematical deﬁnition of the Tic-Tac-Toe game 
+tree as a recursive data type. 
+Here’s  the  idea  behind  the  deﬁnition:  at  any  point  in  the  game,  the  “board 
+position” is the pattern of X’s and O’s on the 3 × 3 grid. From any such Tic-Tac-Toe 
+pattern,  there  are  a  number  of  next  patterns  that might  result  from  a move.  For 
+example,  from  the  initial  empty  grid,  there  are  nine  possible  next  patterns,  each 
+with a single X in some grid cell and the other eight cells empty. From any of these 
+patterns, there are eight possible next patterns gotten by placing an O in an empty 
+cell.  These move possibilities are given by the game tree for Tic-Tac-Toe indicated 
+in Figure 11.2. 
+Deﬁnition 11.4.1.  A Tic-Tac-Toe pattern is a 3× 3 grid each of whose 9 cells contains 
+either the single letter, X, the single letter, O, or is empty. 
+A  pattern,  Q,  is  a  possible  next  pattern  after  P ,  providing  P  has  no  tic-tac-toes 
+and 
+
+•	 if P  has an equal number of X’s and O’s, and Q is the same as P  except that 
+a cell that was empty in P  has an X in Q, or 
+
+•	 if P  has one more X  than O’s,  and Q  is  the same as P  except  that a cell  that 
+was empty in P  has an O in Q. 
+
+If  P  is  a  Tic-Tac-Toe  pattern,  and  P  has  no  next  patterns,  then  the  terminated 
+Tic-Tac-Toe game trees at P  are 
+•	 �P , �win��, if P  has a tic-tac-toe of X’s. 
+•	 �P , �lose��, if P  has a tic-tac-toe of O’s. 
+•	 �P , �tie��, otherwise. 
+
+The Tic-Tac-Toe game trees starting at P  are deﬁned recursively: 
+Base Case:  A terminated Tic-Tac-Toe game tree at P  is a Tic-Tac-Toe game tree 
+starting at P . 
+Constructor  case:  If  P  is  a  non-terminated  Tic-Tac-Toe  pattern,  then  the  Tic-
+Tac-Toe game tree starting at P  consists of P  and the set of all game trees starting 
+at possible next patterns after P . 
+
+11.4.  GAMES AS A RECURSIVE DATA TYPE 
+
+225 
+
+Figure 11.2: The Top of the Game Tree for Tic-Tac-Toe. 
+
+XXXXXXXXXXXXO…XOX(cid:36)(cid:37)(cid:36)(cid:37)O…OO(cid:36)O(cid:37)X(cid:36)X(cid:37)X226 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+For example, if 
+
+P0  = 
+
+Q1  = 
+
+Q2  = 
+
+R = 
+
+X 
+O 
+
+O 
+X 
+
+X 
+O 
+
+O 
+X 
+X 
+O 
+O 
+X 
+X 
+X 
+O 
+O  X  O 
+X  O  X 
+X  O 
+O  X  O 
+X  O  X 
+X  O  X 
+
+the game tree starting at P0  is pictured in Figure 11.3. 
+
+Figure 11.3: Game Tree for the Tic-Tac-Toe game starting at P0 . 
+
+Game trees are usually pictured in this way with the starting pattern (referred 
+
+OXXXXOOOXOOXOOXOXXOOO<lose>XOOXXXXOXOXOXXOOOX<tie>XX11.4.  GAMES AS A RECURSIVE DATA TYPE 
+
+227 
+
+to as the “root” of the tree) at the top and lines connecting the root to the game trees 
+that start at each possible next pattern. The “leaves” at the bottom of the tree (trees 
+grow upside down in computer science) correspond to terminated games.  A path 
+from the root to a leaf describes a complete play of the game.  (In English, “game” 
+can  be  used  in  two  senses:  ﬁrst we  can  say  that Chess  is  a  game,  and  second we 
+can  play  a  game  of  Chess.  The  ﬁrst  usage  refers  to  the  data  type  of  Chess  game 
+trees, and the second usage refers to a “play.”) 
+
+11.4.2  Inﬁnite Tic-Tac-Toe Games 
+At any point  in a Tic-Tac-Toe game,  there are at most nine possible next patterns, 
+and no play can continue  for more  than nine moves.  But we can expand Tic-Tac-
+Toe  into  a  larger  game  by  running  a  5-game  tournament:  play  Tic-Tac-Toe  ﬁve 
+times  and  the  tournament  winner  is  the  player  who  wins  the  most  individual 
+games. A 5-game tournament can run for as many as 45 moves. 
+It’s  not much  of  generalization  to  have  an  n-game  Tic-Tac-Toe  tournament.  But 
+then comes a generalization that sounds simple but can be mind-boggling:  consol­
+idate all these different size tournaments into a single game we can call Tournament-
+Tic-Tac-Toe (T 4 ).  The ﬁrst player in a game of T 4  chooses any integer n >  0.  Then 
+the  players  play  an  n-game  tournament.  Now we  can  no  longer  say  how  long  a 
+T 4  play can  take.  In  fact,  there are T 4  plays  that  last as  long as you might  like:  if 
+you want  a game  that has  a play with,  say,  nine billion moves,  just have  the ﬁrst 
+player  choose n  equal  to  one  billion.  This  should make  it  clear  the  game  tree  for 
+T 4  is inﬁnite. 
+But still, it’s obvious that every possible T 4  play will stop.  That’s because after 
+the  ﬁrst  player  chooses  a  value  for  n,  the  game  can’t  continue  for  more  than  9n 
+moves.  So  it’s  not possible  to  keep playing  forever  even  though  the  game  tree  is 
+inﬁnite. 
+This isn’t very hard to understand, but there is an important difference between 
+any given n-game tournament and T 4 : even though every play of T 4  must come to 
+an end, there is no longer any initial bound on how many moves it might be before 
+the game ends —a play might end after 9 moves, or 9(2001) moves, or 9(1010  + 1) 
+moves.  It just can’t continue forever. 
+Now that we recognize T 4  as a 2PTG, we can go on to a meta-T 4  game, where 
+the ﬁrst player chooses a number, m > 0, of T 4  games to play, and then the second 
+player gets the ﬁrst move in each of the individual T 4  games to be played. 
+Then, of course, there’s meta-meta-T 4 . . . . 
+
+11.4.3  Two Person Terminating Games 
+Familiar  games  like  Tic-Tac-Toe,  Checkers,  and  Chess  can  all  end  in  ties,  but  for 
+simplicity we’ll only consider win/lose games —no “everybody wins”-type games 
+at MIT. :-).  But everything we show about win/lose games will extend easily to 
+games with  ties,  and more  generally  to  games with  outcomes  that  have different 
+payoffs. 
+
+228 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+Like Tic-Tac-Toe, or Tournament-Tic-Tac-Toe,  the  idea behind  the deﬁnition of 
+2PTG’s as a recursive data type is that making a move in a 2PTG leads to the start 
+of a subgame.  In other words, given any set of games, we can make a new game 
+whose ﬁrst move is to pick a game to play from the set. 
+So what  deﬁnes  a  game?  For  Tic-Tac-Toe,  we  used  the  patterns  and  the  rules 
+of Tic-Tac-Toe to determine the next patterns.  But once we have a complete game 
+tree, we don’t really need the pattern labels:  the root of a game tree itself can play 
+the role of a “board position” with its possible “next positions” determined by the 
+roots  of  its  subtrees.  So  any  game  is  deﬁned  by  its  game  tree.  This  leads  to  the 
+following very simple —perhaps deceptively simple —general deﬁnition. 
+
+Deﬁnition  11.4.2.  The  2PTG,  game  trees  for  two-person  terminating  games  of  perfect 
+information are deﬁned recursively as follows: 
+
+•  Base cases: 
+
+�leaf, win�
+∈ 2PTG,  and 
+�leaf, lose� ∈ 2PTG. 
+•  Constructor case:  If G  is a nonempty set of 2PTG’s, then G is a 2PTG, where 
+G ::= �tree, G � . 
+The game trees in G  are called the possible next moves from G. 
+These  games  are  called  “terminating”  because,  even  though  a  2PTG  may  be 
+a  (very)  inﬁnite datum  like Tournament2 -Tic-Tac-Toe,  every play of  a  2PTG must 
+terminate.  This is something we can now prove, after we give a precise deﬁnition 
+of “play”: 
+
+Deﬁnition 11.4.3.  A play of a 2PTG, G, is a (potentially inﬁnite) sequence of 2PTG’s 
+starting with G and such that if G1  and G2  are consecutive 2PTG’s in the play, then 
+G2  is a possible next move of G1 . 
+If a 2PTG has no inﬁnite play, it is called a terminating game. 
+
+Theorem 11.4.4.  Every 2PTG is terminating. 
+
+Proof.  By  structural  induction  on  the deﬁnition  of  a  2PTG, G, with  induction  hy­
+pothesis 
+
+G is terminating. 
+Base case:  If G = �leaf, win� or G = �leaf, lose� then the only possible play 
+of G is the length one sequence consisting of G. Hence G terminates. 
+Constructor  case:  For  G  =  �tree, G �,  we  must  show  that  G  is  terminating, 
+given the Induction Hypothesis that every G�  ∈ G  is terminating. 
+But any play of G is, by deﬁnition, a sequence starting with G and followed by 
+a play starting with some G0  ∈ G .  But G0  is terminating, so the play starting at G0 
+is ﬁnite, and hence so is the play starting at G. 
+This completes the structural  induction, proving that every 2PTG, G,  is termi­
+� 
+nating. 
+
+11.4.  GAMES AS A RECURSIVE DATA TYPE 
+
+229 
+
+11.4.4  Game Strategies 
+A key question about a game is whether a player has a winning strategy. A strategy 
+for a player  in a game speciﬁes which move  the player should make at any point 
+in  the game.  A winning  strategy  ensures  that  the player will win no matter what 
+moves the other player makes. 
+In Tic-Tac-Toe  for example, most elementary  school  children ﬁgure out  strate­
+gies for both players that each ensure that the game ends with no tic-tac-toes, that 
+is,  it  ends  in  a  tie.  Of  course  the ﬁrst player  can win  if his  opponent plays  child­
+ishly, but not if the second player follows the proper strategy.  In more complicated 
+games like Checkers or Chess, it’s not immediately clear that anyone has a winning 
+strategy, even if we agreed to count ties as wins for the second player. 
+But structural induction makes it easy to prove that in any 2PTG, somebody has 
+the winning strategy! 
+Theorem  11.4.5.  Fundamental  Theorem  for  Two-Person  Games:  For  every  two-
+person  terminating  game  of  perfect  information,  there  is  a  winning  strategy  for  one  of 
+the players. 
+Proof.  The  proof  is  by  structural  induction  on  the  deﬁnition  of  a  2PTG,  G.  The 
+induction hypothesis is that there is a winning strategy for G. 
+Base cases: 
+1.	 G =  �leaf, win�.  Then the ﬁrst player has the winning strategy:  “make the 
+winning move.” 
+2.	 G =  �leaf, lose�.  Then the second player has a winning strategy:  “Let the 
+ﬁrst player make the losing move.” 
+Constructor  case:  Suppose  G  =  �tree, G �.  By  structural  induction,  we may 
+assume  that  some  player  has  a winning  strategy  for  each G�  ∈ G .  There  are  two 
+cases to consider: 
+•	 some  G0  ∈ G  has  a  winning  strategy  for  its  second  player.  Then  the  ﬁrst 
+player  in G  has  a winning  strategy:  make  the move  to G0  and  then  follow 
+the second player ’s winning strategy in G0 . 
+•	 every  G�  ∈ G  has  a  winning  strategy  for  its  ﬁrst  player.  Then  the  second 
+player in G has a winning strategy:  if the ﬁrst player ’s move in G is to G0  ∈ G , 
+then follow the winning strategy for the ﬁrst player in G0 . 
+So  in any  case,  one of  the players has a winning  strategy  for G, which  completes 
+the proof of the constructor case. 
+It  follows  by  structural  induction  that  there  is  a  winning  strategy  for  every 
+� 
+2PTG, G. 
+Notice  that  although  Theorem  11.4.5  guarantees  a winning  strategy,  its  proof 
+gives no clue which player has it.  For most familiar 2PTG’s like Chess, Go, . . . , no 
+one knows which player has a winning strategy.3 
+3Checkers used  to  be  in  this  list,  but  there has  been  a  recent  announcement  that  each player has  a 
+
+230 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+11.4.5  Problems 
+Homework Problems 
+
+Problem 11.8. 
+Deﬁne 2-person 50-point games of perfect information50-PG’s, recursively as follows: 
+Base  case:  An  integer,  k ,  is  a  50-PG  for  −50  ≤  k  ≤  50.  This  50-PG  called 
+the  terminated  game  with  payoff  k . A  play  of  this  50-PG  is  the  length  one  integer 
+sequence, k . 
+Constructor case:  If G0 , . . . , Gn  is a ﬁnite sequence of 50-PG’s for some n  ∈ N, 
+then the following game, G, is a 50-PG:  the possible ﬁrst moves in G are the choice 
+of  an  integer  i  between  0  and n,  the possible  second moves  in G  are  the possible 
+ﬁrst moves in Gi , and the rest of the game G proceeds as in Gi . 
+A  play  of  the  50-PG,  G,  is  a  sequence  of  nonnegative  integers  starting  with  a 
+possible  move,  i,  of  G,  followed  by  a  play  of  Gi .  If  the  play  ends  at  the  game 
+terminated game, k , then k  is called the payoff  of the play. 
+There are two players in a 50-PG who make moves alternately. The objective of 
+one player (call him the max-player) is to have the play end with as high a payoff 
+as possible, and the other player (called the min-player) aims to have play end with 
+as low a payoff as possible. 
+Given which of the players moves ﬁrst in a game, a strategy for the max-player 
+is  said  to  ensure  the  payoff,  k ,  if  play  ends  with  a  payoff  of  at  least  k ,  no  matter 
+what moves the min-player makes.  Likewise, a strategy for the min-player is said 
+to hold down the payoff to k , if play ends with a payoff of at most k , no matter what 
+moves the max-player makes. 
+A  50-PG  is  said  to have max  value,  k ,  if  the max-player has  a  strategy  that  en­
+sures payoff k , and the min-player has a strategy that holds down the payoff to k , 
+when  the max-player moves  ﬁrst.  Likewise,  the  50-PG has min  value,  k ,  if  the max­
+player has a strategy  that ensures k ,  and  the min-player has a strategy  that holds 
+down the payoff to k , when the min-player moves ﬁrst. 
+The  Fundamental  Theorem  for  2-person  50-point  games  of  perfect  information 
+is  that  is  that  every  game has  both  a max value  and  a min value.  (Note:  the  two 
+values are usually different.) 
+What  this means  is  that  there’s no point  in playing  a  game:  if  the max player 
+gets  the ﬁrst move,  the min-player should  just pay  the max-player  the max value 
+of the game without bothering to play (a negative payment means the max-player 
+is paying the min-player). Likewise, if the min-player gets the ﬁrst move, the min­
+player should just pay the max-player the min value of the game. 
+(a)  Prove  this Fundamental Theorem  for  50-valued  50-PG’s by  structural  induc­
+tion. 
+
+(b)  A  meta-50-PG  game  has  as  possible  ﬁrst  moves  the  choice  of  any  50-PG  to 
+play.  Meta-50-PG games aren’t any harder  to understand  than 50-PG’s,  but  there 
+is one notable difference, they have an inﬁnite number of possible ﬁrst moves. We 
+could also deﬁne meta-meta-50-PG’s  in which  the ﬁrst move was  a  choice of any 
+
+strategy that forces a tie.  (reference TBA) 
+
+11.5.  INDUCTION IN COMPUTER SCIENCE 
+
+231 
+
+50-PG or the meta-50-PG game to play.  In meta-meta-50-PG’s there are an inﬁnite 
+number of possible ﬁrst and second moves. And then there’s meta3  − 50-PG . . . . 
+To model such inﬁnite games, we could have modiﬁed the recursive deﬁnition of 
+50-PG’s to allow ﬁrst moves that choose any one of an inﬁnite sequence 
+
+G0 , G1 , . . . , Gn , Gn+1 , . . . 
+
+of 50-PG’s. Now a 50-PG can be a mind-bendingly inﬁnite datum instead of a ﬁnite 
+one. 
+Do these inﬁnite 50-PG’s still have max and min values?  In particular, do you think 
+it would be correct to use structural induction as in part (a) to prove a Fundamental 
+Theorem  for  such  inﬁnite  50-PG’s?  Offer  an  answer  to  this  question,  and  brieﬂy 
+indicate why you believe in it. 
+
+11.5  Induction in Computer Science 
+
+Induction  is  a  powerful  and  widely  applicable  proof  technique,  which  is  why 
+we’ve  devoted  two  entire  chapters  to  it.  Strong  induction  and  its  special  case  of 
+ordinary  induction  are  applicable  to  any  kind  of  thing  with  nonnegative  integer 
+sizes –which is a awful lot of things, including all step-by-step computational pro­
+cesses. 
+Structural  induction  then  goes  beyond  natural  number  counting  by  offering 
+a  simple,  natural  approach  to  proving  things  about  recursive  computation  and 
+recursive  data  types.  This makes  it  a  technique  every  computer  scientist  should 
+embrace. 
+
+232 
+
+CHAPTER 11.  RECURSIVE DATA TYPES 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.042J / 18.062J Mathematics for Computer Science 
+Spring 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

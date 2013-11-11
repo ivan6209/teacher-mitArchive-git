@@ -1,0 +1,310 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Spring 2008
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+Lecture  20	
+
+Dynamic  Programming  II  of  IV 
+
+6.006  Spring  2008
+
+
+Lecture  20:  Dynamic  Programming  II:  Longest
+
+Common  Subsequence,  Parent  Pointers
+
+
+Lecture  Overview 
+•	 Review  of  big  ideas  &  examples  so  far 
+•	 Bottom-up  implementation 
+•	 Longest  common  subsequence 
+•	 Parent  pointers  for  guesses 
+
+Readings 
+
+CLRS  15 
+
+Summary 
+*	 DP  ≈  “controlled  brute  force” 
+*	 DP  ≈  guessing  +  recursion  + memoization 
+*	 DP  ≈  dividing  into  reasonable  �  subproblems  whose  solutions  relate  - acyclicly  - usually 
+via  guessing  parts  of  solution. 
+� 
+�� 
+� 
+*	 time  =  �  subproblems  × time/subproblem
+treating  recursive  calls  as O(1) 
+(usually mainly  guessing) 
+•	 essentially  an  amortization 
+•	 count  each  subproblem  only  once;  after  ﬁrst  time,  costs  O(1)  via  memoization 
+
+1
+
+
+Lecture  20	
+
+Dynamic  Programming  II  of  IV 
+
+6.006  Spring  2008
+
+
+Examples: 
+subprobs: 
+
+�  subprobs: 
+guessing: 
+�  choices: 
+relation: 
+
+time/subpr: 
+DP  time: 
+orig.  prob: 
+extra  time: 
+
+Fibonacci 
+ﬁb(k) 
+0 ≤ k ≤ n 
+
+Shortest  Paths 
+δk (s, t)∀s, k < n 
+= min  path  s → t 
+using  ≤ k  edges 
+Θ(n) 
+Θ(V 2 )	
+none 
+edge  from  s,  if  any 
+1 
+deg(s)	
+=  ﬁb(k − 1) 
+= min{δk−1 (s, t)} 
++  ﬁb(k − 2)  u{w(s, v) + δk−1 (v , t) 
+| v�  Adj[s]} 
+Θ(1 +  deg(s)) 
+Θ(V E ) 
+δn−1 (s, t) 
+Θ(1)	
+
+Θ(1) 
+Θ(n) 
+ﬁb(n) 
+Θ(1) 
+
+Crazy  Eights 
+
+trick(i)  =  longest 
+trick  from  card(i) 
+
+Θ(n) 
+next  card  j 
+n − i 
+= 1 + max(trick(j )) 
+for  i < j < n  if 
+match(c[i], c[j ]) 
+Θ(n − i) 
+Θ(n2 ) 
+max{trick(i),  0 ≤ i < n}
+Θ(n) 
+
+Bottom-up  implementation  of  DP: 
+
+alternative  to  recursion 
+•	 subproblem  dependencies  form  DAG  (see  Figure  1) 
+•	 imagine  topological  sort 
+•	 iterate  through  subproblems  in  that  order
+
+⇒
+
+=  when  solving  a  subproblem,  have  already  solved  all  dependencies 
+
+•  often  just:  “solve  smaller  subproblems  ﬁrst”
+
+
+Example. 
+
+Figure  1:  DAG
+
+ 
+
+Fibonacci: 
+for  k  in  range(n + 1):  ﬁb[k ] = · · · 
+Shortest  Paths: 
+for  k  in  range(n):  for  v  in  V  : d[k , v , t] = · · · 
+Crazy  Eights: 
+for  i  in  reversed(range(n)):  trick[i] =  · · · 
+
+2 
+
+Lecture  20	
+
+Dynamic  Programming  II  of  IV 
+
+6.006  Spring  2008
+
+
+• 
+
+no  recursion  for memoized  tests 
+⇒ 
+= 
+faster  in  practice 
+•	 building  DP  table  of  solutions  to  all  subprobs.  can  often  optimize  space: 
+
+–	 Fibonacci:  PS6 
+–	 Shortest  Paths:  re-use  same  table  ∀k 
+
+Longest  common  subsequence:  (LCS) 
+
+A.K.A.  edit  distance,  diﬀ,  CVS/SVN,  spellchecking,  DNA  comparison,  plagiarism,  detec­
+tion,  etc. 
+Given  two  strings/sequences  x  &  y ,  ﬁnd  longest  common  subsequence  LCS(x,y)  sequential 
+but  not  necessarily  contiguous 
+•	 e.g., H I E R O G  L Y P H O  L O G Y vs.  M I C  H A E L  A N G E  L O
+
+common  subsequence  is  Hello
+
+•	 equivalent to “edit distance” (unit costs):  � character insertions/deletions to transform 
+→ 
+y  everything  except  the matches 
+x
+•	 brute  force:  try  all  2|x|  subsequences  of  x  = ⇒  Θ(2|x| · | y  |)  time 
+•	 instead:  DP  on  two  sequences  simultaneously 
+
+*	 Useful  subproblems  for  strings/sequences  x: 
+•	 suﬃxes  x[i :] 
+•	 preﬁxes  x[: i]
+
+The  suﬃxes  and  preﬁxes  are  Θ(| x  |) ← = ⇒  use  if  possible 
+
+•  substrings  x[i : j ]  Θ(| x  | 2 ) 
+
+Idea:  Combine  such  subproblems  for  x  &  y  (suﬃxes  and  preﬁxes  work) 
+
+LCS  DP 
+subproblem  c(i, j ) =|  LCS(x[i :], y [j  :]) 
+• 
+= ⇒  Θ(n2 )  subproblems 
+- original  problem  ≈ c[0, 0]  (length  ∼  ﬁnd  seq.  later)
+
+⇒
+idea:  either  x[i] =  y [j ]  part  of  LCS  or  not  = 
+LCS  (with  anyone) 
+•	 guess:  drop  x[i]  or  y [j ]?  (2  choices) 
+
+•	
+
+3 
+
+|
+
+
+for  0 ≤ i, j  < n 
+
+either  x[i]  or  y [j ]  (or  both)  not  in 
+
+Lecture  20 
+
+Dynamic  Programming  II  of  IV 
+
+6.006  Spring  2008
+
+
+•  relation  among  subproblems: 
+
+if  x[i] = y [j ] : c(i, j ) = 1 + c(i + 1, j + 1) 
+(otherwise  x[i]  or  y [j ]  unused  ∼  can’t  help) 
+�} 
+�� 
+� � 
+�� 
+� 
+else:  c(i, j ) = max{c(i + 1, j ), c(i, j + 1) 
+y [j ] out 
+x[i] out 
+base  cases:  c(| x  |, j ) = c(i, | y  |) = φ 
+⇒ 
+=  Θ(1)  time  per  subproblem 
+⇒ 
+=  Θ(n2 )  total  time  for  DP 
+•  DP  table:  see  Figure  2 
+
+Figure  2:  DP Table
+
+• 
+
+recursive  DP: 
+
+def  LCS(x, y): 
+seen  =  { } 
+def  c(i, j ): 
+if  i ≥  len(x) or j  ≥  len(y)  :  returnφ 
+if  (i, j )  not  in  seen: 
+if  x[i] == y [j ]: 
+seen[i, j ] = 1 + c(i + 1, j + 1) 
+else: 
+seen[i, j ] = max(c(i + 1, j ), c(i, j + 1)) 
+return  seen[i, j ] 
+return  c(0, 0) 
+
+4 
+
+if x[i] = y[j]if x[i] = y[j]jiφφ|y||x|[-linear space via antidiagonal order        ]Lecture  20	
+
+Dynamic  Programming  II  of  IV 
+
+6.006  Spring  2008
+
+
+•	 bottom-up  DP: 
+
+def  LCS(x, y): 
+c = {}
+for  i  in  range(len(x)):
+
+c[i,  len(y)] = φ
+
+for  j  in  range(len(y)):
+
+c[len(x), j ] = φ
+
+for  i  in  reversed(range(len(x))): 
+for  j  in  reversed(range(len(y))): 
+if  x[i] == y [j ]: 
+c[i, j ] = 1 + c[i + 1, j + 1] 
+else: 
+c[i, j ] = max(c[i + 1, j ], c[i, j + 1]) 
+return  c[0, 0] 
+
+Recovering  LCS: 
+[material  covered  in  recitation] 
+•	 to get LCS, not just its length, store parent pointers (like shortest paths) to remember 
+correct  choices  for  guesses: 
+
+if  x[i] = y [j ]: 
+c[i, j ] = 1 + c[i + 1, j + 1] 
+parent[i, j ] = (i + 1, j + 1) 
+else: 
+if  c[i + 1, j ] > c[i, j + 1]: 
+c[i, j ] = c[i + 1, j ] 
+parent[i, j ] = (i + 1, j ) 
+else: 
+c[i, j ] = c[i, j + 1] 
+parent[i, j ] = (i, j + 1) 
+
+• 
+
+. . . and  follow  them  at  the  end: 
+
+lcs  =  [  ] 
+here  =  (0,0) 
+while  c[here]: 
+if  x[i] == y [j ]: 
+lcs.append(x[i]) 
+here  =  parent[here] 
+
+5 
+
+

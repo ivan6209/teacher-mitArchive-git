@@ -1,0 +1,330 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+October  1,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  8 
+
+Previously,  we  introduced  the  dynamic  tree  data  structure  and  the  operations  that  dynamic 
+trees must  support.  Today, we  take  a more  detailed  look  at  dynamic  trees  and  describe  the  eﬃcient 
+implementation  of  the  operations.  In  doing  so,  much  of  our  focus  will  be  on  the  Expose  method, 
+an  extended  splay  operation  that  is  essential  in  all  these  operations.  We  show  that  any  sequence  of 
+m  operations  on  a  dynamic  tree  with  n  nodes  takes  O((m + n) log n)  time. 
+
+1  Dynamic  Trees 
+
+Dynamic  trees  (also  known  as  link-cut  trees)  introduced  by  Sleator  and Tarjan  are  a  data  structure 
+intended  to  maintain  a  representation  of  a  set  of  rooted  trees.  We  will  be  able  to  perform  various 
+operations  on  these  trees,  to  be  discussed  later.  Figure  1  shows  an  example  tree  as  a  virtual  tree 
+(left)  and  a  rooted  tree  (right). 
+
+1.1  Rooted  Trees 
+We  view  rooted  trees  as  unions  of  node-disjoint  (directed)  paths.  This  divides  the  edges  of  the  tree 
+into  two  sets.  Solid  edges  are  those  that  are  on  the  node-disjoint  paths  that  the  tree  is  composed 
+of,  and  dashed  edges  are  those  that  are  not  on  these  paths.  Note  that  each  path  consisting  of  solid 
+edges  is  a  directed  path  (we  omit  the  arrows  here)  from  top  to  bottom. 
+
+1.2  Virtual  Trees 
+The union  of disjoint paths described  above  can be used  to  represent  virtual  trees.  In  a  virtual  tree, 
+each  solid  path  is  represented  by  a  splay  tree  such  that  the  following  conditions  hold: 
+• 
+• 
+• 
+
+For  each  splay  tree,  its  largest  node  is  linked  to  the  parent  of  the  root  in  the  rooted  tree. 
+
+A  successor  node  in  a  splay  tree  is  an  ancestor  in  the  rooted  tree. 
+
+In  the  virtual  tree,  each  node  has  at  most  one  left  child,  at  most  one  right  child,  and  any 
+number  of middle  (virtual)  children. 
+
+There  are  three  kinds  of  edges  in  a  virtual  tree,  corresponding  to  the  three  types  of  children  a 
+node  can  have.  Left  and  right  children  of  a  node  are  connected  to  the  node  by  solid  edges,  and 
+middle  children  of  a  node  are  connected  to  it  by  dashed  edges.  Note  that  there  can  be many  virtual 
+trees  corresponding  to  a  rooted  tree,  because  there  are  two  diﬀerent  degrees  of  freedom  involved  in 
+constructing  a  virtual  tree  —  the  union  of  disjoint  paths  could  be  diﬀerent,  as  could  the  structure 
+of  the  splay  trees  corresponding  to  the  paths. 
+An important consequence of this setup is that rotations in a splay tree do not aﬀect the structure 
+of  the  rooted  tree. 
+
+2  The  Expose  Operation 
+
+The  Expose(v)  operation  is  an  extended  splay  operation  that  brings  v  to  the  root  of  the  virtual 
+tree without  changing  the  structure  of  the  rooted  tree.  The  important parts  of  this  operation  are  to 
+
+8-1 
+
+Figure  1:  Virtual  tree  (left)  and  corresponding  rooted  tree  (right). 
+
+make  sure  that  the  path  from  v  to  the  root  is  solid  and  that  the  splay  tree  representing  the  path  to 
+which  v  belongs  is  rooted  at  v .  We  can  describe  this  operation  in  three  steps.  In  our  example,  we 
+run  Expose  on  node  15. 
+
+2.1  Step  1 
+Step  1  consists  of  walking  from  v  to  the  root  of  the  virtual  tree.  Whenever  the  walk  enters  a  splay 
+tree  (solid  edges)  at  some  node  w, a  Splay(w)  operation  is  performed,  bringing  w  to  the  root  of 
+that  tree.  Middle  children  are  not  aﬀected  in  this  step.  For  instance,  we  splay  nodes  11  and  5  in 
+our  example  tree  as  in  ﬁgure  2.  Note  that  at  the  end  of  step  1  of  an Expose(v)  operation,  v  will  be 
+connected  to  the  root  of  the  virtual  tree  only  by  dashed  edges. 
+
+2.2  Step  2:  Splicing 
+Step  2  consists  of  walking  from  v  to  the  root  of  the  virtual  tree  exchanging  along  the  way  each 
+middle  edge  with  the  left  subtree  of  the  parent.  This  is  illustrated  in  Figure  3  and  called  splicing. 
+A  middle  child  of  a  node  w  and  its  left  child  can  be  exchanged  (without  changing  the  rooted  tree) 
+only  if  w  is  the  root  of  its  splay  tree.  This  justiﬁes  our  execution  of  step  1  ﬁrst  since  at  the  end  of 
+step  1  all  edges  from  v  to  the  root  are  middle  edges. 
+Splicing  is  a  valid  operation  on  virtual  trees.  Indeed,  referring  to  Figure  3,  the  left  subtree  of 
+w  in  the  splay  tree  corresponds  to  the  part  of  the  solid  path  that  is  below  w  in  the  rooted  tree; 
+this  is  because  w  is  the  root  of  its  splay  tree.  Exchanging  that  solid  subpath  with  the  solid  path 
+corresponding to the splay tree rooted at v still leaves the rooted tree decomposed into a node-disjoint 
+union  of  paths. 
+Note  that  after performing  this  operation  on  every  edge  to  the  root  of  the virtual  tree,  there will 
+be  a  solid  path  from  the  root  of  the  rooted  tree  to  the  node  being  exposed. 
+
+8-2 
+
+Figure  2:  Walking  Up  and  Splaying.  The  virtual  tree  after  splaying  15  and  11  is  shown  on  the  left. 
+The  virtual  tree  on  the  right  is  at  the  end  of  step  1,  after  splaying  also  node  5. 
+
+Figure  3:  Splicing.  w  needs  to  be  the  root  of  its  splay  tree. 
+
+8-3 
+
+
+Figure  4:  Left  virtual  tree  is  after  ﬁrst  splicing,  the  right  virtual  tree  is  the  one  at  the  end  of  step  2. 
+
+The  result  of  splicing  every  node  on  the  path  to  the  root  for  our  example  is  illustrated  in Figure 
+
+4. 
+
+2.3  Step  3 
+Step  3  consists  of  walking  from  v  to  the  root  in  the  virtual  tree,  splaying  v  to  the  root.  Note  that 
+in  the  analysis,  we  can  charge  the  entire  cost  of  step  2  to  the  ﬁnal  splaying  operation  in  step  3. 
+Figure  5  shows  the  relevant  splay  tree  before  and  after  this  step. 
+
+3  Operations  on  Dynamic  Trees 
+
+We will now describe the desired operations on a dynamic tree and how to implement them eﬃciently 
+using  the  Expose  method  just  deﬁned.  Some  of  these  operations  require  keeping  track  of  diﬀerent 
+costs  in  the  tree,  so  we  ﬁrst  consider  an  eﬃcient  way  of  doing  this. 
+
+3.1  Maintaining  Cost  Information 
+When  performing  operations  on  the  dynamic  tree, we  need  to  keep  track  of  cost(x)  for  each  node  x, 
+and we  need  to  be  able  to  ﬁnd  the minimum  cost  along  paths  to  the  root  of  the  rooted  tree.  If  such 
+a  path  is  the  preﬁx  of  a  path  corresponding  to  a  splay  tree,  it  seems  that,  knowing  the  minimum 
+cost  in  any  subtree  of  any  our  splay  trees might be helpful.  So,  in  addition  to  cost(x), we would  like 
+to  keep  track  of  the  value  mincost(x),  given  by 
+mincost(x) = min{cost(y) | y  in  the  subtree  rooted  at  x  of  x’s  splay  tree}. 
+We’ll  see  that,  instead  of maintaining  cost(x)  and mincost(x),  that  it  will  be  easier  to maintain  the 
+following  two  quantities  for  every  node  x: 
+Δ min(x) = cost(x) − mincost(x) 
+
+8-4 
+
+Figure  5:  Splaying  on  Virtual  Tree. 
+
+Figure  6:  Rotation. 
+
+and 
+
+Δ cost(x) = 
+
+� 
+if  x  is  the  root  of  a  splay  tree,
+cost(x) 
+cost(x) − cost(p(x))  otherwise. 
+Observe  that,  if x  is  the  root of a  splay  tree,  then cost(x) = Δ cost(x) and mincost(x) = Δ cost(x) −
+Δ min(x).  This  fact,  combined  with  the  Expose  operation,  shows  that  we  can  ﬁnd  cost(x)  and 
+mincost(x)  given Δ min(x)  and Δ cost(x),  so  it  is  suﬃcient  to  maintain  the  latter. 
+We  now  claim  that  we  can  update  Δ min(x)  and  Δ cost(x)  in  O(1)  time  after  a  rotation  or  a 
+splice,  which  will  allow  us  to  maintain  cost(x)  and mincost(x)  in  O(1)  time. 
+We  ﬁrst  consider  a  rotation,  see  Figure  6  for  the  labelling  of  the  nodes.  Let  Δ cost(x)  and 
+Δ cost� (x)  correspond  to  before  and  after  the  rotation,  respectively.  Similarly  deﬁne  Δ min(x)  and 
+Δ min� (x).  Observe  that  during  a  rotation,  only  the  nodes  b,  w  and  v  have  their  Δ cost(x)  change. 
+One  can  check  that  the  updates  are  as  follows: 
+Δ cost� (v)  =  Δ cost(w) + (cost(v) − cost(w)) 
+=  Δ cost(w) + Δ cost(v), 
+Δ cost� (w) =  −Δ cost(v), 
+Δ cost� (b)  =  Δ cost(b) + (cost(v) − cost(w)) = Δ cost(b) + Δ cost(v). 
+
+Before  showing  the  corresponding  updates  for  Δ min(x),  observe  that  Δ min(x)  and  Δ cost(x) 
+
+8-5 
+
+vvcwabbcwasatisfy  the  following  equation;  here  x  is  any  node  and  l  is  its  left  child  and  r  is  its  right  child: 
+Δ min(x)	 =  cost(x) − mincost(x) 
+=  cost(x) − min(cost(x), mincost(l), mincost(r)) 
+=  max(0, cost(x) − mincost(l), cost(x) − mincost(r)) 
+=  max(0, Δ min(l) − Δ cost(l), Δ min(r) − Δ cost(r)). 
+
+(1) 
+
+Furthermore,  the minimum  of  the  subtree  can  be  located  by  knowing  which  term  attains  the maxi­
+mum  in  the  last  expression. 
+Back  to  the  updates  for  Δ min(x).  The  only  subtrees  that  change  are  those  of  w  and  v ,  and  so 
+only  those  Δ min  values  change.  Using  (1),  one  can  see  that 
+Δ min� (w)  =  max(0, Δ min(b) − Δ cost� (b), Δ min(c) − Δ cost(c)) 
+Δ min� (v)  =  max(0, Δ min(a) − Δ cost(a), Δ min� (w) − Δ cost� (w)). 
+Notice  that  Δ min� (v)  depends  on Δ min� (w)  that  was  just  computed. 
+Similar when we  perform  the  splicing  step  given  in Figure  3, Δ cost  only  change  for  v  and  u  and 
+only Δ min(w)  changes.  The  updates  are: 
+Δ cost� (v)  = Δ(cost(v)) − Δ(cost(w)), 
+Δ cost� (u)  =  Δ cost(u) + Δ cost(w), 
+Δ min� (w)  =  max(0, Δ min(v) − Δ cost� (v), Δ min(z ) − Δ cost(z )). 
+
+3.2 
+Implementation  of  Operations 
+We  now  describe  the  implementation  of  each  of  the  desired  operations  on  a  dynamic  tree,  making 
+extensive  use  of  the  Expose  operation. 
+•	 make-tree(v)
+
+Simply  create  a  tree  with  the  single  node  v .
+
+•	 find-root(v) 
+First,  run  Expose(v).  Then  follow  right  children  until  a  leaf  w  of  the  splay  tree  containing  v 
+is  reached.  Now,  splay(w),  and  then  return  w. 
+•	 find-cost(v) 
+First,  run  Expose(v).  Now  v  is  the  root,  so  return  Δ cost(v) = cost(v).  Note  that  the  actual 
+computations  here were  done  by  the  updates  of Δ cost(v)  and Δ min(x) within  the  splay  and 
+splice  operations. 
+•	 find-min(v)
+
+First,  run  Expose(v).  Now,  let’s  rewrite  (1): 
+
+
+Δ min(v) = max{0, −Δ cost(left(v)) + Δ min(left(v)), −Δ cost(right(v)) + Δ min(right(v))}. 
+
+If  Δ min(v)  =  0,  then  splay(v)  and  then  return  v ,  as  the  minimum  is  achieved  at  v .  Else, 
+if −Δ cost(left(v)) + Δ min(left(v)) > −Δ cost(right(v)) + Δ min(right(v)),  then  the minimum 
+is  contained  in  the  left  subtree  and  we  walk  down  it  recursively.  Otherwise,  the  minimum  is 
+contained in the right subtree, so we recurse down the right.  Once we have found the minimum, 
+we  splay  it. 
+
+8-6 
+
+•	 add-cost(v , x) 
+First,  run  Expose(v).  Add  x  to  Δ cost(v)  and  subtract  x  from  Δ cost(left(v)).  Also  update 
+Δ min(v)  (using  (1)).  (The  Δ min  value  of  other  nodes  is  unchanged.) 
+•	 cut(v) 
+First,  run  Expose(v).  Add Δ cost(v)  to Δ cost(right(v)).  Remove  the  edge  (v , right(v)). 
+•	 link(v , w, x) 
+First,  run  Expose(v)  and  Expose(w).  Then,  add  the  root  w  as  a  middle  child  of  v .  Add 
+Δ cost(w) − x  to Δ cost(right(v))  and  to  Δ cost(left(v)).  Also  update  Δ min(w). 
+
+4  Analysis  of  Dynamic  Trees 
+
+We  now  give  an  amortized  analysis  of  cost  of  operations  in  these  dynamic  trees.  We  will  see  that 
+any  sequence  of m  dynamic  tree  operations  on  n  nodes  will  take  O((m + n) log n)  time. 
+
+4.1  Potential  Function 
+We will use  the  following potential  function  in our analysis, motivated by our analysis of splay trees. 
+� 
+For  each  node  x,  let  w(x) = 1  be  the  weight  assigned  to  x,  and  deﬁne 
+w(y), 
+y∈Tx 
+� 
+where  Tx  is  the  entire  virtual  tree  subtree  attached  at  x.  Then,  consider  r(x) =  log2 s(x)  and  take 
+our  ﬁnal  potential  function  to  be 
+φ(T ) = 3 
+r(x). 
+x∈T 
+This  diﬀers  from  the  potential  function  for  splay  trees  in  2  ways.  First  Tx  is  deﬁned  over  the  entire 
+virtual  tree  and  secondly we  have  this  additional  factor  3.  We will  see  later why  the  constant  factor 
+of  3  was  chosen  here. 
+
+s(x) = 
+
+4.2  Runtime  of  the  Expose  Operation 
+We  ﬁrst  analyze  the  runtime  of Expose(v),  since  it  is  used  in  all  other  operations.  We  look  at  each 
+step  of  Expose(v)  separately.  Let  k  be  the  number  of  middle  edges  separating  v  from  the  root  of 
+the  entire  virtual  tree.  Equivalently,  k  is  the  number  of  splay  operations  performed  during  Step  1. 
+•	 Step  1:  Let  t(v)  be  the  root  of  the  splay  tree  containing  v .  Recall  that  the  amortized  cost  of 
+� 
+splay(v)  was  3(r(t(v)) − r(v)) + 1  when  we  used  the  potential  function 
+r(x). 
+x∈T 
+We  now  have  the  potential  function  φ(T ) = 3φsplay (T ),  so the 3(r(t(v)) − r(v))  term  here 
+should  be multiplied  by  3  to  obtain  an  amortized  runtime  of  9(r(t(v)) − r(v)) + 1  for  each  call 
+of  splay(v)  (the  +1  corresponds  to  the  cost  of  the  last  zig,  if  any,  and  so  we  do  not  need  to 
+multiply  it  by  3). 
+
+φsplay (T ) = 
+
+8-7 
+
+◦ 
+
+t)k−1 (v)  in  this  step, 
+
+We  are  using  the  splay  operation  on  the  k  nodes  v , p(t(v)), . . . , (p
+k�−1 �	
+meaning  that  we  get  a  total  amortized  runtime  of 
+� 
+9	 r(t((p ◦ t)i (v))) − r((p ◦ t)i (v))  + 1 ≤ 9[r(root) − r(v)] + k , 
+i=0 
+since we  have  that  r(t(p ◦ t)i−1 (v)) ≤ r((p ◦ t)i (v)),  so  the  sum  telescopes.  The  amortized  cost 
+of  step  1  is  therefore  O(log n) + k  (since  r(root) − r(v) ≤ log n). 
+•	 Step  2:  Splicing  does  not  change  the  value  of  φ(T ),  so  the  amortized  cost  for  this  step  is  the 
+same  as  its  actual  cost  of  k . 
+•	 Step  3:  We are using  the  splay operation once on node  v  at distance k  from  the  root,  so  this 
+has  an  actual  cost  of  k .  Using  the  fact  that  our  potential  φ  has  an  additional  factor  3  in  its 
+deﬁnition  compared  to  the  splay  tree  version,  we  get  from  the  amortized  analysis  of  splaying 
+that: 
+1 
+Δφ(T ) ≤ 3[r(root) − r(v)] + 1 = O(log n). 
+3
+Multiplying  by  3,  we  see  that  we  can  also  account  for  the  additional  cost  of  2k  from  steps  1 
+and  2,  and  have  an  amortized  time  of  O(log n). 
+•	 Total:  We  get O(log n) + k  in  step  1,  k  in  step  2,  and  these  2k  plus  step  3  gives  O(log n),  for 
+a  total  of  O(log n). 
+
+k + 
+
+4.3  Runtimes  of  all  Operations 
+We  can  now  brieﬂy  summarize  the  runtimes  of  all  other  operations  in  terms  of  Expose. 
+•	 find-cost,  find-root,  find-min,  add-cost 
+Each  of  these  operations  requires  at  most  one  use  of  Expose,  at  most  one  run  of  splay,  and 
+at  most  one  search  of  the  tree  which  can  be  charged  to  the  last  splay.  Therefore,  they  each 
+run  in  O(log n)  amortized  time. 
+
+• 
+
+cut
+We  again  use  Expose  once.  We  now  consider  the  eﬀect  of  the  other  actions  on  the  poten­
+tial  function.  Removing  the  edge  (v , right(v))  decreases  s(v)  by  s(right(v))  and  leaves  s(x) 
+unchanged  for  all  other  x,  so  it  decreases  φ(T ),  which  we  can  safely  ignore.  This  gives  an 
+amortized  runtime  of  O(log n). 
+
+• 
+
+link 
+We  use Expose  twice.  Now, when we  link w  to  v , we  see  that  r(v)  increases  by O(log n),  and 
+all  other  r(x)  remain  unchanged.  Hence,  this  operation  increases  φ(T )  by  O(log n),  giving  a 
+total  amortized  runtime  of  O(log n). 
+With  this  analysis,  we  see  that  every  operation  has  amortized  time  O(log n).  A  sequence  of  m 
+� 
+� 
+operations  has  therefore  amortized  time  O(m log n).  Furthermore,  the  potential  function  satisﬁes 
+r(x) ≤ 
+log n ≤ n log n, 
+x∈T 
+x∈T
+meaning  that  any  increase  in  potential  is  at most O(n log n),  implying  that  the  total  cost  is  at most 
+O((m + n) log n).  We  now  have  the  following  theorem. 
+Theorem  1  Any  m  operations  on  a  dynamic  tree  with  n  nodes  run  in  O((m + n) log n)  time. 
+
+φ(T ) = 
+
+8-8 
+
+

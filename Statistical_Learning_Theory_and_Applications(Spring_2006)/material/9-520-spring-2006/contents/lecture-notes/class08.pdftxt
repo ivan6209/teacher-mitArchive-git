@@ -1,0 +1,1636 @@
+Multiclass  Classiﬁcation
+
+9.520  Class  08,  06  March  2006
+
+
+Ryan  Rifkin
+
+
+“It  is  a  tale
+
+Told  by  an  idiot,  full  of  sound  and  fury,
+
+Signifying  nothing.”
+
+
+Macbeth,  Act  V,  Scene  V
+
+
+What  Is  Multiclass  Classiﬁcation?
+
+
+Each  training  point  belongs  to  one  of  N  diﬀerent  classes. 
+The  goal  is  to  construct  a  function  which,  given  a  new 
+data  point,  will  correctly  predict  the  class  to  which  the 
+new  point  belongs. 
+
+What  Isn’t  Multiclass  Classiﬁcation? 
+
+
+There  are  many  scenarios  in  which  there  are  multiple  cate­
+gories  to which  points  belong,  but  a  given  point  can  belong 
+to multiple  categories.  In  its most  basic  form,  this  problem 
+decomposes  trivially  into  a  set  of  unlinked  binary  problems, 
+which  can  be  solved  naturally  using  our  techniques  for  bi­
+nary  classiﬁcation. 
+
+A  First  Idea 
+
+
+Suppose  we  knew  the  density,  pi(x),  for  each  of  the  N 
+classes.  Then,  we  would  predict  using 
+
+f (x) = arg  max  pi(x). 
+i�1,...,N 
+
+Of  course  we  don’t  know  the  densities,  but  we  could  esti­
+mate  them  using  classical  techniques. 
+
+The  Problem  With  Densities,  and
+
+Motivation
+
+
+Estimating  densities  is  hard,  especially  in  high  dimensions 
+with  limited  data. 
+
+For  binary  classiﬁcation  tasks,  we  have  seen  that  directly 
+estimating  a  smooth  separating  function  gives  better  re­
+sults than density estimation (SVM, RLSC). Can we extend 
+these  approaches  usefully  to  the  multiclass  scenario? 
+
+A  Simple  Idea  —  One-vs-All
+
+Classiﬁcation
+
+
+Pick  a  good  technique  for  building  binary  classiﬁers  (e.g., 
+RLSC,  SVM).  Build  N  diﬀerent  binary  classiﬁers.  For  the 
+ith  classiﬁer,  let  the  positive  examples  be  all  the  points  in 
+class  i,  and  let  the  negative  examples  be  all  the  points  not 
+in  class  i.  Let  fi  be  the  ith  classiﬁer.  Classify  with 
+
+f (x) = arg max fi(x). 
+i 
+
+Another  Simple  Idea  —  All-vs-All
+
+Classiﬁcation
+
+
+Build  N (N − 1)  classiﬁers,  one  classiﬁer  to  distinguish  each 
+pair  of  classes  i  and  j .  Let  fij  be  the  classiﬁer  where  class 
+i  were  positive  examples  and  class  j  were  negative.  Note 
+fj i  = −fij .  Classify  using 
+
+⎠
+�
+ 
+ . 
+�
+f (x) = arg max 
+�
+�
+i 
+j 
+Also  called  all-pairs  or  one-vs-one  classiﬁcation.
+
+
+ 
+fij (x)
+
+ 
+
+The  Truth 
+
+
+OVA  and  AVA  are  so  simple  that  many  people  invented 
+them  independently.  It’s  hard  to  write  papers  about  them. 
+So  there’s  a  whole  cottage  industry  in  fancy,  sophisticated 
+methods  for  multiclass  classiﬁcation. 
+
+To  the  best  of  my  knowledge,  choosing  properly  tuned 
+regularization  classiﬁers  (RLSC,  SVM)  as  your  underlying 
+binary  classiﬁers  and  using  one-vs-all  (OVA)  or  all-vs-all 
+(AVA)  works  as  well  as  anything  else  you  can  do. 
+
+If you actually have  to solve a multiclass problem,  I strongly 
+urge  you  to  simply  use  OVA  or  AVA,  and  not  worry  about 
+anything  else.  The  choice  between OVA  and AVA  is  largely 
+computational. 
+
+OVA  vs.  AVA 
+
+
+Viewed  naively,  AVA  seems  faster  and  more  memory  eﬃ­
+It  requires  O(N 2)  classiﬁers  instead  of  O(N ),  but 
+cient. 
+each  classiﬁer  is  (on  average)  much  smaller.  If  the  time  to 
+build a classiﬁer  is  superlinear  in  the number of data points, 
+AVA  is  a  better  choice.  With  SVMs,  AVA’s  probably  best. 
+
+However,  if you can  solve one RLS problem over your entire 
+data  set  using  a  matrix  factorization,  you  get  multiclass 
+classiﬁcation  essentially  for  free  (see  RLS  lecture).  So 
+with  RLS,  OVA’s  a  great  choice. 
+
+Other  Approaches
+
+
+There  have  been  two  basic  approaches  to  extending  regu­
+larization  ideas  to  multiclass  classiﬁcation: 
+
+•	 “Single  Machine”  approaches  —  try  to  solve  a  single 
+optimization problem  that  trains many binary classiﬁers 
+simultaneously. 
+
+•	 “Error Correcting Code”  approaches —  try  to  combine 
+binary  classiﬁers  in  a  way  that  lets  you  exploit  decorre­
+lations  and  correct  errors. 
+
+These  approaches  are  not  completely  exclusive.
+
+
+Weston  and  Watkins,  Vapnik
+
+
+The  ﬁrst  “single  machine”  approach:
+
+
+f1 ,...,fN�H,��R�(N−1)  �N 
+K  + C �� 
+i=1 ||fi||2 
+min 
+i=1 �
+subject  to  :  fyi (xi) + byi  � fj (xi) + bj  + 2 − �ij 
+�ij  � 0 
+
+ 
+j �=yi  �ij 
+
+Key  idea.  Suppose  that  point  i  is  in  class  yi.  Then,  for 
+j  ≡= yi,  we  want  (abusing  our  notation  w.r.t.  b), 
+
+fyi (xi) − fj (xi) � 2, 
+or  we  pay  a  linear  penalty  of  �ij . 
+
+WW  Analysis  I
+
+
+This  idea  seems  intuitively  reasonable.  Is  it  good?
+
+
+Weston  and  Watkins  perform  experiments.  On  2  out  of  5 
+datasets,  they  ﬁnd  that  their  approach  performs  substan­
+tially  better  than  OVA,  and  about  the  same  on  the  rest. 
+However,  they  state  that  “to  enable  comparison,  for  each 
+algorithm  C  =  ∀  was  chosen  (the  training  data  must  be 
+classiﬁed  without  error),”  so  they  are  performing  ERM, 
+not  regularization  (C  = ∀ ∞∈  � =  0).  A  Gaussian  kernel 
+was  used,  with  �  the  same  for  each  method  (not  necessar­
+ily  a  good  idea),  and  no  information  about  how  this  �  was 
+chosen. 
+
+WW  Analysis  I I
+
+
+Under what  circumstances would we  expect  this method  to 
+outperform  a  OVA  approach?  Tough  to  say.  We’d  need 
+a  situation  where  it  would  be  hard  to  actually  separate 
+the  data,  but  where  there  exist  meaningful  subsets  of  the 
+data  where  even  though  we  can’t  assign  a  positive  value 
+to  the  correct  class,  we  can  assign  a  less  negative  value 
+to  it  than  other  classes.  Or,  we  need  subsets  where  even 
+though  we’re  assigning  positive  values  to  some  incorrect 
+class,  we’re  assigning  even  more  strongly  positive  values 
+to  the  correct  classes. 
+
+Challenge:  Come  up  with  a  set  of  examples  that  actually 
+has  this  property.  Double  challenge:  Have  it  hold  when 
+the  kernel  is  a  properly-tuned  Gaussian. 
+
+WW  Analysis  I I I
+
+
+There  is  no  evidence  that  this  scheme  is  any more  accurate 
+than  an OVA  scheme.  It  is,  however,  much  slower.  Instead 
+of  N  problems  of  size  σ,  we  need  to  solve  a  problem  of  size 
+(N  − 1)σ.  Moreover,  although  the  authors  derive  a  dual 
+problem,  they  don’t  show  any  way  to  decompose  it;  the 
+resulting  problem  is  much  more  complex  than  a  standard 
+SVM. 
+
+Lee,  Lin  and  Wahba:  Motivation 
+
+
+In  an  earlier  paper,  Lin  showed  that  asymptotically,  as  we
+
+let  σ � ∀  and  � � 0,  the  solution  of  an  SVM  will  tend  to
+
+⎝1 
+⎛
+f (x) = sign  p(x) − 
+2 
+This  is  good  for  binary  classiﬁcation. 
+
+. 
+
+Now consider multiclass classiﬁcation with an OVA scheme. 
+
+In  regions  where  there  is  a  dominant  class  i  for  which
+
+p(x)
+ >
+ 1 
+2 ,
+ all  is  good. 
+If  there  isn’t,  then  all  N  of  the
+
+OVA  functions  will  return  −1,  and  we  will  be  unable  to 
+recover  the  most  likely  class. 
+
+Lee,  Lin  and  Wahba:  Notation 
+
+
+For  i → 1, . . . , N ,  deﬁne  vi  as  the  N  dimensional  vector  with 
+a  1  in  the  ith  coordinate  and  −  1  elsewhere.  The  vector 
+N −1 
+vi  serves  as  the  “target”  for  points  in  class  i  —  we  try  to 
+get  function  outputs  that  are  very  close  to  the  entries  of
+
+vi. 
+
+Given  a  training  point  xi,  we  try  to  make  fj  =  −  1 
+for 
+N −1 
+j  ≡= yi,  and  then  we  also  require  that  �N
+j=1 f (xi) = 0.  This 
+leads  us  to. . . 
+
+Lee,  Lin  and  Wahba:  Formulation 
+
+
+min 
+f1 ,...,fN �HK 
+subject  to  : 
+
+1 ��
+N 
+i=1 �j
+� 
+=1,j �
+=yi
+
+j=1 ||fj ||2 
+1
+(fj (xi) + N −1 )+ + � �N
+K
+�N
+j=1 fj (x) = 0 
+
+� 
+x
+
+Lee,  Lin  and  Wahba:  Analysis
+
+
+Asymptotically,  this  formulation  gives 
+ 
+�
+
+1 
+−  1 
+N −1 
+
+fi(x) = 
+
+iﬀ  i = arg max pj (x)
+otherwise
+
+In  turn,  this  means  that  our  ﬁnal  multiclass  classiﬁcation 
+function  will  be 
+
+f (x) = arg max pj (x). 
+
+Lee,  Lin  and  Wahba:  Issues  I
+
+
+•	 Even under the conditions of the analysis,  this produces 
+a  diﬀerent  result  from  OVA  only  when  arg max pj (x) < 
+2
+ —  the  Bayes  error  rate  must  be  >
+ 1
+
+1
+
+indicating  a 
+2
+ ,
+
+very  tough  problem  that  should  likely  be  modelled  dif­
+ferently. 
+
+•	 The  “problem”  with  an  OVA-SVM  scheme  relies  on 
+the  linearity  of  the  SVM  loss.  If  we  use  instead  RLSC 
+or  a  square-loss  SVM,  these  problems  disappear,  and 
+the  Bayes  rule  is  again  recovered  asymptotically. 
+
+Lee,  Lin  and  Wahba:  Issues  I I
+
+
+•	 Like  the  WW  formulation,  this  formulation  is  big,  and 
+no  decomposition  method  is  provided. 
+
+•	 This  is  an  asymptotic  analysis.  It  requires  n � ∀  and 
+� � 0,  and  no  rates  are  provided.  But  asymptotically, 
+density  estimation  will  allow  us  to  recover  the  optimal 
+Bayes  rule.  The  burden  is  on  the  authors  to  show  that 
+there  is  a  useful  middle  ground  where  this  performs 
+well. 
+
+Lee,  Lin  and  Wahba:  Experiments
+
+
+Two  toy  examples.  In  one,  no  comparison  is made  to  other 
+techniques.  In  the  other,  they  compare  to  OVA.  The  data 
+is  200  points  in  one-dimension  in  thre  classes,  constructed 
+so  that  class  2  never  has  conditional  probability  >  50%. 
+The  LLW  approach  predicts  class  2  in  the  region  where  it’s 
+more  likely  than  any  other  class  (total  error  rate  .389,  and 
+the  OVA  system  fails  there  (total  error  .4243).  I  cannot 
+understand  how  their  parameters  were  chosen. 
+
+Crammer  and  Singer:  Formulation
+
+
+They  consider  a  formulation  that  is  a  modiﬁed  version  of 
+WW: 
+
+min 
+f1 ,...,fN�H,��R� 
+subject  to  : 
+
+ 
+j �
+
+=yi  �i
+
+��  �
+N 
+=1 ||fi||2  + C 
+�i
+i=1 
+K
+fyi (xi) � fj (xi) + 1 − �i 
+�i  � 0 
+
+Key  diﬀerence:  there  is  only  one  slack  variable  �i  per  data 
+point,  rather  than  N − 1  slack  variables  per  data  point  as 
+in  WW.  Instead  of  paying  for  each  class  j  ≡=  i  for  which 
+fi(x) < fj (x) + 1,  they  pay  only  for  the  largest  fj (x). 
+
+Crammer  and  Singer:  Development
+
+
+The  majority  of  the  C&S  paper  is  devoted  to  eﬃciently 
+solving  the  formulation.  The  Lagrangian  dual  is  taken, 
+dot  products  are  replaced  with  kernel  products,  and  a  dual 
+decomposition  algorithm  is  developed.  This  algorithm  is 
+substantially  more  complicated  than  the  SVM  algortihm; 
+the  mathematics  is  fairly  involved,  but  elegant. 
+
+In  the  experimental  section  of  their  paper,  C&S  make 
+claims  as  to  both  the  speed  and  the  accuracy  of  their 
+method. . . 
+
+Crammer  and  Singer:  Speed
+
+
+C&S  claim  that  their  method  is  orders  of  magnitude  faster 
+than  than  an  OVA  approach.  However: 
+
+•	 They  benchmark  the  OVA  approach  by  using  Platt’s 
+1998  results,  in  which  he  implemented  SMO  with  no 
+caching  of  kernel  products.  In  contrast,  their  system 
+used  2  GB  of  RAM  to  cache  kernel  products. 
+
+•	 The  paper  states  that  the  fastest  version  has  “two 
+more  technical  improvements  which  are  not  discussed 
+here  but  will  be  documented  in  the  code  that  we  will 
+shortly make available”;  the code was never made avail­
+able. 
+
+Crammer  and  Singer:  Accuracy
+
+
+C&S  consider  data  sets  from  the  UCI  repository.  Their 
+chart  shows  the  diﬀerence  in  error  rates  between  their  sys­
+tem  and  an  OVA  system,  but  not  the  actual  error  rates. 
+
+The  largest diﬀerences appeared to be on the satimage (dif­
+ference  of  approximately  6.5%)  and  shuttle  (diﬀerence  of 
+approximately  3%)  data  sets.  Through  personal  commu­
+nication,  Crammer  indicated  that  the  actual  error  rates  for 
+his  system  on  these  two  data  sets  were  8.1%  and  0.1%, 
+In  my  own  one-vs-all  experiments  on  these 
+respectively. 
+data  sets,  I  achieved  error  rates  of  7.9%  for  the  satimage 
+data  and  0.35%  on  the  shuttle  data.  These  diﬀerences 
+are  much  smaller  than  the  diﬀerences  reported  by  C&S. 
+
+Dietterich  and  Bakiri:  Introducing  the
+
+ECC  Approach
+
+
+Consider  a  {−1, 1}-valued matrix M  of  size N  by F  where F 
+is  the  number  of  classiﬁers  to  be  trained.  The  ith  column 
+of  the  matrix  induces  a  partition  of  the  classes  into  two 
+“metaclasses”,  where  a  point  xi  is  placed  in  the  positive 
+metaclass  for  the  j th  classiﬁer  if  and  only  if  Myij  = 1. 
+
+When faced with a new test point x, we compute f1(x), . . . , fF (x), 
+take  the  signs  of  these  values,  and  then  compare  the  Ham­
+ming  distance  between  the  resulting  vector  and  each  row 
+of  the  matrix,  choosing  the  minimizer: 
+F 
+  1 − sign(Mrifi(x))
+⎞
+�
+2
+i=1 
+
+f (x) = arg  min 
+r�1,...,N 
+
+�
+
+.
+
+
+Dietterich  and  Bakiri:  Introducing  the
+
+ECC  Approach
+
+
+D&B  suggest  that  M  be  constructed  to  have  good  error-
+correcting  properties —  if  the minimum Hamming  distance 
+between  rows  of  M  is  d,  then  the  resulting  multiclass  clas­
+siﬁcation  will  be  able  to  correct  any  ⇒ d−1 ⇐  errors. 
+2 
+
+In  learning,  good  column  separation  is  also  important  — 
+two  identical  (or  opposite)  columns  will  make  identical 
+errors.  This  highlights  the  key  diﬀerence  between  the 
+multiclass  machine  learning  framework  and  standard  error-
+correcting  code  applications. 
+
+Dietterich  and  Bakiri:  Experiments
+
+
+A  large  number  of  experiments  were  performed.  Decision 
+trees  and  feed-forward  neural  networks  were  used  as  base 
+learners,  and  several  methods  of  generating  codes  were 
+tried. 
+
+In  general,  it  seems  that  their  approach  outperformed OVA 
+approaches.  However,  diﬀerences  were  often  small,  the 
+quality  of  the  underlying  binary  classiﬁers  is  unknown,  and 
+often  only  relative  performance  results  are  given,  so  this 
+work  is  diﬃcult  to  evaluate. 
+
+Allwein,  Schapere  and  Singer:
+
+Generalizing  D&B
+
+
+AS&S  generalize  D&B  in  two  main  ways: 
+
+•  Allow 0-entries (in addition to 1 and -1)  in the M  matrix
+
+—  if  Mij  =  0,  then  examples  from  class  i  are  simply 
+not  used  in  classiﬁer  j . 
+
+•	 Use  loss-based decoding to classify examples —  instead 
+of  taking  the  sign  of  the  output  of  each  classiﬁer,  com­
+pute  the  actual  loss,  using  the  training  loss  function 
+(hinge  loss  for  SVM,  square  loss  for  RLSC). 
+
+AS&S observe that OVA approaches, “all-pairs” approaches, 
+the  ECC  approach  of  D&B,  and  generalizations  of  this  to 
+include  0  in  the  matrix  all  ﬁt  into  their  framework. 
+
+Allwein,  Schapere  and  Singer:
+
+Experimental  Setup
+
+
+AS&S  tested  multiclass  SVMs  and  AdaBoost  using  ﬁve 
+diﬀerent  matrices: 
+
+•	 OVA  and  AVA:  one-vs-all  and  “all-pairs”
+
+
+•	 COMPLETE:  O(2N )  columns 
+
+•	 DENSE  and  SPARSE:  Randomized  codes  with  and 
+without  zeros  in  M . 
+
+Their  conclusion:  “For  SVM,  it  is  clear  that  the  widely 
+used  one-against-all  code  is  inferior  to  all  the  other  codes 
+we  tested.” 
+
+Allwein,  Schapere  and  Singer:
+
+Experimental  Conditions
+
+
+AS&S  performed  all  SVM  experiments  using  a  polynomial 
+kernel  of  degree  4;  no  justiﬁcation  for  this  choice  is  made. 
+No  information  about  regularization  parameters  is  given. 
+Fortunately,  AS&S  gave  actual  numerical  results  for  their 
+experiments. 
+
+The  diﬀerence  in  performance  was  large  on  only  two  data 
+sets:  yeast  and  satimage.  I  performed my  own  experiments 
+on  these  data  sets,  using  Gaussian  kernels.  The  Guassian 
+parameter  �  was  tuned  by  “cheating”  on  the  test  set,  al­
+though  the  accuracy  rates were  not  very  sensitive  to  choice 
+of  �  (and  see  later). 
+
+Allwein,  Schapere  and  Singer:
+
+Experimental  Comparison 
+
+
+OVA  AVA  COM  DEN  SPA 
+Allwein  et  al.  40.9  27.8  13.9  14.3  13.3 
+Rifkin 
+8.2 
+8.2 
+8.0 
+7.9 
+7.9 
+Comparison  of  results  for  the  satimage  data  set.
+
+
+OVA  AVA  COM  DEN  SPA 
+Allwein  et  al.  72.9  40.9  40.4  39.7  47.2 
+Rifkin 
+39.0  39.3  38.5  39.3  38.8 
+Comparison  of  results  for  the  yeast  data  set.
+
+
+F¨
+urnkrnaz:  Round-Robin  Classiﬁcation
+
+
+Using  Ripper,  a  rule-based  learner,  as  an  underlying  bi­
+nary  learner,  F¨urnrkanz  showed  experimentally  that  all-
+pairs  substantially  outperformed  one-vs-all  across  a  variety 
+of  data  sets  from  UCI. 
+
+His  experiments  include  the  satimage  and  yeast  data  sets 
+discussed  above,  with  his  best  all-pairs  system  achieving 
+accuracy  rates  of  10.4%  and  41.8%,  respectively.  These 
+results  cannot  be  directly  compared  to  my  numbers  (7.9% 
+and  39.0%)  because  I  cheated  and  because  the  yeast  set­
+up  was  somewhat  diﬀerent,  but  see  below. 
+
+Hsu  and  Lin:  A  Metastudy
+
+
+Hsu  and  Lin  empirically  compared  diﬀerent  methods  of 
+multiclass  classiﬁcation  using  SVMs  as  binary  learners. 
+
+They  tried  ﬁve methods:  OVA, AVA, DAG  (similar  to AVA, 
+faster  at  testing  time),  the  method  of  Crammer  &  Singer, 
+and  the  method  of  Weston  &  Watkins.  They  used  Gaus­
+sian  kernels,  tuned  on  validation  sets,  and  reported  all  the 
+numbers. 
+
+They  conclude  that  “one-against-one  and  DAG  methods 
+are  more  suitable  for  practical  use  than  the  other  meth­
+ods.”  We  take  the  numbers  directly  from  their  paper,  and 
+presented  them  in  a  format  that  suits  us. . . 
+
+Hsu  and  Lin:  Results
+
+
+Size  Size  *  Diﬀ 
+Best  Worst  Diﬀ 
+1.000 
+150 
+97.333  96.667 
+.666 
+iris 
+178 
+1.000 
+99.438  98.876 
+.562 
+wine 
+6.000 
+214 
+73.832  71.028  2.804 
+glass 
+528 
+3.000 
+99.053  98.485 
+.568 
+vowel 
+10.58 
+746 
+87.470  86.052  1.418 
+vehicle 
+2310 
+6.006 
+97.576  97.316 
+.260 
+segment 
+5.005 
+.422 
+95.869  95.447 
+dna 
+1186 
+1.050  2000 
+satimage  92.35 
+91.3 
+20.1 
+15.0 
+.300 
+97.98 
+letter 
+5000 
+97.68 
+shuttle 
+99.938  99.910 
+.028  14500 
+4.06 
+A  view  of  the  multiclass  results  of  Hsu  and  Lin  for  RBF
+
+kernels.
+
+
+New  Experiments
+
+
+With  Aldebaro  Klautau  of  UCSD,  I  performed  a  set  of  ex­
+periments on data  from the UCI data set.  There were three 
+main  things  we  wanted  to  explore,  in  a  well-controlled, 
+(hopefully)  reproducible  setting: 
+
+•	 Revisiting  the data  sets F¨
+urnkranz used,  but using well-
+tuned  SVMs  as  the  base  learners. 
+
+•	 Comparing  the  ﬁve  diﬀerent  matrices  of  Allwein  et  al., 
+across  a  range  of  data  sets. 
+
+•	 Comparing  RLSC  and  SVM.
+
+
+Protocol 
+
+
+Details  of  the  protocol  are  found  in  the  papers.  All  ex­
+periments  were  done  with  a  Gaussian  kernel.  For  a  given 
+experiments,  the  same  parameters  (�  and  C  (or  �))  were 
+used  for  all  machines.  All  parameters  were  found  by  cross-
+validation. 
+
+We  focussed  speciﬁcally  on  data  sets  on  which  F¨ 
+urnkranz 
+had  found  a  signiﬁcant  diﬀerence  between  OVA  and  AVA. 
+But  what  is  signiﬁcance? 
+
+McNemar’s  Test,  I
+
+
+F¨
+urnkranz  used  McNemar’s  test  to  assess  the  signiﬁcance 
+of  the  diﬀerence  in  performance  of  two  classiﬁers. 
+
+We  compute  the  number  of  times  (over  the  test  set)  each 
+of  these  events  occur: 
+
+•  both  classiﬁers  were  correct  on  (CC )
+
+
+•  both  classiﬁers  were  incorrect  (I I ) 
+
+•  A  was  correct,  B  incorrect  (C I ) 
+
+•  B  was  correct,  A  incorrect  (I C ) 
+
+McNemar’s  Test,  I I
+
+
+McNemar’s Test uses  the  observation  that,  if  the  classiﬁers 
+have  equal  error  rates,  then  C I  and  I C  should  be  equally 
+frequent.  This  test  is  good  because  it  requires  very  few 
+assumptions  (just  that  the  observations  are  paired).  It’s 
+bad  because  it  ignores  the  number  of  examples  on  which 
+the  two  systems  agree,  and  (directly  related)  it  does  not 
+provide  a  conﬁdence  interval. 
+
+We  therefore  decided  to  introduce...
+
+
+A  Bootstrap  Test  For  Comparing 
+
+Classiﬁers
+
+
+We  calculate  the  empirical  probabilities  of  the  four  events 
+CC ,  C I ,  I C ,  and  I I .  Then,  a  large  number  (in  our  ex­
+periments,  10,000)  of  times,  we  generate  bootstrap  sam­
+ples  containing  σ  “data  points”,  each  of  which  is  simply 
+an  occurrence  of  CC ,  C I ,  I C ,  or  I I  with  the  appropriate 
+probability.  We  then  calculate  conﬁdence  intervals  (in  our 
+experiments,  90%)  on  the  diﬀerence  in  performance  (C I  ­
+I C ). 
+
+Other,  better  approaches  may  be  possible.
+
+
+Data  Sets  Used 
+
+
+Name 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+test 
+train 
+307 
+376 
+16000  4000 
+2000 
+4435 
+1044 
+3133 
+3823 
+1797 
+214 
+-
+1728 
+-
+531 
+-
+1484 
+-
+5473 
+-
+
+class 
+19 
+26 
+6 
+29 
+10 
+7 
+4 
+48 
+10 
+5 
+
+#  att  / 
+#  nom 
+35  /  35 
+16  /  0 
+36  /  0 
+8  /  1 
+64  /  0 
+9  /  0 
+6  /  6 
+101  /  0 
+8  /  0 
+10  /  0 
+
+average  /  min  /  max 
+#  examples  per  class 
+16.2  /  1  /  40 
+615.4  /  576  /  648 
+739.2  /  409  /  1059 
+108.0  /  0  /  522 
+382.3  /  376  /  389 
+30.6  /  0  /  76 
+432.0  /  65  /  1210 
+11.1  /  1  /  55 
+148.4  /  5  /  463 
+1094.6  /  28  /  4913 
+
+baseline 
+error  (%) 
+87.2 
+96.4 
+77.5 
+84.0 
+89.9 
+64.5 
+30.0 
+89.6 
+68.8 
+10.2 
+
+Reproducing  F¨
+urnkranz’s  Experiments
+
+
+Data  Set 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+Current  Experiments  Furnkranz’s  paper 
+6.30 
+13.3 
+7.7 
+7.85 
+11.15 
+12.2 
+74.34 
+74.1 
+7.5 
+3.74 
+25.70 
+26.2 
+2.8 
+2.26 
+53.11 
+51.2 
+41.6 
+41.78 
+2.76 
+2.6 
+
+Code  Matrix  Sizes
+
+
+Name 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+OVA  AVA 
+COM 
+171 
+19 
+262143 
+26 
+325 
+33554431 
+15 
+6 
+31 
+406 
+29 
+268435455 
+10 
+45 
+511 
+15 
+6 
+31 
+4 
+6 
+7 
+1128  1.407375e+014 
+48 
+10 
+45 
+511 
+15 
+10 
+5 
+
+DEN  SPA 
+64 
+43 
+48 
+71 
+39 
+26 
+73 
+49 
+34 
+50 
+39 
+26 
+20 
+30 
+84 
+56 
+34 
+50 
+35 
+24 
+
+Results:  SVM  AVA  vs.  OVA
+
+
+AVA  OVA  DIFF  AGREE  BOOTSTRAP 
+Data  Set 
+soybean-large  6.38 
+5.85 
+0.530 
+0.971 
+[-0.008,  0.019] 
+[0.008,  0.015] 
+0.978 
+1.09 
+2.75 
+3.85 
+letter 
+satimage 
+8.15 
+7.80 
+0.350 
+0.984 
+[-5E-4,  0.008] 
+[-0.102,  -0.047] 
+0.347 
+-7.37 
+72.32  79.69 
+abalone 
+optdigits 
+3.78 
+2.73 
+1.05 
+0.982 
+[0.006,  0.016] 
+0.818 
+-.470 
+30.37  30.84 
+glass 
+[-0.047,  0.037] 
+[-0.016,  -0.006] 
+car 
+0.41 
+1.50 
+-1.09 
+0.987 
+[-0.143,  -0.075] 
+0.635 
+spectrometer  42.75  53.67  -10.920 
+yeast 
+41.04  40.30 
+0.740 
+0.855 
+[-0.006,  0.021] 
+[-0.002,  0.002] 
+0.991 
+-.020 
+3.40 
+3.38 
+page-blocks 
+
+Results:  SVM  DENSE  vs.  OVA
+
+
+DEN  OVA  DIFF  AGREE  BOOTSTRAP 
+Data  Set 
+soybean-large  5.58 
+5.85 
+-0.270 
+0.963 
+[-0.019,  0.013] 
+[5E-4,  0.004] 
+0.994 
+0.200 
+2.75 
+2.95 
+letter 
+satimage 
+7.65 
+7.80 
+-0.150 
+0.985 
+[-0.006,  0.003] 
+[-0.092,  -0.039] 
+0.393 
+-6.51 
+73.18  79.69 
+abalone 
+optdigits 
+2.61 
+2.73 
+-0.12 
+0.993 
+[-0.004,  0.002] 
+[-0.042,  0.014] 
+0.911 
+-1.40 
+29.44  30.84 
+glass 
+car 
+1.50 
+-
+-
+-
+-
+[-0.011,  0.026] 
+0.866 
+spectrometer  54.43  53.67  -0.760 
+yeast 
+40.30  40.30 
+0.00 
+0.900 
+[-0.011,  0.011] 
+3.40 
+page-blocks 
+-
+-
+-
+-
+
+Results:  SVM  SPARSE  vs.  OVA
+
+
+SPA  OVA  DIFF  AGREE  BOOTSTRAP 
+Data  Set 
+soybean-large  6.12 
+5.85 
+0.270 
+0.968 
+[-0.011,  0.016] 
+[0.005,  0.011] 
+0.980 
+0.800 
+2.75 
+3.55 
+letter 
+satimage 
+8.85 
+7.80 
+1.05 
+0.958 
+[0.003,  0.018] 
+[-0.067,  -0.014] 
+0.352 
+-4.02 
+75.67  79.69 
+abalone 
+optdigits 
+3.01 
+2.73 
+0.280 
+0.984 
+[-0.002,  0.008] 
+[-0.070,  0.033] 
+0.738 
+-1.87 
+28.97  30.84 
+glass 
+car 
+0.81 
+1.50 
+-0.69 
+0.988 
+[-0.011,  -0.003] 
+[-0.038,  0.019] 
+0.744 
+spectrometer  52.73  53.67  -0.940 
+yeast 
+40.16  40.30  -0.140 
+0.855 
+[-0.015,  0.013] 
+[0.001,  0.007] 
+0.979 
+0.440 
+3.40 
+3.84 
+page-blocks 
+
+Results:  SVM  COMPLETE  vs.  OVA
+
+
+Data  Set 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+COM  OVA  DIFF  AGREE  BOOTSTRAP 
+5.85 
+-
+-
+-
+-
+2.75 
+-
+-
+-
+-
+[-1E-3,  1E-3] 
+0.999 
+7.80 
+7.80 
+0.00 
+79.69 
+-
+-
+-
+-
+[-0.003,  0.002] 
+0.996 
+2.67 
+2.73 
+-0.060 
+[-0.042,  0.014] 
+0.911 
+29.44  30.84  -1.340 
+1.68 
+1.50 
+-0.180 
+0.998 
+[5.79E-4,  0.003] 
+53.67 
+-
+-
+-
+-
+[-0.028,  -0.005] 
+0.906 
+38.61  40.30  -1.690 
+[-0.002,  0.004] 
+0.983 
+-0.090 
+3.40 
+3.49 
+
+¨
+
+Results:  FURNRKANZ  vs.  SVM  OVA
+
+
+FUR  OVA  DIFF  AGREE  BOOTSTRAP 
+Data  Set 
+soybean-large  13.3  5.85 
+7.45 
+0.891 
+[.056,  .109] 
+[.043,  .057] 
+0.922 
+4.95 
+7.7 
+letter 
+2.75 
+satimage 
+12.2  7.80 
+4.40 
+0.906 
+[.0345,  .055] 
+[-.083,  -0.029] 
+0.335 
+74.1  79.69  -5.59 
+abalone 
+optdigits 
+7.5 
+2.73 
+4.77 
+0.920 
+[0.035,  0.056] 
+[-0.098,  0.005] 
+0.734 
+26.2  30.84  -4.64 
+glass 
+car 
+2.8 
+1.50 
+1.3 
+0.969 
+[0.006,  0.020] 
+[-0.060,  0.017] 
+0.488 
+spectrometer  51.2  53.67  -2.47 
+yeast 
+41.6  40.3 
+1.29 
+0.765 
+[-0.005,  -0.032] 
+[-0.012,  -0.005] 
+0.978 
+-0.80 
+3.40 
+2.6 
+page-blocks 
+
+Results:  SVM  OVA  vs.  RLSC  OVA
+
+
+RLSC  SVM  DIFF  AGREE  BOOTSTRAP 
+Data  Set 
+soybean-large  6.12 
+5.85 
+0.270 
+0.984 
+[-0.008,  0.013] 
+2.75 
+letter 
+-
+-
+-
+-
+[-0.004,  0.006] 
+satimage 
+7.9 
+7.80 
+0.010 
+0.979 
+[-0.099,  -0.041] 
+0.284 
+72.7  79.69  -7.000 
+abalone 
+optdigits 
+2.5 
+2.73 
+-0.230 
+0.980 
+[-0.007,  0.003] 
+[-0.037,  0.047] 
+0.808 
+31.3  30.84  0.460 
+glass 
+car 
+2.9 
+1.50 
+1.40 
+0.980 
+[0.009,  0.020] 
+[-0.036,  0.009] 
+0.821 
+52.3  53.67  -1.370 
+spectrometer 
+yeast 
+40.0  40.30  -0.300 
+0.872 
+[-0.016,  0.011] 
+[-0.004,  0.001] 
+0.983 
+-0.150 
+3.40 
+3.25 
+page-blocks 
+
+Results:  SVM  AVA  vs.  RLSC  AVA
+
+
+Data  Set 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+RLSC  SVM  DIFF  AGREE  BOOTSTRAP 
+8.2 
+6.38 
+1.820 
+0.941 
+[0.000,  0.037] 
+3.85 
+-
+-
+-
+-
+[-0.013,  -0.001] 
+7.4 
+8.15 
+-.750 
+0.974 
+[-0.009,  0.034] 
+0.560 
+73.66  72.32  1.340 
+3.0 
+3.78 
+-.780 
+0.974 
+[-0.013,  -0.002] 
+[-0.047,  0.028] 
+0.864 
+29.4  30.37  -0.970 
+2.3 
+0.41 
+1.89 
+0.980 
+[0.013,  0.024] 
+[0.036,  0.092] 
+0.738 
+49.1  42.75  6.350 
+40.0  41.04  -1.040 
+0.838 
+[-0.025,  0.005] 
+[-0.003,  0.003] 
+0.981 
+0.020 
+3.38 
+3.4 
+
+Results:  SVM  DENSE  vs.  RLSC
+
+DENSE
+
+
+Data  Set 
+soybean-large 
+letter 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+RLSC  SVM  DIFF  AGREE  BOOTSTRAP 
+[0.011,  0.040] 
+0.971 
+2.41 
+5.58 
+8.0 
+8.0 
+7.65 
+0.350 
+0.976 
+[-0.002,  0.009] 
+[-0.025,  0.017] 
+0.663 
+72.8  73.18  -0.380 
+2.5 
+2.61 
+-0.110 
+0.982 
+[-0.006,  0.003] 
+[-0.037,  0.042] 
+0.864 
+-.460 
+29.9  29.44 
+-
+-
+-
+-
+-
+[-0.038,  0.008] 
+0.825 
+52.9  54.43  -1.530 
+40.0  40.30 
+-.300 
+0.888 
+[-0.016,  0.009] 
+-
+-
+-
+-
+-
+
+Results:  SVM  SPARSE  vs.  RLSC
+
+SPARSE
+
+
+Data  Set 
+soybean-large 
+letter 
+satimage 
+abalone 
+optdigits 
+glass 
+car 
+spectrometer 
+yeast 
+page-blocks 
+
+RLSC  SVM  DIFF  AGREE  BOOTSTRAP 
+[0.000,  0.027] 
+0.973 
+1.280 
+6.12 
+7.4 
+3.55 
+-
+-
+-
+-
+0.958 
+8.4 
+[-0.011,  0.003] 
+-0.450 
+8.85 
+[-0.043,  -0.005] 
+0.621 
+73.3  75.67  -2.370 
+3.6 
+3.01 
+0.590 
+0.977 
+[0.001,  0.011] 
+[-0.037,  0.047] 
+0.841 
+29.4  28.97  -0.430 
+4.3 
+0.81 
+3.490 
+0.963 
+[0.028,  0.043] 
+[-0.024,  0.021] 
+0.827 
+52.5  52.73  -0.230 
+40.9  40.16  0.740 
+0.877 
+[-0.005,  0.020] 
+[-0.006,  1.83E-4] 
+0.980 
+-0.340 
+3.84 
+3.5 
+
+Towards  a  Theory,  I
+
+
+Recall  that  to  solve  an  RLSC  problem,  we  solve  a  linear 
+system  of  the  form 
+
+(K + �σI )c = y.
+
+
+Because  this  is  a  linear  system,  the  vector  c  is  a  linear 
+function  of  the  right  hand  side  y.  Deﬁne  the  vector  y i  as 
+ 
+�
+
+1  if  yj  =  i 
+0  otherwise
+
+i
+y  = 
+j
+
+
+Towards  a  Theory,  I I
+
+
+Now,  suppose  that  we  solve  N  RLSC  problems  of  the  form
+
+
+(K + �σI )c i  = y  , 
+i
+
+and  denote  the  associated  functions  f c1 , . . . , f cN .  Now,  for 
+any  possible  right  hand  side  y�  for  which  the  yi  and  yj 
+are  equal,  whenever  xi  and  xj  are  in  the  same  class,  we 
+can  calculate  the  associated  c  vector  from  the  ci  without 
+solving  a  new  RLSC  system. 
+In  particular,  if  we  let  mi 
+(i  → {1, . . . , N })  be  the  y  value  for  points  in  class  i,  then 
+the  associated  solution  vector  c  is  given  by 
+
+c = 
+
+ 
+
+N 
+i 
+�
+c mi. 
+i=1 
+
+Towards  a  Theory,  I I I
+
+
+For  any  code  matrix  M  not  containing  any  zeros,  we  can 
+compute  the  output  of  the  coding  system  using  only  the 
+entries  of  the  coding  matrix  and  the  outputs  of  the  under­
+lying  one-vs-all  classiﬁers. 
+In  particular,  we  do  not  need 
+to  actually  train  the  classiﬁers  associated  with  the  coding 
+matrix.  We  can  simply  use  the  appropriate  linear  combi­
+nation  of  the  “underlying”  one-vs-all  classiﬁers.  For  any 
+r  → {1, . . . , N },  it  can  be  shown  that 
+
+ 
+
+= 
+
+F 
+�
+L(Mrifi(x)) 
+i=1 
+N 
+ 
+�
+j=1 
+j �=r 
+where  Crj  ≥ �F
+i=1 MriMj i  and  Drj  ≥ (F  − Crj ). 
+
+
+Drj f j (x), 
+
+(1) 
+
+Towards  a  Theory,  IV
+
+
+Noting  that  Drj  is  guaranteed  to  be  positive  under  the 
+basic  assumption  that  no  two  rows  of  the  coding  matrix 
+are  identical,  we  see  that 
+
+ 
+
+F 
+�
+f (x)  =  arg  min 
+L(Mrifi(x)) 
+r�{1,...,N } i=1 
+N 
+ 
+Drj f j (x). 
+�
+=  arg  min 
+r�{1,...,N }  j=1 
+j �=r 
+
+Towards  a  Theory:  Class  Symmetry  I
+
+
+We deﬁne a coding matrix to be class-symmetric  if Dij  (and 
+therefore  Cij  as  well)  is  independent  of  i  and  j  (assuming 
+i  ≡=  j ).  Note  that  a  suﬃcient  (but  not  necessary)  condi­
+tion  for  a  coding-matrix  to  class  symmetric  is  if,  whenever 
+it  contains  a  column  containing  k  1’s  and  n − k  -1’s,  all 
+N ! 
+such  columns  are  included.  The  OVA  and  COM-
+k!(N −k)! 
+PLETE  schemes  are  class-symmetric,  while  the  DENSE 
+scheme  is  in  general  not  (the  AVA  and  SPARSE  schemes 
+include  zeros  in  the  coding  matrix,  and  are  not  addressed 
+by  this  analysis). 
+
+Towards  a  Theory:  Class  Symmetry  I I
+
+
+For  class-symmetric  schemes,  Drj  is  independent  of  the 
+choice  of  r  and  j ,  and  can  be  denoted  as  D � .  For  these 
+schemes, 
+
+ 
+
+f j (x) 
+
+f (x)  =  arg  min 
+r�1,...,N 
+
+N 
+D�  �
+j=1 
+j �=r 
+N 
+ 
+f j (x) 
+r�1,...,N  �
+=  arg  min 
+j=1 
+j �=r 
+f r (x), 
+=  arg  max 
+r�1,...,N 
+When  RLSC  is  used  as  the  underlying  binary  learner  for 
+class-symmetric  coding  matrices  containing  no  zeros,  the 
+predictions  generated  are  identical  to  those  of  the  one-vs-
+all  scheme. 
+
+

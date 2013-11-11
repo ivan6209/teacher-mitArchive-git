@@ -1,0 +1,1272 @@
+6.042/18.062J Mathematics for Computer Science 
+Srini Devadas and Eric Lehman 
+
+March 10, 2005
+
+Lecture Notes
+
+
+Sums and Approximations 
+
+When you analyze  the running  time of an algorithm,  the probability some procedure 
+succeeds, or the behavior of a load­balancing or communications scheme, you’ll rarely get 
+n� 
+a simple answer.  The world is not so kind. More likely, you’ll end up with a complicated 
+sum: 
+√
+1 
+k  +
+k=1 
+� � 
+� � 
+3 
+2
+1 + 
+1 +
+2 
+2
+n
+n
+� 
+�
+Or you might get an answer that is just tad too complicated to grasp intuitively: 
+72/n  n 
+1 + 
+100 
+
+Or a nasty product:  � 
+1 +
+
+�
+
+1
+2
+n
+
+k
+
+�
+
+� 
+· · · 
+1 + 
+
+n 
+2
+n
+
+And these examples are relatively benign! 
+So the ability to cope with such messy mathematical expressions is an important skill 
+in computer science— and in many other areas of science and engineering. This might not 
+seem glorious, but people who can cut monstrous expressions down to size  in moments 
+can  seem  pretty  amazing  to  the  uninitiated.  This  week,  we’ll  equip  you  with  the  most 
+useful tricks of the trade. 
+
+1  The Value of an Annuity 
+
+Would you prefer a million dollars today or $20,000 a year for the next ﬁfty years? 
+This is a question about the value of an annuity, a ﬁnancial instrument that pays out a 
+ﬁxed amount of money at the beginning of every year for some speciﬁed number of years. 
+In particular, an n­year, $m­payment annuity pays m  dollars at  the start of each year  for 
+n  years.  In  some  cases,  n  is  ﬁnite,  but  not  always.  Examples  include  lottery  payouts, 
+student loans, and home mortgages.  There are even Wall Street people who specialize in 
+trading annuities. 
+For many reasons, $20,000 a year for 50 years is worth much less than a million dollars 
+right  now.  For  example,  consider  the  last  $20,000  installment.  If  you  had  that  $20,000 
+right  now,  then  you  could  start  earning  interest,  invest  the money  in  the  stock market, 
+
+2 
+
+Sums and Approximations 
+
+or  just  buy  something  fun.  However,  if  you  don’t  get  the  $20,000  for  another  50  years, 
+then someone else is earning all the interest or investment proﬁt.  Furthermore, prices are 
+likely to gradually rise over the next 50 years, so you when you ﬁnally get the money, you 
+won’t be able to buy as much.  Finally, people only live so long; if you were 60 years old, 
+a payout 50 years in the future would be worth next to nothing! 
+But what if your choice were between $40,000 a year for 50 years and a million dollars 
+today? Now which is better? What is an annuity is actually worth? 
+
+1.1  The Future Value of Money 
+
+In  order  to  address  such  questions,  we  have  to  make  an  assumption  about  the  future 
+value  of money.  Let’s  put most  of  the  complications  aside  and  think  about  this  from  a 
+simple­minded perspective.  The average rate of  inﬂation  in  the United States  from 1980 
+to  2004  was  about  p  = 3.5%  per  year.  This  means  that  the  price  of  a  selection  of  basic 
+goods increases by about 3.5% each year.  If this trend continues, then goods costing $100 
+today will cost: 
+
+$100(1  +  p)  =  $103.50  in 1 year 
+$100(1  +  p)2  =  $107.12  in 2 year 
+. . . 
+$100(1  +  p)k  in k years 
+
+Looked at another way, k years from now, $100 will have the buying power of just 100/(1+ 
+p)k  dollars today. 
+Now we can work out the value of an annuity that pays m dollars at the start of each 
+year for the next n years: 
+
+payments 
+
+$m today 
+
+$m in 1 year 
+
+$m in 2 years 
+· · · 
+$m in n − 1  years 
+
+Total current value:  V  = 
+
+current value 
+
+m 
+m 
+1  +  p 
+m 
+(1  +  p)2 
+· · · 
+m 
+(1  +  p)n−1 
+n−1�  m
+(1  +  p)k 
+k=0 
+
+Sums and Approximations 
+
+3 
+
+So  to  compute  the  value  of  the  annuity,  we  need  only  evaluate  this  sum.  We  could 
+plug  in  values  for m,  n,  and  p,  compute  each  term  explicitly,  and  then  add  them  all up. 
+However,  this particular sum has an equivalent “closed  form”  that makes  the  job easier. 
+In general, a closed form is a mathematical expression that can be evaluated with a ﬁxed 
+number  of  basic  operations  (addition,  multiplication,  exponentiation,  etc.)  In  contrast, 
+evaluating the sum above requires a number of operations proportional to n. 
+
+1.2  A Geometric Sum 
+Our goal is to ﬁnd a closed form equivalent to the summation: 
+n−1�  m 
+(1 + p)k 
+k=0 
+
+m 
+(1 + p)2 
+
+=  m +
+
+m
+1 + p 
+
++ 
+
+V  =
+
++ . . . + 
+
+m 
+(1 + p)k−1 
+
+This  is a geometric sum, which means  that consecutive  terms all have  the same ratio.  In 
+particular,  the  second  term  is  1/(1 + p) times  the  ﬁrst,  the  third  is  1/(1 + p) times  the 
+second, and so forth. And we’ve already encountered a theorem about geometric sums: 
+Theorem 1.  For all n ≥ 1 and all z  =  1: � 
+n−1
+k 
+z  = 
+k=0 
+
+1 − z
+n
+1 − z 
+
+This  theorem  can  be  proved  by  induction,  but  that  proof  gives  no  hint  how  the  for­
+mula might be found in the ﬁrst place.  Here is a more insightful derivation based on the 
+perturbation method.  First, we let S equal the value of the sum and then “perturb” it by 
+multiplying by z . 
+
+S  = 1  +  z  +  z 2  + 
+z  +  z 2  + 
+zS  = 
+
+. . .  +  z n−1 
+. . .  +  z n−1  +  z n 
+
+The difference between  the original sum and  the perturbed sum  is not so great, because 
+there is massive cancellation on the right side: 
+S − zS =  1 − z  n 
+
+Now solving for S gives the expression in Theorem 1: 
+1 − z
+n
+1 − z 
+
+S = 
+
+You can derive a passable number of summation formulas by mimicking the approach 
+used above. We’ll look at some other methods for evaluting sums shortly. 
+
+�
+4 
+
+Sums and Approximations 
+
+V  = 
+
+=  m
+
+1.3  Return of the Annuity Problem 
+Now  we  can  solve  the  annuity  pricing  problem!  The  value  of  an  annuity  that  pays  m 
+n−1�  m 
+dollars at the start of each year for n  years is: 
+n−1� 
+(1  +  k)p 
+k=0 
+k 
+(where z  = 
+z 
+k=0 
+1  − z
+� 
+�
+n
+=  m  · 
+1  − z 
+�
+�
+1  −  1+p 
+n 
+1
+1  −  1+p 
+1
+We apply Theorem 1 on the second line, and undo the the earlier substitution z  = 1/(1+ p) 
+on the last line. 
+The  last  expression  is  a  closed  form;  it  can  be  evaluated  with  a  ﬁxed  number  of  ba­
+sic  operations.  For  example, what  is  the  real  value  of  a winning  lottery  ticket  that  pays 
+$40,  000  per  year  for  50  years?  Plugging  in  m  =  $40,  000,  n  =  50,  and  p  = 0.035  gives 
+V  ≈ $971,  063. You’d be better off taking the million dollars today! 
+
+1
+1  +  p
+
+=  m 
+
+· 
+
+)
+
+1.4  Inﬁnite Sums 
+
+means 
+
+All right, would you prefer a million dollars  today or $40,000 a year  forever?  This might 
+seem like an easy choice— when inﬁnite money is on offer, why worry about inﬂation? 
+This  is  a  question  about  an  inﬁnite  sum.  In  general,  the  value  of  an  inﬁnite  sum  is 
+� 
+� 
+deﬁned as the limit of a ﬁnite sum as the number of terms goes to inﬁnity: 
+∞
+n
+zk 
+zk 
+k=0 
+k=0 
+
+lim 
+n→∞ 
+�
+� 
+So the value of an annuity with an inﬁnite number of payments is given by our previ­
+ous answer in the limit as n  goes to inﬁnity: 
+�
+�
+1  −  1+p
+n 
+1
+· 
+1  −  1+p 
+1
+�
+�
+1 
+1  −  1+p 
+1
+1  +  p 
+p 
+
+V  =  lim  m 
+n→∞ 
+
+=  m  · 
+
+=  m 
+
+· 
+
+Sums and Approximations 
+
+5 
+
+In  the  second  step,  notice  that  the  1/(1  +  p)n  term  in  the  numerator  goes  to  zero  in  the 
+limit. The third equation follows by simplifying. 
+Plugging  in m  = $40, 000  and p = 0.035  into  this  formula gives V  ≈  $1, 182, 857.  The 
+value of money drops off so fast that even an inﬁnite number of payments are worth on a 
+bit over a million dollars.  In fact, the total value of all payments beyond the 50th is only 
+about $200,000! 
+More generally, we can get a closed form for inﬁnite geometric sums from Theorem 1 
+by taking a limit. 
+� 
+Corollary 2.  If |z | < 1, then: 
+∞
+1
+i z  = 
+1  − z 
+i=0 
+� 
+� 
+∞
+n−1
+i z  =  lim 
+z  i 
+n→∞ 
+i=0 
+i=0 
+1  − z
+n
+n→∞  1  − z 
+=  lim 
+1 
+1  − z 
+The ﬁrst equation uses the deﬁnition of an inﬁnite limit, and the second uses Theorem 1. 
+In the limit, the term z n+1  in the numerator vanishes since |z | < 1. 
+
+Proof. 
+
+= 
+
+We now have closed forms for both ﬁnite and inﬁnite geometric series. Some examples 
+are  given  below.  In  each  case,  the  solution  follows  immediately  from  either  Theorem  1 
+� 
+(for ﬁnite series) or Corollary 2 (for inﬁnite series). 
+∞
+1 
+1
+1
+(1/2)i  = 
+� 
+1  +  +  +  +  . . .  = 
+4
+2
+8 
+i=0 ∞
+− 
+(−1/2)i  =
+� 
+i=0 
+n−1
+1  +  2   +  4   +  8   +  . . . +  2n−1  = 
+2i  =
+� 
+i=0 
+n−1
+3i  =
+i=0 
+
+1 
+1  − (1/2)
+1
+1  − (−1/2)  
+1  − 2n 
+1  − 2 
+1  − 3n 
+1  − 3 
+
+1  +  3   +  9   +  27  +  . . . +  3n−1  = 
+
+= 2n  − 1 
+
+1  − 
+
+1
+2
+
+− 1 
+2
+
++
+
+1
+4 
+
+=
+
+2 
+3
+
+1 
+8 
+
++  . . .  =
+
+= 2 
+
+3n 
+
+= 
+
+Here  is  a  good  rule  of  thumb:  the  sum  of  a  geometric  series  is  approximately  equal  to  the 
+term  with  greatest  absolute  value.  In  the  ﬁrst  two  examples,  the  largest  term  is  equal  to  1 
+and the sums are 2 and 2/3, which are both relatively close to 1.  In the third example, the 
+sum is about twice the largest term.  In the ﬁnal example, the largest term is 3n−1  and the 
+sum is (3n  − 1)/2, which is 1.5 times greater. 
+
+6 
+2  Sums of Powers 
+
+Sums and Approximations 
+
+Pharaoh Aha I decides to build a “pyramid” in his own honor consisting of a single block: 
+
+His successor, Aha II, trumps him by building a larger pyramid: 
+
+Not to be outdone, Aha III builds a still­larger pyramid: 
+
+If this madness continues, how many blocks will Pharoah Aha n  require?  Let’s break the 
+problem down by chopping the n­th pyramid into n  horizontal slabs: 
+
+Therefore, we have: 
+
+# blocks in n­th pyramid = 
+
+Similarly, we can slice each slab into columns: 
+
+� 
+n
+# blocks in k ­th slab 
+k=1 
+
+Etc.Sums and Approximations
+
+
+7 
+
+So the number of blocks in the k ­th slab is: 
+
+� 
+k−1
+1 + 3 + 5 + . . . + (2k − 1) + . . . + 5 + 3 + 1 =  (2k − 1) + 2 · 
+2j − 1 
+j=1 
+� 
+� 
+Plugging this into the previous sum gives the total number of blocks required by Pharaoh 
+� 
+� 
+Aha­n: 
+k−1
+n
+2j − 1 
+(2k − 1) + 2 · 
+j=1 
+k=1 
+
+# blocks in n­th pyramid = 
+
+This sum is pretty nasty. And the bad news is that similar sums arise when analyzing the 
+running time of a program with nested loops. 
+
+2.1  Evaluating the Sum 
+
+Sums of  small powers are actually easy  to handle,  because  there are  simple  closed­form 
+equivalents: 
+
+Lemma 3 (Sums of Powers). 
+
+1 + 2 + 3 + . . . + m = 
+
+12  + 22  + 3 + . . . + m  = 
+2
+2
+
+13  + 23  + 3 + . . . + m  = 
+3
+3
+
+m(m + 1)  
+2 
+1 
+m(m + 2 )(m + 1)  
+3 
+m2 (m + 1)
+4 
+
+2
+
+These formulas can all be proved by routine induction arguments. For now, let’s apply 
+them  to  to  ﬁnd  a  closed­form  expression  for  the  number  of  blocks  in  a  pyramid.  First, 
+
+. . .. . .352k−15311Sums and Approximations 
+
+8 
+
+let’s tackle the inner sum: 
+
+� 
+k−1
+2j  − 1 =  2 
+j=1 
+
+�  �  � 
+� 
+� 
+� 
+k−1
+k−1
+− 
+1
+j 
+j=1 
+j=1 
+(k  − 1)k  − (k  − 1)
+=  2 · 
+2 
+=  (k  − 1)2 
+
+# blocks in n­th pyramid = 
+
+On the ﬁrst line, we’re using a standard maneuver:  break up the sum of a polynomial into one 
+sum  for  each  term.  In  this case, we break  the  sum of 2j  − 1 into one  sum  involving  j  and 
+one sum  for  the constant.  This allows us  to apply  the standard  formulas above, and  the 
+rest  is  simpliﬁcation.  We’ll  use  the  same  trick  to  ﬁnish  off  the whole  pyramid  problem, 
+� 
+� 
+though now we have to sum values of a quadratic polynomial: 
+� 
+� 
+k−1
+n
+2j  − 1 
+(2k  − 1) + 2 · 
+� 
+j=1 
+k=1 
+n
+(2k  − 1) + 2(k  − 1)2 
+� 
+k=1 
+n
+2k2  − 2k  + 1 
+�  �  � 
+k=1 
+n
+n
+n
+k2  − 2 
+k  +
+1 
+k=1 
+k=1 
+k=1 
+1 
+n(n   + 2 )(n  + 1)  
+− 2 · 
+=  2 ·
+3
+2n3  + n 
+3 
+
+n(n   + 1)  
+2 
+
++ n 
+
+= 
+
+=
+
+= 
+
+=  2 
+
+We’re  done!  But  let’s  check  a  couple  easy  cases  to make  sure we made  no  algebra mis­
+takes.  This  formula says  that a pyramid of size 1 contains  (2 · 13  + 1)/3 =  1 block and a 
+pyramid of size 2 contains (2 · 23  + 2)/3 =  6 blocks— both of which are correct. 
+
+2.2  Where Do the Formulas Come From? 
+
+Sure, we can prove all the summation formulas in Lemma 3 by induction, but where did 
+the expressions on the right come from? How on earth would we even guess an analogous 
+summation formula for, say, fourth powers? 
+Here is systematic way to generate a good guess. Remember that sums are the discrete 
+cousins of integrals. So we might guess that the sum of a degree­k  polynomial is a degree­
+(k  + 1) polynomial,  just  as  if we were  integrating.  Based  on  this  observation, we might 
+
+9 
+
+Sums and Approximations 
+
+guess that 
+
+� 
+n
+3
+i2  =  an  + bn2  + cn  + d 
+i=1  
+for some constants a, b, c, and d. All that remains is to determine these constants. We can 
+do this by plugging a few values for n  into the equation above.  Each value gives a linear 
+equation in a, b, c, and d.  For example: 
+⇒ 
+⇒ 
+⇒ 
+⇒ 
+
+0 = d
+1 = a  + b  + c  + d
+5 = 8a  + 4b  + 2c  + d
+14 = 27a  + 9b  + 3c  + d
+
+n  = 0  
+n  = 1  
+n  = 2  
+n  = 3  
+
+We  now  have  four  equations  in  four  unknowns.  Solving  this  system  gives  a  = 1/3, 
+n� 
+b  =  1/2, c  =  1/6, and d   =  0, so it is tempting to conclude that: 
+i2 
+i=1 
+
+n
+3 
+
+n
+2
+
+n 
+6 
+
+=
+
+3
+
+2 
+
++
+
++ 
+
+1 
+n(n  + 2 )(n  + 1)  
+3 
+But be careful! This equation is valid only if we were correct in our initial guess at the form 
+of the solution.  If we were wrong, then this equation might not hold for any n  other than 
+0,  1,  2,  and  3!  So  be  sure  to  verify  that  such  guesses  are  correct  by  giving  an  induction 
+proof. 
+
+= 
+
+3  Approximating Functions 
+
+When you ask about the weather, you probably want to hear something like “hot”, “cold”, 
+or “raining”, not a lengthly discourse on convection currents, radiative heat transfer, and 
+dew  points.  Something  similar  is  true  about  the  analysis  of  computer  algorithms  and 
+systems:  a  simple,  approximate  answer  is  often more useful  than  an  exact,  complicated 
+answer. So techniques for replacing complicated expressions with simple approximations 
+can be extremely useful. 
+
+3.1  Taylor ’s Theorem 
+
+A wonderful way to get approximations is to dredge up Taylor ’s Theorem from the dark, 
+murky regions of calculus. Unfortuantely, the theorem looks like something dredged from 
+a dark, murky place.  So let’s start with some intuition. 
+Suppose we want a simple approximation for the function ln(1 + x) that is fairly accu­
+rate when x  is a small number. Here’s what the function actually looks like: 
+
+10 
+
+Sums and Approximations
+
+
+6 
+
+1.5 
+
+1 
+
+0.5 
+
+0 
+
+y  =  ln(1  +  x) 
+
+-
+
+0
+1
+2
+3 
+The curve goes through the origin, so a trivial approximation is ln(1  +  x)   ≈  0  when x 
+is small.  In general: 
+f (x)  ≈ f (0)   when x  is small 
+Sometimes this crude approximation is good enough, but not often. 
+A line tangent to the curve at x  = 0  provides a better approximation.  The slope of the 
+tangent is given by the derivative 
+
+1 
+d 
+ln(1  +  x) = 
+1  +  x 
+dx 
+evaluated at x  = 0, which  is 1/(1  +  0)  = 1.  This gives  the approximation  ln(1  +  x)  ≈  x, 
+which is a signiﬁcant improvement: 
+
+6 
+
+1.5 
+
+1 
+
+0.5 
+
+0 
+
+0
+
+y  =  x
+
+y  =  ln(1  +  x) 
+
+1
+
+2
+
+3 
+
+-
+
+In general: 
+
+f (x)  ≈ f (0) +  xf  � (0)   when x  is small 
+This  approximation  is  accurate  enough  in many  situations.  This  is great,  because  linear 
+functions are very simple and easy to manipulate. 
+This  linear  approximation  has  both  the  correct  value  at  x  = 0  and  the  correct  ﬁrst 
+derivative.  We  can go  one more  step  and get  an  approximation with  the  correct  second 
+derivative: 
+
+f (x) ≈ f (0) +  xf  � (0) + 
+
+f �� (0)   when x  is small 
+
+2x
+2 
+
+Sums and Approximations 
+11 
+In  our  example,  where  f (x)  =  ln(1  +  x),  we  have  f �� (x) =  −1/(1  +  x)2 ,  which  means 
+f �� (0) =  −1. This gives the quadratic approximation ln(1  +  x) ≈ x − x2/2. Lets add this to 
+our plot: 
+
+6 
+
+1.5 
+
+1 
+
+0.5 
+
+0 
+
+0 
+
+y =  x 
+
+y =  ln(1  +  x) 
+
+y =  x − x2/2 
+
+-
+
+1 
+
+2 
+
+3 
+
+Taylor ’s Theorem says  that one can continue  in  this way, getting progressively better 
+approximations by incorporating higher­order derivatives. 
+
+Theorem  (Taylor ’s  theorem).  Suppose  that  f  :  R
+interval [0, x]. Then 
+
+→ 
+
+R  is  (n +  1)­times  differentiable  on  the 
+
+f (x) =  f (0) +  f � (0)x +
+
+2 
+
+f �� (0)x
+2! 
+
++  . . . +
+
+n 
+
+f (n) (0)x
+n!
+
++ 
+
+f (n+1) (z )xn+1
+(n +  1)! 
+
+for some z  ∈  [0, x]. 
+
+The  ﬁnal  term  describes  the  “error ”  in  an  n­term  Taylor  approximation;  we’ll  return 
+to that later.  Here are the leading terms in the Taylor series for some functions that often 
+arise: 
+
+x e  = 1  +  x +
+ln(1  +  x) =  x − 
+x
+2
+√
+x
+2 
+
+1  +  x = 1  +
+
+2
+
++
+− 
+
++  . . . 
+− . . . 
+
++   . . . 
+
++
+
+4
+
+2
+
+x
+2! 
+x
+3 
+2 
+
+x
+8 
+
+3
+
+3
+
+x
++
+3! 
+− 
+x
+4 
+x3 
+16 
+
++
+
+4
+
+5
+
+x
+4! 
+x
+5 
+5x4
+128 
+
++
+− 
+
+12 
+
+3.2  Rule of 72 
+
+Sums and Approximations 
+
+Suppose you want  to double your money  in n  years.  What annual  rate of  return would 
+you need? Here are the answers for various numbers of years: 
+
+n  = # of Years  Rate Needed to Double Money 
+
+4 
+6 
+8
+12  
+24  
+36  
+
+18.9% 
+12.2% 
+9.0% 
+6.0% 
+2.9% 
+1.9% 
+
+There’s a curious pattern here:  the product of the numbers on each line is always around 
+70 or 72 or so. 
+This  observation  is  the  basis  for  an  old  investing  rule  that  says  you  can  double  your 
+money by investing it for n  years at 72/n  percent interest. For example, you could double 
+your  money  by  investing  it  for  24  years  at  72/24  = 3  percent  interest.  This  rule  isn’t 
+exactly  right,  but  it’s  almost  mysteriously  close.  For  example,  a  dollar  invested  for  24 
+years at 3% becomes $2.03. 
+� 
+�
+In general, a dollar invested for n  years at 72/n  percent interest becomes 
+72/n  n 
+1  + 
+100 
+
+m  = 
+
+dollars.  This  complicated  expression  doesn’t  look much  like  the  number  2,  but  let’s  try 
+an approximation. One standard trick when the relevant variable (n  in this case) appears 
+� 
+�
+in the exponent is to analyze the logarithm of the expression. 
+� 
+� 
+72/n  n 
+ln  m  =  ln   1  + 
+100 
+72 
+=  n  ln   1  + 
+100n 
+Here  we’re  taking  a  logarithm  of  1  plus  something  small  (72/100n),  so  we  can  use  the 
+� 
+� 
+approximation ln(1   +  x)  ≈ x  − x2/2. 
+ln  m  ≈ n 
+72 
+100n 
+− 
+72 
+162 
+100 
+625n 
+Now let’s exponentiate to undo the earlier logarithm: 
+m  ≈ e 72/100−162/(625n) 
+
+722 
+· 
+2  1002n
+
+= 
+
+− 
+
+2
+
+Sums and Approximations 
+
+13 
+
+This  explains  the  Rule  of  72:  if  you  invest  a  dollar  for  n  years  at  72/n  percent  interest, 
+then  the value of your dollar  approaches  e72/100  = 2.05443  dollars  from below  as n  goes 
+to inﬁnity.  So the Rule overestimates your return for small n, slightly underestimates for 
+large n, and is fairly accurate for typical values of n. A “Rule for 71” might be even more 
+accurate, but 72 has lots of convenient divisors, while 71 is inconveniently prime. 
+
+3.3  Upper and Lower Bounds 
+
+f (x) =  f (0) +  xf  (z ) 
+
+Sometime an upper or  lower bound on a  function  is needed  instead of a simple approx­
+imation.  For example,  if you’re computing  the probability  that a critical system  fails,  an 
+upper bound would give you a reassuring, conservative answer.  We can get good upper 
+and lower bounds on many functions by looking at the error term in Taylor ’s Theorem. 
+Taylor ’s Theorem with one ordinary term and the error term says: 
+for some z  ∈  [0,  x] 
+This  is  actually  an  equation,  not  an  approximation.  The problem  is  that we don’t know 
+the  value  of  z  in  the  error  term.  However,  we  do  have  some  bounds  on  z ,  and  those 
+bounds imply upper and lower bounds on the function f (x). 
+For example, suppose f (x)  =  ln(1  +  x). Then Taylor ’s Theorem says: 
+ln(1  +  x)   =  0  +  x  · 
+1 
+x 
+= 
+1  +  z 
+1  +  z 
+for some z  ∈  [0,  x].  If we assume x  is positive, then the expression on the right is maximized 
+when z  = 0  and minimized when z  =  x. Therefore, we have the bounds: 
+≤  ln(1  +  x)   ≤ x 
+x 
+1  + 
+x 
+The  upper  bound  is  the  same  as  the  linear  Taylor  approximation.  Let’s  add  the  lower 
+bound to our plot: 
+
+6 
+
+1.5 
+
+1 
+
+0.5 
+
+0 
+
+0 
+
+y  =  x 
+
+y  =  ln(1  +  x) 
+
+y  =  x/(1  +  x)  
+
+y  =  x  − x2/2 
+
+-
+
+1 
+
+2 
+
+3 
+
+This  lower  bound  is  fairly  accurate  for  small  x.  However,  for  large  x,  the  lower  bound 
+x/(1  +  x)  asymptotically  approaches  1  while  the  actual  function  ln(1  +  x)   diverges  to 
+inﬁnity. 
+
+14 
+
+3.4  Approximating 1 + x 
+
+Sums and Approximations 
+
+We can get upper and lower bounds on the function 1 + x by exponentiating our bounds 
+on ln(1 + x): 
+≤ 1 + x ≤ e x 
+x/(1+x)
+e
+What a profoundly stupid thing to do!  The function 1 + x is really simple, while the func­
+tion ex/(1+x)  is complicated.  Why would one ever want to bound a simple function with a 
+complicated function? Why not just work with the original, simple function? 
+The reason is that x appears at “ground level” in the function 1 + x, but “upstairs” in 
+the functions ex  and ex/(1+x) . This difference allows one to switch back and forth between 
+sums and products. As a result, 1 + x ≈ ex  is probably the most widely­used approxima­
+tion in computer science! 
+� 
+� � 
+� � 
+�
+� 
+�
+For example, let’s take the nasty product that we tried to scare you with earlier: 
+· · · 
+2
+1
+1 +
+1 +
+1 + 
+1 + 
+n2 
+n2 
+� � 
+� 
+�
+� 
+Our upper bound on 1 + x gives: 
+· · · 
+1 +
+1 + 
+1 + 
+
+3 
+n2 
+�
+n  ≤ e 1/n2 
+2
+n
+
+n/n2 
+e
+
+2/n2 
+e
+
+1
+2
+n
+
+2  
+2 
+n
+
+n 
+n2 
+
+·
+
+· · ·
+
+(1+2+...+n)/n2 
+=  e
+n(n+1)/2n2 
+=  e 
+√
+e · e 
+1/2n 
+· 
+The  second  line  follows  from  the  rule  e
+e =  eA+B  .  We’ve  now  translated  the  nasty 
+B
+A
+product  into  an  easy  sum  in  the  exponent!  The  rest  is  simpliﬁcation.  Note  that  e1/2n  is 
+very close to 1 when n is large. 
+� 
+� � 
+� 
+� 
+� 
+Similarly, the lower bound on 1 + x gives: 
+· · · 
+1 +
+1 + 
+1 + 
+
+≥ e 1+1/n2  · e 1+2/n2  · · · e 1+n/n2
+1/n2
+n/n 2
+2/n2 
+
+= 
+
+1
+2
+n
+
+2  
+2 
+n
+
+n 
+2 
+n
+
+1
+2  + . . . + 
+=  e n2+1  +  n2+2 
+
+n 
+n2+n 
+
+This sum is outside our repetoire.  But we can get a lower bound by making some of the 
+denominators a  little bigger.  In particular,  if we make all  the denominators as big as  the 
+� � 
+� 
+�
+� 
+n  � ≥ e n2
+largest one, then we have: 
+· · · 
+2
+1
+n
++n  +  n2
++n  + . . . +  n2+n 
+1 + 
+1 + 
+1 + 
+2
+n
+(1+2+...+n)/n(n+1) 
+=  e
+√
+
+1
+2
+n
+
+2 
+2 
+n
+
+So the very scary product rapidly descends to nothing more than 
+
+= 
+
+e 
+
+√
+
+e. 
+
+Sums and Approximations 
+
+3.5  A Large­x  Approximation 
+
+15 
+
+So  far, we’ve  focused on  the problem of approximating a  function f (x)  when x  is  small. 
+But what if we need to approximate a function f (x) when x  is large? 
+Here’s a simple trick that often works.  As an example, let’s take our old friend f (x) =  
+ln(1  +  x). When x  is a big number, there is little difference between ln   x  and ln(1  +  x).  So 
+�  � 
+�� 
+let’s ﬁrst write ln(1  +  x) in terms of ln   x: 
+� 
+� 
+· 
+ln(1  +   x) = ln  x 
+1  + 
+=  ln   x  +  ln  1  + 
+
+1 
+x 
+
+1 
+x 
+
+The general idea is to express f (x) in terms of a fairly similar function and then use Tay­
+lor ’s Theorem just to analyze the leftover bit, which is ln(1  +  1/x) in this case. Notice that 
+when  x  is  large,  1/x  is  small.  So  our  earlier methods  should now  give  excellent  results. 
+Speciﬁcally, suppose we set z  = 1/x  and use the bounds that we derived earlier: 
+≤  ln(1  +  z )  ≤ z 
+
+z 
+1  + 
+
+z 
+
+Then we get the upper bound 
+
+and the lower bound: 
+
+ln(1  +  x)   ≤  ln   x  + 
+
+1 
+x 
+
+ln(1  +  x) ≥  ln   x  +
+≥  ln   x  + 
+
+1/x
+1  +  1/x 
+1 
+x  +  1 
+
+For example, suppose we wanted to evaluate ln(e10  +  1). Then these bounds say: 
+≤  ln(e 10  +  1)   ≤ 10  + 
+
+1 
+1
+e10 
+e10  +  1 
+The difference between the upper and lower bounds is only about e−20 . Not bad! 
+
+10   + 
+
+

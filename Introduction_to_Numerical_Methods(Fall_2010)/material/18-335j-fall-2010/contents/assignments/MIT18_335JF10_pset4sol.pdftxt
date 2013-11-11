@@ -1,0 +1,354 @@
+18.335 Problem Set 4 Solutions 
+Problem 1: Hessenberg ahead!  (10+10+10 points) 
+(a)  (Essentially  the  same  recurrence  is  explained  in  equation  30.8  in  the  text.)  You  can  derive  this  re­
+currence  relation  by  recalling  the  expression  for  determinants  in  terms  of  cofactors  or  minors  that 
+you  should  have  learned  in  a  previous  linear-algebra  course.  In  det B,  the  coefﬁcient  the  (i, j)  en­
+try  Bi j  is  (−1)i+ j  multiplied  by  the  determinant  of  the  submatrix  (minor)  of  B  with  the  i-th  row 
+and  j-th  column  removed  (this  determinant,  mutiplied  by  (−1)i+ j ,  is  the  cofactor  of  Bi j ).  The  co­
+factor  formula  tells  us  that  the  determinant  is  equal  to  any  row  (or  column)  of  B  multiplied  by  its 
+cofactors.  Take  the  last  row  of  B,  which  has  only  two  nonzero  entries  Bmm  and  Bm,m−1 .  The  co­
+factor  of  Bmm  is  + det B1:m−1,1:m−1 .  The  cofactor  of  Bm,m−1  is  the  −1  times  the  determinant  of 
+the  matrix  whose  last  column  is  all  zeros  except  for  Bm−1,m in  the  lower-right.  To  get  the  determi­
+nant  of  that  matrix  we  take  everything  in  that  column  and  multiply  by  their  cofactors;  everythign 
+is  zero  except  for  Bm−1,m ,  whose  cofactor  is  + det B1:m−2,1:m−2 .  Putting  these  together,  we  have 
+det B = Bm,m det B1:m−1,1:m−1 − Bm−1,mBm,m−1 det B1:m−2,1:m−2  as desired. 
+
+This gives a three-term recurrence relation, since the determinant of each submatrix is given in terms 
+of  the  the determinants of  the  two smaller submatrices.  At each  iteration, we only need  the determi­
+nants  of  the  submatrices  of  size  n × n  and  (n − 1) × (n − 1)  to  get  the  determinant  of  the  submatrix 
+of size (n + 1) × (n + 1) using three multiplications and one addition, or four ﬂops. We have to apply 
+the recurrence m − 1 times to get the full det(H − zI ), for 4(m − 1) + m = O(m) ﬂops (where the +m 
+ﬂops was for subtracting z from  the m diagonals).  The code  is given  in part (b) below (including  the 
+derivative. 
+
+To test it, we computed a random H matrix as suggested in the problem, for m = 20, and computed the 
+relative  error  (evalpoly(H,z)-det(H-z*eye(m)))/det(H-z*eye(m))  for  a  few  randomly  cho­
+sen values of z. The relative error was always on the order of the machine precision ≈ 10−16 . 
+(b)  If we simply take the derivative  d 
+d z  of our recurrence relation for det B, we get a three-term recurrence 
+relation for (det B)� : 
+(det B)�  = − det B1:m−1,1:m−1 + Bm,m (det B1:m−1,1:m−1 )� − Bm−1,mBm,m−1 (det B1:m−2,1:m−2 ), 
+using the fact that for B = H − zI we have B�  = −I and hence B� = −1 while B�
+�
+m−1,m  = Bm,m−1  = 0.
+mm 
+
+This is implemented in the following Matlab function: 
+
+function  [p,pderiv]  =  evalpoly(H,z)
+
+m  =  size(H,1);
+
+d1  =  (H(1,1)  - z);
+
+d2  =  1;
+
+d1deriv  =  -1;
+
+d2deriv  =  0;
+
+for  i  =  2:m
+
+d  =  (H(i,i)  - z)  *  d1  - H(i-1,i)*H(i,i-1)  *  d2;
+
+dderiv  =  -d1  +  (H(i,i)  - z)  *  d1deriv  - H(i-1,i)*H(i,i-1)*  d2deriv;
+
+d2  =  d1;
+
+d1  =  d;
+
+d2deriv  =  d1deriv;
+
+d1deriv  =  dderiv;
+
+end 
+
+1 
+
+p  =  d1;
+
+pderiv  =  d1deriv;
+
+If  we  choose  Δz =  10−4 ,  and  compare  [ p(z + Δz) − p(z − Δz)]/2Δz  to  pderiv  computed  by  this 
+function  for  a  random  H  (as  above)  and  for  various  random  z ∈  [0, 1],  then  the  relative  difference 
+is  usually  on  the  order  of  10−6  or  so.  Decreasing  Δz  to  10−6 ,  the  relative  difference  is  around 
+10−10  or so; exactly the convergence of O(Δz2 )that one would expect:  Taylor expanding  p(z + Δz) = 
+p(z) + p� (z)Δz + p�� (z)Δz2/2 + O(Δz3 ),  one ﬁnds  [ p(z + Δz) − p(z − Δz)]/2Δz =  p� (z) + O(Δz2 ).  Of 
+course,  you  can’t make  Δz  too  small  or  you  run  into  the  limitations  of  ﬂoating-point  precision  (e.g. 
+Δz = 10−20  will just give zero for  p(z + Δz) − p(z − Δz) if z ∼ 1). 
+(c)  Newton’s method is just the iteration z ← z − p(z)/ p� (z).  You can do this “by hand” in Matlab, but I 
+wrote a little Matlab script to repeat this until the answer stops changing to within 10εmachine .  (Better 
+stopping criteria could be devised, but this works well enough for illustration purposes.) 
+
+function  lam  =  newtpoly(H,  lamguess) 
+
+lam  =  lamguess;
+
+for  i  =  1:1000
+
+[p,pderiv]  =  evalpoly(H,  lam);
+
+disp(lamnew  =  lam  - p  /  pderiv);
+
+if  (abs(lamnew  - lam)  <  10*eps*abs(lamnew))
+
+break;
+
+end
+
+lam  =  lamnew;
+
+end 
+
+Applying  this  to  my  random  A  and  H  from  above,  I  run  eig(A)  to  get  the  eigenvalues,  and  then 
+execute the Newton solver with starting points that are somewhere nearby one of the eigenvalues (e.g. 
+the  eigenvalue  rounded  to  two  signiﬁcant  digits).  You  can  run  the  command  format  long  to  have 
+Matlab print out values to 15 decimal places, to better see what is going on. A typical output is: 
+
+>>  newtpoly(H,  0.96)
+
+0.961143436106079 
+
+0.961118817820461 
+
+0.961118806268620 
+
+0.961118806268617 
+
+0.961118806268617 
+
+ans  =  0.961118806268617
+
+In comparison, the corresponding eigenvalue returned by eig(A) is λ  ≈ 0.961118806268619, which 
+differs only  in  the 15th decimal place  from  the Newton  result.  If you  repeat  this with  several  eigen­
+values (i.e., different starting points), you ﬁnd that it consistently ﬁnds λ  to nearly machine precision. 
+Notice that the number of accurate digits roughly doubles on each step, which is typical of Newton’s 
+method:  this is “quadratic” convergence. 
+
+If  you  tried  a  test  case  with  a  bigger  value  of  m,  say  m = 1000,  you  problably  noticed  a  problem:  the 
+determinant  grows  so  large  that  it  overﬂows  the  range  of  ﬂoating-point  arithmetic,  leading  to  results  of 
+NaN  or  Inf!  However,  this  is  easily  ﬁxed.  For  example,  as  one  is  computing  the  determinant,  one  can 
+periodically check the magnitude and rescale to prevent it from growing too large (or too small)—obviously, 
+p(z)  multiplied  by  any  constant  still  has  the  same  roots.  There  are  also  slightly  more  clever  recurrences 
+
+2 
+
+that  rescale  the  result  automatically;  See  Barth,  Martin,  and Wilkinson  (1967).1  The  other  key  to  ﬁnding 
+eigenvalues  in  this  way,  described  in  lecture  30  of  Trefethen,  is  that  there  is  a  simple  technique  to  count 
+the number of eigenvalues  in any given  interval,  leading  to  the “bisection” algorithm  I mentioned  in class. 
+I  didn’t  expect  you  to  do  any  of  that  stuff  however;  I  hope  you  all  just  picked  a  small  enough m  to  avoid 
+overﬂow. 
+
+Problem 2: Q’s ‘R us (10+15 points) 
+(a)  In ﬁnite precision, instead of w = A−1 v, we will get  ˜w = w + δ w where δ w = −(A + δ A)−1 δ A w (from 
+the formula on page 95), where δ A = O(εmachine )�A� is the backwards error.  [Note that we cannot 
+use  δ w ≈ −A−1 δ A w,  which  neglects  the  δ Aδ w  terms,  because  in  this  case  δ w  is  not  small.]  The 
+key point,  however,  is  to  show  that δ w  is mostly parallel  to q1 ,  the eigenvector corresponding  to  the 
+smallest-magnitude eigenvalue λ1  (it is given that all other eigenvalues have magnitude ≥ |λ2 | � |λ1 |). 
+Since w is also mostly parallel to q1 , this will mean that  ˜w/�w˜ �2  ≈ q1  ≈ w/�w�2 . 
+First,  exactly  as  in  our  analysis  of  the  power  method,  note  that  w = A−1 v = α1q1 [1 + O(λ1/λ2 )], 
+since A−1  ampliﬁes the q1  component of v by 1/ λ1 | which is much bigger than the inverse of all the 
+|
+other eigenvalues. Thus, w/�w�2  = q1 [1 + O(λ1/
+λ2 )]. 
+Second,  if  we  Taylor-expand  (A + δ A)−1  in  powers  of  δ A,  i.e.  in  powers  of  εmachine ,  we  obtain: 
+− A−1 δ A A−1 + O(ε 2 
+(A + δ A)−1  = A−1 
+machine  ).  Since all of the terms in this expansion are propor­
+tional  to A−1 ,  when multiplied  by  any  vector  they will  again  amplify  the  q1  component much more 
+than any other component.  In particular,  the vector δ A w  is a vector  in a  random direction  (since δ A 
+comes  from  roundoff  and  is  essentially  random)  and  hence  will  have  some  nonzero  q1  component. 
+Thus, δ w = −(A + δ A)−1 δ A w = β1q1 [1 + O(λ1/λ2 )] for some constant β1 . 
+Putting  these  things  together,  we  see  that  w˜ = (α1 + β1 )q1 [1 + O(λ1/λ2 )],  and  hence  w˜ /�w˜ �2  = 
+q1 [1 + O(λ1 /λ2 )] =  w  [1 + O(λ1 /λ2 )]. Q.E.D. 
+�w�2 
+(b)  Trefethen, problem 28.2: 
+
+(i)  In general, ri j  is nonzero (for i <  j) if column i is non-orthogonal to column  j.  For a tridiagonal 
+matrix A, only columns within  two columns of one another are non-orthogonal  (overlapping  in 
+the  nonzero  entries),  so  R  should  only  be  nonzero  (in  general)  for  the  diagonals  and  for  two 
+entries above each diagonal; i.e.  ri j  is nonzero only for i =  j, i =  j − 1, and i =  j − 2. 
+
+Each  column  of  the  Q  matrix  involves  a  linear  combination  of  all  the  previous  columns,  by 
+induction  (i.e.  q2 uses  q1 ,  q3uses  q2  and  q1 ,  q4  uses  q3  and  q2 ,  q5  uses  q4  and  q3 ,  and  so  on). 
+This  means  that  an  entry  (i, j)  of  Q  is  zero  (in  general)  only  if  ai,1: j  = 0  (i.e.,  that  entire  row 
+of A  is  zero  up  to  the  j-th  column).  For  the  case  of  tridiagonal A,  this means  that Q will  have 
+upper-Hessenberg form. 
+(ii)	 Note:  In  the problem,  you are  told  that A  is  symmetric and  tridiagonal.  You must also assume 
+that A is real, or alternatively that A is Hermitian and tridiagonal.  (This is what must be meant in 
+the problem, since tridiagonal matrices only arise in the QR method if the starting point is Hermi­
+tian.)  In contrast, if A is complex tridiagonal with AT  = A, the stated result is not true (RQ is not 
+in general tridiagonal, as can easily be veriﬁed using a random tridiagonal complex A in Matlab). 
+It  is  sufﬁcient  to  show  that  RQ  is  upper  Hessenberg:  since  RQ = Q∗AQ  and  A  is  Hermitian, 
+
+1W. Barth,  R.  S. Martin,  and  J. H. Wilkinson,  “Calculation  of  the  eigenvalues  of  a  symmetric  tridiagonal matrix  by  the  bisection 
+method,” Numer. Math.  9, 386–393 (1967). 
+
+3 
+
+then  RQ  is  Hermitian  and  upper-Hessenberg  implies  tridiagonal.  To  show  that  RQ  is  upper-
+Hessenberg, all we need is the fact that R is upper-triangular and Q is upper-Hessenberg. 
+
+Consider  the  (i, j)  entry  of  RQ,  which  is  given  by  ∑k ri,k qk, j .  ri,k  = 0  if  i > k  since  R  is  up­
+per triangular, and qk, j  = 0 if k >  j + 1 since Q is upper-Hessenberg, and hence ri,k qk, j  =� 0 only 
+when i ≤ k ≤  j + 1, which is only true if i ≤  j + 1. Thus the (i, j) entry of RQ is zero if i >  j + 1 
+and thus RQ is upper-Hessenberg. 
+(iii)  As  we  saw  in  problem  set  3  (Trefethen  10.4),  the  2 × 2  Givens  QR  algorithm  does  elimina­
+tion  “bottom-up”  on  each  column,  introducing  zeros  one  at  a  time  in  the  current  column  of A. 
+Obviously,  if A  is  tridiagonal  (or  even  just  upper-Hessenberg), most  of  each  column  is  already 
+zero—we only need to introduce one zero into each column below the diagonal. Hence, for each 
+column  k  we  only  need  to  do  one  Givens  rotation  of  the  k-th  and  (k + 1)-st  rows.  Each  2 × 2 
+Givens  rotation  requires  6  ﬂops  (multiping  a  2-component  vector  by  a  2 × 2  matrix),  and  we 
+need to do it for all columns starting from the k-th. However, actually we only need to do it for 3 
+columns for each k, since from above the conversion from A to R only introduces one additional 
+zero above each diagonal,  so most of  the Givens  rotations  in a given  row are zero.  That  is,  the 
+⎛  ·
+⎛⎞
+⎛⎞
+⎛⎞
+process looks like 
+⎜⎜⎜⎜⎜⎜⎝ 
+⎟⎟⎟⎟⎟⎟⎠ 
+⎜⎜⎜⎜⎜⎜⎝ 
+⎟⎟⎟⎟⎟⎟⎠ 
+⎜⎜⎜⎜⎜⎜⎝ 
+⎟⎟⎟⎟⎟⎟⎠ 
+⎜⎜⎜⎜⎜⎜⎝ 
+·	
+·
+·
+·
+→ 
+→ 
+→ 
+· 
+· 
+· 
+· 
+• 
+indicates  the  entries  that  change  on  each  step.  Notice  that  it  gradually  converts  A  to
+where 
+R, with  the  two  nonzero  entries  above  each  diagonal  as  explained  above,  and  that  each Givens 
+rotation need only operate on three columns.  Hence, only O(m) ﬂops are required, compared to 
+O(m3 ) for ordinary QR! [Getting the exact number requires more care that I won’t bother with, 
+since we can no longer sweep under the rug the O(m) operations required to construct the 2 × 2 
+Givens or Householder matrix, etc.] 
+
+·
+· 
+•  •  • 
+•  • 
+0 
+· 
+·
+·
+
+•
+• 
+•  • 
+· 
+·
+· 
+
+· 
+·
+·
+
+· 
+·
+
+·
+0
+
+·
+·
+0 
+
+· 
+·
+·
+
+· 
+·
+·
+
+· 
+·
+·
+
+· 
+·
+·
+
+· 
+·
+·
+
+•
+0 
+
+·
+0
+
+⎞
+⎟⎟⎟⎟⎟⎟⎠ 
+,
+
+· 
+· 
+
+· 
+·
+· 
+•  •  • 
+•  • 
+0 
+·
+· 
+·
+
+Problem 3 (5+5+5+5+5 pts): 
+The underlying point in this problem is that Arnoldi will only stop partway if the starting vector b is in the 
+span  of  a  subset  of  only  n  of  the  eigenvectors.  This  is why multiplying  by  A more  than  n  times  does  not 
+give any new vectors, why  the Ritz vectors are exact eigenvectors  (spanned by Qn ), and why Ax = b has a 
+solution x ∈ Kn . These results are shown explicitly by algebraic manipulation below. 
+(a)  In  this  case,  the qn+1  vector  is multiplied by  a  zero  row  in H˜ n ,  and we  can  simplify 33.13  to AQn  = 
+� 
+� 
+QnHn .  If we consider the full Hessenberg reduction, H = Q∗AQ, it must have a “block Schur” form: 
+Hn  B
+H = 
+0	 H � 
+,
+where H �  is  an  (m − n) × (m − n) upper-Hessenberg matrix  and B ∈ Cn×(m−n) .  (It  is not  necessarily 
+the case that B = 0; this is only true if A is Hermitian.) 
+(b)	 Qn  is a basis for Kn ,  so any vector x ∈ Kn  can be written as x = Qn y for some y ∈ Cn .  Hence,  from 
+above, Ax = AQn y = QnHn y = Qn (Hn y) ∈ Kn . Q.E.D. 
+(c)  The (n + 1) basis vector, Anb, is equal to A(An−1 b) where An−1b ∈ Kn . Hence, from above, An b ∈ Kn 
+and thus Kn+1  = Kn . By induction, K�  = Kn  for � ≥ n. 
+
+4 
+
+(d)  If Hn y = λ y, then AQn y = QnHn y = λ Qn y, and hence λ  is an eigenvalue of A with eigenvector Qn y. 
+
+(e)  If  A  is  nonsingular,  then  Hn  is  nonsingular  (if  it  had  a  zero  eigenvalue,  A  would  too  from  above). 
+Hence,  noting  that b  is proportional  to  the ﬁrst column of Qn , we have:  x = A−1 b = A−1Qn e1 �b� = 
+A−1QnHnH −1 e1�b� = A−1AQnH −1 e1�b� = QnH −1 e1�b� ∈ Kn . Q.E.D. 
+n 
+n
+n 
+
+5 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods
+
+ 
+Fal l 2010 
+ 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

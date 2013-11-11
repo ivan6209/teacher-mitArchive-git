@@ -1,0 +1,1271 @@
+L5: Simple Sequential Circuits and Verilog
+Verilog
+L5: Simple Sequential Circuits and 
+
+Acknowledgements:
+
+Materials in this lecture are courtesy of the following sources and are used with
+permission. 
+
+Nathan Ickes
+
+Rex Min
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+1
+
+Key Points from L4 (Sequential Blocks)
+Key Points from L4 (Sequential Blocks)
+
+Classification:
+(cid:132) Latch: level sensitive (positive latch passes input to output on high phase, hold 
+value on low phase)
+(cid:132) Register: edge-triggered (positive register samples input on rising edge)
+(cid:132) Flip-Flop: any element that has two stable states. Quite often Flip-flop also used 
+denote an (edge-triggered) register
+
+Positive
+Latch
+
+D
+
+D
+
+Q
+
+Q
+
+D
+
+D
+
+Q
+
+Q
+
+Positive
+Register
+
+Clk
+
+Clk
+
+(cid:132) Latches are used to build Registers (using the Master-Slave Configuration), but 
+are almost NEVER used by itself in a standard digital design flow.
+(cid:132) Quite often, latches are inserted in the design by mistake (e.g., an error in your 
+Verilog code). Make sure you understand the difference between the two.
+(cid:132) Several types of memory elements (SR, JK, T, D). We will most commonly use 
+the D-Register, though you should understand how the different types are built 
+and their functionality.
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+2
+
+System Timing Parameters
+System Timing Parameters
+
+In
+
+D
+
+Q
+
+Combinational
+Logic
+
+D
+
+Q
+
+Clk
+Register Timing Parameters
+Tcq : worst case rising edge 
+clock to q delay
+Tcq, cd: contamination or          
+minimum delay from 
+clock to q
+Tsu: setup time
+Th: hold time
+
+Clk
+Logic Timing Parameters
+Tlogic : worst case delay 
+through the combinational 
+logic network
+Tlogic,cd: contamination or          
+minimum delay 
+through logic network
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+3
+
+System Timing (I): Minimum Period
+System Timing (I): Minimum Period
+
+In
+
+D
+
+Q
+
+Clk
+
+CLK
+
+IN
+
+FF1
+
+CLout
+
+Th
+
+Tsu
+
+Tcq
+
+Tcq,cd
+
+Tl,cd
+
+Combinational
+Logic
+
+CLout
+
+D
+
+Q
+
+Clk
+
+Th
+
+Tsu
+
+Tcq
+
+Tcq,cd
+
+Tsu2
+
+Tlogic
+
+L5: 6.111 Spring 2006
+
+T > Tcq + Tlogic + Tsu
+Introductory Digital Systems Laboratory
+
+4
+
+System Timing (II): Minimum Delay
+System Timing (II): Minimum Delay
+CLout
+
+Combinational
+Logic
+
+D
+
+Q
+
+Clk
+
+Th
+
+In
+
+D
+
+Q
+
+Clk
+
+CLK
+
+IN
+
+FF1
+
+CLout
+
+Th
+
+Tsu
+
+Tcq,cd
+
+Tl,cd
+
+L5: 6.111 Spring 2006
+
+Tcq,cd + Tlogic,cd > Thold
+Introductory Digital Systems Laboratory
+
+5
+
+The Sequential always
+Block
+always Block
+The Sequential 
+
+(cid:132) Edge-triggered circuits are described using a sequential 
+always block
+Combinational
+module combinational(a, b, sel,
+out);
+
+Sequential
+module sequential(a, b, sel, 
+clk, out);
+
+input a, b;
+input sel;
+output out;
+reg out;
+always @ (a or b or sel) 
+begin
+if (sel) out = a;
+else out = b;
+end    
+endmodule
+
+out
+
+a
+
+b
+
+1
+
+0
+
+sel
+
+input a, b;
+input sel, clk;
+output out;
+reg out;
+always @ (posedge clk) 
+begin
+if (sel) out <= a;
+else out <= b;
+end    
+endmodule
+
+D Q
+
+out
+
+a
+
+b
+
+1
+
+0
+
+sel
+
+clk
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+6
+
+Importance of the Sensitivity List
+Importance of the Sensitivity List
+(cid:132) The use of posedge and negedge makes an always block sequential 
+(edge-triggered)
+(cid:132) Unlike a combinational always block, the sensitivity list does
+determine behavior for synthesis! 
+D Flip-flop with synchronous clear
+module dff_sync_clear(d, clearb, 
+clock, q);
+input d, clearb, clock;
+output q;
+reg q;
+always @ (posedge clock) 
+begin
+if (!clearb) q <= 1'b0;
+else q <= d; 
+end
+endmodule
+always block entered immediately 
+always block entered only at 
+when (active-low) clearb is asserted
+each positive clock edge
+Note: The following is incorrect syntax: always @ (clear or negedge clock)
+If one signal in the sensitivity list uses posedge/negedge, then all signals must.
+(cid:131) Assign any signal or variable from only one always block, Be 
+wary of race conditions: always blocks execute in parallel
+
+always @ (negedge clearb or posedge clock) 
+begin
+if (!clearb) q <= 1’b0;
+else q <= d;
+end
+endmodule
+
+D Flip-flop with asynchronous clear
+
+module dff_async_clear(d, clearb, clock, q);
+input d, clearb, clock;
+output q;
+reg q;
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+7
+
+Simulation (after Place and Route in Xilinx)
+Simulation (after Place and Route in Xilinx)
+(cid:131) DFF with Synchronous Clear
+
+tc-q
+
+Clear on Clock Edge
+
+(cid:131) DFF with Asynchronous Clear
+
+Clear happens on 
+falling edge of clearb
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+8
+
+Nonblocking Assignments
+Blocking vs. Nonblocking
+Assignments
+Blocking vs. 
+
+(cid:132) Verilog supports two types of assignments within always blocks, with 
+subtly different behaviors.
+(cid:132) Blocking assignment: evaluation and assignment are immediate
+always @ (a or b or c)
+begin
+x = a | b;
+y = a ^ b ^ c;
+z = b & ~c;
+end
+(cid:132) Nonblocking assignment: all assignments deferred until all right-hand 
+sides have been evaluated (end of simulation timestep)
+
+1. Evaluate a | b, assign result to x
+2. Evaluate a^b^c, assign result to y
+3. Evaluate b&(~c), assign result to z
+
+always @ (a or b or c)
+begin
+x <= a | b;
+y <= a ^ b ^ c;
+z <= b & ~c;
+end
+
+1. Evaluate a | b but defer assignment of x
+2. Evaluate a^b^c but defer assignment of y
+3. Evaluate b&(~c) but defer assignment of z
+4. Assign x, y, and z with their new values
+
+(cid:132) Sometimes, as above, both produce the same result. Sometimes, not!
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+9
+
+Assignment Styles for Sequential Logic
+Assignment Styles for Sequential Logic
+
+Flip-Flop Based 
+Digital Delay 
+Line
+
+clk
+
+in
+
+D Q
+
+q1
+
+q2
+
+D Q
+
+D Q
+
+out
+
+(cid:132) Will nonblocking and blocking assignments both produce 
+the desired result?
+
+module nonblocking(in, clk, out);
+input in, clk;
+output out;
+reg q1, q2, out;
+always @ (posedge clk) 
+begin
+q1 <= in;
+q2 <= q1;
+out <= q2;
+end    
+endmodule
+
+module blocking(in, clk, out);
+input in, clk;
+output out;
+reg q1, q2, out;
+always @ (posedge clk) 
+begin
+q1 = in;
+q2 = q1;
+out = q2;
+end    
+endmodule
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+10
+
+Nonblocking for Sequential Logic
+Use Use Nonblocking
+for Sequential Logic
+
+always @ (posedge clk) 
+begin
+q1 <= in;
+q2 <= q1;
+out <= q2;
+end
+
+“At each rising clock edge, q1, q2, and out
+simultaneously receive the old values of in, 
+q1, and q2.”
+
+always @ (posedge clk) 
+begin
+q1 = in;
+q2 = q1;
+out = q2;
+end    
+
+“At each rising clock edge, q1 = in. 
+After that, q2 = q1 = in. 
+After that, out = q2 = q1 = in. 
+Therefore out = in.”
+
+in
+
+D Q
+
+q1
+
+q2
+
+D Q
+
+D Q
+
+out
+
+in
+
+q1 q2
+
+out
+
+D Q
+
+clk
+
+clk
+
+(cid:132) Blocking assignments do not reflect the intrinsic behavior of multi-stage 
+sequential logic
+(cid:132) Guideline: use nonblocking assignments for sequential 
+always blocks
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+11
+
+Simulation
+Simulation
+(cid:131) Non-blocking Simulation
+
+(cid:131) Blocking Simulation
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+12
+
+Use Blocking for Combinational Logic
+Use Blocking for Combinational Logic
+
+Blocking Behavior
+(Given) Initial Condition
+a changes; 
+always block triggered
+x = a & b;
+y = x | c;
+
+a b c  x y
+1 1 0  1 1
+0 1 0  1 1
+0 1 0  0 1
+0 1 0  0 0
+
+a
+b
+c
+
+x
+y
+
+module blocking(a,b,c,x,y);
+input a,b,c;
+output x,y;
+reg x,y;
+
+always @ (a or b or c) 
+begin
+x = a & b;
+y = x | c;
+end    
+
+endmodule
+
+module nonblocking(a,b,c,x,y);
+input a,b,c;
+output x,y;
+reg x,y;
+
+a b c  x y      Deferred
+Nonblocking Behavior
+1 1 0  1 1
+(Given) Initial Condition
+a changes; 
+0 1 0  1 1
+always block triggered
+0 1 0  1 1    x<=0
+x <= a & b;
+0 1 0  1 1    x<=0, y<=1
+y <= x | c;
+0 1 0  0 1
+Assignment completion
+endmodule
+(cid:132) Nonblocking and blocking assignments will synthesize correctly. Will both 
+styles simulate correctly?
+(cid:132) Nonblocking assignments do not reflect the intrinsic behavior of multi-stage 
+combinational logic
+(cid:132) While nonblocking assignments can be hacked to simulate correctly (expand 
+the sensitivity list), it’s not elegant
+(cid:132) Guideline: use blocking assignments for combinational always blocks
+
+always @ (a or b or c) 
+begin
+x <= a & b;
+y <= x | c;
+end    
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+13
+
+The Asynchronous Ripple Counter
+The Asynchronous Ripple Counter
+
+A simple counter architecture
+(cid:134) uses only registers 
+(e.g., 74HC393 uses T-register and 
+negative edge-clocking)
+(cid:134) Toggle rate fastest for the LSB
+…but ripple architecture leads to 
+large skew between outputs
+
+D Q
+Q
+
+Clock
+
+Count[0]
+
+Count[1]
+
+Count [3:0]
+Count[3]
+Count[2]
+
+D Q
+Q
+
+D Q
+Q
+
+D Q
+Q
+
+D register set up to 
+always toggle: i.e., T 
+Register with T=1
+
+Skew
+
+Count [3]
+Count [2]
+Count [1]
+Count [0]
+Clock
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+14
+
+The Ripple Counter in Verilog
+Verilog
+The Ripple Counter in 
+
+Single D Register with Asynchronous Clear:
+
+module dreg_async_reset (clk, clear, d, q, qbar);
+input d, clk, clear;
+output q, qbar;
+reg q;
+
+D Q
+Q
+
+always @ (posedge clk or negedge clear)
+begin
+if (!clear) 
+q <= 1'b0;
+else q <= d;
+end
+assign qbar = ~q;
+endmodule
+Structural Description of Four-bit Ripple Counter:
+
+clk
+
+Count[0]
+
+Count[1]
+
+Count [3:0]
+Count[3]
+Count[2]
+
+D Q
+Q
+
+D Q
+Q
+
+D Q
+Q
+
+Countbar[3]
+
+Countbar[0]
+
+Countbar[1] Countbar[2]
+
+module ripple_counter (clk, count, clear);
+input clk, clear;
+output [3:0] count;
+wire [3:0] count, countbar;
+
+dreg_async_reset bit0(.clk(clk), .clear(clear), .d(countbar[0]),
+.q(count[0]), .qbar(countbar[0]));
+dreg_async_reset bit1(.clk(countbar[0]), .clear(clear), .d(countbar[1]),
+.q(count[1]), .qbar(countbar[1]));
+dreg_async_reset bit2(.clk(countbar[1]), .clear(clear), .d(countbar[2]),
+.q(count[2]), .qbar(countbar[2]));
+dreg_async_reset bit3(.clk(countbar[2]), .clear(clear), .d(countbar[3]),
+.q(count[3]), .qbar(countbar[3]));
+
+endmodule
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+15
+
+Simulation of Ripple Effect
+Simulation of Ripple Effect
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+16
+
+Logic for a Synchronous Counter
+Logic for a Synchronous Counter
+
+(cid:132) Count (C) will retained by a D Register
+(cid:132) Next value of counter (N) computed by combinational logic
+
+C3 C2 C1 N3 N2 N1
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+1
+0
+0
+1
+0
+0
+1
+1
+1
+1
+0
+0
+0
+1
+1
+0
+0
+1
+0
+1
+1
+0
+1
+0
+1
+1
+1
+1
+1
+0
+1
+1
+1
+1
+1
+0
+0
+0
+
+N1 := C1
+
+N2 := C1 C2  + C1  C2
+:= C1 xor C2
+
+N3 := C1 C2 C3  + C1  C3 + C2  C3
+:= C1 C2 C3  + (C1  + C2 ) C3
+:= (C1 C2) xor C3
+
+N1
+
+C1
+
+1
+
+0
+
+C3
+
+0
+
+1
+
+1
+
+0
+
+1
+
+0
+
+C2
+
+C3
+
+1
+
+0
+
+1
+
+0
+
+1
+
+0
+
+C2
+
+N3
+
+C1
+
+0
+
+0
+
+N2
+
+C1
+
+0
+
+1
+
+C3
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+C2
+
+C1
+
+C2
+
+C3
+
+D Q
+
+D Q
+
+D Q
+
+CLK
+
+L5: 6.111 Spring 2006
+
+From [Katz05]
+Introductory Digital Systems Laboratory
+
+17
+
+The 74163 Catalog Counter
+The 74163 Catalog Counter
+
+(cid:132) Synchronous Load and Clear Inputs
+(cid:132) Positive Edge Triggered FFs
+(cid:132) Parallel Load Data from D, C, B, A
+(cid:132) P, T Enable Inputs: both must be asserted 
+to enable counting
+(cid:132) Ripple Carry Output (RCO): asserted when 
+counter value is 1111 (conditioned by T); 
+used for cascading counters
+
+Synchronous CLR and LOAD
+If CLRb = 0 then Q <= 0
+Else if LOADb=0 then Q <= D
+Else if P * T = 1 then Q <= Q + 1
+Else Q <= Q
+
+7
+10
+2
+6
+5
+4
+3
+
+9
+1
+
+P
+163
+T
+RCO
+CLK
+D
+C
+B
+A
+LOAD
+CLR
+
+QD
+QC
+QB
+QA
+
+15
+
+11
+12
+13
+14
+
+74163 Synchronous
+4-Bit Upcounter
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+18
+
+Verilog Code for 
+Code for  ‘‘163163
+Verilog
+
+(cid:132) Behavioral description of the ‘163 counter:
+
+module counter(LDbar, CLRbar, P, T, CLK, D, 
+count, RCO);
+input LDbar, CLRbar, P, T, CLK;
+input [3:0] D;
+output [3:0] count;
+output RCO;
+reg [3:0] Q;
+
+always @ (posedge CLK) begin
+if (!CLRbar) Q <= 4'b0000;
+else if (!LDbar) Q <= D;
+else if (P && T) Q <= Q + 1;
+end
+
+priority logic for 
+control signals
+
+7
+10
+2
+6
+5
+4
+3
+
+9
+1
+
+P
+163
+T
+RCO
+CLK
+D
+C
+B
+A
+LOAD
+CLR
+
+QD
+QC
+QB
+QA
+
+15
+
+11
+12
+13
+14
+
+assign count = Q;
+assign RCO = Q[3] & Q[2] & Q[1] & Q[0] & T;
+endmodule
+
+RCO gated 
+by T input
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+19
+
+Simulation
+Simulation
+
+Notice the glitch on RCO!
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+20
+
+Output Transitions
+Output Transitions
+
+(cid:132) Any time multiple bits 
+change, the counter output 
+needs time to settle.
+(cid:132) Even though all flip-flops 
+share the same clock, 
+individual bits will change 
+at different times.
+(cid:134) Clock skew, propagation 
+time variations
+(cid:132) Can cause glitches in 
+combinational logic driven 
+by the counter
+(cid:132) The RCO can also have a 
+glitch.
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+21
+
+Figure by MIT OpenCourseWare.
+
+Cascading the 74163: Will this Work?
+Cascading the 74163: Will this Work?
+
+VDD
+
+bits 0-3
+
+bits 4-7
+
+bits 8-11
+
+T
+
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+P
+
+T
+
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+P
+
+T
+
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+P
+
+VDD
+
+CLK
+
+(cid:132) ‘163 is enabled only if P and T are high
+(cid:132) When first counter reaches Q = 4’b1111, its RCO goes high 
+for one cycle
+(cid:132) When RCO goes high, next counter is enabled (P T = 1)
+
+So far, so good...then what’s wrong?
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+22
+
+Incorrect Cascade for 74163
+Incorrect Cascade for 74163
+
+Everything is fine up to 8’b11101111:
+VDD
+
+T
+
+1   1   1   1
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+1
+
+P
+
+T
+
+0   1   1   1
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+P
+
+VDD
+
+0
+
+P
+
+T
+
+0   0   0   0
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+CLK
+
+Problem at 8’b11110000: one of the RCOs is now stuck high for 16 cycles!
+VDD
+0   0   0   0
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+1   1   1   1
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+0   0   0   0
+QA QB QC QD
+‘163
+RCO
+CL LD
+DA DB DC DD
+
+1
+
+P
+
+0
+
+P
+
+T
+
+P
+
+T
+
+T
+
+VDD
+
+CLK
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+23
+
+Correct Cascade for 74163
+Correct Cascade for 74163
+
+Master enable
+
+P
+
+T
+
+CL LD
+
+QA QB QC QD
+RCO
+DA DB DC DD
+
+P
+
+T
+
+CL LD
+
+QA QB QC QD
+RCO
+DA DB DC DD
+
+(cid:132) P input takes the master enable
+(cid:132) T input takes the ripple carry
+
+assign RCO = Q[3] & Q[2] & Q[1] & Q[0] & T;
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+24
+
+Summary
+Summary
+
+(cid:132) Use blocking assignments for combinational 
+always blocks
+(cid:132) Use non-blocking assignments for sequential 
+always blocks
+(cid:132) Synchronous design methodology usually used in 
+digital circuits
+(cid:134) Single global clocks to all sequential elements
+(cid:134) Sequential elements almost always of edge-triggered 
+flavor (design with latches can be tricky)
+(cid:132) Today we saw simple examples of sequential 
+circuits (counters)
+
+L5: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+25
+
+

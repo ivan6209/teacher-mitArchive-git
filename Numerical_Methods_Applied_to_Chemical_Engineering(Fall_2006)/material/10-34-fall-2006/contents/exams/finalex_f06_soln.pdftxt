@@ -1,0 +1,2331 @@
+10.34 Final Exam - Fall 2006 
+Solution 
+
+Overall: 
+
+Average = 62.5 
+
+St. Dev. = 11.25 
+
+1) (20 points total)  Average = 14.2 
+St. Dev. = 3.8 
+You  are  using  the  Gillespie  Algorithm  in  a  Kinetic  Monte  Carlo  simulation  of  a  biochemical 
+process  forming  a  protein.  This  process  occurs  at  only  one  active  site  in  a  cell,  and  it  initiates 
+quickly,  so  there  is  almost  always  a  growing  protein  attached  to  the  site.  This  process  runs 
+correctly  most  of  the  time,  but  in  about  one  case  in  a  million  the  protein  folds  the  wrong  way. 
+Ideally,  the  simulation  could  precisely  determine  what  fraction  of  the  cells  will  contain 
+N={0, 1, 2, …} copies of the misfolded protein after two days.  
+
+The  simulation  includes  two  processes:  addition  of  an  amino  acid  to  the  growing  protein  (time 
+constant  approximately  1  millisecond)  and  misfolding  of  the  growing  protein  (time  constant 
+approximately  105  seconds).  In  the  simulation,  the  protein  detaches  from  the  active  site 
+immediately when the final amino acid is added, and a new protein immediately starts growing at 
+the  site. The  rates  of both processes vary  a  little bit depending on  the  size of  the growing  chain; 
+these details are included in your simulation. The protein consists of 100 amino acids. 
+
+a)  (10  points)  Approximately  how  many  random  numbers  will  the  computer  have  to 
+generate in order to simulate what happens in a single cell over the course of two days? 
+
+In  the  Gillespie  algorithm,  one  needs  to  generate  2  random  numbers  for  each  reaction  event;  one 
+determines  the  time  until  the  event,  while  the  other  determines  the  reaction  that  will  take  place  at  the 
+given time.  So we need to estimate the tau for the system in order to estimate the number of time steps 
+that will be taken to reach 2 days (172800 seconds). 
+
+⎞ −1
+
+1 
+1
+⎛ 
+5  ⎟ = 0.001  sec 
++ 
+τ= ⎜ 
+event
+
+⎝ 0.001s  1 × 10  s ⎠ 
+
+So,  in order  to  reach our goal of 2 days of  simulation  time, we need  to divide  the  total  time by  the  time 
+per event (on average) to get to total number of events that will take place (on average).  This is: 
+
+N events  =
+
+tTotal 
+[0,1 ]) 
+− ⋅ ln ( rand 
+τ 
+
+note : 
+
+ln ( rand [0,1 ] )  = − 1  ≠ ln (  rand [0,1 ]  ) = − 0.693 
+
+N events  == 
+
+tTotal  = 
+τ 
+
+172800 sec 
+0.001 
+sec 
+event 
+
+= 1.728 × 108  events 
+
+Since we said that each event requires the generation of 2 random numbers, the answer is: 
+
+N rand #  = 3.456 × 108 
+
+1 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+b)  (10  points)  Approximately  how  many  cells  will  you  need  to  simulate  to  compute  the 
+ensemble  average  N unfolded  ( t = 2 days )    to  a  standard  error of  less  than  ± 1.0% ?  If  the 
+CPU time for the simulation is dominated by the cost of generating random numbers, and 
+generating  each  random  number  takes  1 microsecond  of  CPU  time,  approximately  how 
+many  CPU  hours  will  be  required  for  to  compute  this  ensemble  average  to  this  level  of 
+accuracy using Gillespie’s Algorithm? 
+
+There are several ways  to  solve  this problem, all of which have  “minor” aspects  that must be  taken  care 
+of  to  get  the  right  answer.   Many  of  you were  fortunate  that  you  got  approximately  the  correct  answer, 
+but this was only because <N> ~ O(1) and σN ~ O(1). 
+
+Method #1: 
+It  was  mentioned  that  the  Gillespie  algorithm  (and  other  MC  methods)  do  not  work  very  efficiently  for 
+systems  in  which  there  are  very minor  channels,  as  is  the  case  in  this  problem.    This  part  will  illustrate 
+this fact.  The equation of important for this part is for the standard deviation in the fraction of events: 
+
+σ f i  = 
+f i 
+
+1 −  f i 
+f i  ⋅ N proteins 
+
+where f i  is the fraction of times event i  happens 
+
+It  is  also  important  to  remember  here  that  we  are  talking  about  the  entire  protein  of  100  amino  acids, 
+which means it takes 100 reaction events to generate a protein.  However, one misfolding event will ruin 
+the entire protein.  The fraction of misfolding can be calculated as: 
+
+1 misfold
+
+105 sec 
+f unfold  =  1 .
+a acid  
+ 
+10−3 sec 
+
+⋅ 100 protein  = 1 × 10 
+−6 
+a acid  
+.
+
+misfolded  proteins
+
+total  proteins  created 
+
+The problem asked us to calculate the number of trajectories needed to achieve an error of less than 1% 
+in the number of misfolded proteins after 2 days.  This is done by applying the above two results: 
+
+σ f i  = 0.01 = 
+f i 
+
+1 −  f i 
+f i  ⋅ N proteins 
+
+1 
+10  proteins
+( 0.01) 2  = 1 10  
+× 
+Since it takes the number of proteins is the number of events divided by 100 (1.728x106), we have: 
+
+1 −  f i 
+⇒  N proteins  = 
+f i 
+
+created
+
+⋅
+
+ 
+
+ 
+
+N cells  = N proteins  total 
+
+N proteins per  cell  = 1 × 10 10  1.728 × 106  ⇒
+
+N cells  > 5787  cells 
+
+The  problem  also  asked  for  the  CPU  hours  necessary  to  perform  this  simulation  if  the  CPU  time  is 
+governed  by  generating  random  numbers  and  that  each  random  number  take  1.0  microsecond  to 
+generate.  This  is  a  simple  calculation  since we  have  already  calculated  the  number  of  random  numbers 
+per trajectory and the total number of trajectories.  The result would be: 
+
+2 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+Wall  Time = 5787  cells ⋅ 3.456 × 10 
+cell  ⋅ 1.0 × 10 
+8  rand # 
+−6 
+
+1 hr
+rand #  ⋅  3600
+sec
+ 
+sec
+
+ = 555.5 hrs 
+ 
+
+Wall  Time >  555.5 hrs 
+
+Method #2: 
+You could also realize directly that the uncertainty  in Monte Carlo simulations typically go as N-½.  In this 
+case  it  is  important  to  realize  that  the  N  you  calculate  here  is  number  of  misfolded  protein  events  (not 
+necessarily  the  number  of  cells)  that must  occur  to  have  an  error  in  that  number  of  less  than  1%.    You 
+can determine the time necessary as follows: 
+
+N 
+δ 
+misfold 
+N 
+misfold 
+
+≈ 
+
+1 
+N 
+misfold 
+
+⇒ 
+
+N 
+misfold 
+
+N
+⎛ 
+misfold 
+≈ 
+⎜ 
+⎜ 
+N
+δ 
+⎝ 
+
+misfold 
+
+2 
+⎞ 
+⎟ 
+⎟ 
+⎠ 
+
+=
+
+2⎞ 
+1 
+×  misfold  events 
+⎟ = 1 10  
+4
+0.01 
+⎠ 
+
+⎛
+⎜
+⎝
+
+However, what we want is the number of cells needed… 
+
+N misfold / cell  = N misfold  per  protein  ⋅ N proteins per  cell  = 1 × 10 −6  ⋅1.728 × 106  = 1.728 misfolds  per  cell 
+
+N cells  = N misfold  needed  / N misfold  per  cell  = 1 × 10  / 1.728  ⇒ 
+4 
+
+N cells  > 5787  cells 
+
+The rest of this is the same as above, and the total time will be 555.5 hours. 
+
+Method #3: 
+You  could  also  approach  this  problem  from  a  confidence  interval  approach.    In  this  it  was  important  to 
+understand  the  difference  between  the  sigma  of  the  data  and  the  sigma  of  the  mean.    This  is  the  way 
+you would go about this (not dealing with the log-normal aspects of the distribution).  This is a somewhat 
+weaker argument because it makes some assumptions about what you get from the analysis.  The major 
+points of ambiguity are: 
+
+1.	 Technically, a X%  confidence  interval  is  the percentage of  the  time  that  the actual mean will  fall 
+within  the  interval  <Nmisfold>measured  +/-  CI,  for  the  given  number  of  degrees  of  freedom.    What 
+we will estimate  is  the number of  cells needed  in order  to be X%  confidence  that  the  true mean 
+will fall with the <Nmisfold>measured +/- 1% interval. 
+2.	 Since we don’t have any actual data, assumptions will need  to be made  regarding  the mean and 
+standard deviation of  the data.   It will be assumed  that <Nmisfold>measured = <Nmisfold>Ncells  -> ∞  .  It 
+will also be assumed that the sigma of the data is related to the expected mean as is the case for 
+a true Poisson distribution with Nsamples  Æ ∞. 
+
+N misfold  data 
+
++ CI
+
+= 1.01  N misfold  data 
+ 
+⋅
+
+⇒
+
+CI 
+N misfold  data
+
+
+= 0.01
+
+
+From Method #2, we found that the <Nmisfold> = 1.728, which leads to the following expression:  
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+3 
+
+CI  = 0.01728  ⇒  CI  = tαν, 
+
+σN 
+misfold  = 0.01728  ⇒ 
+N cells 
+
+N 
+cells 
+
+⎞ 2 
+⎛ σN 
+> ⎜ t 
+misfold 
+αν,  0.01728 ⎟
+⎝ 
+⎠ 
+
+Now, to get a numerical answer, we need to make some assumption about how confident we want to be 
+in our 1% error, and get an estimate of the standard deviation in the Nmisfold per cell.  Since ν will likely be 
+large,  the  t-distribution  will  basically  be  identical  to  the  normal  (z)  distribution.    If  we  want  to  be  99% 
+confident  that  the  true  mean  lies  in  our  1%  interval,  then  tα,ν  ~  2.6,  and  if  we  wanted  to  be  67% 
+confident,  then  tα,ν  ~  1.0.  Also,  for  the  Poisson  distribution,  the  sigma  can  be  approximately  related  to 
+N 
+1.728  1.315
+= 
+the expected mean value: σNmisfold 
+≈
+= 
+misfold 
+
+This will  results  in  the  following  values of Ncells  for  99%  and  70%  confidence  that  the  true mean will  fall 
+within the +/- 1% of the expected value interval: 
+
+1.315  ⎞ 2 
+⎛ 
+N cells  = 
+⎟  > 2.9 × 10  cells 
+⎜ 2.6 ⋅ 
+99% 
+4 
+0.01728 ⎠
+⎝
+Time ( N cells  ) > 2800 hrs 
+99% 
+
+1.315  ⎞ 2 
+⎛ 
+N cells  = 
+⎟  > 5787  cells 
+⎜1.0 ⋅ 
+67% 
+0.01728 ⎠
+⎝
+Time ( N cells  ) > 555.5 hrs 
+67% 
+
+You will notice  that  the other methods  imply  that a 67%  confidence  (which equates  to about 1  standard 
+deviation)  in  the  true mean  being  in  the +/-  1%  interval.    If  you wanted  to  have  higher  confidence  that 
+the true mean would fall within the 1% error bounds, you would have to perform more simulations.   
+
+Method #4: 
+This method  is somewhat similar  to Method #2, and  it starts with the equation  for  the uncertainty  in  the 
+evaluation of a Monte Carlo integral: 
+
+δ I  = 
+
+2 
+
+f  −  f 
+2
+N samples 
+
+similar  to 
+⎯⎯⎯⎯
+→
+
+δ N misfold 
+
+=
+
+2
+
+N misfold  −  N misfold 
+2
+N cells 
+
+However, this  is the absolute uncertainty  in the Nmisfold, so we must divide by the expected value  in order 
+to equate it to a relative error of 1%.  From before, the expected value is 1.728 misfolds per cell. 
+
+δ N misfold  = 
+N misfold 
+
+1 
+N misfold 
+
+2 
+
+N misfold  −  N misfold 
+2
+N cells 
+
+⇒  0.01728 = 
+
+2
+
+N misfold  −  N misfold 
+2
+N cells 
+
+So this will give us an expression for Ncells in terms of the fluctuation in the number of misfolds per cell: 
+
+N cells  =
+
+2 
+
+N misfold  −  N misfold 
+2
+( 0.01728) 2 
+
+⎡ 
+= 3349 ⋅ 
+⎣⎢ 
+
+N misfold 
+2 
+
+− 
+
+N misfold 
+
+2
+
+⎤
+⎥  cells 
+⎦ 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+4 
+
+The  problem  with  this  is  getting  an  estimate  of  the  fluctuation  in  the  number  of  misfolds,  which  is 
+required  to estimate  the number of cells needed.    It  turns out  that  the above  fluctuation  is equivalent  to 
+the variance in the data (for a large number of samples), as is seen below: 
+1 ∑ ( i 
+1
+1 ∑ ( i 
+2 )
+) 2
+note :  f  = f  ≈ ∑ f i(
+f  − 2 f f  + f 
+f  − f  = 
+2 
+2
+σ = 
+i 
+ν 
+ν
+ν 
+where :  2 1 
+f 2  + f  2  − 2 1 
+1 ∑ (
+∑ (
+∑ (
+) = 2 
+f  f 
+σ2  = 
+i
+i 
+ν 
+ν
+
+ν
+2  − f  2
+
+f i 
+
+∴ σ2  = 
+
+) 
+
+f i
+
+) = 2
+
+2
+
+f
+
+)
+
+f 
+i
+
+f 
+
+f 
+
+As  mentioned  in  Method  #3,  we  can  estimate  the  sigma  in  the  data  for  a  Poisson  distribution  as  the 
+sqrt(expected value), which means that the variance can be approximated as the expected value (1.728). 
+Therefore, we have the following expression: 
+
+⎡ 
+N cells  > 3349 ⋅ ⎢⎣
+
+N misfold  − N misfold 
+2
+
+2 ⎤ 
+= 3349 ⋅σN misfold 
+2 
+⎥⎦ 
+
+≈ 3349  1.728 = 5787 
+⋅ 
+
+cells 
+
+This would again yield the same amount of CPU time, which was 555.5 hours.  
+
+From all of these analyses, you should see that if the expected value of the number of misfolded proteins 
+per  cell was not O(1),  then  the  answer would be  significantly different  (and many of  you who happened 
+upon a reasonable answer would have been far off).  As an example, consider two other cases where the 
+<Nmisfold>  =  10-3  or  103  per  cell. 
+In  these  cases,  one  would  need  to  simulate  1x107  and  10  cells, 
+respectively, to ensure an error of < 1%.  This would translate into CPU times of 9.6x105 and 0.96 hours. 
+As you can see, it was fortunate that <Nmisfold> = O(1). 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+5 
+
+− 
+
+1 
+K 
+eq 
+
+) 
+(
+) 
+(
+ethylene oxide  E  → acetaldehyde  A 
+
+2) (30 points total)  Average = 21.9 
+St. Dev. = 3.9 
+The  inside  of  a  pipe,  inner  radius  R, wall  thickness  d,  is  coated with  a  very  thin  layer  of  silver, 
+which catalyzes the highly exothermic isomerization reaction (∆Hrxn < 0): 
+A ⎞
+⎛ 
+(  ) 
+C  ⎟ 
+rate =  rxn  T  ⋅ ⎜ 
+k 
+C E 
+⎟ 
+⎜ 
+⎠ wall 
+⎝ 
+(Exothermicity  ∆Hrxn;  Entropy  change  ∆Srxn.).  A mixture  of  ethylene  oxide  and  acetaldehyde  is 
+flowing  slowly  down  the  pipe  (so  everything  is  laminar).   The  pressure  at  the  inlet  is Po,  and  at 
+the output it is 1.00 bar. The length of the pipe is L.  The gas viscosity is η, and its heat capacity 
+is CP, both  independent of  temperature and composition.   The  thermal conductivity of  the gas  is 
+κ1,  and  the  thermal  conductivity  of  the  pipe material  is κ2.  The  diffusivity  of  both  isomers  is D 
+and  the molecular weight  is MW.  The  outside  of  the  pipe  is maintained  at T  =  40  ºC  =  313 K. 
+Because  the  pipe  is  thin-walled  and  the  fluid  is  a  gas,  you  can  neglect  axial  temperature 
+conduction  in  the  pipe  wall  and  gas  phase.  Make  the  ideal-gas  approximation.    You  are 
+simulating  this  reactor  using  finite  differences.  Be  sure  to  include  all  appropriate  indices  when 
+writing  equations.  The  radial  direction  has  been  discretized  using  NR  number  of  points,  with 
+point j=NR on the boundary.  Do not use Method of Lines to solve this problem. 
+
+moles 
+m  ⋅ s
+2
+
+[ ] 
+= 
+
+Hint: In the full simulation there would be additional differential equations for the P and velocity 
+fields,  but  you  are  not  asked  to  derive  these  here.    You  can  act  as  if  the  P  and  velocity  field 
+equations  are  already written  out  in  finite  difference  form,  and  assume  that  all  equations will  be 
+solved  simultaneously  with  your  T  and  C  equations.    Note  that  P  and  velocity  will  vary  with 
+position,  and  should  include  the  appropriate  indices  when  writing  out  the  finite  difference 
+equations.  The heat flux through the pipe wall can be taken to be:   q(cid:5) = −κ2  (Tamb  − T , 
+) d .
+i  N R 
+
+Tamb  = 313 K = 40 ºC 
+
+( 
+)
+i N  
+,  R
+
+( 
+)
+i N − 
+1R
+, 
+
+)
+
+( 
+i N  − 
+2
+, 
+R
+(cid:35) 
+
+Pipe wall 
+
+d 
+
+Silver catalyst 
+
+R 
+
+Gas-phase 
+
+ 
+(far from centerline or wall) 
+
+j
+
+)
+
+( 
+,i
+(cid:35) 
+( i,1) 
+
+Flow 
+
+Centerline 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+6 
+
+a)  (10  points) Write  the  finite  difference  equations  for  the  steady-state  temperature  (T)  and 
+concentration  of  ethylene  oxide  (CE)  at  a  generic  mesh  point  (i,j)  somewhere  in  the 
+interior  of  the  pipe  (not  near  the  walls  nor  the  centerline).    Let  i  be  the  discretization 
+index in the axial direction, and j be the index in the radial direction. 
+
+In  this  part,  we  must  derive  the  finite  difference  equations  for  a  cylindrical  geometry  with  diffusion, 
+convection, heat  transfer, and  a  reaction  at  a  surface.   This  is  very  similar  to  the problem  tackled  in HW 
+Set #8, insofar as the geometry is concerned.  The governing equations for this system are: 
+
+P  ) κ1  ∇ T  ⇒ v z 
+v ⋅ ∇ (ρC T
+ 
+2 
+⋅
+=
+
+v ⋅ ∇ (
+
+E 
+
+C
+
+) = 
+
+D 
+⋅ ∇ T 
+2
+
+⇒ v z 
+
+)  κ1  ⎛ 1  ∂ 
+( 
+∂ ρT 
+⎛  T ⎞ ⎞  κ1  ⎛ 1 ∂T  ∂ T ⎞ 
+2 
+∂ 
+⎝ ∂ ⎜ r
+= CP 
+= CP 
++
+r ⎟
+∂ 2  ⎟
+⎜
+⎜
+⎠ ⎟
+r ⎝ ∂ 
+∂z 
+r
+⎝ r
+r
+ 
+r 
+∂ 
+⎠ 
+⎠ 
+∂C 
+C 
+∂ C  ⎞ 
+C
+⎞ 
+⎛ 
+1  ∂
+⎛ 1 
+E 
+E 
+E 
+E 
+2 
+⎛ r
+∂
+∂
+= D ⎜
+= D ⎜
++
+⎟
+∂ ⎜
+⎟
+r
+r
+ 
+∂r
+z 2 
+r  ∂r
+z
+∂ 
+∂ 
+⎠
+⎝
+⎝
+⎠
+⎝
+
++
+
+∂ C 
+E 
+2 
+r 2 
+∂ 
+
++
+
+∂ C  ⎞
+E 
+2 
+⎟
+z 2 
+∂ 
+⎠ 
+
+Since  we  are  dealing  with  a  gas  (and  the  constant  density  approximation  would  be  invalid),  we  must 
+write out the density as a function of T and P (using the ideal gas law) in the equation. 
+
+v z 
+
+(
+)
+W ⋅ T 
+∂ P M⋅ 
+RT
+z
+∂ 
+
+= 
+
+v Mz  ⋅  W P  
+∂ 
+∂z
+R 
+
+⇒ 
+
+∂  κ ⎛ 1 ∂T  ∂ 
+v MW P  
+2T ⎞
+z  ⋅ 
+=
++ 
+1
+2  ⎟
+⎜
+r
+R 
+∂z  CP ⎝
+∂r  ⎠
+r 
+∂ 
+
+Since we are only concerned with the interior points right now, and we never have to deal with boundary 
+conditions at the entrance, exit, or centerline, we will  ignore  these  for now.   The discretization equations 
+for the above equations are as follows (note the upwind difference was used in the convective term): 
+
+Heat equation terms: 
+P  − P 
+∂P 
+= i j  
+i −1,
+, 
+∆z 
+∂z 
+
+j 
+
+zi 
+
+ 
+
+∂ 2T 
+∂r 2 
+
+r 
+j 
+
+T 
+= i j,  +1 
+
+− 2T  + T 
+i j, 
+i j,  −1 
+(
+) 2 
+∆r
+
+∂T 
+∂r 
+
+r j
+
+− T
+T 
+= i j,  +1 
+i j,  −1 
+2∆r
+
+j 
+
+= 
+
+Diffusion equation terms: 
+Ci j,  − Ci −1,
+E
+E 
+∂C E 
+∂z 
+∆z 
+ − 2Ci j,  + Ci j,
+E
+E 
+(
+)r  2 
+∆
+
+zi 
+∂ 2C E 
+∂r 2 
+
+C ,
+E 
+i j  +
+1
+
+= 
+
+ 
+
+r j 
+
+1 
+− 
+
+∂ C 
+2  E
+∂z 2 
+
+C 
+∂ E
+
+r 
+∂
+
+r j 
+
+= 
+
+Ci +1,
+E 
+
+j − 2Ci j,  + Ci −1,
+E
+E
+ 
+∆z(
+) 2 
+Ci j  
+,  +1  − Ci j,  −1
+E
+
+E
+2∆r
+
+zi 
+
+= 
+
+j
+
+ 
+
+Now that we have the discretized form of the derivatives, we can substitute them into the PDEs above: 
+
+Heat equation: 
+∂P 
+1 ∂T
+⎛
+v z  ⋅
+= ⋅ 
+β
+⎜ 
+∂z 
+r
+r 
+∂ 
+⎝
+i j   P − 
+⎛ P ,  −
+i 1,
+v ,  ⋅ 
+i j   ⎜
+∆z
+⎝
+
+j 
+
++
+
+∂ 2T 
+⎞
+⎟ 
+∂r
+2 
+⎠ 
+β ⎛ T +  T ,  − 
+−
+⎞ 
+i j 1 
+i j,  1
+ 
+⋅ ⎜ 
+⎟ − 
+rj  ⎝ 
+∆r
+2 
+⎠
+
+where :  β 
+= 
+
+R ⋅κ1
+W C
+M ⋅ 
+P
+⎛ i j,
+Ti j, 
+T + − 2 
+T ,  − 
++ i j  1
+⎞ 
+1 
+⎟ − β⋅ 
+⎜⎜
+)∆ 
+(
+2 
+r 
+⎠
+⎝ 
+
+⎞
+⎟⎟
+⎠
+
+ 
+
+= 0 
+
+7 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+⎛ 1  β
+⎛ v ,  ⎞
+⎛ vi j,  ⎞
+i j
+⎟ P  − ⎜ 
+⎟ P  − ⎜
+⎜
+⎜ rj  2∆r 
+⎝ ∆z ⎠ i j, 
+⎝ ∆z ⎠ i −1, j 
+⎝
+
++ 
+
+⎛ 1  β  β ⎞ 
+⎛ 2β ⎞ 
+β ⎞ 
+2  ⎟ Ti  j  1  = 0 
+2  ⎟ T  + ⎜ 
+2  ⎟ T ,  + + ⎜ 
+− 
+⎟ i j  1 
+⎜ (
+⎟ i j, 
+⎜ rj  2∆r 
+⎟
+,  −
+) ⎠
+) ⎠
+(
+) ⎠
+∆r 
+∆r 
+∆r	
+⎝
+⎝
+
+(
+
++
+
+Diffusion equation terms: 
+∂ 2C E ⎞ 
+∂ 2C E 
+⎛ 1 ∂C E 
+∂C E 
+v 
+= D 
+∂z 2  ⎟
+⎜
+z	 ∂z 
+⎝ r  ∂r 
+∂r 2 
+⎠
+
+⎛ C E  − 2C E  + C E 
+⎛ C E  − 2C E  + C E 
+⎞
+
+⎞
+⎞  D ⎛ C E  − C E 
+⎛ C E  − C E 
+⎞
+i −1,  ⎟ = 0
+i j −1  ⎟ − D ⎜
+i −1, j ⎟ − 
+i j  
+i j +1 
+i j +1 
+i j  
+i j 
+i +1, j  
+i j  
+j
+
+,  −1  ⎟ − D ⎜
+, 
+,
+, 
+,
+, 
+, 
+v ,  ⎜ 
+⎜
+⎜ 
+⎟
+⎜ 
+⎟
+i j
+
+(
+) 
+(
+) 
+2
+2 
+∆z 
+rj  ⎝ 
+2∆r 
+∆r	
+∆z 
+⎝
+⎠ 
+⎠
+⎝
+⎠
+⎝
+⎠
+
++
+
+⎛ vi j,
+⎛ D  ⎞
+2  ⎟ Ci +1, j + ⎜ 
+E 
+− ⎜ 
+⎜	 ∆z  ⎟ 
+⎜ ∆z 
+⎝ (
+) ⎠ 
+⎝ 
+
++ 
+
+2D 
+2  + 
+)
+∆r 
+
+(
+
+(
+
+⎛ vi  j, 
+2D  ⎞
+2  ⎟ Ci j,  − ⎜ 
+E 
+∆z  ⎟ 
+⎜ ∆z 
+) ⎠ 
+⎝ 
+
++ 
+
+D  ⎞
+⎛ 1  D
+2  ⎟ Ci − j − ⎜ 
+E 
+∆z  ⎟
+⎜ r  2∆r 
+1, 
+) ⎠ 
+⎝ j 
+
+(
+
++ 
+
+D  ⎞
+⎛ 1  D
+2  ⎟ C ,  +1  + ⎜ 
+E 
+∆r  ⎟
+⎜ r  2∆r 
+i j  
+) ⎠ 
+⎝ j 
+
+(
+
+− 
+
+D  ⎞
+2  ⎟ C ,  = 0
+E
+∆r  ⎟
+i j −1 
+) ⎠ 
+
+(
+
+b)  (20 points) Write  the  steady-state boundary conditions  for T and CE at  the wall (i,NR). 
+What  are  the  finite-difference  equations  for  T  and  CE  mesh  points  in  the  gas  phase 
+immediately adjacent to the wall (i,NR-1)? 
+
+For  this part, we  are  asked  to write out  the  finite difference  equations  for  the boundary at  the wall  (and 
+no other boundary conditions).  The correct way  to go about this  is  to equate the  fluxes at the  interface. 
+The  concentration-field  BC  is  something  you  should  have  seen  already,  with  the  need  to  match  the 
+diffusive flux to the wall and the consumption rate/flux of the surface reaction.  The temperature-field BC 
+is  slightly different,  since  you have  a  flux  from  the wall  to  the gas, generation of heat  at  the wall,  and a 
+flux  from  the wall  to  the ambient  (through  the pipe wall).  However,  the same  idea of equating  fluxes at 
+the  boundary  holds  true  because  we  are  at  steady-state  and  there  is  no  accumulation  of  heat  at  the 
+interface.  The species and thermal flux balances are as follows: 
+
+∂C E 
+−D 
+∂r 
+
+i N	
+=	 R
+
+= rate of reaction = k rxn (T ,  R 
+i N 
+
+⎡	
+⋅ ⎢C ,  −
+E 
+⎣⎢ i N R 
+
+1 
+K 
+Eq 
+
+A  ⎤
+⋅ Ci N,  R ⎥ 
+⎥
+⎦ 
+
+We can write out the quadratic approximation to the first derivative at the wall with the following: 
+
+∂C E 
+∂r 
+
+i N R 
+= 
+
+= 
+
+3C E  − 4C E 
+i N,  R − 
+i N,  R 
+1 
+2∆r
+
++ C E
+i N  −2 
+,  R
+
+This  is  then  substituted  into  the  flux  balance  to  yield  the  final  equation  which  is  used  to  determine  the 
+concentration of ethylene oxide at the wall (when solved simultaneously with the interior points). 
+
+(cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11) (cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:15)
+will be > 0 
+(cid:15) 
+will be < 0	
+(
+)
+k rxn  T ,  R 
+− 4C 
+3C 
++ C 
+E
+E 
+E
+⋅ C A  ⎤
+⎡ 
+⎛ 
+⎞
+1 
+i N 
+i N  −2  ⎟⎟
+i N, 
+i N, 
+1 
+, 
+C E  −
+− 
++ 
+⎜⎜
+⎢
+⎥
+R 
+R 
+i N, 
+i N, 
+K Eq 
+2∆r 
+D
+R
+R
+⎥⎦ 
+⎢⎣ 
+⎠ 
+⎝ 
+
+⋅
+
+R
+
+= 0
+
+8 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+For  the  temperature-field  boundary  condition,  we  have  three  flux  terms  and  the  following  equations 
+relating them (see eqn 2.5-1 in Deen’s book): 
+
+Heat  generated  by  Rxn 
+(cid:5) 
+Q 
+Rxn 
+
+= 
+= 
+
+Flux  to  gas  − 
+(cid:71) (cid:71) 
+n qi 
+− 
+gas 
+i 
+
+Flux  to  ambient  through  pipe
+(cid:71) (cid:71)
+i
+n q
+i 
+
+pipe 
+
+Since  the  flux  in  the  pipe  and  gas  are  both  defined  in  the  same  direction  (in  terms  of  increasing  r),  the 
+n*q dot product of the unit normal vector of the interface with the flux vectors will both result in +q. 
+
+(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)
+(cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)
+(cid:15)
+will  be  ≤ 0
+(cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:15)  (cid:13)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:15) (cid:13)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:15) 
+will  be < 0 
+will  be ≥ 0
+will  be  ≤ 0 
+⎛
+⎞
+gas  ⎞
+pipe  wall  ⎞ 
+⎛ 
+⎛ 
+)  ⎡
+A  ⎤ 
+∂T
+∂T
+1 
+( 
+⋅ Ci  N R  ⎥ ⋅ ∆H rxn  = −κ1
+⎜ k
+T ,  R 
+⋅ ⎢Ci  N,  R  −
+E 
+− − κ2
+⎟
+⎟⎟ 
+⎟
+⎜
+⎜
+⎜ 
+⎟
+⎜ 
+⎜ rxn 
+⎟
+i N 
+, 
+∂r
+K 
+∂r
+⎢⎣ 
+⎥⎦ 
+⎝ 
+⎝ 
+⎠
+⎠ 
+⎠
+⎝ 
+Eq 
+
+i N R 
+= 
+
+i = N R 
+
+The  above  equation  shows  how  the  terms  are  related.  The  flux  to  the  gas  will  be  (-)  because  the 
+temperature should increase as you get closer to the wall since there is no source term in the gas-phase. 
+The flux to the ambient will be (+) because the ambient is the heat sink (T will decrease as you approach 
+Tamb with  increasing  r).   Therefore,  the  above  equation makes  qualitative  sense.  For  a  given  amount of 
+heat generated by the reaction, part must go to the gas and part must go to the ambient, the distribution 
+will  depend  on  the  κ-values  and  the  solution  to  the  convection-conduction-diffusion  problem  in  the 
+interior points. 
+
+Since  the  formula  for  the  flux  through  the  pipe  wall  was  given,  we  simply  need  to  insert  that  term  and 
+write out the finite difference approximation for the dT/dr in the gas at the wall (similar to above for CE): 
+
+(cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:15)  (cid:13)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)(cid:11)(cid:11)(cid:11)
+will  be  ≤ 0 
+(cid:15)
+(cid:15) (cid:13)(cid:11)(cid:11)(cid:14)(cid:11)(cid:11)
+will  be ≤ 0
+will  be ≥ 0 
+⎛ 
+⎞
+⎛ Tamb  − T ,  R 
+⎛ 3T ,  R  − 4T ,  R − + Ti N,  R −2  ⎞
+⋅ C A  ⎤
+⎡ 
+⎞
+1 
+(
+)  ⎢ 
+i N   1 
+i N
+i N  
+C E  −
+T 
+k
+⋅ ∆H 
+= 0
+−κ
++κ
+⋅
+⎟
+⎜
+⎟
+⎜ 
+⎟
+⎜ 
+⎥
+⎟
+⎜
+⎟
+⎜
+rxn  ⎟ 
+⎜ rxn 
+i N 
+i  N 
+i  N R 
+,  R 
+,  R 
+, 
+1 
+2 
+2∆r 
+K Eq 
+d 
+⎢⎣ 
+⎥⎦ 
+⎠ 
+⎝ 
+⎝ 
+⎠ 
+⎝ 
+⎠
+
+We were also asked  to write out  the  finite difference equations  for  the grid point directly adjacent  to  the 
+wall, point ( i , j=NR-1 ).  This is very straightforward and simply involves re-writing the general equations 
+for  interior  grid  points,  but  using  a  specific  index.  This will  show how  the  boundary  condition  equations 
+are  necessary  to  specify  the  values  of  the  state  variables  at  the  boundary,  which  show  up  in  the  finite 
+difference equations near the boundaries.  They would be as follows: 
+
+⎛ 1  β
+⎛ vi N R −1  ⎞
+⎛ vi N,  R  1  ⎞
+, 
+⎟ Pi − N R  1  − ⎜ 
+− ⎟ P ,  R  1  − ⎜
+⎜ 
+⎜ rN R −1 2∆r 
+i N  − 
+1, 
+⎝ ∆z  ⎠
+⎝ ∆z  ⎠ 
+− 
+⎝
+
++
+
+⎛ 1  β  β ⎞ 
+⎛ 2β ⎞ 
+β ⎞ 
+∆r  2  ⎟Ti, R + ⎜ 
+∆r  2  ⎟ Ti N R −2  = 0 
+∆r  2  ⎟ Ti N R  1  + ⎜ 
+−
+⎟ 
+⎜ (
+⎟
+⎜ rN R −1 2∆r 
+⎟
+, 
+, 
+) ⎠
+) ⎠
+(
+) ⎠
+− 
+⎝
+⎝
+
+(
+
+and 
+
+⎛ vi N,  R  1
+⎛ D  ⎞
+2  ⎟ C  1,N R  1  + ⎜ 
+E 
+− + 
+− ⎜ 
+⎜ ∆z  ⎟ 
+⎜ ∆z 
+i + 
+⎝ (
+) ⎠ 
+−
+⎝ 
+
+(
+
+2D 
+2  + 
+) 
+∆r 
+
+(
+
+⎛ vi  N R −1 
+2D  ⎞
+, 
+2  ⎟ Ci  N R  1  − ⎜
+E 
+∆z  ⎟ 
+⎜ ∆z 
+, 
+) ⎠ 
+−
+⎝ 
+
++ 
+
+D  ⎞
+⎛ 1  D
+2  ⎟ Ci − N R  1  − ⎜ 
+E 
+∆z  ⎟
+⎜ r 
+1, 
+) ⎠ 
+2∆r 
+−
+⎝ N R −1 
+
+(
+
++ 
+
+D  ⎞
+2  ⎟ C i,N R 
+E 
+∆r  ⎟
+) ⎠ 
+
+⎛ 1  D
++ ⎜ 
+⎜ r 
+2∆r 
+⎝ N R −1 
+
+(
+
+− 
+
+D  ⎞
+2  ⎟ Ci N R −2  = 0
+E
+∆r  ⎟
+, 
+) ⎠ 
+
+(
+
+The  state  variables  that are highlighted  in bold  in  the  above  equations  are  the ones  that  are determined 
+by simultaneously solving the BC equations along with the interior points. 
+
+9 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+3) (50 points total)  Average = 26.3 
+St. Dev. = 7.0 
+Frosty  and  Claus  have  published  a  model  for  the  shape  of  mist  droplets  resting  on  mistletoe 
+leaves; of course the shapes depend on the angle at which the leaf is suspended from the ceiling.  
+
+In particular, their model predicts how the height of each drop depends on 
+1.  the angle at which the leaf is suspended and  
+2.  the contact area between the droplet and the leaf.  
+
+Height = Ymodel(angle, area; liquid parameters) 
+
+A  postdoc  in  your  research  group  has  written  a  Matlab  function  that  evaluates  their  model 
+predictions,  and  also  a  Matlab  function  that  computes  certain  derivatives  of  how  their  model 
+predictions  depend  on  the  input  parameters  to  the  model  (p1=the  leaf-droplet  surface  tension 
+(N/m),  p2=the  droplet-air  surface  tension  (N/m),  and  p3=the  density  of  the  liquid  in  the  droplet 
+(g/cc)). The last two input parameters are expected to have values similar to those for pure water 
+(air/water  surface  tension=  0.72 N/m;  density  of water  =  1.00  g/cc),  but  slightly  changed  due  to 
+some  of  the  biomolecules  in  the  leaf  dissolving  into  the  droplet.  For  details  on  the  Matlab 
+functions, which  the postdoc has given  to you, see the header files below. The postdoc  is now  in 
+northern Norway doing fieldwork and is unavailable for questions. 
+A  hardworking  UROP  in  your  laboratory  has  put  mist  droplets  on  a  mistletoe  leaf,  and 
+then  photographed  the  leaf  from  different  perspectives. Using  a Matlab  image-analysis  program 
+she has recorded data on the leaf-droplet contact area and the height of 100 droplets, with the leaf 
+suspended  at  three  different  angles  theta.  (See  figure).  At  your  request,  while  you  were  busy 
+filming  the  1st  year  skit,  she  repeated  each  experiment  400  times.  She  has  now  left  for  an 
+extended vacation  to  recuperate. Before she  left  town she gave you all  the data as 120,000  rows. 
+(300 blocks of 400  rows  each). You notice  that  there  is perfect  reproducibility  for  the  angle  and 
+area measurements, but large fluctuations in the measured heights. 
+
+Side View 
+
+θ; Angle to vertical 
+
+Surface of Misletoe 
+leaf. 
+
+height 
+
+Area of Contact 
+
+10 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+Trial Number  Angle  Droplet Number  Area  height 
+
+1 
+
+2 
+(cid:35) 
+
+101 
+(cid:35) 
+
+300 
+
+Angle1 
+
+Droplet 1 
+
+A1 
+
+h1 
+
+400 repeats 
+
+Angle1 
+(cid:35) 
+
+Angle2 
+(cid:35) 
+
+Droplet 2 
+(cid:35)
+
+Droplet1 
+(cid:35)
+
+A2 
+(cid:35)
+
+A1 
+(cid:35)
+
+h2 
+(cid:35)
+
+
+h101 
+(cid:35)
+
+
+400 repeats 
+
+400 repeats 
+
+Angle3 
+
+Droplet100 
+
+A100 
+
+h300 
+
+400 repeats 
+
+You  have  sorted  the  data  (as  shown  in  the  table)  so  the  first  400  entries  are  data measured with 
+the  leaf  at  angle#1  for  droplet  #1;  the  next  400  are  for  droplet#2,  etc.  through  all  100  droplets. 
+Then  there  are  400  numbers  measured  with  the  leaf  at  angle#2  for  droplet#1,  then  400  for 
+droplet#2, etc. Finally  there are  the 40,000 entries measured with  the  leaf at angle#3. The sorted 
+data  is  available  in  Matlab  as  matrix  SortedRawData  (120000  rows  and  5  columns).  You  of 
+course will  immediately  condense  each  set  of  400  replicates  to  a  single  point  <height>n with  an 
+estimated variance σ .n 
+
+a)  (20 points) Write a Matlab function which takes SortedRawData and values of the 3 
+parameters as inputs, and returns as its output the corresponding value of χ2. 
+
+Each of the 300 experiments is repeated 400 times. First we will calculate the average of those 400 
+values and then calculate the standard deviation of the 400 values σ . Since the average is calculated 
+σ σ
+using 400 different data points, the average will have a standard deviation of σav  =
+=
+ . First 
+400  20 
+let us convert the 120,000 height values into 300 average heights and corresponding standard deviations. 
+The average height  h  and its standard deviation σav   are given by the expression below 
+
+h = 
+
+1  400 
+∑  i 
+h 
+400  i =1 
+
+and 
+
+σ = 
+av 
+
+1 
+1  400
+∑  i  − 
+(h
+20  399  i =1 
+
+h ) 2
+
+This is done by the matlab program “calc_avg_std”.  
+
+Once the average values and standard deviation of the 300 entries are known we can calculate the χ2 
+value given by the model. The value of  χ 2  is given by the expression below, where A is the contact area 
+of the drop and θ is the angle of the leaf. This calculation is performed by the matlab function 
+“calc_chi2”. 
+
+(  i 
+ p1 , p2 , p3 ) )2 
+300  h  −  A θ
+
+f i (
+,
+;
+χ 2  = ∑ 
+2
+σ
+i =1 
+av  i , 
+
+11 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+ 1 , p  , p3 )  is just short for  f (
+In the above expression  f  (
+i A θ p 
+;
+,
+2 
+
+,θi ; p , p2
+Ai 
+1
+
+, p3 ) . 
+
+function chi2 = calc_chi2(SortedRawData, p1,p2,p3)
+%calculates the chi2 for the data using the function "thickness"
+%input data include the sortedRawData, p1 is leaf_tension, p2
+%drop_air_tension, p3 is density of water 
+%output is the chi2 
+%first obtain the average heights and standard deviations from calc_avg_std
+%notice only the 5th column is passed to the function
+[height, std] = calc_avg_std(SortedRawData(:,5); 
+area = zeros(300,1); %extract area from SortedRawData 
+angle = zeros(300,1); % extract angle from SortedRawData 
+for i=1:300
+ area(i) = SortedRawData((i-1)*400 + 1,4);
+angle(i) = SortedRawData((i-1)*400 + 1,2);
+end 
+chi2 = 0; %initialize the chi2 and start adding terms to it 
+for i=1:300
+ chi2 = chi2+(height(i)- thickness(area(i), angle(i), p1, p2, p3))^2 ...
+ /std(i)^2;
+end 
+return; 
+
+function [avg, std] =  calc_avg_std(height)
+% takes in a vector of length 120,000 and returns a vector of length 300
+% of the averages and vector of length 300 of the standard deviations.
+avg = zeros(300,1);
+std = zeros(300,1); 
+%first calculate the average
+for i=1:3 %iterate over angles
+for j=1:100 %iterate over drops
+for k=1:400 %iterate over all the repeats
+avg((i-1)*100 + j) = avg((i-1)*100+j) + height((i-1)*100*400...
++ (j-1)*400 + k); 
+end 
+end 
+end 
+avg = avg/400; 
+%now calculate the standard deviation 
+
+12 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+for i=1:3 %iterate over angles
+for j=1:100 %iterate over drops
+for k=1:400 %iterate over all the repeats
+std((i-1)*100 + j) = std((i-1)*100 + j) + ...
+ 1/20 * ((avg((i-1)*100+j) - height((i-1)*100*400 + ...
+ (j-1)*400 + k))^2/399)^0.5;
+
+end 
+end 
+end 
+return; 
+
+b)  (10 points) In their journal paper, Frosty and Claus suggest these values of the three 
+parameters: p1 = 0.95 N/m, p2 = 0.73 N/m,  p3 = 1.02 g/cc. 
+      Suppose your function from part (a) is working and is bug-free. When you give it 
+these values for p1,p2,p3 the function returns as its output the number 682. Is Frosty & 
+Claus’s model, using their suggested parameter values, consistent with the experimental 
+data measured by your UROP? If you cannot determine this numerically right now, write 
+down an inequality that, if true, would indicate that there was a high probability that the 
+model and the data were consistent. 
+
+The  χ 2 value should ideally be very close to the number of experimental values – number of fitted 
+parameters, in this case this is 300-3 = 297. Thus the  χ 2  obtained, 682, is too high and the model is 
+most likely incorrect. The rigorous test is given by the p-value of the model. If the p-value if greater than 
+0.05 then the model is likely correct or if it is less than 0.05 then the model is most likely incorrect. The 
+matlab function which can be used to perform this test is chi2cdf and is given below. 
+p-value = 1-chi2cdf( χ 2  ,297) > 0.05. 
+
+We can also write the criteria as follows 
+
+∞
+(1 / 2) 
+ν / 2
+
+∫ 
+(
+/ 2)
+2  Γ ν 
+χ 
+Or 
+ x /
+/ 2,
+(
+Γ ν 
+Γ(
+/ 2)
+ν 
+
+xν / 2   1  e − x / 2  dx
+− 
+ 
+
+ ≥ 0.05
+
+
+ 
+≥ 0.05
+
+ 2)
+ 
+
+c)  (10 points) Your research advisor asks you to refine Frosty & Claus’s suggested 
+parameters by taking a single Newton-type step. Write a short Matlab function which 
+would accomplish this, returning p_refined. 
+The parameters will be refined by taking a Newton-type step so that the  χ 2  value is minimized. 
+
+300  ( hi  −  f i (
+χ 2  = ∑ 
+i =1 
+
+ p1 , p2 , p3 ) )2
+A θ 
+,
+;
+2 
+σav  i , 
+
+13 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+Now let us calculate the gradient and the Hessian of this cost function. 
+
+⎡ ∂χ2  ⎤
+
+⎢ ∂ 
+⎥
+
+⎢ p1  ⎥
+
+⎢ ∂χ2  ⎥ 
+2 
+∇ p χ = ⎢
+∂p  ⎥
+
+⎢ 
+2  ⎥
+
+⎢ ∂χ2  ⎥
+
+⎢
+⎥
+
+⎢⎣ ∂p3  ⎦⎥
+
+
+The kth element of the vector is given below. 
+p1 , p2 , p3 ) ) ∂f
+= −∑ 2 ( hi  − f i  A θ 
+ 
+(
+,
+;
+300 
+i 
+∂pk 
+2 
+σav
+i =1 
+i
+, 
+
+2 
+∂χ
+∂pk 
+
+ 
+
+ 
+
+The Hessian of the cost function is a 3 X 3 matrix and l,k element of the matrix is given below 
+( i 
+ p1 , p2 , p3 ) ) ∂ 2  f
+h  −  A θ 
+f i (
+,
+;
+f 
+300 
+∂ 
+i  − ∑ 2 
+i 
+∂ ∂p
+p
+p
+σ2 
+∂ 
+i =1 
+i
+ 
+ 
+l
+k
+av
+k 
+, 
+
+f
+1  ∂
+300 
+= ∑ 2 
+i 
+p
+σ2 
+∂
+i =1 
+av
+ 
+l 
+ 
+
+i
+, 
+
+H lk  = 
+
+∂ 2 χ2 
+p p 
+∂ ∂ 
+l
+k 
+
+In the above expression we will ignore the second term and thus the Hessian becomes 
+
+∂f i
+f i 
+1  ∂
+300 
+H lk  = ∑ 2 2  ∂
+p
+p
+
+∂ 
+i =1  σ 
+k 
+l
+av  i , 
+
+= 2 X X
+
+T
+
+Where 
+
+1  ∂f i
+
+X i j  =
+
+,  σi  ∂p j 
+
+A Newton step in given below 
+
+p m +1  = p m  − ⎡
+⎣
+
+X T X  | pm 
+
+−1
+
+⎤
+⎦ 
+
+∇ p χ2
+
+
+For our problem the matrix X will have 300 rows and 3 columns. All the partial derivatives with respect to 
+the parameters required to calculate X and  ∇ p χ2   are given by the function “dh_dp”. This single step of 
+the Newton method is carried out by the matlab function “p_refined”. 
+
+function p_new = p_refined(p_old, height, sigma, area, angle)
+%p_old is a vector containing  leaf_tension, drop_air_tension and density
+%of water. area is the vector of areas of the droplet and angle is the
+%vector of angles made by the maple tree. These three vectors are of length
+%300 and are extracted from SortedRawData in the same was as was done in 
+%the last problem. 
+
+14 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+X = zeros(300,3); % X is a matrix of 300 rows and 3 columns 
+for i=1:300 % fill all the rows
+
+ X(i,:) = dh_dp(angle(i), area(i), p_old(1), p_old(2), p_old(3))...
+
+sigma(i);
+
+end 
+g = [0; 0; 0]; 
+
+error = 0; %calculate the error
+
+for i=1:300 
+
+g(1) = g(1) - (h(i) - thickness(angle(i), area(i), p_old(1), ...
+
+ p_old(2), p_old(3))*X(i,1)/sigma(i)^2;
+
+ g(2) = g(2) - (h(i) - thickness(angle(i), area(i), p_old(1), ...
+ p_old(2), p_old(3))*X(i,2) /sigma(i)^2;
+ g(3) = g(3) - (h(i) - thickness(angle(i), area(i), p_old(1), ...
+ p_old(2), p_old(3))*X(i,3) /sigma(i)^2;
+end 
+p_new = p_old - (X'*X)^(-1)*g; 
+return; 
+
+d)  (10 points) Suppose that when you run the Matlab function asked for in part (c), 
+everything works wonderfully: χ2(p_refined) is very small, and the fit to the data looks 
+wonderful. You decide to take a second Newton-type step, starting from p_refined. But 
+this time you get the error message “Matrix singular or ill-conditioned”. What does this 
+mean? Your goal is to publish a good fit with information about the uncertainties in the 
+parameters. You have the good fit; what would you do next so that you will be able to say 
+something definitive about the uncertainties in p_refined, without performing more 
+experiments? Explain clearly. 
+
+If the Newton-type step starting from p_refined gives the error that the matrix is singular or ill-
+conditioned then at least one of the three parameters cannot be determined accurately. The way to 
+diagnose the problem is to perform the singular value decomposition of the Hessian matrix  X T X (this 
+Hessian matrix is a positive definite square matrix and SVD is the same as eigenvalue decomposition). 
+This will give three singular values one of which will be very close to 0. The column of right singular 
+matrix (V) corresponding to the 0 singular value is the direction which cannot be resolved by these sets 
+of experiments. There can be two problems; 
+The experimental design is such that you are unable to decouple the dependence of two 
+parameters. 
+The model is such that two parameters always occur in the model with a definite relation. 
+
+1.	
+
+2. 
+
+However in this case it is not practical to do any more experiments. What you should do next is to 
+change variables to θ such that 
+
+Tθ= V p  
+
+15 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+Again coming back to the equation that we had to solve 
+
+⎡ X X   ⎤ ∆ =p  −∇ χ 
+| pm ⎦
+T 
+2
+p 
+⎣ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Eqn
+
+1
+
+ 
+
+ 
+
+⎤
+Here  ∆p  is the update in the parameter values. We also know that  ⎡
+⎦ is a symmetric square 
+⎣
+⎤
+⎦  is just the eigenvalue decomposition and can be written as 
+
+matrix. Thus the SVD of  ⎡
+⎣
+
+X X | pm 
+T
+
+X X | pm 
+T
+
+⎡ X X |  m 
+⎤ = ΣV V
+T
+p  ⎦
+⎣ 
+
+T
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Eqn
+
+2
+
+ 
+
+ 
+
+Substituting this equation 2 back into the equation 1 we obtain the following  
+
+V V   p   −∇ p
+T 
+2
+Σ ∆ = χ 
+
+Now since we are transforming the variables from p to θ, we can write down the following 
+
+V Σ∆θ= −∇ χ2 
+p 
+
+In the above equation we will ignore the values of  ∆θ that correspond to the 0 eigenalues. The rest of 
+the eigenvalues are solved easily as follows. 
+1  V T 
+[
+∆ = 
+θi 
+σi 
+
+(−∇ χ )]
+2 
+p 
+i 
+
+Eqn
+
+3
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+The above equation shows that the data that we have is sufficient to determine the values of θthat 
+correspond to the columns of V which have a corresponding non-zero singular value. The error in these 
+1
+.  The 95% confidence intervals on the parameters θ is given below
+σi 
+
+directions is proportional to 
+
+θ  θ =  i M
+i 
+, 
+
+Z 2.5 
+ ±
+iσ
+
+, 
+
+Where θ,
+ is best value of θi   calculated using equation 3. 
+i M  
+
+16 
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+Functions given in the problem statements: 
+
+function h=thickness(angle,area,leaf_tension,drop_air_tension,rho) 
+
+% computes the droplet height above a mistletoe leaf predicted by the model %  of  
+
+Frosty and Claus.  
+
+%  Written by Peter Postdoc, Dec. 15, 2006  
+
+   
+% inputs:  
+
+  
+%  angle [=] radians that the leaf normal makes with vertical. For a leaf lying  
+
+% 
+flat, angle=0.  
+
+      
+%  area [=] cm2   area of the leaf wetted by the droplet  
+
+ 
+  
+surface tension at the droplet/leaf interface  
+
+   
+ 
+leaf_tension [=] N/m 
+% 
+ 
+%  drop_air_tension [=] N/m  surface tension at droplet/air interface  
+
+%  rho [=] g/cm3  density of the liquid in the droplet  
+
+  
+% output:  
+
+  
+%  h [=] cm    maximum thickness of the droplet   
+
+
+function derivs=dh_dp(angle,area,leaf_tension,drop_air_tension,rho) 
+
+% computes the partial derivatives of the droplet thickness  
+
+% with respect to surface tensions and density,  
+
+% as predicted by the model of Frosty and Claus.  
+
+%  Written by Peter Postdoc, Dec. 15, 2006  
+
+   
+% inputs:  
+
+  
+%  angle [=] radians that the leaf normal makes with vertical. For a leaf lying  
+
+% 
+flat, angle=0.  
+
+      
+%  area [=] cm2   area of the leaf wetted by the droplet  
+
+ 
+  
+   
+ 
+leaf_tension [=] N/m 
+surface tension at the droplet/leaf interface  
+
+% 
+%  drop_air_tension [=] N/m  surface tension at droplet/air interface  
+
+ 
+ 
+%  rho [=] g/cm3  density of the liquid in the droplet  
+
+  
+ 
+% output:  
+
+ 
+%  derivs is a 3-vector with components:  
+
+%  derivs(1) [=] cm/(N/m)  d(thickness of the droplet)/d(leaf-drop tension)  
+
+  
+%  derivs(2) [=] cm/(N/m)  d(thickness of the droplet)/d(air-drop tension)  
+
+  
+  
+%  derivs(3) [=] cm/(g/cm3)  d(thickness of the droplet)/d(rho)  
+
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to Chemical Engineering, Fall 2006.
+MIT OpenCourseWare (http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY].
+
+17 
+
+

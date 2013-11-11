@@ -1,0 +1,1432 @@
+10
+
+“mcs-ftl” — 2010/9/8 — 0:40 — page 283 — #289
+
+(for n (cid:21) 2):
+
+Recurrences
+A recurrence describes a sequence of numbers. Early terms are speciﬁed explic-
+itly and later terms are expressed as a function of their predecessors. As a trivial
+example, this recurrence describes the sequence 1, 2, 3, etc.:
+T1 D 1
+Tn D Tn(cid:0)1 C 1
+Here, the ﬁrst term is deﬁned to be 1 and each subsequent term is one more than its
+predecessor.
+Recurrences turn out to be a powerful tool. In this chapter, we’ll emphasize using
+recurrences to analyze the performance of recursive algorithms. However, recur-
+rences have other applications in computer science as well, such as enumeration of
+structures and analysis of random processes. And, as we saw in Section 9.4, they
+also arise in the analysis of problems in the physical sciences.
+A recurrence in isolation is not a very useful description of a sequence. One
+can not easily answer simple questions such as, “What is the hundredth term?” or
+“What is the asymptotic growth rate?” So one typically wants to solve a recurrence;
+that is, to ﬁnd a closed-form expression for the nth term.
+We’ll ﬁrst introduce two general solving techniques: guess-and-verify and plug-
+and-chug. These methods are applicable to every recurrence, but their success re-
+quires a ﬂash of insight—sometimes an unrealistically brilliant ﬂash. So we’ll also
+introduce two big classes of recurrences, linear and divide-and-conquer, that often
+come up in computer science. Essentially all recurrences in these two classes are
+solvable using cookbook techniques; you follow the recipe and get the answer. A
+drawback is that calculation replaces insight. The “Aha!” moment that is essential
+in the guess-and-verify and plug-and-chug methods is replaced by a “Huh” at the
+end of a cookbook procedure.
+At the end of the chapter, we’ll develop rules of thumb to help you assess many
+recurrences without any calculation. These rules can help you distinguish promis-
+ing approaches from bad ideas early in the process of designing an algorithm.
+Recurrences are one aspect of a broad theme in computer science: reducing a big
+problem to progressively smaller problems until easy base cases are reached. This
+same idea underlies both induction proofs and recursive algorithms. As we’ll see,
+all three ideas snap together nicely. For example, one might describe the running
+time of a recursive algorithm with a recurrence and use induction to verify the
+solution.
+
+1“mcs-ftl” — 2010/9/8 — 0:40 — page 284 — #290
+
+Chapter 10 Recurrences
+
+Figure 10.1 The initial conﬁguration of the disks in the Towers of Hanoi problem.
+
+10.1 The Towers of Hanoi
+
+According to legend, there is a temple in Hanoi with three posts and 64 gold disks
+of different sizes. Each disk has a hole through the center so that it ﬁts on a post.
+In the misty past, all the disks were on the ﬁrst post, with the largest on the bottom
+and the smallest on top, as shown in Figure 10.1.
+Monks in the temple have labored through the years since to move all the disks
+to one of the other two posts according to the following rules:
+(cid:15) The only permitted action is removing the top disk from one post and drop-
+ping it onto another post.
+(cid:15) A larger disk can never lie above a smaller disk on any post.
+So, for example, picking up the whole stack of disks at once and dropping them on
+another post is illegal. That’s good, because the legend says that when the monks
+complete the puzzle, the world will end!
+To clarify the problem, suppose there were only 3 gold disks instead of 64. Then
+the puzzle could be solved in 7 steps as shown in Figure 10.2.
+The questions we must answer are, “Given sufﬁcient time, can the monks suc-
+ceed?” If so, “How long until the world ends?” And, most importantly, “Will this
+happen before the ﬁnal exam?”
+
+10.1.1 A Recursive Solution
+The Towers of Hanoi problem can be solved recursively. As we describe the pro-
+cedure, we’ll also analyze the running time. To that end, let Tn be the minimum
+number of steps required to solve the n-disk problem. For example, some experi-
+mentation shows that T1 D 1 and T2 = 3. The procedure illustrated above shows
+that T3 is at most 7, though there might be a solution with fewer steps.
+The recursive solution has three stages, which are described below and illustrated
+in Figure 10.3. For clarity, the largest disk is shaded in the ﬁgures.
+
+2“mcs-ftl” — 2010/9/8 — 0:40 — page 285 — #291
+
+10.1. The Towers of Hanoi
+
+Figure 10.2 The 7-step solution to the Towers of Hanoi problem when there are
+n D 3 disks.
+
+Figure 10.3 A recursive solution to the Towers of Hanoi problem.
+
+12345671233“mcs-ftl” — 2010/9/8 — 0:40 — page 286 — #292
+
+Chapter 10 Recurrences
+Stage 1. Move the top n(cid:0)1 disks from the ﬁrst post to the second using the solution
+for n (cid:0) 1 disks. This can be done in Tn(cid:0)1 steps.
+Stage 2. Move the largest disk from the ﬁrst post to the third post. This takes just
+1 step.
+Stage 3. Move the n (cid:0) 1 disks from the second post to the third post, again using
+the solution for n (cid:0) 1 disks. This can also be done in Tn(cid:0)1 steps.
+
+This algorithm shows that Tn , the minimum number of steps required to move n
+disks to a different post, is at most Tn(cid:0)1 C 1 C Tn(cid:0)1 D 2Tn(cid:0)1 C 1. We can use this
+fact to upper bound the number of operations required to move towers of various
+heights:
+
+T3  2 (cid:1) T2 C 1 D 7
+T4  2 (cid:1) T3 C 1  15
+Continuing in this way, we could eventually compute an upper bound on T64 , the
+number of steps required to move 64 disks. So this algorithm answers our ﬁrst
+question: given sufﬁcient time, the monks can ﬁnish their task and end the world.
+This is a shame. After all that effort, they’d probably want to smack a few high-ﬁves
+and go out for burgers and ice cream, but nope—world’s over.
+
+10.1.2 Finding a Recurrence
+We can not yet compute the exact number of steps that the monks need to move
+the 64 disks, only an upper bound. Perhaps, having pondered the problem since the
+beginning of time, the monks have devised a better algorithm.
+In fact, there is no better algorithm, and here is why. At some step, the monks
+must move the largest disk from the ﬁrst post to a different post. For this to happen,
+the n (cid:0) 1 smaller disks must all be stacked out of the way on the only remaining
+post. Arranging the n (cid:0) 1 smaller disks this way requires at least Tn(cid:0)1 moves. After
+the largest disk is moved, at least another Tn(cid:0)1 moves are required to pile the n (cid:0) 1
+smaller disks on top.
+This argument shows that the number of steps required is at least 2Tn(cid:0)1 C 1.
+Since we gave an algorithm using exactly that number of steps, we can now write
+an expression for Tn , the number of moves required to complete the Towers of
+Hanoi problem with n disks:
+T1 D 1
+Tn D 2Tn(cid:0)1 C 1
+
+(for n (cid:21) 2):
+
+4“mcs-ftl” — 2010/9/8 — 0:40 — page 287 — #293
+
+10.1. The Towers of Hanoi
+
+This is a typical recurrence. These two lines deﬁne a sequence of values, T1 ; T2 ; T3 ; : : :.
+The ﬁrst line says that the ﬁrst number in the sequence, T1 , is equal to 1. The sec-
+ond line deﬁnes every other number in the sequence in terms of its predecessor. So
+we can use this recurrence to compute any number of terms in the sequence:
+T1 D 1
+T2 D 2 (cid:1) T1 C 1 D 3
+T3 D 2 (cid:1) T2 C 1 D 7
+T4 D 2 (cid:1) T3 C 1 D 15
+T5 D 2 (cid:1) T4 C 1 D 31
+T6 D 2 (cid:1) T5 C 1 D 63:
+10.1.3 Solving the Recurrence
+We could determine the number of steps to move a 64-disk tower by computing T7 ,
+T8 , and so on up to T64 . But that would take a lot of work. It would be nice to have
+a closed-form expression for Tn , so that we could quickly ﬁnd the number of steps
+required for any given number of disks. (For example, we might want to know how
+much sooner the world would end if the monks melted down one disk to purchase
+burgers and ice cream before the end of the world.)
+There are several methods for solving recurrence equations. The simplest is to
+guess the solution and then verify that the guess is correct with an induction proof.
+As a basis for a good guess, let’s look for a pattern in the values of Tn computed
+above: 1, 3, 7, 15, 31, 63. A natural guess is Tn D 2n (cid:0) 1. But whenever you guess
+a solution to a recurrence, you should always verify it with a proof, typically by
+induction. After all, your guess might be wrong. (But why bother to verify in this
+case? After all, if we’re wrong, its not the end of the... no, let’s check.)
+Claim 10.1.1. Tn D 2n (cid:0) 1 satisﬁes the recurrence:
+T1 D 1
+(for n (cid:21) 2):
+Tn D 2Tn(cid:0)1 C 1
+Proof. The proof is by induction on n. The induction hypothesis is that Tn D
+2n (cid:0) 1. This is true for n D 1 because T1 D 1 D 21 (cid:0) 1. Now assume that
+Tn(cid:0)1 D 2n(cid:0)1 (cid:0) 1 in order to prove that Tn D 2n (cid:0) 1, where n (cid:21) 2:
+Tn D 2Tn(cid:0)1 C 1
+D 2.2n(cid:0)1 (cid:0) 1/ C 1
+D 2n (cid:0) 1:
+
+5“mcs-ftl” — 2010/9/8 — 0:40 — page 288 — #294
+
+Chapter 10 Recurrences
+
+The ﬁrst equality is the recurrence equation, the second follows from the induction
+(cid:4)
+assumption, and the last step is simpliﬁcation.
+
+Such veriﬁcation proofs are especially tidy because recurrence equations and
+induction proofs have analogous structures. In particular, the base case relies on
+the ﬁrst line of the recurrence, which deﬁnes T1 . And the inductive step uses the
+second line of the recurrence, which deﬁnes Tn as a function of preceding terms.
+Our guess is veriﬁed. So we can now resolve our remaining questions about the
+64-disk puzzle. Since T64 D 264 (cid:0) 1, the monks must complete more than 18
+billion billion steps before the world ends. Better study for the ﬁnal.
+
+10.1.4 The Upper Bound Trap
+When the solution to a recurrence is complicated, one might try to prove that some
+simpler expression is an upper bound on the solution. For example, the exact so-
+lution to the Towers of Hanoi recurrence is Tn D 2n (cid:0) 1. Let’s try to prove the
+“nicer” upper bound Tn  2n , proceeding exactly as before.
+Proof. (Failed attempt.) The proof is by induction on n. The induction hypothesis
+is that Tn  2n . This is true for n D 1 because T1 D 1  21 . Now assume that
+Tn(cid:0)1  2n(cid:0)1 in order to prove that Tn  2n , where n (cid:21) 2:
+Tn D 2Tn(cid:0)1 C 1
+ 2.2n(cid:0)1 / C 1
+  Uh-oh!
+6 2n
+
+The ﬁrst equality is the recurrence relation, the second follows from the induction
+(cid:4)
+hypothesis, and the third step is a ﬂaming train wreck.
+
+The proof doesn’t work! As is so often the case with induction proofs, the ar-
+gument only goes through with a stronger hypothesis. This isn’t to say that upper
+bounding the solution to a recurrence is hopeless, but this is a situation where in-
+duction and recurrences do not mix well.
+
+10.1.5 Plug and Chug
+Guess-and-verify is a simple and general way to solve recurrence equations. But
+there is one big drawback: you have to guess right. That was not hard for the
+Towers of Hanoi example. But sometimes the solution to a recurrence has a strange
+form that is quite difﬁcult to guess. Practice helps, of course, but so can some other
+methods.
+
+6“mcs-ftl” — 2010/9/8 — 0:40 — page 289 — #295
+
+10.1. The Towers of Hanoi
+
+Plug-and-chug is another way to solve recurrences. This is also sometimes called
+“expansion” or “iteration”. As in guess-and-verify, the key step is identifying a
+pattern. But instead of looking at a sequence of numbers, you have to spot a pattern
+in a sequence of expressions, which is sometimes easier. The method consists of
+three steps, which are described below and illustrated with the Towers of Hanoi
+example.
+
+Step 1: Plug and Chug Until a Pattern Appears
+The ﬁrst step is to expand the recurrence equation by alternately “plugging” (apply-
+ing the recurrence) and “chugging” (simplifying the result) until a pattern appears.
+Be careful: too much simpliﬁcation can make a pattern harder to spot. The rule
+to remember—indeed, a rule applicable to the whole of college life—is chug in
+moderation.
+
+Tn D 2Tn(cid:0)1 C 1
+D 2.2Tn(cid:0)2 C 1/ C 1
+plug
+D 4Tn(cid:0)2 C 2 C 1
+chug
+D 4.2Tn(cid:0)3 C 1/ C 2 C 1
+plug
+D 8Tn(cid:0)3 C 4 C 2 C 1
+chug
+D 8.2Tn(cid:0)4 C 1/ C 4 C 2 C 1
+plug
+D 16Tn(cid:0)4 C 8 C 4 C 2 C 1
+chug
+Above, we started with the recurrence equation. Then we replaced Tn(cid:0)1 with
+2Tn(cid:0)2 C 1, since the recurrence says the two are equivalent.
+In the third step,
+we simpliﬁed a little—but not too much! After several similar rounds of plugging
+and chugging, a pattern is apparent. The following formula seems to hold:
+Tn D 2k Tn(cid:0)k C 2k(cid:0)1 C 2k(cid:0)2 C : : : C 22 C 21 C 20
+D 2k Tn(cid:0)k C 2k (cid:0) 1
+Once the pattern is clear, simplifying is safe and convenient. In particular, we’ve
+collapsed the geometric sum to a closed form on the second line.
+
+7“mcs-ftl” — 2010/9/8 — 0:40 — page 290 — #296
+
+Chapter 10 Recurrences
+
+Step 2: Verify the Pattern
+The next step is to verify the general formula with one more round of plug-and-
+chug.
+
+Tn D 2k Tn(cid:0)k C 2k (cid:0) 1
+D 2k .2Tn(cid:0).kC1/ C 1/ C 2k (cid:0) 1
+D 2kC1Tn(cid:0).kC1/ C 2kC1 (cid:0) 1
+
+plug
+chug
+
+The ﬁnal expression on the right is the same as the expression on the ﬁrst line,
+except that k is replaced by k C 1. Surprisingly, this effectively proves that the
+formula is correct for all k . Here is why: we know the formula holds for k D 1,
+because that’s the original recurrence equation. And we’ve just shown that if the
+formula holds for some k (cid:21) 1, then it also holds for k C 1. So the formula holds
+for all k (cid:21) 1 by induction.
+Step 3: Write Tn Using Early Terms with Known Values
+The last step is to express Tn as a function of early terms whose values are known.
+Here, choosing k D n (cid:0) 1 expresses Tn in terms of T1 , which is equal to 1. Sim-
+plifying gives a closed-form expression for Tn :
+Tn D 2n(cid:0)1T1 C 2n(cid:0)1 (cid:0) 1
+D 2n(cid:0)1 (cid:1) 1 C 2n(cid:0)1 (cid:0) 1
+D 2n (cid:0) 1:
+
+We’re done! This is the same answer we got from guess-and-verify.
+Let’s compare guess-and-verify with plug-and-chug.
+In the guess-and-verify
+method, we computed several terms at the beginning of the sequence, T1 , T2 , T3 ,
+etc., until a pattern appeared. We generalized to a formula for the nth term, Tn . In
+contrast, plug-and-chug works backward from the nth term. Speciﬁcally, we started
+with an expression for Tn involving the preceding term, Tn(cid:0)1 , and rewrote this us-
+ing progressively earlier terms, Tn(cid:0)2 , Tn(cid:0)3 , etc. Eventually, we noticed a pattern,
+which allowed us to express Tn using the very ﬁrst term, T1 , whose value we knew.
+Substituting this value gave a closed-form expression for Tn . So guess-and-verify
+and plug-and-chug tackle the problem from opposite directions.
+
+8“mcs-ftl” — 2010/9/8 — 0:40 — page 291 — #297
+
+10.2. Merge Sort
+
+10.2 Merge Sort
+
+Algorithms textbooks traditionally claim that sorting is an important, fundamental
+problem in computer science. Then they smack you with sorting algorithms until
+life as a disk-stacking monk in Hanoi sounds delightful. Here, we’ll cover just one
+well-known sorting algorithm, Merge Sort. The analysis introduces another kind
+of recurrence.
+Here is how Merge Sort works. The input is a list of n numbers, and the output
+is those same numbers in nondecreasing order. There are two cases:
+(cid:15) If the input is a single number, then the algorithm does nothing, because the
+list is already sorted.
+(cid:15) Otherwise, the list contains two or more numbers. The ﬁrst half and the
+second half of the list are each sorted recursively. Then the two halves are
+merged to form a sorted list with all n numbers.
+
+Let’s work through an example. Suppose we want to sort this list:
+
+10, 7, 23, 5, 2, 8, 6, 9.
+
+Since there is more than one number, the ﬁrst half (10, 7, 23, 5) and the second half
+(2, 8, 6, 9) are sorted recursively. The results are 5, 7, 10, 23 and 2, 6, 8, 9. All that
+remains is to merge these two lists. This is done by repeatedly emitting the smaller
+of the two leading terms. When one list is empty, the whole other list is emitted.
+The example is worked out below. In this table, underlined numbers are about to
+be emitted.
+
+First Half
+5, 7, 10, 23
+5, 7, 10, 23
+7, 10, 23
+7, 10, 23
+10, 23
+10, 23
+10, 23
+
+Second Half Output
+2, 6, 8, 9
+6, 8, 9
+6, 8, 9
+8, 9
+8, 9
+9
+
+2
+2, 5
+2, 5, 6
+2, 5, 6, 7
+2, 5, 6, 7, 8
+2, 5, 6, 7, 8, 9
+2, 5, 6, 7, 8, 9, 10, 23
+
+The leading terms are initially 5 and 2. So we output 2. Then the leading terms are
+5 and 6, so we output 5. Eventually, the second list becomes empty. At that point,
+we output the whole ﬁrst list, which consists of 10 and 23. The complete output
+consists of all the numbers in sorted order.
+
+9“mcs-ftl” — 2010/9/8 — 0:40 — page 292 — #298
+
+Chapter 10 Recurrences
+
+10.2.1 Finding a Recurrence
+A traditional question about sorting algorithms is, “What is the maximum number
+of comparisons used in sorting n items?” This is taken as an estimate of the running
+time. In the case of Merge Sort, we can express this quantity with a recurrence. Let
+Tn be the maximum number of comparisons used while Merge Sorting a list of n
+numbers. For now, assume that n is a power of 2. This ensures that the input can
+be divided in half at every stage of the recursion.
+(cid:15) If there is only one number in the list, then no comparisons are required, so
+T1 D 0.
+(cid:15) Otherwise, Tn includes comparisons used in sorting the ﬁrst half (at most
+Tn=2 ), in sorting the second half (also at most Tn=2 ), and in merging the two
+halves. The number of comparisons in the merging step is at most n (cid:0) 1.
+This is because at least one number is emitted after each comparison and one
+more number is emitted at the end when one list becomes empty. Since n
+items are emitted in all, there can be at most n (cid:0) 1 comparisons.
+Therefore, the maximum number of comparisons needed to Merge Sort n items is
+given by this recurrence:
+T1 D 0
+Tn D 2Tn=2 C n (cid:0) 1
+This fully describes the number of comparisons, but not in a very useful way; a
+closed-form expression would be much more helpful. To get that, we have to solve
+the recurrence.
+
+(for n (cid:21) 2 and a power of 2):
+
+10.2.2 Solving the Recurrence
+Let’s ﬁrst try to solve the Merge Sort recurrence with the guess-and-verify tech-
+nique. Here are the ﬁrst few values:
+T1 D 0
+T2 D 2T1 C 2 (cid:0) 1 D 1
+T4 D 2T2 C 4 (cid:0) 1 D 5
+T8 D 2T4 C 8 (cid:0) 1 D 17
+T16 D 2T8 C 16 (cid:0) 1 D 49:
+We’re in trouble! Guessing the solution to this recurrence is hard because there is
+no obvious pattern. So let’s try the plug-and-chug method instead.
+
+10“mcs-ftl” — 2010/9/8 — 0:40 — page 293 — #299
+
+10.2. Merge Sort
+
+Step 1: Plug and Chug Until a Pattern Appears
+First, we expand the recurrence equation by alternately plugging and chugging until
+a pattern appears.
+Tn D 2Tn=2 C n (cid:0) 1
+D 2.2Tn=4 C n=2 (cid:0) 1/ C .n (cid:0) 1/
+D 4Tn=4 C .n (cid:0) 2/ C .n (cid:0) 1/
+D 4.2Tn=8 C n=4 (cid:0) 1/ C .n (cid:0) 2/ C .n (cid:0) 1/
+D 8Tn=8 C .n (cid:0) 4/ C .n (cid:0) 2/ C .n (cid:0) 1/
+D 8.2Tn=16 C n=8 (cid:0) 1/ C .n (cid:0) 4/ C .n (cid:0) 2/ C .n (cid:0) 1/
+D 16Tn=16 C .n (cid:0) 8/ C .n (cid:0) 4/ C .n (cid:0) 2/ C .n (cid:0) 1/
+A pattern is emerging. In particular, this formula seems holds:
+Tn D 2k Tn=2k C .n (cid:0) 2k(cid:0)1 / C .n (cid:0) 2k(cid:0)2 / C : : : C .n (cid:0) 20 /
+D 2k Tn=2k C k n (cid:0) 2k(cid:0)1 (cid:0) 2k(cid:0)2 : : : (cid:0) 20
+D 2k Tn=2k C k n (cid:0) 2k C 1:
+On the second line, we grouped the n terms and powers of 2. On the third, we
+collapsed the geometric sum.
+
+plug
+chug
+plug
+chug
+plug
+chug
+
+Step 2: Verify the Pattern
+Next, we verify the pattern with one additional round of plug-and-chug.
+guessed the wrong pattern, then this is where we’ll discover the mistake.
+Tn D 2k Tn=2k C k n (cid:0) 2k C 1
+D 2k .2Tn=2kC1 C n=2k (cid:0) 1/ C k n (cid:0) 2k C 1
+plug
+D 2kC1Tn=2kC1 C .k C 1/n (cid:0) 2kC1 C 1
+chug
+The formula is unchanged except that k is replaced by k C 1. This amounts to the
+induction step in a proof that the formula holds for all k (cid:21) 1.
+
+If we
+
+11“mcs-ftl” — 2010/9/8 — 0:40 — page 294 — #300
+
+Chapter 10 Recurrences
+
+Step 3: Write Tn Using Early Terms with Known Values
+Finally, we express Tn using early terms whose values are known. Speciﬁcally, if
+we let k D log n, then Tn=2k D T1 , which we know is 0:
+Tn D 2k Tn=2k C k n (cid:0) 2k C 1
+D 2log nTn=2log n C n log n (cid:0) 2log n C 1
+D nT1 C n log n (cid:0) n C 1
+D n log n (cid:0) n C 1:
+We’re done! We have a closed-form expression for the maximum number of com-
+parisons used in Merge Sorting a list of n numbers. In retrospect, it is easy to see
+why guess-and-verify failed: this formula is fairly complicated.
+As a check, we can conﬁrm that this formula gives the same values that we
+computed earlier:
+n log n (cid:0) n C 1
+n Tn
+1 log 1 (cid:0) 1 C 1 D 0
+0
+1
+2 log 2 (cid:0) 2 C 1 D 1
+1
+2
+4 log 4 (cid:0) 4 C 1 D 5
+4
+5
+8 log 8 (cid:0) 8 C 1 D 17
+8
+17
+16 49 16 log 16 (cid:0) 16 C 1 D 49
+As a double-check, we could write out an explicit induction proof. This would be
+straightforward, because we already worked out the guts of the proof in step 2 of
+the plug-and-chug procedure.
+
+10.3 Linear Recurrences
+
+So far we’ve solved recurrences with two techniques: guess-and-verify and plug-
+and-chug. These methods require spotting a pattern in a sequence of numbers or
+expressions. In this section and the next, we’ll give cookbook solutions for two
+large classes of recurrences. These methods require no ﬂash of insight; you just
+follow the recipe and get the answer.
+
+10.3.1 Climbing Stairs
+How many different ways are there to climb n stairs, if you can either step up one
+stair or hop up two? For example, there are ﬁve different ways to climb four stairs:
+
+1. step, step, step, step
+
+12“mcs-ftl” — 2010/9/8 — 0:40 — page 295 — #301
+
+10.3. Linear Recurrences
+
+2. hop, hop
+
+3. hop, step, step
+
+4. step, hop step
+
+5. step, step, hop
+Working through this problem will demonstrate the major features of our ﬁrst cook-
+book method for solving recurrences. We’ll ﬁll in the details of the general solution
+afterward.
+
+Finding a Recurrence
+As special cases, there is 1 way to climb 0 stairs (do nothing) and 1 way to climb
+1 stair (step up). In general, an ascent of n stairs consists of either a step followed
+by an ascent of the remaining n (cid:0) 1 stairs or a hop followed by an ascent of n (cid:0) 2
+stairs. So the total number of ways to climb n stairs is equal to the number of ways
+to climb n (cid:0) 1 plus the number of ways to climb n (cid:0) 2. These observations deﬁne
+a recurrence:
+
+f .0/ D 1
+f .1/ D 1
+for n (cid:21) 2:
+f .n/ D f .n (cid:0) 1/ C f .n (cid:0) 2/
+Here, f .n/ denotes the number of ways to climb n stairs. Also, we’ve switched
+from subscript notation to functional notation, from Tn to fn . Here the change is
+cosmetic, but the expressiveness of functions will be useful later.
+This is the Fibonacci recurrence, the most famous of all recurrence equations.
+Fibonacci numbers arise in all sorts of applications and in nature. Fibonacci intro-
+duced the numbers in 1202 to study rabbit reproduction. Fibonacci numbers also
+appear, oddly enough, in the spiral patterns on the faces of sunﬂowers. And the
+input numbers that make Euclid’s GCD algorithm require the greatest number of
+steps are consecutive Fibonacci numbers.
+
+Solving the Recurrence
+The Fibonacci recurrence belongs to the class of linear recurrences, which are es-
+sentially all solvable with a technique that you can learn in an hour. This is some-
+what amazing, since the Fibonacci recurrence remained unsolved for almost six
+centuries!
+In general, a homogeneous linear recurrence has the form
+f .n/ D a1f .n (cid:0) 1/ C a2f .n (cid:0) 2/ C : : : C ad f .n (cid:0) d /
+
+13“mcs-ftl” — 2010/9/8 — 0:40 — page 296 — #302
+
+Chapter 10 Recurrences
+
+where a1 ; a2 ; : : : ; ad and d are constants. The order of the recurrence is d . Com-
+monly, the value of the function f is also speciﬁed at a few points; these are called
+boundary conditions. For example, the Fibonacci recurrence has order d D 2 with
+coefﬁcients a1 D a2 D 1 and g.n/ D 0. The boundary conditions are f .0/ D 1
+and f .1/ D 1. The word “homogeneous” sounds scary, but effectively means “the
+simpler kind”. We’ll consider linear recurrences with a more complicated form
+later.
+Let’s try to solve the Fibonacci recurrence with the beneﬁt centuries of hindsight.
+In general, linear recurrences tend to have exponential solutions. So let’s guess that
+f .n/ D x n
+where x is a parameter introduced to improve our odds of making a correct guess.
+We’ll ﬁgure out the best value for x later. To further improve our odds, let’s neglect
+the boundary conditions, f .0/ D 0 and f .1/ D 1, for now. Plugging this guess
+into the recurrence f .n/ D f .n (cid:0) 1/ C f .n (cid:0) 2/ gives
+x n D x n(cid:0)1 C x n(cid:0)2 :
+Dividing both sides by x n(cid:0)2 leaves a quadratic equation:
+x 2 D x C 1:
+Solving this equation gives two plausible values for the parameter x :
+x D 1 ˙ p
+2
+!n
+ 
+ 
+!n
+This suggests that there are at least two different solutions to the recurrence, ne-
+glecting the boundary conditions.
+1 (cid:0) p
+1 C p
+f .n/ D
+2
+2
+
+or f .n/ D
+
+5
+
+5
+
+:
+
+5
+
+A charming features of homogeneous linear recurrences is that any linear com-
+bination of solutions is another solution.
+Theorem 10.3.1. If f .n/ and g.n/ are both solutions to a homogeneous linear
+recurrence, then h.n/ D sf .n/ C t g.n/ is also a solution for all s; t 2 R.
+Proof.
+h.n/ D sf .n/ C t g.n/
+D s .a1f .n (cid:0) 1/ C : : : C ad f .n (cid:0) d // C t .a1g.n (cid:0) 1/ C : : : C ad g.n (cid:0) d //
+D a1 .sf .n (cid:0) 1/ C t g.n (cid:0) 1// C : : : C ad .sf .n (cid:0) d / C t g.n (cid:0) d //
+D a1h.n (cid:0) 1/ C : : : C ad h.n (cid:0) d /
+
+14“mcs-ftl” — 2010/9/8 — 0:40 — page 297 — #303
+
+10.3. Linear Recurrences
+
+The ﬁrst step uses the deﬁnition of the function h, and the second uses the fact that
+f and g are solutions to the recurrence. In the last two steps, we rearrange terms
+and use the deﬁnition of h again. Since the ﬁrst expression is equal to the last, h is
+(cid:4)
+also a solution to the recurrence.
+
+5
+
+5
+
+5
+
+5
+
+The phenomenon described in this theorem—a linear combination of solutions is
+another solution—also holds for many differential equations and physical systems.
+In fact, linear recurrences are so similar to linear differential equations that you can
+ 
+!n C t
+ 
+!n
+safely snooze through that topic in some future math class.
+Returning to the Fibonacci recurrence, this theorem implies that
+1 C p
+1 (cid:0) p
+f .n/ D s
+2
+2
+is a solution for all real numbers s and t . The theorem expanded two solutions to
+a whole spectrum of possibilities! Now, given all these options to choose from,
+we can ﬁnd one solution that satisﬁes the boundary conditions, f .0/ D 1 and
+f .1/ D 1. Each boundary condition puts some constraints on the parameters s and
+!0 D s C t D 1:
+ 
+!0 C t
+ 
+t . In particular, the ﬁrst boundary condition implies that
+1 (cid:0) p
+1 C p
+f .0/ D s
+2
+2
+ 
+ 
+!1 C t
+!1 D 1:
+Similarly, the second boundary condition implies that
+1 C p
+1 (cid:0) p
+f .1/ D s
+5
+2
+2
+Now we have two linear equations in two unknowns. The system is not degenerate,
+so there is a unique solution:
+(cid:1) 1 C p
+(cid:1) 1 (cid:0) p
+t D (cid:0) 1p
+s D 1p
+5
+5
+:
+2
+2
+5
+5
+!n (cid:0) 1p
+!n
+ 
+ 
+These values of s and t identify a solution to the Fibonacci recurrence that also
+satisﬁes the boundary conditions:
+(cid:1) 1 (cid:0) p
+(cid:1) 1 C p
+1 (cid:0) p
+1 C p
+f .n/ D 1p
+!nC1 (cid:0) 1p
+!nC1
+ 
+ 
+5
+5
+5
+2
+2
+2
+2
+5
+5
+1 (cid:0) p
+1 C p
+D 1p
+5
+2
+2
+5
+5
+
+5
+
+5
+
+5
+
+:
+
+15“mcs-ftl” — 2010/9/8 — 0:40 — page 298 — #304
+
+Chapter 10 Recurrences
+
+It is easy to see why no one stumbled across this solution for almost six centuries!
+All Fibonacci numbers are integers, but this expression is full of square roots of
+ﬁve! Amazingly, the square roots always cancel out. This expression really does
+give the Fibonacci numbers if we plug in n D 0; 1; 2, etc.
+ﬁrst term tends to inﬁnity because the base of the exponential, .1 C p
+This closed-form for Fibonacci numbers has some interesting corollaries. The
+5/=2 D
+ratio”. The second term tends to zero, because .1 (cid:0) p
+1:618 : : : is greater than one. This value is often denoted (cid:30) and called the “golden
+5/=2 D (cid:0)0:618033988 : : :
+has absolute value less than 1. This implies that the nth Fibonacci number is:
+f .n/ D (cid:30) nC1p
+C o.1/:
+5
+Remarkably, this expression involving irrational numbers is actually very close to
+an integer for all large n—namely, a Fibonacci number! For example:
+D 6765:000029 : : : (cid:25) f .19/:
+(cid:30) 20p
+5
+This also implies that the ratio of consecutive Fibonacci numbers rapidly approaches
+the golden ratio. For example:
+D 10946
+6765
+
+D 1:618033998 : : : :
+
+f .20/
+
+f .19/
+
+10.3.2 Solving Homogeneous Linear Recurrences
+The method we used to solve the Fibonacci recurrence can be extended to solve
+any homogeneous linear recurrence; that is, a recurrence of the form
+f .n/ D a1f .n (cid:0) 1/ C a2f .n (cid:0) 2/ C : : : C ad f .n (cid:0) d /
+where a1 ; a2 ; : : : ; ad and d are constants. Substituting the guess f .n/ D x n , as
+with the Fibonacci recurrence, gives
+x n D a1x n(cid:0)1 C a2x n(cid:0)2 C : : : C ad x n(cid:0)d :
+Dividing by x n(cid:0)d gives
+x d D a1x d (cid:0)1 C a2x d (cid:0)2 C : : : C ad (cid:0)1x C ad :
+This is called the characteristic equation of the recurrence. The characteristic equa-
+tion can be read off quickly since the coefﬁcients of the equation are the same as
+the coefﬁcients of the recurrence.
+The solutions to a linear recurrence are deﬁned by the roots of the characteristic
+equation. Neglecting boundary conditions for the moment:
+
+16“mcs-ftl” — 2010/9/8 — 0:40 — page 299 — #305
+
+10.3. Linear Recurrences
+(cid:15) If r is a nonrepeated root of the characteristic equation, then r n is a solution
+to the recurrence.
+(cid:15) If r is a repeated root with multiplicity k then r n , nr n , n2 r n , . . . , nk(cid:0)1 r n
+are all solutions to the recurrence.
+
+Theorem 10.3.1 implies that every linear combination of these solutions is also a
+solution.
+For example, suppose that the characteristic equation of a recurrence has roots s ,
+t , and u twice. These four roots imply four distinct solutions:
+f .n/ D s n
+f .n/ D t n
+f .n/ D un
+f .n/ D nun :
+Furthermore, every linear combination
+f .n/ D a (cid:1) s n C b (cid:1) t n C c (cid:1) un C d (cid:1) nun
+
+(10.1)
+
+is also a solution.
+All that remains is to select a solution consistent with the boundary conditions
+by choosing the constants appropriately. Each boundary condition implies a linear
+equation involving these constants. So we can determine the constants by solving
+a system of linear equations. For example, suppose our boundary conditions were
+f .0/ D 0, f .1/ D 1, f .2/ D 4, and f .3/ D 9. Then we would obtain four
+equations in four unknowns:
+f .0/ D 0 ) a (cid:1) s 0 C b (cid:1) t 0 C c (cid:1) u0 C d (cid:1) 0u0 D 0
+f .1/ D 1 ) a (cid:1) s 1 C b (cid:1) t 1 C c (cid:1) u1 C d (cid:1) 1u1 D 1
+f .2/ D 4 ) a (cid:1) s 2 C b (cid:1) t 2 C c (cid:1) u2 C d (cid:1) 2u2 D 4
+f .3/ D 9 ) a (cid:1) s 3 C b (cid:1) t 3 C c (cid:1) u3 C d (cid:1) 3u3 D 9
+This looks nasty, but remember that s , t , and u are just constants. Solving this sys-
+tem gives values for a, b , c , and d that deﬁne a solution to the recurrence consistent
+with the boundary conditions.
+
+10.3.3 Solving General Linear Recurrences
+We can now solve all linear homogeneous recurrences, which have the form
+f .n/ D a1f .n (cid:0) 1/ C a2f .n (cid:0) 2/ C : : : C ad f .n (cid:0) d /:
+Many recurrences that arise in practice do not quite ﬁt this mold. For example, the
+Towers of Hanoi problem led to this recurrence:
+f .1/ D 1
+f .n/ D 2f .n (cid:0) 1/ C 1
+
+(for n (cid:21) 2):
+
+17“mcs-ftl” — 2010/9/8 — 0:40 — page 300 — #306
+
+Chapter 10 Recurrences
+The problem is the extra C1; that is not allowed in a homogeneous linear recur-
+rence. In general, adding an extra function g.n/ to the right side of a linear recur-
+rence gives an inhomogeneous linear recurrence:
+f .n/ D a1f .n (cid:0) 1/ C a2f .n (cid:0) 2/ C : : : C ad f .n (cid:0) d / C g.n/:
+Solving inhomogeneous linear recurrences is neither very different nor very dif-
+ﬁcult. We can divide the whole job into ﬁve steps:
+
+1. Replace g.n/ by 0, leaving a homogeneous recurrence. As before, ﬁnd roots
+of the characteristic equation.
+
+2. Write down the solution to the homogeneous recurrence, but do not yet use
+the boundary conditions to determine coefﬁcients. This is called the homo-
+geneous solution.
+
+3. Now restore g.n/ and ﬁnd a single solution to the recurrence, ignoring bound-
+ary conditions. This is called a particular solution. We’ll explain how to ﬁnd
+a particular solution shortly.
+
+4. Add the homogeneous and particular solutions together to obtain the general
+solution.
+
+5. Now use the boundary conditions to determine constants by the usual method
+of generating and solving a system of linear equations.
+
+As an example, let’s consider a variation of the Towers of Hanoi problem. Sup-
+pose that moving a disk takes time proportional to its size. Speciﬁcally, moving the
+smallest disk takes 1 second, the next-smallest takes 2 seconds, and moving the nth
+disk then requires n seconds instead of 1. So, in this variation, the time to complete
+the job is given by a recurrence with a Cn term instead of a C1:
+f .1/ D 1
+f .n/ D 2f .n (cid:0) 1/ C n
+
+for n (cid:21) 2:
+
+Clearly, this will take longer, but how much longer? Let’s solve the recurrence with
+the method described above.
+In Steps 1 and 2, dropping the Cn leaves the homogeneous recurrence f .n/ D
+2f .n (cid:0) 1/. The characteristic equation is x D 2. So the homogeneous solution is
+f .n/ D c 2n .
+In Step 3, we must ﬁnd a solution to the full recurrence f .n/ D 2f .n (cid:0) 1/ C n,
+without regard to the boundary condition. Let’s guess that there is a solution of the
+
+18“mcs-ftl” — 2010/9/8 — 0:40 — page 301 — #307
+
+10.3. Linear Recurrences
+form f .n/ D a n C b for some constants a and b . Substituting this guess into the
+recurrence gives
+
+a n C b D 2.a.n (cid:0) 1/ C b / C n
+0 D .a C 1/n C .b (cid:0) 2a/:
+The second equation is a simpliﬁcation of the ﬁrst. The second equation holds for
+all n if both a C 1 D 0 (which implies a D (cid:0)1) and b (cid:0) 2a D 0 (which implies
+that b D (cid:0)2). So f .n/ D a n C b D (cid:0)n (cid:0) 2 is a particular solution.
+In the Step 4, we add the homogeneous and particular solutions to obtain the
+general solution
+
+f .n/ D c 2n (cid:0) n (cid:0) 2 :
+Finally, in step 5, we use the boundary condition, f .1/ D 1, determine the value
+of the constant c :
+
+f .1/ D 1 ) c 21 (cid:0) 1 (cid:0) 2 D 1
+) c D 2 :
+Therefore, the function f .n/ D 2 (cid:1) 2n (cid:0) n (cid:0) 2 solves this variant of the Towers
+of Hanoi recurrence. For comparison, the solution to the original Towers of Hanoi
+problem was 2n (cid:0) 1. So if moving disks takes time proportional to their size, then
+the monks will need about twice as much time to solve the whole puzzle.
+
+10.3.4 How to Guess a Particular Solution
+Finding a particular solution can be the hardest part of solving inhomogeneous
+recurrences. This involves guessing, and you might guess wrong.1 However, some
+rules of thumb make this job fairly easy most of the time.
+(cid:15) Generally, look for a particular solution with the same form as the inhomo-
+geneous term g.n/.
+(cid:15) If g.n/ is a constant, then guess a particular solution f .n/ D c . If this doesn’t
+work, try polynomials of progressively higher degree: f .n/ D b n C c , then
+f .n/ D a n2 C b n C c , etc.
+(cid:15) More generally, if g.n/ is a polynomial, try a polynomial of the same degree,
+then a polynomial of degree one higher, then two higher, etc. For example,
+if g.n/ D 6 n C 5, then try f .n/ D b n C c and then f .n/ D a n2 C b n C c .
+1 In Chapter 12, we will show how to solve linear recurrences with generating functions—it’s a
+little more complicated, but it does not require guessing.
+
+19“mcs-ftl” — 2010/9/8 — 0:40 — page 302 — #308
+
+Chapter 10 Recurrences
+(cid:15) If g.n/ is an exponential, such as 3n , then ﬁrst guess that f .n/ D c 3n .
+Failing that, try f .n/ D b n3n C c 3n and then a n23n C b n3n C c 3n , etc.
+
+The entire process is summarized on the following page.
+
+10.4 Divide-and-Conquer Recurrences
+
+We now have a recipe for solving general linear recurrences. But the Merge Sort
+recurrence, which we encountered earlier, is not linear:
+T .1/ D 0
+T .n/ D 2T .n=2/ C n (cid:0) 1
+
+(for n (cid:21) 2):
+
+ai T .bi n/ C g.n/
+
+In particular, T .n/ is not a linear combination of a ﬁxed number of immediately
+preceding terms; rather, T .n/ is a function of T .n=2/, a term halfway back in the
+sequence.
+Merge Sort is an example of a divide-and-conquer algorithm: it divides the in-
+put, “conquers” the pieces, and combines the results. Analysis of such algorithms
+T .n/ D kX
+commonly leads to divide-and-conquer recurrences, which have this form:
+i D1
+Here a1 ; : : : ak are positive constants, b1 ; : : : ; bk are constants between 0 and 1,
+and g.n/ is a nonnegative function. For example, setting a1 D 2, b1 D 1=2, and
+g.n/ D n (cid:0) 1 gives the Merge Sort recurrence.
+10.4.1 The Akra-Bazzi Formula
+The solution to virtually all divide and conquer solutions is given by the amazing
+Akra-Bazzi formula. Quite simply, the asymptotic solution to the general divide-
+T .n/ D kX
+and-conquer recurrence
+ai T .bi n/ C g.n/
+i D1
+
+
+1 C Z n
+1
+
+
+g.u/
+upC1 d u
+
+(10.2)
+
+is
+
+T .n/ D ‚
+
+np
+
+20“mcs-ftl” — 2010/9/8 — 0:40 — page 303 — #309
+
+10.4. Divide-and-Conquer Recurrences
+
+Short Guide to Solving Linear Recurrences
+„ ƒ‚ …
+„
+ƒ‚
+…
+A linear recurrence is an equation
+C g.n/
+f .n/ D a1f .n (cid:0) 1/ C a2f .n (cid:0) 2/ C : : : C ad f .n (cid:0) d /
+inhomogeneous part
+homogeneous part
+together with boundary conditions such as f .0/ D b0 , f .1/ D b1 , etc. Linear
+recurrences are solved as follows:
+
+1. Find the roots of the characteristic equation
+x n D a1x n(cid:0)1 C a2x n(cid:0)2 C : : : C ak(cid:0)1x C ak :
+2. Write down the homogeneous solution. Each root generates one term and
+the homogeneous solution is their sum. A nonrepeated root r generates the
+term c r n , where c is a constant to be determined later. A root r with multi-
+plicity k generates the terms
+dk nk(cid:0)1 r n
+d3n2 r n
+d2nr n
+d1 r n
+: : :
+where d1 ; : : : dk are constants to be determined later.
+3. Find a particular solution. This is a solution to the full recurrence that need
+not be consistent with the boundary conditions. Use guess-and-verify.
+If
+g.n/ is a constant or a polynomial, try a polynomial of the same degree, then
+of one higher degree, then two higher. For example, if g.n/ D n, then try
+f .n/ D b n C c and then a n2 C b n C c . If g.n/ is an exponential, such as 3n ,
+then ﬁrst guess f .n/ D c 3n . Failing that, try f .n/ D .b n C c /3n and then
+.a n2 C b n C c /3n , etc.
+4. Form the general solution, which is the sum of the homogeneous solution
+„ ƒ‚ …
+„
+ƒ‚
+…
+and the particular solution. Here is a typical general solution:
+f .n/ D c 2n C d .(cid:0)1/n
+C
+3n C 1.
+inhomogeneous solution
+homogeneous solution
+5. Substitute the boundary conditions into the general solution. Each boundary
+condition gives a linear equation in the unknown constants. For example,
+substituting f .1/ D 2 into the general solution above gives
+2 D c (cid:1) 21 C d (cid:1) .(cid:0)1/1 C 3 (cid:1) 1 C 1
+) (cid:0)2 D 2c (cid:0) d :
+Determine the values of these constants by solving the resulting system of
+linear equations.
+
+21“mcs-ftl” — 2010/9/8 — 0:40 — page 304 — #310
+
+Chapter 10 Recurrences
+
+ai bp
+i
+
+(10.3)
+
+n
+
+n
+
+D 1:
+
+where p satisﬁes
+
+kX
+i D1
+A rarely-troublesome requirement is that the function g.n/ must not grow or
+0
+oscillate too quickly. Speciﬁcally, jg
+.n/j must be bounded by some polynomial.
+So, for example, the Akra-Bazzi formula is valid when g.n/ D x 2 log n, but not
+when g.n/ D 2n .
+Let’s solve the Merge Sort recurrence again, using the Akra-Bazzi formula in-
+stead of plug-and-chug. First, we ﬁnd the value p that satisﬁes
+2 (cid:1) .1=2/p D 1:
+
+
+
+1 C Z n
+Looks like p D 1 does the job. Then we compute the integral:
+u (cid:0) 1
+
+n
+1 C 
+
+
+T .n/ D ‚
+u2 d u
+1
+
+
+
+log u C 1
+D ‚
+u
+1
+D ‚
+log n C 1
+n
+n
+D ‚ .n log n/ :
+The ﬁrst step is integration and the second is simpliﬁcation. We can drop the 1=n
+term in the last step, because the log n term dominates. We’re done!
+Let’s try a scary-looking recurrence:
+T .n/ D 2T .n=2/ C 8=9T .3n=4/ C n2 :
+Here, a1 D 2, b1 D 1=2, a2 D 8=9, and b2 D 3=4. So we ﬁnd the value p that
+satisﬁes
+2 (cid:1) .1=2/p C .8=9/.3=4/p D 1:
+Equations of this form don’t always have closed-form solutions, so you may need
+
+
+
+1 C Z n
+to approximate p numerically sometimes. But in this case the solution is simple:
+p D 2. Then we integrate:
+D ‚ (cid:0)n2 .1 C log n/(cid:1)
+T .n/ D ‚
+u2
+n2
+u3 d u
+D ‚ (cid:0)n2 log n(cid:1) :
+1
+
+That was easy!
+
+22“mcs-ftl” — 2010/9/8 — 0:40 — page 305 — #311
+
+10.4. Divide-and-Conquer Recurrences
+
+10.4.2 Two Technical Issues
+Until now, we’ve swept a couple issues related to divide-and-conquer recurrences
+under the rug. Let’s address those issues now.
+First, the Akra-Bazzi formula makes no use of boundary conditions. To see why,
+let’s go back to Merge Sort. During the plug-and-chug analysis, we found that
+Tn D nT1 C n log n (cid:0) n C 1:
+This expresses the nth term as a function of the ﬁrst term, whose value is speciﬁed
+in a boundary condition. But notice that Tn D ‚.n log n/ for every value of T1 .
+The boundary condition doesn’t matter!
+the asymptotic solution to a divide-and-conquer
+This is the typical situation:
+recurrence is independent of the boundary conditions. Intuitively, if the bottom-
+level operation in a recursive algorithm takes, say, twice as long, then the overall
+running time will at most double. This matters in practice, but the factor of 2 is
+concealed by asymptotic notation. There are corner-case exceptions. For example,
+the solution to T .n/ D 2T .n=2/ is either ‚.n/ or zero, depending on whether
+T .1/ is zero. These cases are of little practical interest, so we won’t consider them
+further.
+There is a second nagging issue with divide-and-conquer recurrences that does
+not arise with linear recurrences. Speciﬁcally, dividing a problem of size n may
+create subproblems of non-integer size. For example, the Merge Sort recurrence
+contains the term T .n=2/. So what if n is 15? How long does it take to sort seven-
+and-a-half items? Previously, we dodged this issue by analyzing Merge Sort only
+when the size of the input was a power of 2. But then we don’t know what happens
+for an input of size, say, 100.
+Of course, a practical implementation of Merge Sort would split the input ap-
+proximately in half, sort the halves recursively, and merge the results. For example,
+a list of 15 numbers would be split into lists of 7 and 8. More generally, a list of n
+numbers would be split into approximate halves of size dn=2e and bn=2c. So the
+maximum number of comparisons is actually given by this recurrence:
+T .1/ D 0
+T .n/ D T .dn=2e/ C T .bn=2c/ C n (cid:0) 1
+
+(for n (cid:21) 2):
+
+This may be rigorously correct, but the ceiling and ﬂoor operations make the recur-
+rence hard to solve exactly.
+Fortunately, the asymptotic solution to a divide and conquer recurrence is un-
+affected by ﬂoors and ceilings. More precisely, the solution is not changed by
+replacing a term T .bi n/ with either T .dbi ne/ or T .bbi nc/. So leaving ﬂoors and
+
+23“mcs-ftl” — 2010/9/8 — 0:40 — page 306 — #312
+
+Chapter 10 Recurrences
+
+ceilings out of divide-and-conquer recurrences makes sense in many contexts; those
+are complications that make no difference.
+
+10.4.3 The Akra-Bazzi Theorem
+The Akra-Bazzi formula together with our assertions about boundary conditions
+and integrality all follow from the Akra-Bazzi Theorem, which is stated below.
+Theorem 10.4.1 (Akra-Bazzi). Suppose that the function T W R ! R satisﬁes the
+8ˆ<ˆ:is nonnegative and bounded
+recurrence
+kP
+ai T .bi x C hi .x // C g.x /
+i D1
+1. a1 ; : : : ; ak are positive constants.
+
+for 0  x  x0
+for x > x0
+
+T .x / D
+
+where:
+
+2. b1 ; : : : ; bk are constants between 0 and 1.
+
+where p satisﬁes
+
+T .x / D ‚
+
+3. x0 is large enough so that T is well-deﬁned.
+0
+4. g.x / is a nonnegative function such that jg
+.x /j is bounded by a polynomial.
+5. jhi .x /j D O .x = log2 x /.
+
+
+
+1 C Z x
+Then
+g.u/
+upC1 d u
+xp
+kX
+1
+i D1
+The Akra-Bazzi theorem can be proved using a complicated induction argument,
+though we won’t do that here. But let’s at least go over the statement of the theorem.
+All the recurrences we’ve considered were deﬁned over the integers, and that is
+the common case. But the Akra-Bazzi theorem applies more generally to functions
+deﬁned over the real numbers.
+The Akra-Bazzi formula is lifted directed from the theorem statement, except
+that the recurrence in the theorem includes extra functions, hi . These functions
+
+D 1:
+
+ai bp
+i
+
+24“mcs-ftl” — 2010/9/8 — 0:40 — page 307 — #313
+
+10.4. Divide-and-Conquer Recurrences
+
+extend the theorem to address ﬂoors, ceilings, and other small adjustments to the
+h1 .x / D l x
+m (cid:0) x
+sizes of subproblems. The trick is illustrated by this combination of parameters
+k (cid:0) x
+h2 .x / D j x
+a1 D 1
+b1 D 1=2
+2
+2
+b2 D 1=2
+a2 D 1
+2
+2
+g.x / D x (cid:0) 1
+ C x (cid:0) 1
+k (cid:0) x
+C (cid:16)j x
+m (cid:0) x
+C (cid:16)l x
+ C (cid:1)T
+(cid:16) x
+(cid:16) x
+which corresponds the recurrence
+k C x (cid:0) 1:
+(cid:16)j x
+m C T
+(cid:16)l x
+T .x / D 1 (cid:1) T
+2
+2
+2
+2
+2
+2
+D T
+2
+2
+This is the rigorously correct Merge Sort recurrence valid for all input sizes,
+complete with ﬂoor and ceiling operators. In this case, the functions h1 .x / and
+h2 .x / are both at most 1, which is easily O .x= log2 x / as required by the theorem
+statement. These functions hi do not affect—or even appear in—the asymptotic
+solution to the recurrence. This justiﬁes our earlier claim that applying ﬂoor and
+ceiling operators to the size of a subproblem does not alter the asymptotic solution
+to a divide-and-conquer recurrence.
+
+10.4.4 The Master Theorem
+There is a special case of the Akra-Bazzi formula known as the Master Theorem
+that handles some of the recurrences that commonly arise in computer science. It
+is called the Master Theorem because it was proved long before Akra and Bazzi
+arrived on the scene and, for many years, it was the ﬁnal word on solving divide-
+and-conquer recurrences. We include the Master Theorem here because it is still
+widely referenced in algorithms courses and you can use it without having to know
+anything about integration.
+(cid:16) n
+ C g.n/:
+Theorem 10.4.2 (Master Theorem). Let T be a recurrence of the form
+T .n/ D aT
+(cid:16)
+nlogb .a/(cid:0)(cid:15) 
+b
+nlogb .a/
+(cid:16)
+for some constant (cid:15) > 0, then
+T .n/ D ‚
+
+Case 1: If g.n/ D O
+
+:
+
+25“mcs-ftl” — 2010/9/8 — 0:40 — page 308 — #314
+
+(cid:16)
+
+:
+
+Chapter 10 Recurrences
+Case 2: If g.n/ D ‚
+
+
+for some constant k (cid:21) 0, then
+(cid:16)
+
+nlogb .a/ logk .n/
+nlogb .a/ logkC1 .n/
+T .n/ D ‚
+nlogb .a/C(cid:15) 
+(cid:16)
+Case 3: If g.n/ D (cid:127)
+for some constant (cid:15) > 0 and ag.n=b / < cg.n/
+for some constant c < 1 and sufﬁciently large n, then
+T .n/ D ‚.g.n//:
+
+The Master Theorem can be proved by induction on n or, more easily, as a corol-
+lary of Theorem 10.4.1. We will not include the details here.
+
+10.4.5 Pitfalls with Asymptotic Notation and Induction
+We’ve seen that asymptotic notation is quite useful, particularly in connection with
+recurrences. And induction is our favorite proof technique. But mixing the two is
+risky business; there is great potential for subtle errors and false conclusions!
+
+False Claim. If
+
+T .1/ D 1
+and
+T .n/ D 2T .n=2/ C n;
+
+then T .n/ D O .n/.
+The Akra-Bazzi theorem implies that the correct solution is T .n/ D ‚.n log n/
+and so this claim is false. But where does the following “proof ” go astray?
+
+Bogus proof. The proof is by strong induction. Let P .n/ be the proposition that
+T .n/ D O .n/.
+Base case: P .1/ is true because T .1/ D 1 D O .1/.
+Inductive step: For n (cid:21) 2, assume P .1/, P .2/, . . . , P .n (cid:0) 1/ to prove P .n/. We
+have
+
+T .n/ D 2 (cid:1) T .n=2/ C n
+D 2 (cid:1) O .n=2/ C n
+D O .n/:
+The ﬁrst equation is the recurrence, the second uses the assumption P .n=2/, and
+(cid:4)
+the third is a simpliﬁcation.
+
+26“mcs-ftl” — 2010/9/8 — 0:40 — page 309 — #315
+
+10.5. A Feel for Recurrences
+
+Where’s the bug? The proof is already far off the mark in the second sentence,
+which deﬁnes the induction hypothesis. The statement “T .n/ D O .n/” is either
+true or false; it’s validity does not depend on a particular value of n. Thus the very
+idea of trying to prove that the statement holds for n D 1, 2, . . . , is wrong-headed.
+The safe way to reason inductively about asymptotic phenomena is to work di-
+rectly with the deﬁnition of the asymptotic notation. Let’s try to prove the claim
+above in this way. Remember that f .n/ D O .n/ means that there exist constants
+n0 and c > 0 such that jf .n/j  cn for all n (cid:21) n0 . (Let’s not worry about the
+absolute value for now.) If all goes well, the proof attempt should fail in some
+blatantly obvious way, instead of in a subtle, hard-to-detect way like the earlier ar-
+gument. Since our perverse goal is to demonstrate that the proof won’t work for
+any constants n0 and c , we’ll leave these as variables and assume only that they’re
+chosen so that the base case holds; that is, T .n0 /  cn.
+Proof Attempt. We use strong induction. Let P .n/ be the proposition that T .n/ 
+cn.
+Base case: P .n0 / is true, because T .n0 /  cn.
+Inductive step: For n > n0 , assume that P .n0 /, . . . , P .n (cid:0) 1/ are true in order to
+prove P .n/. We reason as follows:
+T .n/ D 2T .n=2/ C n
+ 2c .n=2/ C n
+D cn C n
+D .c C 1/n
+— cn:
+
+(cid:4)
+
+The ﬁrst equation is the recurrence. Then we use induction and simplify until the
+argument collapses!
+In general, it is a good idea to stay away from asymptotic notation altogether
+while you are doing the induction. Once the induction is over and done with, then
+you can safely use big-Oh to simplify your result.
+
+10.5 A Feel for Recurrences
+
+We’ve guessed and veriﬁed, plugged and chugged, found roots, computed integrals,
+and solved linear systems and exponential equations. Now let’s step back and look
+for some rules of thumb. What kinds of recurrences have what sorts of solutions?
+
+27“mcs-ftl” — 2010/9/8 — 0:40 — page 310 — #316
+
+Chapter 10 Recurrences
+
+Here are some recurrences we solved earlier:
+
+5
+
+p
+
+Solution
+Recurrence
+Towers of Hanoi Tn D 2Tn(cid:0)1 C 1
+Tn (cid:24) 2n
+Tn D 2Tn=2 C n (cid:0) 1 Tn (cid:24) n log n
+Merge Sort
+Tn (cid:24) 2 (cid:1) 2n
+Tn D 2Tn(cid:0)1 C n
+Hanoi variation
+Tn (cid:24) .1:618 : : :/nC1=
+Tn D Tn(cid:0)1 C Tn(cid:0)2
+Fibonacci
+Notice that the recurrence equations for Towers of Hanoi and Merge Sort are some-
+what similar, but the solutions are radically different. Merge Sorting n D 64 items
+takes a few hundred comparisons, while moving n D 64 disks takes more than
+1019 steps!
+Each recurrence has one strength and one weakness. In the Towers of Hanoi,
+we broke a problem of size n into two subproblem of size n (cid:0) 1 (which is large),
+but needed only 1 additional step (which is small). In Merge Sort, we divided the
+problem of size n into two subproblems of size n=2 (which is small), but needed
+.n (cid:0) 1/ additional steps (which is large). Yet, Merge Sort is faster by a mile!
+This suggests that generating smaller subproblems is far more important to al-
+gorithmic speed than reducing the additional steps per recursive call. For example,
+shifting to the variation of Towers of Hanoi increased the last term from C1 to Cn,
+but the solution only doubled. And one of the two subproblems in the Fibonacci
+recurrence is just slightly smaller than in Towers of Hanoi (size n (cid:0) 2 instead of
+n (cid:0) 1). Yet the solution is exponentially smaller! More generally, linear recurrences
+(which have big subproblems) typically have exponential solutions, while divide-
+and-conquer recurrences (which have small subproblems) usually have solutions
+bounded above by a polynomial.
+All the examples listed above break a problem of size n into two smaller prob-
+lems. How does the number of subproblems affect the solution? For example,
+suppose we increased the number of subproblems in Towers of Hanoi from 2 to 3,
+giving this recurrence:
+Tn D 3Tn(cid:0)1 C 1
+This increases the root of the characteristic equation from 2 to 3, which raises the
+solution exponentially, from ‚.2n / to ‚.3n /.
+Divide-and-conquer recurrences are also sensitive to the number of subproblems.
+For example, for this generalization of the Merge Sort recurrence:
+T1 D 0
+Tn D aTn=2 C n (cid:0) 1:
+
+28“mcs-ftl” — 2010/9/8 — 0:40 — page 311 — #317
+
+10.5. A Feel for Recurrences
+
+the Akra-Bazzi formula gives:
+
+Tn D
+
+for a < 2
+for a D 2
+for a > 2:
+
+8ˆ<ˆ:‚.n/
+‚.n log n/
+‚.nlog a /
+So the solution takes on three completely different forms as a goes from 1.99
+to 2.01!
+How do boundary conditions affect the solution to a recurrence? We’ve seen
+that they are almost irrelevant for divide-and-conquer recurrences. For linear re-
+currences, the solution is usually dominated by an exponential whose base is de-
+termined by the number and size of subproblems. Boundary conditions matter
+greatly only when they give the dominant term a zero coefﬁcient, which changes
+the asymptotic solution.
+So now we have a rule of thumb! The performance of a recursive procedure is
+usually dictated by the size and number of subproblems, rather than the amount
+of work per recursive call or time spent at the base of the recursion. In particular,
+if subproblems are smaller than the original by an additive factor, the solution is
+most often exponential. But if the subproblems are only a fraction the size of the
+original, then the solution is typically bounded by a polynomial.
+
+29“mcs-ftl” — 2010/9/8 — 0:40 — page 312 — #318
+
+30MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.042J / 18.062J Mathematics for Computer Science 
+Fall 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

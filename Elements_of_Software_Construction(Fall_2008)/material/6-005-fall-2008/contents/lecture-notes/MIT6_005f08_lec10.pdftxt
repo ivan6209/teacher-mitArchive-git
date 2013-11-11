@@ -1,0 +1,594 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+6.005
+elements of
+software
+construction 
+
+how to design a SAT solver, part 1 
+
+Daniel Jackson 
+
+plan for today 
+
+
+topics 
+�  demo: solving Sudoku 
+�  what’s a SAT solver and why do you want one? 
+�  new paradigm: functions over immutable values 
+�  big idea: using datatypes to represent formulas 
+
+today’s patterns 
+�  Variant as Class: deriving class structure 
+�  Interpreter: recursive traversals 
+
+© Daniel Jackson 2008 
+
+2
+
+what’s a SAT solver? 
+
+
+what is SAT? 
+
+the SAT problem 
+�  given a formula made of boolean variables and operators 
+(P 㱹 Q) 㱸 (¬P 㱹 R) 
+�  ﬁnd an assignment to the variables that makes it true 
+�  possible assignments, with solutions in green, are: 
+{P = false, Q = false, R = false} 
+
+{P = false, Q = false, R = true} 
+
+{P = false, Q = true, R = false} 
+
+{P = false, Q = true, R = true} 
+
+{P = true, Q = false, R = false} 
+{P = true, Q = false, R = true} 
+{P = true, Q = true, R = false} 
+{P = true, Q = true, R = true} 
+
+© Daniel Jackson 2008 
+
+4
+
+what real SAT solvers do 
+
+
+conjunctive normal form (CNF) or “product of sums” 
+
+�  set of clauses, each containing a set of literals 
+{{P, Q}, {¬P, R}} 
+�  literal is just a variable, maybe negated 
+
+SAT solver 
+�  program that takes a formula in CNF 
+�  returns an assignment, or says none exists 
+
+© Daniel Jackson 2008 
+
+5
+
+SAT is hard 
+
+how to build a SAT solver, version one 
+�  just enumerate assignments, and check formula for each 
+�  for k variables, 2k assignments: surely can do better? 
+
+SAT is hard 
+�  in the worst case, no: you can’t do better 
+�  Cook (1973): 3-SAT (3 literals/clause) is “NP-complete” 
+�  the quintessential “hard problem” ever since 
+
+how to be a pessimist 
+�  suppose you have a problem P (that is, a class of problems) 
+�  show SAT reducible to P (ie, can translate any SAT-problem to a P-problem) 
+�  then if P weren’t hard, SAT wouldn’t be either; so P is hard too 
+
+© Daniel Jackson 2008 
+
+6
+
+SAT is easy 
+
+
+remarkable discovery 
+#boolean vars SAT solver can handle 
+�  most SAT problems are easy 
+(from Sharad Malik) 
+Courtesy of Sharad Malik. Used with permission. 
+�  can solve in much less than exponential time 
+
+how to be an optimist 
+�  suppose you have a problem P 
+�  reduce it to SAT, and solve with SAT solver 
+
+© Daniel Jackson 2008 
+
+7
+
+applications of SAT 
+conﬁguration ﬁnding 
+solve (conﬁguration rules 㱸 par tial solution) to obtain conﬁguration 
+�  eg: generating network conﬁgurations from ﬁrewall rules 
+�  eg: course scheduling (http://andalus.csail.mit.edu:8180/scheduler/) 
+
+� 
+
+� 
+
+theorem proving 
+solve (axioms 㱸 ¬ theorem): valid if no assignment 
+hardware veriﬁcation: solve (combinator ial logic design 㱸 ¬ speciﬁcation) 
+
+model checking: solve (state machine design 㱸 ¬ invar iant) 
+code veriﬁcation: solve (method code 㱸 ¬ method spec) 
+
+� 
+
+� 
+
+� 
+
+more exotic application 
+solve (obser vations 㱸 design structure) to obtain failure info 
+
+� 
+
+� 
+
+why are we teaching you this?
+
+
+SAT is cool 
+�  good for (geeky) cocktail parties 
+�  you’ll build a Sudoku solver for Exploration 2 
+�  builds on your 6.042 knowledge 
+
+fundamental techniques 
+�  you’ll learn about datatypes and functions 
+�  same ideas will work for any compiler or interpreter 
+
+© Daniel Jackson 2008 
+
+9
+
+the new paradigm
+
+
+from machines to functions
+
+
+6.005, part 1 
+�  a program is a state machine 
+�  computing is about taking state transitions on events 
+
+6.005, part 2 
+�  a program is a function 
+�  computing is about constructing and applying functions 
+
+an important paradigm 
+�  functional or “side effect free” programming 
+�  Haskell, ML, Scheme designed for this; Java not ideal, but it will do 
+�  some apps are best viewed entirely functionally 
+�  most apps have an aspect best viewed functionally 
+
+© Daniel Jackson 2008 
+
+11
+
+immutables
+
+
+like mathematics, compute over values 
+�  can reuse a variable to point to a new value 
+�  but values themselves don’t change 
+
+why is this useful? 
+�  easier reasoning: f(x) = f(x) is true 
+�  safe concurrency: sharing does not cause races 
+�  network objects: can send objects over the network 
+�  performance: can exploit sharing 
+
+but not always what’s needed 
+�  may need to copy more, and no cyclic structures 
+�  mutability is sometimes natural (bank account that never changes?) 
+�  [hence 6.005 part 3] 
+© Daniel Jackson 2008 
+
+12
+
+datatypes: describing 
+structured values 
+
+modeling formulas 
+
+problem 
+�  want to represent and manipulate formulas such as 
+(P 㱹 Q) 㱸 (¬P 㱹 R) 
+�  concerned about programmatic representation 
+�  not interested in lexical representation for parsing 
+
+how do we represent the set of all such formulas? 
+�  can use a grammar, but abstract not concrete syntax 
+
+datatype productions 
+�  recursive equations like grammar productions 
+�  expressions only from abstract constructors and choice 
+�  productions deﬁne terms, not sentences 
+
+© Daniel Jackson 2008 
+
+14
+
+example: formulas 
+
+productions 
+Formula = OrFormula + AndFormula + Not(formula:Formula)+ Var(name:Str ing)
+
+OrFormula = OrVar(left :Formula,r ight :Formula)
+
+AndFormula = And(left :Formula,r ight :Formula)
+
+sample formula: (P 㱹 Q) 㱸 (¬P 㱹 R) 
+�  as a term: 
+And(Or(Var(“P ”), Var(“Q”)), (Not(Var(“P ”)), Var(“R”))) 
+sample formula: Socrates 㱺Human 㱸 Human㱺Mor tal 㱸 ¬ (Socrates 㱺Mor tal) 
+�  as a term: 
+And(Or(Not(Var(“Socrates”)),Var(“Human”)),
+
+And (Or(Not(Var(“Human”)),Var(“Mor tal”)),
+
+Not(Or(Not(Var(“Socrates”)),Var(“Mor tal”)))))
+
+
+© Daniel Jackson 2008 
+
+15
+
+drawing terms as trees
+
+
+“abstract syntax tree” (AST) for Socrates formula
+
+
+And
+And 
+
+Or
+Or 
+
+And 
+And
+
+Not 
+Not
+
+Lit(H)
+Lit(H) 
+
+Or
+Or 
+
+Lit(S) 
+Lit(S)
+
+Not 
+Not
+
+Lit(M) 
+Lit(M)
+
+Not
+Not 
+
+Or 
+Or
+
+Lit(H)
+Lit(H) 
+
+Not
+Not 
+
+Lit(M)
+Lit(M) 
+
+Lit(S)
+Lit(S) 
+
+© Daniel Jackson 2008
+
+
+16 
+
+other data structures
+
+
+many data structures can be described in this way 
+�  tuples: Tuple = Tup (fst : Object , snd: Object) 
+�  options: Option = Some(value: Object) + None 
+�  lists: List = Empty + Cons(ﬁrst : Object , rest : List) 
+�  trees: Tree = Empty + Node(val : Object , left : Tree, r ight : Tree) 
+�  even natural numbers: Nat = 0 + Succ(Nat) 
+
+structural form of production 
+�  datatype name on left; variants separated by + on right 
+�  each option is a constructor with zero or more named args 
+
+what kind of data structure is Formula? 
+
+© Daniel Jackson 2008 
+
+17
+
+exercise: representing lists
+
+
+writing terms 
+�  write these concrete lists as terms 
+[] -- the empty list 
+[1] -- the list whose ﬁrst element is 1 
+[1, 2] -- the list whose elements are 1 and 2 
+[[1]] -- the list whose ﬁrst element is the list [1] 
+[[]] -- the list whose ﬁrst element is the empty list 
+
+note 
+�  the empty list, not an empty list 
+�  we’re talking values here, not objects 
+
+© Daniel Jackson 2008 
+
+18
+
+philosophical interlude
+
+what do these productions mean? 
+
+deﬁnitional interpretation (used for designing class structure) 
+�  read left to right: an X is either a Y or a Z ... 
+read List = Empty + Cons(ﬁrst : Nat , rest : List) 
+as “a List is either an Empty list or a Cons of a Nat and a List” 
+
+inductive interpretation (used for designing functions) 
+�  read right to left: if x is an X, then Y(x) is too ... 
+“if l is a List and n is a Nat , then Cons(n, l) is a List too” 
+
+aren’t these equations circular? 
+�  yes, but OK so long as List isn’t a RHS option 
+�  deﬁnitional view: means smallest set of objects satisfying equation 
+otherwise, can make Banana a List ; then Cons(1,Banana) is a list too, etc. 
+
+© Daniel Jackson 2008 
+
+19
+
+polymorphic datatypes
+
+
+suppose we want lists over any type 
+�  that is, allow list of naturals, list of formulas 
+�  called “polymorphic” or “generic” lists 
+List<E> = Empty + Cons(ﬁrst : E, rest : List<E>) 
+�  another example 
+Tree<E> = Empty + Node(val : E, left : Tree<E>, r ight : Tree<E>) 
+
+© Daniel Jackson 2008 
+
+20
+
+classes from datatypes
+
+
+Variant as Class pattern
+
+exploit the deﬁnitional interpretation 
+�  create an abstract class for the datatype 
+�  and one subclass for each variant, with ﬁeld and getter for each arg 
+
+example 
+�  production 
+List<E> = Empty + Cons (ﬁrst : E, rest : List<E>) 
+�  code 
+
+public abstract class List<E> {}
+
+public class Empty<E> extends List<E> {}
+
+public class Cons<E> extends List<E> {
+
+�  private final E first; 
+�  private final List<E> rest; 
+�  public Cons (E e, List<E> r) {first = e;rest = r;} 
+�  public E first () {return first;} 
+�  public List<E> rest () {return rest;}
+
+}
+
+
+© Daniel Jackson 2008 
+
+22
+
+class structure for formulas
+
+formula production 
+Formula = Var(name:Str ing) + Not(formula: Formula)
+ + Or(left : Formula,r ight : Formula) + And(left : Formula,r ight : Formula) 
+
+code  public abstract class Formula {} 
+public class AndFormula extends Formula {
+
+private final Formula left, right;
+
+public AndFormula (Formula left, Formula right) {
+
+this.left = left; this.right = right;}
+
+
+}
+
+public class OrFormula extends Formula {
+
+private final Formula left, right;
+
+public OrFormula (Formula left, Formula right) {
+
+this.left = left; this.right = right;}
+
+
+}
+
+public class NotFormula extends Formula {
+
+private final Formula formula;
+
+public NotFormula (Formula f) {formula = f;}
+
+ }
+
+public class Var extends Formula {
+
+private final String name;
+
+public Var (String name) {this.name = name;}
+
+} 
+
+© Daniel Jackson 2008 
+
+23
+
+functions over datatypes
+
+
+Interpreter pattern
+
+how to build a recursive traversal 
+�  write type declaration of function 
+size: List<E> -> int 
+�  break function into cases, one per variant 
+List<E> = Empty + Cons(ﬁrst :E, rest : List<E>)
+
+size (Empty) = 0
+
+size (Cons(ﬁrst :e, rest : l)) = 1 + size(rest)
+
+�  implement with one subclass method per case 
+
+public abstract class List<E> { 
+� 
+public abstract int size (); 
+} 
+public class Empty<E> extends List<E> { 
+� 
+public int size () {return 0;} 
+} 
+public class Cons<E> extends List<E> { 
+private final E first; 
+� 
+� 
+private final List<E> rest; 
+� 
+public int size () {return 1 + rest.size();} 
+} 
+
+© Daniel Jackson 2008 
+
+25
+
+caching results
+
+
+look at this implementation 
+�  representation is mutable, but abstractly object is still immutable! 
+
+public abstract class List<E> { 
+�	 int size; 
+�	 boolean sizeSet; 
+�  public abstract int size ();
+
+}
+
+public class Empty<E> extends List<E> {
+
+�  public int size () {return 0;}
+
+}
+
+public class Cons<E> extends List<E> {
+
+�	 private final E first; 
+�	 private final List<E> rest; 
+�	 public int size () { 
+�  �  if (sizeSet) return size; 
+�  �  �  �  int s = 1 + rest.size(); 
+�  �  �  �  size = s; sizeSet = true; 
+�  �  �  �  return size; 
+�	 �  �  }
+
+}
+
+
+© Daniel Jackson 2008 
+
+26
+
+size, finally
+
+
+in this case, best just to set in constructor 
+�  can determine size on creation -- and never changes* because immutable 
+
+public abstract class List<E> { 
+�  int	size; 
+�  public int size () {return size;} 
+�	 �  } 
+public class Empty<E> extends List<E> { 
+�  public EmptyList () {size = 0;}
+
+}
+
+public class Cons<E> extends List<E> {
+
+�  private final E first; 
+�  private final List<E> rest; 
+�  private Cons (E e, List<E> r) {first = e;rest = r;size = r.size()+1} 
+} 
+
+*so why can’t I mark it as ﬁnal? ask the designers of Java ... 
+
+© Daniel Jackson 2008 
+
+27
+
+summary
+
+
+summary
+
+
+big ideas 
+�  SAT: an important problem, theoretically & practically 
+�  datatype productions: a powerful way to think about immutable types 
+
+patterns 
+�  Variant as Class: abstract class for datatype, one subclass/variant 
+�  Interpreter: recursive traversal over datatype with method in each subclass 
+
+where we are 
+�  now we know how to represent formulas 
+�  next time: how to solve them 
+
+© Daniel Jackson 2008 
+
+29
+
+

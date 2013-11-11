@@ -1,0 +1,266 @@
+This material  takes  about  1.5  hours. 
+
+1  Suﬃx  Trees 
+Gusﬁeld:  Algorithms  on  Strings,  Trees,  and  Sequences. 
+Weiner 73 “Linear Pattern-matching algorithms” IEEE conference  on automata 
+and  switching  theory 
+McCreight  76  “A  space-economical  suﬃx  tree  construction  algorithm”  JACM 
+23(2)  1976 
+Chen and Seifras 85  “Eﬃcient and Elegegant Suﬃx  tree  construction”  in Apos-
+tolico/Galil Combninatorial   Algorithms   on   Words  
+Another  “search”  structure,  dedicated  to  strings. 
+Basic  problem:  match  a  “pattern”  (of  length m)  to  “text”  (of  length  n) 
+•  goal:  decide  if  a  given  string  (“pattern”)  is  a  substring  of  the  text 
+•  possibly  created  by  concatenating  short  ones,  eg  newspaper 
+•  application  in  IR,  also  computational  bio  (DNA  seqs) 
+•  if  pattern  avilable  ﬁrst,  can  build  DFA,  run  in  time  linear  in  text 
+•  if  text  available  ﬁrst,  can  build  suﬃx  tree,  run  in  time  linear  in  pattern. 
+•  applications  in  computational  bio. 
+First  idea:  binary  tree  on  strings.  Ineﬃcient  because  run  over  pattern  many 
+times. 
+•  fractional  cascading? 
+•  realize  only  need  one  character  at  each  node! 
+Tries: 
+•  Idea  like  bucket  heaps:  use  bounded  alphabet Σ. 
+•  used  to  store  dictionary  of  strings 
+•  trees  with  children  indexed  by  “alphabet” 
+•  time  to  search  equal  length  of  query  string 
+•  insertion  ditto.
+
+•  optimal,  since  even  hashing  requires  this  time  to  hash.
+
+•  but  better,  because  no  “hash  function”  computed. 
+•  space  an  issue: 
+–  using  array  increases  stroage  cost  by  |Σ| 
+
+1 
+
+–  using  binary  tree  on  alphabet  increases  search  time  by  log |Σ| 
+–  ok  for  “const  alphabet” 
+–	 if  really  fussy,  could  use  hash-table  at  each  node. 
+•	 size in worst case:  sum of word lengths (so pretty much solves “dictionary” 
+problem. 
+
+· · · an 
+
+But  what  about  substrings? 
+•	 idea:  trie  of  all  n2  substrings 
+•	 equivalent  to  trie  of  all  n  suﬃxes. 
+•	 put  “marker”  at  end,  so  no  suﬃx  contained  in  other  (otherwise,  some 
+suﬃx  can  be  an  internal  node,  “hidden”  by  piece  of  other  suﬃx) 
+•	 means  one  leaf  per  suﬃx 
+•	 Naive  construction:  insert  each  suﬃx 
+•	 basic  alg: 
+–	 text  a1  · · · an 
+–	 deﬁne  si  = ai 
+–	 for  i  = 1  to  n 
+–	 insert  si 
+•  time,  space O(n2 ) 
+Better  construction: 
+•	 note  trie  size  may  be  much  smaller:  aaaaaaa. 
+•	 algorithm  with  time  O(|T |) 
+•	 idea:  avoid  repeated  work  by  “memoizing” 
+•	 also  shades  of  ﬁnger  search  tree  idea—use  locality  of  reference 
+•	 suppose  just  inserted  aw  
+•	 next  insert  is  w 
+•	 big  preﬁx  of w  might  already  be  in  trie 
+•  avoid  traversing:  skip  to  end  of  preﬁx. 
+Suﬃx  links: 
+•	 any  node  in  trie  corresponds  to  string 
+•	 arrange  for  node  corresp  to  ax   to  point  at  node  corresp  to  x 
+
+2 
+
+•	 suppose  just  inserted  aw. 
+•	 walk  up  tree  till  ﬁnd  suﬃx  link 
+•	 follow  link  (puts  you  on  path  corresp  to  w) 
+•  walk  down  tree  (adding  nodes)  to  insert  rest  of  w 
+Memoizing:  (save  your  work) 
+•	 can  add  suﬃx  link  to  every  node  we  walked  up 
+•	 (since  walked  up  end  of  aw,  and  are  putting  in  w  now). 
+•	 charging  scheme:  charge  traversal up  a  node  to  creation  of  suﬃx  link 
+•  traversal up  also  covers  (same  length)  traversal down
+
+•  once  node  has  suﬃx  link,  never  passed  up  again
+
+•  thus,  total  time  spent  going  up/down  equals  number  of  suﬃx  links 
+•  one  suﬃx  link  per  node,  so  time  O(|T |) 
+half  hour  up  to  here. 
+Amortization  key  principles: 
+•	 Lazy:  don’t  work  till  you must 
+•	 If  you must  work,  use  your work  to  “simplify”  data  structure  too 
+•	 force  user  to  spend  lots  of  time  to make  you  work 
+•	 use  charges  to  keep  track  of  work—earn money  from  user  activity,  spend 
+it  to  pay  for  excess work  at  certain  times. 
+
+Linear-size  structure: 
+•	 problem:  maybe  |T |  is  large  (n2 ) 
+•	 compress  paths  in  suﬃx  trie 
+•	 path  on  letters  ai  · · · aj  corresp  to  substring  of  text 
+•	 replace  by  edge  labelled  by  (i,   j ) (implicit  nodes) 
+•	 Example:  tree  on  abab$ 
+•	 gives  tree  where  every  node  has  indegree  at  least  2 
+•	 in  such  a  tree,  size  is  order  number  of  leaves = O(n) 
+•	 terminating  $  char  now  very  useful,  since means  each  suﬃx  is  a  node 
+•	 Wait:  didn’t  save  space;  still  need  to  store  characters  on  edge! 
+
+3 
+
+•	 see  if  someone  with  prompting  can  ﬁgure  out:  characters  on  edge 
+are  substring  of  pattern,  so  just  store  start  and  end  indices.  Look  in  text 
+to  see  characters. 
+
+Search  still  works: 
+•	 preserves  invariant:  at  most  one  edge  starting with  given  character  leaves 
+a node 
+•	 so  can  store  edges  in  array  indexed  by  ﬁrst  character  of  edge. 
+•	 walk  down  same  as  trie 
+•	 called  “slowﬁnd”  for  later 
+Construction: 
+•  obvious:  build  suﬃx  trie,  compress 
+•	 drawback:  may  take  n2  time  and  intermediate  space 
+•	 better:  use  original  construction  idea,  work  in  compressed  domain. 
+•	 as  before,  insert  suﬃxes  in  order  s1 , . . . , sn 
+•	 compressed  tree  of what  inserted  so  far 
+•	 to  insert  si ,  walk  down  tree 
+•	 at  some  point,  path  diverges  from  what’s  in  tree 
+•	 may  force  us  to  “break”  an  edge  (show) 
+•  tack  on  one  new  edge  for  rest  of  string  (cheap!) 
+MacReight  1976 
+•	 use  suﬃx  link  idea  of  up-link-down 
+•	 problem:  can’t  suﬃx  link  every  character, only  explict  nodes 
+•	 want  to  work  proportional  to  real  nodes  traversed 
+•	 need  to  skip  characters  inside  edges  (since  can’t  pay  for  them) 
+•	 introduced  “fastﬁnd” 
+–	 idea:  fast  alg  for  descending  tree  if  know  string  present  in  tree 
+–	 just check ﬁrst char on edge, then skip number of chars equal to  edge 
+“length” 
+–	 may  land  you  in  middle  of  edge  (speciﬁed  oﬀset) 
+–	 cost  of  search:  number  of  explicit  nodes  in  path 
+
+4 
+
+–	 amortize:  pay  for  with  explicit-node  suﬃx  links 
+
+Amortized Analysis: 
+•	 suppose  just  inserted  string  aw  
+•	 sitting  on  its  leaf,  which  has  parent 
+•	 Parent  is  only  node  that  was  (possibly)  created  by  insertion: 
+–	 As soon as walk down preexisting tree falls of tree, create parent node 
+and  stop 
+•	 invariant:  every  internal  node  except  for  parent  of  current  leaf  has  suﬃx 
+link  to  another  explicit  node 
+•	 plausible? 
+–	 i.e.,  is  there  an  explicit  node  for  that  suﬃx  link  to  point  at? 
+–	 suppose  v  was  created  as  parent  of  sj  leaf  when  it  diverged  from  sk 
+–	 (note  this  is  only  way  nodes  get  created) 
+–	 claim  sj+1   and  sk+1   diverge  at  suﬃx(v),  creating  another  explicit 
+node.
+
+–  only  problem  if  sk+1   not  yet  present
+
+–  happens  only  if  k  is  current  suﬃx
+
+–  only  blocks  parent  of  current  leaf.
+
+•	 insertion  step: 
+–	 suppose  just  inserted  si 
+–	 consider  parent  pi  and  grandparent  (parent  of  parent)  gi  of  current 
+node 
+–	 gi  to  pi  link  has  string  w1 
+–	 pi  to  si  link  w2 
+–	 go  up  to  grandparent 
+–	 follow  suﬃx  link  (exists  by  invariant) 
+–	 fastﬁnd   w1 
+–	 claim:  know w1  is  present  in  tree! 
+∗	 pi  was  created  by  si  split  from  a  previous  edge  (or  preexisted) 
+∗	 so  aww1  was  in  tree  before  si  inserted  (preﬁx  of  earlier  suﬃx) 
+∗	 so  ww1  is  in  tree  after  si  inserted 
+–	 create  suﬃx  link  from  pi  (preserves  invariant) 
+–	 slowﬁnd   w2  (stopping  when  leave  current  tree) 
+–	 break  current  edge  if  necessary  (may  land  on  preexisting  node) 
+
+5 
+
+–  add  new  edge  for  rest  of  w2 
+
+Analysis: 
+•  First,  consider work  to  reach  gi+1  
+•  Mix of fastﬁnd and slowﬁnd, but no worse then cost of doing pure slowﬁnd 
+•  This  is  it  most  |gi+1 | − |gi | + 1  (explain  length  notation) 
+� |gi+1 | − |gi | + 1) = O(n) 
+•  So  total  is  O(
+•  Wait:  maybe  gi+1   − gi  + 1 <  0,  and  I  am  cheating  on  sum? 
+–  Note  si+1   is  suﬃx  of  si 
+–  so  gi  suﬃx  link  must  point  at  gi+1   or  above 
+–  so  |gi+1 | ≥ |gi | − 1 
+•  Remaining  cost:  to  reach  pi+1 . 
+–  If  get  there  during  fastﬁnd,  costs  at most  one  additional  step 
+–  If  get  there  during  slowﬁnd, means  slowﬁnd  stopped  at  or  before  gi . 
+–  So  suf(pi ) is  not  below  gi+1 . 
+–  So remaining cost is |gi+1 |− |pi+1 | ≤ |suf(pi )|− |pi+1 | ≤ |pi |− |pi+1 |+ 1 
+–  telescopes  as  before  to  O(n) 
+–  we mostly  used  slowﬁnd.  when  was  fastﬁnd  important? 
+∗  in  case  when  pi+1   was  reached  on  fastﬁnd  step  from  gi+1  
+∗  in  that  case,  could  not  have  aﬀorded  to  do  slowﬁnd 
+∗  however,  don’t  know  that  the  case  occurred  until  after  the  fact. 
+
+Analysis: 
+•  Break  into  three  costs: 
+–  from  suf(gi ) to  gi+1   (part  of  fastﬁnd  w1 ) 
+–  then  gi+1   to  suf(pi )  (part  of  fastﬁnd  w1 ), 
+–  then  suf(pi ) to  pi+1   (slowﬁnd  w2 ). 
+–  Note  suf(gi ) might  not  be  gi+1 ! 
+•  slowﬁnd  cost 
+–  is  chars  to  get  from  suf(pi ) to  pi+1   (plus  const) 
+–  pi+1   is  last  internal  node  on  path  to  si+1  
+–  so  is  descendant  or  equal  suf(pi ), 
+–  so  |pi+1 | ≥ |pi | + 1 
+� |pi+1 | − |pi | + 1) = O(n)  by  telescoping 
+–  so  total  cost O(
+
+6 
+
+–	 (explain  length  notation) 
+•	 fastﬁnd  to  gi+1  
+–	 fastﬁnd costs  less than slowﬁnd, so at most  |gi+1 | − |gi | to reach gi+1 . 
+–	 Sums  to  O(n). 
+–	 Wait:  maybe  gi+1   − gi  + 1 <  0,  and  I  am  cheating  on  sum? 
+∗	 Note  pi  gets  suﬃx  link  to  internal  node  after  si+1   inserted 
+∗	 So  gi  suﬃx  is  not  last  internal  node  on  path  to  si+1  
+∗	 so  gi  suﬃx  link must  point  at  gi+1   or  above 
+∗	 so  |gi+1 | ≥ |gi | − 1 
+•	 fastﬁnd  suf(pi ) from  gi+1  
+–	 Already  done  if  gi+1   below  suf(pi )  (double  counts,  but  who  cares) 
+–	 what  if  gi+1   above  suf(pi )? 
+–	 can  only  happen  if  suf(pi ) = pi+1   (this  is  only  node  below  gi+1 ) 
+–	 in  this  case,  fastﬁnd  takes  1  step  to  go  from  gi+1   to  pi+1   (landing  in 
+middle  of  edge) 
+–  so  O(1)  per  suﬃx  at  worst 
+–  only  case  where  fastﬁnd  necessary,  but  can’t  tell  in  advance. 
+
+Weiner  algorithm:  insert  strings  “backwards”, use  preﬁx  links.
+
+Ukonnen  online  version.
+
+Suﬃx  arrays:  many  of  same  beneﬁts  as  suﬃx  trees,  but  save  pointers: 
+
+•	 lexicographic  ordering  of  suﬃxes 
+•	 represent  as  list  of  integers:  b1  is  (index  in  text  of )  lexicographically ﬁrst 
+suﬃx,  b2  is  (index  of )  lexicographically  second,  etc. 
+•	 search  for  pattern  via  binary  search  on  this  sequence 
+•	 some  clever  tricks  (and  some  more  space)  let  you  avoid  re-checking  char-
+acters  of  pattern. 
+•	 So  linear  search  (with  additive  log m  for  binary  search. 
+•	 space  usage:  3m  integers  (as  opposed  to  numerous  pointers  and  integers 
+of  suﬃx  tree). 
+Applications: 
+•	 preprocess  bottom  up,  storing  ﬁrst,  last,  num.  of  suﬃxes  in  subtree 
+•	 allows to answer queries:  what ﬁrst, last, count of w  in text in time O(|w|). 
+•	 enumerate  k  occurrences  in  time  O(w  + |k |)  (traverse  subtree,  binary  so 
+size  order  of  number  of  occurences  (compare  to  rabin-karp). 
+•	 longest   common   subsequence   is   probably   on   homework.  
+
+7 
+
+

@@ -1,0 +1,1448 @@
+Primal-Dual  Interior-Point  Methods  for  Linear 
+Programming 
+based  on  Newton’s  Method 
+
+Robert   M.   Freund  
+
+March,   2004  
+
+2004 Massachusetts Institute of Technology.
+
+1 
+
+1  The  Problem 
+
+The  logarithmic  barrier  approach  to  solving  a  linear  program  dates  back  to 
+the  work  of  Fiacco  and  McCormick  in  1967  in  their  book  Sequential   Un­
+constrained   Minimization   Techniques,  also  known  simply  as  SUMT.  The 
+method  was  not  believed  then  to  be  either  practically  or  theoretically  in-
+teresting,  when  in  fact  today  it  is  both!  The  method  was  re-born  as  a 
+consequence  of  Karmarkar’s  interior-point  method,  and  has  been  the  sub-
+ject  of  an  enormous  amount  of  research  and  computation,  even  to  this  day. 
+In  these  notes  we  present  the  basic  algorithm  and  a  basic  analysis  of  its 
+performance. 
+
+Consider  the  linear  programming  problem  in  standard  form: 
+
+T
+P  :  minimize  c x 
+
+s.t.	
+
+Ax = b 
+x ≥ 0, 
+
+where  x  is  a  vector  of  n  variables, whose  standard  linear  programming  dual 
+problem  is: 
+
+D  :  maximize  bT π 
+
+s.t.	
+
+AT π + s = c 
+s ≥ 0. 
+
+Given  a  feasible  solution  x  of  P  and  a  feasible  solution  (π , s) of  D ,  the  du-
+ality  gap  is  simply 
+
+2 
+
+c x − bT π = x s ≥ 0. 
+T
+T 
+
+We  introduce  the  following  notation  which  will  be  very  convenient 
+for  manipulating  equations,  etc.  Suppose  that  x >  0.  Deﬁne  the  matrix 
+X  to  be  the  n × n  diagonal  matrix  whose  diagonal  entries  are  precisely  the 
+components  of  x.  Then  X  looks  like: 
+⎞ 
+⎛
+⎜  0 
+⎟
+⎟ 
+⎜
+0 
+x1 
+. . . 
+.  ⎟ .
+⎜  .
+..  ⎠
+⎝  .. 
+0 
+. . . 
+. 
+. .
+0
+. . .  xn 
+
+0 
+x2 
+.
+. 
+. 
+0 
+
+Notice  that  X  is  positive  deﬁnite,  and  so  is X 2 ,  which  looks  like: 
+⎞ 
+⎛ (x1 )2 
+⎟ 
+⎜  0 
+⎜ 
+⎟ 
+⎜ ⎝ 
+⎟ ⎠ 
+. 
+. . . 
+0 
+
+0 
+. . . 
+0 
+. . . 
+. . . 
+. . . 
+. . .  (xn )2 
+
+0 
+(x2 )2 
+. . . 
+0 
+
+Similarly,  the  matrices X −1  and  X −2  look  like: 
+⎛
+⎜ 
+⎜
+(1/x1 )
+⎜ 
+⎝ 
+0 
+.
+.. 
+0
+
+0 
+(1/x2 ) 
+.
+.
+. 
+0 
+
+0 
+. . . 
+0 
+. . . 
+. 
+. 
+.
+. 
+.
+. 
+. . .  (1/xn ) 
+
+⎞
+⎟
+⎟ 
+⎟
+⎠
+
+3 
+
+and
+
+
+⎛ 1/(x1 )2 
+⎜ 
+⎜ 
+⎜ ⎝ 
+0 
+. . . 
+0 
+
+0 
+1/(x2 )2 
+. . . 
+0 
+
+0 
+. . . 
+0 
+. . . 
+. . . 
+. . . 
+. . .  1/(xn )2 
+
+⎞ 
+⎟ 
+⎟ 
+⎟ ⎠ 
+. 
+
+Let  us  introduce  a  logarithmic  barrier  term  for  P .  We  obtain: 
+(cid:7) 
+P (θ) :  minimize  c x − θ 
+n 
+T
+ln(xj ) 
+j=1 
+
+s.t.	
+
+Ax = b 
+x > 0. 
+
+Because  the  gradient  of  the  ob jective  function  of  P (θ) is simply  c − θX −1e, 
+(where  e  is  the  vector  of  ones,  i.e.,  e  = (1, 1, 1, ..., 1)T ),  the  Karush-Kuhn-
+Tucker  conditions  for  P (θ)  are: 
+⎧ ⎨ ⎪  Ax = b, x > 0 
+⎪ ⎩  c − θX −1e = AT π . 
+If  we  deﬁne  s = θX −1e,  then 
+
+(1) 
+
+1 X s = e ,
+θ 
+
+4 
+
+equivalently 
+
+1 X S e = e ,
+θ 
+
+and  we  can  rewrite  the  Karush-Kuhn-Tucker  conditions  as: 
+⎧ ⎪  Ax = b, x > 0 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ ⎩ 1 
+AT π + s = c 
+X S e − e = 0  .
+
+θ 
+From  the  equations  of  (2)  it  follows  that  if  (x, π , s)  is  a  solution  of  (2),  then 
+x  is  feasible  for  P , (π , s) is feasible for  D ,  and  the  resulting  duality  gap  is: 
+
+(2) 
+
+T x s = e T X S e = θeT e = θn. 
+This  suggests  that  we  try  solving  P (θ)  for  a  variety  of  values  of  θ  as  θ → 0. 
+
+However,  we  cannot  usually  solve  (2)  exactly,  because  the  third 
+equation  group  is  not  linear  in  the  variables.  We  will  instead  deﬁne  a 
+“β -approximate  solution”  of  the  Karush-Kuhn-Tucker  conditions  (2).  A 
+“β -approximate  solution”  of  P (θ)  is  deﬁned  as  any  solution  (x, π , s) of 
+⎧ ⎪  Ax = b, x > 0 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ ⎩ 1 
+AT π + s = c 
+X s − e(cid:4) ≤ β . 
+(cid:4)
+θ 
+Here  the  norm  (cid:4) · (cid:4)  is  the  Euclidean  norm. 
+
+(3) 
+
+5 
+
+Lemma   1.1   If  ( ¯ π , s¯)  is   a   β -approximate   solution   of   P (θ)  and  β <  1,
+x, ¯
+then   ¯
+x  is   feasible   for   P ,  ( ¯ s)  is   feasible   for   D,   and   the   duality   gap   satisﬁes:  
+π , ¯
+
+x − bT ¯
+π = ¯T s¯ ≤ nθ(1 + β ). 
+nθ(1 − β ) ≤ c T ¯
+x
+
+(4) 
+
+Proof:   Primal  feasibility  is  obvious.  To  prove  dual  feasibility,  we  need  to 
+show  that  ¯s  ≥  0.  To  see  this,  note  that  the  third  equation  system  of  (3) 
+implies  that 
+
+−β  ≤
+
+¯ ¯xj sj
+θ 
+
+− 1 ≤ β 
+
+which  we  can  rearrange  as: 
+
+θ(1 − β ) ≤  ¯ ¯xj sj  ≤ θ(1 + β ). 
+xj sj  ≥ (1 − β )θ > 0, which  implies  ¯ ¯
+Therefore  ¯ ¯
+xj sj  > 0,  and  so  ¯
+sj  > 0.  From 
+(5)  we  have 
+
+(5) 
+
+nθ(1 − β ) = 
+
+(cid:12) 
+n
+θ(1 − β ) ≤ 
+j=1 
+
+(cid:12) 
+n 
+x T s¯ ≤ 
+xj sj  = ¯
+¯ ¯
+j=1 
+
+(cid:12) 
+n 
+θ(1 + β ) = nθ(1 + β ). 
+j=1 
+
+2  The  Primal-Dual  Algorithm 
+
+Based  on  the  analysis  just  presented,  we  are  motivated  to  develop  the  fol-
+lowing  algorithm: 
+
+Initialization.  Data  is  (x0 , π0 , s0 , θ0 ).  k  =  0.  Assume  that 
+Step  0  . 
+(x0 , π0 , s0 ) is a  β -approximate  solution  of  P (θ0 )  for  some  known  value  of  β 
+that  satisﬁes  β <  1 .2 
+
+6 
+
+Step  1.  Set  current  values.  ( ¯ π , s¯) = (xk , πk , sk ),  θ = θk .
+
+x, ¯
+�  = αθ  for  some  α ∈ (0, 1).
+
+Step  2.  Shrink  θ.  Set  θ 
+
+Step  3.  Compute  the  primal-dual  Newton  direction.   Compute  the
+
+Newton step (∆x, ∆π , ∆s) for the equation system (2) at (x, π , s) = ( ¯ π , s¯)
+x, ¯
+� ,  by  solving  the  following  system  of  equations  in  the  variables 
+⎧ ⎪  A∆x = 0 
+for  θ  =  θ 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+(∆x, ∆π , ∆s): 
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT ∆π + ∆s = 0 
+⎩  S¯∆x + X∆s = X S e − θe  . 
+¯ ¯ 
+¯ 
+Denote  the  solution  to  this  system  by  (∆x, ∆π , ∆s). 
+
+(6) 
+
+Step  4.  Update  All   Values.  
+
+� , π  , s  ) = ( ¯ π , s¯) + (∆x, ∆π , ∆s)
+� 
+� 
+x, ¯
+(x 
+
+� , π  , s  ). 
+� 
+� 
+Step  5.   Reset  Counter  and  Continue.  (xk+1 , πk+1 , sk+1 ) = (x 
+� = θ  .  k ← k + 1.  Go  to  Step  1. 
+θk+1 
+
+Figure  1  shows  a  picture  of  the  algorithm.
+
+
+Some  of  the  issues  regarding  this  algorithm  include:
+
+•  how  to  set  the  approximation  constant  β  and  the  fractional  decrease 
+3
+parameter  α.  We  will  see  that  it  will  be  convenient  to  set  β  =  40  and 
+1 
+α = 1 −  1 
+√ 
+8
++  n
+5 
+•  the  derivation  of  the  primal-dual  Newton  equation  system  (6) 
+
+. 
+
+7 
+
+θ = 0 
+
+θ = 1/10 
+
+θ = 10 
+
+θ = 100 
+
+Figure  1:  A  conceptual  picture  of  the  interior-point  algorithm. 
+
+8
+
+
+•	 whether or not successive iterative values (xk , πk , sk ) are β -approximate 
+solutions  to  P (θk ) 
+•	 how  to  get  the  method  started 
+
+3  The  Primal-Dual  Newton  Step 
+
+We  introduce  a  logarithmic  barrier  term  for  P  to  obtain  P (θ): 
+(cid:7) 
+n 
+ln(xj ) 
+j=1 
+
+P (θ)  :  minimizex  c x − θ 
+T
+Ax = b 
+s.t.	
+x > 0. 
+
+Because  the  gradient  of  the  ob jective  function  of  P (θ) is simply  c − θX −1e, 
+(where  e  is  the  vector  of  ones,  i.e.,  e  = (1, 1, 1, ..., 1)T ),  the  Karush-Kuhn-
+Tucker  conditions  for  P (θ)  are: 
+⎧ ⎪  Ax = b, x > 0
+⎨ 
+⎪ ⎩	 c − θX −1e = AT π . 
+
+(7) 
+
+We  deﬁne  s = θX −1e,  whereby 
+
+equivalently 
+
+1 X s = e ,
+θ 
+
+1 X S e = e ,
+θ 
+
+9 
+
+and  we  can  rewrite  the  Karush-Kuhn-Tucker  conditions  as: 
+⎧ ⎪  Ax = b, x > 0 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ ⎩ 1 
+AT π + s = c 
+X S e − e = 0  . 
+θ 
+Let  ( ¯ π , s¯)  be  our  current  iterate,  which  we  assume  is  primal  and 
+x, ¯
+dual  feasible,  namely: 
+
+(8) 
+
+x = b,  x > 0  , AT ¯
+π + ¯
+s > 0  . 
+s = c , ¯
+A ¯
+¯
+
+(9)
+
+Introducing  a  direction  (∆x, ∆π , ∆s),  the  next  iterate  will  be  ( ¯ π , s¯) +
+x, ¯
+(∆x, ∆π , ∆s),  and  we  want  to  solve: 
+⎧ ⎪  A( ¯
+⎪ ⎪ ⎪ ⎪ ⎨ 
+x + ∆x > 0
+x + ∆x) = b, ¯
+⎪ ⎪ ⎪ ⎪ ⎪ ⎩ 
+AT ( ¯
+s + ∆s) = c
+π + ∆π) + (¯
+X + ∆X )(S ¯ + ∆S )e − e = 0  . 
+¯1 (θ 
+Keeping  in mind  that  ( ¯ π , s¯)  is primal-dual  feasible  and  so  satisﬁes  (9), we 
+x, ¯
+can  rearrange  the  above  to  be: 
+⎧ ⎪  A∆x = 0 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT ∆π + ∆s = 0 
+⎩  S¯∆x + X∆s = θe − X S e − ∆X∆S e  . 
+¯ ¯ 
+¯ 
+Notice  that  the  only  nonlinear  term  in  the  above  system  of  equations  in 
+(∆x, ∆π , ∆s)  is  term  the  term  “  ∆X∆S e”  in  the  last  system.  If  we  erase 
+this  term,  which  is  the  same  as  the  linearized  version  of  the  equations,  we 
+obtain  the  following  primal-dual  Newton  equation  system: 
+
+10 
+
+⎧ ⎪  A∆x = 0 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT ∆π + ∆s = 0 
+⎩  S¯∆x + X∆s = θe − X S e  . 
+¯ ¯ 
+¯ 
+The  solution  (∆x, ∆π , ∆s)  of  the  system  (10)  is  called  the  primal-
+dual Newton step.  We can manipulate these equations to yield the following 
+formulas  for  the  solution: 
+(cid:13) 
+(cid:16) 
+(cid:14) 
+(cid:15)−1 
+(cid:17) 
+(cid:18) 
+A  −x + θS¯−1e ,
+I − X 
+¯ S¯−1AT 
+¯ S¯−1AT 
+¯
+AX 
+(cid:15)−1 
+(cid:14) 
+(cid:17) 
+(cid:18) 
+A x − θS−1e , 
+∆π  ←  AX 
+¯ S¯−1AT 
+¯ 
+¯
+(cid:15)−1 
+(cid:14) 
+(cid:18) 
+(cid:17) 
+A  −x + θS¯−1e . 
+∆s  ← AT  AX 
+¯ S¯−1AT 
+¯
+
+∆x  ← 
+
+(10) 
+
+(11)
+
+Notice,  by  the way,  that  the  computational  eﬀort  in  these  equations 
+lies  primarily  in  solving  a  single  equation: 
+(cid:15) 
+(cid:14) 
+(cid:14) 
+(cid:15) 
+∆π = A x − θS¯−1 e
+¯ S¯−1AT 
+¯
+AX 
+
+. 
+
+Once  this  system  is  solved,  we  can  easily  substitute: 
+∆s  ← −AT ∆π 
+∆x  ← −x + θS¯−1e −
+¯
+
+S¯−1  ¯
+X∆s . 
+
+(12) 
+
+However,  let  us  instead  simply  work  with  the  primal-dual  Newton  system 
+(10).  Suppose  that  (∆x, ∆π , ∆s)  is  the  (unique)  solution  of  the primal-dual 
+Newton  system  (10).  We  obtain  the  new  value  of  the  variables  (x, π , s) by 
+taking  the  Newton  step: 
+
+11 
+
+� , π  , s  ) = ( ¯ π , ¯
+
+� 
+�
+
+(x 
+x, ¯ s) + (∆x, ∆π , ∆s)  . 
+
+We  have  the  following  very  powerful  convergence  theorem  which  demon-
+strates  the  quadratic  convergence  of  Newton’s  method  for  this  problem, 
+with an explicit guarantee of the range in which quadratic convergence takes 
+place. 
+
+Theorem  3.1  (Explicit  Quadratic  Convergence   of  Newton’s  Method).  
+Suppose   that   ( ¯ π , s¯)  is   a   β -approximate   solution   of   P (θ)  and  β <  1 . Let  
+x, ¯
+2
+(∆x, ∆π , ∆s)  be   the   solution   to   the   primal-dual   Newton   equations   (10),   and  
+let:  
+(cid:14) 
+(cid:15) 
+� 
+� 
+� , π  , s  ) = ( ¯ π , s¯) + (∆x, ∆π , ∆s)  .
+x, ¯
+(x 
+� , π  , s  )  is   a  
+� 
+�
+1+β
+(1−β )2  β 2 -approximate   solution   of   P (θ). 
+Then   (x 
+x, ¯⎧ ⎪  A ¯
+Proof:   Our  current  point  ( ¯ π , s¯)  satisﬁes: 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+x > 0
+x = b, ¯
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT ¯
+s = c 
+π + ¯
+⎩  (cid:4) 1 X S e − e(cid:4) ≤β .
+¯ ¯ 
+θ 
+⎧ ⎪  A∆x = 0 
+Furthermore  the  primal-dual  Newton  step  (∆x, ∆π , ∆s)  satisﬁes: 
+⎪ ⎪ ⎪ ⎪ ⎨ 
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT ∆π + ∆s = 0 
+⎩  S¯∆x + X∆s = θe − X S e  . 
+¯ ¯ 
+¯ 
+Note  from  the  ﬁrst  two  equations  of  (14)  that  ∆xT ∆s = 0.  From  the  third 
+equation  of  (13)  we  have 
+1 − β  ≤ 
+
+sj xj  ≤ 1 + β ,  j  = 1, . . . , n, 
+¯ ¯
+θ 
+
+(13)
+
+(14) 
+
+(15)
+
+12 
+
+which  implies: 
+xj  ≥ 
+¯
+
+(1 − β )θ 
+s¯j 
+
+sj  ≥ 
+and  ¯	
+
+(1 − β )θ
+¯xj 
+
+, j  = 1, . . . , n  . 
+
+(16) 
+
+As  a  result  of  this  we  obtain: 
+θ(1 − β )(cid:4)X −1∆x(cid:4)2	 = θ(1 − β )∆xT X −1  ¯ 
+¯  X −1∆x
+¯	
+(cid:18) 
+(cid:17) 
+≤ ∆xT X −1 ¯
+¯  S∆x 
+(cid:18) 
+(cid:17) 
+θe − X S e − X∆s 
+T X −1 
+¯ ¯ 
+¯
+= ∆x ¯ 
+θe − X S e 
+T X −1 
+¯ ¯
+= ∆x ¯ 
+≤ (cid:4)X −1∆x(cid:4)(cid:4)θe − X S e(cid:4) 
+¯ 
+¯ ¯
+¯≤ (cid:4)X −1∆x(cid:4)β θ  . 
+
+From  this  it  follows  that 
+
+¯(cid:4)X −1∆x(cid:4) ≤ 
+
+1 − β
+β 
+
+< 1  . 
+
+Therefore 
+
+x + ∆x = X (e + X −1∆x) > 0  . 
+� 
+¯
+¯ 
+x  = ¯
+We  have  the  exact  same  chain  of  inequalities  for  the  dual  variables: 
+θ(1 − β )(cid:4)S¯−1∆s(cid:4)2  = θ(1 − β )∆sT S¯−1S¯−1∆s 
+(cid:17) 
+(cid:18) 
+≤ ∆sT  ¯  X∆s 
+S−1  ¯
+(cid:18) 
+(cid:17) 
+= ∆sT S¯−1  θe − X S e − S∆x 
+¯ ¯ 
+¯ 
+= ∆sT S¯−1  θe − X S e 
+¯ ¯ 
+≤ (cid:4)S¯−1∆s(cid:4)(cid:4)θe − X S e(cid:4) 
+¯ ¯
+≤ (cid:4)S¯−1∆s(cid:4)β θ  . 
+
+From  this  it  follows  that 
+
+(cid:4)S¯−1∆s(cid:4) ≤ 
+
+1 − β 
+β 
+
+< 1  . 
+
+Therefore 
+
+s + ∆s = S (e + S¯−1∆s) > 0  .
+� 
+¯ 
+s  = ¯
+Next  note  from  (14)  that  for  j  = 1, . . . , n  we  have: 
+� 
+� 
+xj sj + ¯
+xj +∆xj )(¯	
+xj sj  = ( ¯
+sj +∆sj ) =  ¯ ¯
+xj ∆sj +∆xj s¯j +∆xj ∆sj  = θ+∆xj ∆sj  . 
+
+13 
+
+. 
+
+Therefore 
+
+(cid:19)
+(cid:20)
+e −  X S e  = − 
+∆xj ∆sj
+1 
+� 
+�
+θ 
+θ 
+j 
+From  this  we  obtain: 
+(cid:7) (cid:7) (cid:7) 
+� S e(cid:4) ≤ (cid:4)e − 1 X S e(cid:4)1
+(cid:4)e − 1 X 
+� 
+� 
+�	
+θ	
+θ 
+|∆xj ∆sj |
+n 
+=	
+j=1 
+θ 
+|∆xj | ∆sj |  ¯ ¯xj sj 
+n 
+= 
+j=1  ¯xj	
+θ 
+s¯j 
+xj | |∆sj |
+|∆
+≤ 
+n 
+(1 + β )
+(cid:14)
+(cid:15)2 
+j=1 
+¯
+xj	
+s¯j
+−1∆x(cid:4)(cid:4)S¯−1∆s(cid:4)(1 + β ) 
+¯≤ (cid:4)X 
+≤ 
+β 
+(1 + β )
+1−β 
+
+4  Complexity  Analysis  of  the  Algorithm 
+
+Theorem  4.1  (Relaxation  Theorem).  Suppose that   ( ¯ π , s¯)  is   a   β  = 
+x, ¯
+3 
+40 -approximate   solution   of   P (θ). Let  
+α = 1 −
+
+1 
+√1  +	 n
+8
+5 
+�  = αθ.   Then   ( ¯ π , ¯
+� ). 
+1
+and   let   θ 
+x, ¯	 s)  is   a   β  =  5 -approximate   solution   of   P (θ 
+
+x >  0,  and  AT ¯
+π + ¯ =  c, and 
+x  =  b, ¯
+Proof:   The  triplet  ( ¯ π , ¯
+x, ¯ s)  satisﬁes  A ¯
+s 
+(cid:21) 
+(cid:21) 
+(cid:21) 
+so  it  remains  to  show  that  (cid:21) 1 
+(cid:21) ≤
+(cid:21)  X s¯ − e 
+(cid:21) θ � 
+(cid:21)	
+¯ 
+(cid:21) 
+(cid:21) 
+(cid:21) 
+(cid:21) 
+(cid:21)	
+(cid:19) 
+(cid:20)  (cid:19) 
+(cid:21)
+(cid:21)
+We  have (cid:21) 1 
+(cid:21) 1
+(cid:21)  1 
+(cid:21)  X s¯ − e(cid:21) = (cid:21)  X s¯ − e  =
+(cid:21) 
+(cid:21)
+(cid:21) αθ 
+(cid:21) α	
+(cid:21) θ � 
+(cid:21)
+(cid:21)
+X s¯ − e  −  1 − 
+1	
+¯ 
+¯
+¯
+(cid:21) 
+(cid:22) 
+(cid:22) 
+(cid:21) 
+(cid:19)  (cid:20) 
+θ	
+1  (cid:21) 1 
+(cid:22) 1 − α (cid:22) 
+(cid:21)
+(cid:21)  X s¯ − e 
+(cid:21) + (cid:22) 
+(cid:22) (cid:4)e(cid:4) 
+(cid:21) θ 
+(cid:22)
+(cid:22)  α 
+(cid:21)
+≤ 
+¯ 
+α 
+
+(cid:21) 
+(cid:20)  (cid:21) 
+(cid:21) 
+(cid:21)
+1 
+e 
+α 
+
+1
+5 
+
+. 
+
+14 
+
+(cid:19)
+3 
+≤  40  + 
+α
+
+(cid:20) 
+1 − α  √ 
+n  = 
+α 
+
+√
+3  +  n  √ 
+−  n =
+40 
+α 
+
+1 
+5 
+
+. 
+
+Theorem  4.2  (Convergence  Theorem).  Suppose that   (x0 , π0 , s0 )  is   a  
+3
+β  =  40 -approximate   solution   of   P (θ0 ) .   Then   for   al l   k = 1, 2, 3, . . .,  (xk , πk , sk ) 
+3
+is   a   β  =  40 -approximate   solution   of   P (θk ). 
+
+Proof:   By induction, suppose that the theorem is true for iterates 0, 1, 2, ..., k . 
+3
+Then  (xk , πk , sk ) is a  β  =  40 -approximate  solution  of  P (θk ).  From  the  Re-
+laxation Theorem,  (xk , πk , sk ) is a  1 
+5 -approximate solution of P (θk+1 ) where 
+θk+1  = αθk . 
+From the Quadratic Convergence Theorem, (xk+1 , πk+1 , sk+1 ) is a β -approximate 
+(cid:19) (cid:20)2
+solution  of  P (θk+1 ) for 
+β  =  (cid:14) 
+5 (cid:15)2  5 
+1 +  1 
+1
+1 −  1
+5 
+Therefore,  by  induction,  the  theorem  is  true  for  all  values  of  k . 
+
+3 
+40 
+
+=
+
+. 
+
+Figure  2  shows  a  better  picture  of  the  algorithm. 
+
+Theorem  4.3  (Complexity  Theorem).  Suppose   that   (x0 , π0 , s0 )  is   a  
+3
+β  =  40 -approximate   solution   of   P (θ0 ).   In   order   to   obtain   primal   and   dual  
+feasible   solutions   (xk , πk , sk )  with   a   duality   gap   of   at   most   ,  one  needs  to 
+run   the   algorithm   for   at   most  
+(cid:25)(cid:26) 
+(cid:23) 
+(cid:24) 
+√ 
+0
+43 (x0 )T s
+k =  10  n ln 
+37 
+ 
+
+iterations.  
+
+Proof:   Let  k  be  as  deﬁned  above.  Note  that 
+√  (cid:15)  ≤ 1 − √  . 
+8√  = 1 −  (cid:14) 
+1 
+α = 1 −  1
+1 
+1
+10 n 
+5  +  n 
+8 
+5  + 8 n 
+
+15 
+
+θ = 80 
+
+x^ 
+
+x~ 
+
+θ = 90 
+
+_ 
+x
+
+θ = 100 
+
+Figure  2:  Another  picture  of  the  interior-point  algorithm. 
+
+16 
+
+
+(cid:19) 
+1 − 
+
+(cid:20)k 
+√ 
+1 
+10
+n 
+
+(cid:20) 
+(cid:19) 43 
+θ0 ) 
+n 
+40 
+
+(cid:20) 
+
+Therefore 
+
+θk  ≤ 
+
+≤ 
+
+θ0 . 
+(cid:19) 
+(cid:20)k 
+This  implies  that 
+√ 
+1 − 
+c T x k  − bT πk  = (x k )T s k  ≤ θk n(1 + β ) ≤ 
+1 
+(cid:25) 
+(cid:24) 
+(cid:20)  (x0 )T s0 
+(cid:19) 43 
+(cid:20)k 
+(cid:19) 
+10
+n 
+√ 
+1 − 
+1 
+n 
+, 
+37 
+40 
+10
+n 
+n 
+40 
+(cid:19) 43 
+(cid:20) 
+(cid:19) 
+from  (4).  Taking  logarithms,  we  obtain 
+ln(c x k  − bT πk ) ≤ k ln  1 − √  + ln 
+1 
+T	
+0
+(x 0 )T s
+(cid:19) 
+(cid:20) 
+10 	 n 
+37
+−k 
+≤ √  + ln 
+43 
+(cid:25) 
+(cid:24) 
+0
+(x 0 )T s
+(cid:20) 
+(cid:19) 
+37
+10 	 n 
+43 (x0 )T s0 
+≤ − ln 
+43 
+0 )T  0
+(x
++ ln 
+s  = ln(). 
+37
+37 
+ 
+Therefore  cT xk  − bT πk  ≤ . 
+
+5	 An  Implementable  Primal-Dual  Interior-Point 
+Algorithm 
+
+Herein  we  describe  a  more  implementable  primal-dual  interior-point  algo-
+rithm.  This  algorithm  diﬀers  from  the  previous  method  in  the  following 
+respects: 
+•	 We  do  not  assume  that  the  current  point  is  near  the  central  path.  In 
+fact,  we  do  not  assume  that  the  current  point  is  even  feasible. 
+•  The  fractional  decrease  parameter  α  is  set  to  α = 
+conservative  value  of 
+1 
+α = 1 −  1 
+√ 
+8
++	 n
+5 
+
+rather  than  the 
+
+1
+10 
+
+. 
+
+17 
+
+•	 We do not necessarily  take  the  full Newton  step  at  each  iteration,  and 
+we  take  diﬀerent  step-sizes  in  the  primal  and  dual. 
+
+x, ¯ s) for which  ¯
+Our current “point” is ( ¯ π , ¯
+s > 0, but quite possibly 
+x > 0 and  ¯
+
+π + ¯ (cid:9)
+x  (cid:9)
+A ¯ = b and/or AT ¯
+s = c.  We are given a value of the central path barrier
+
+parameter  θ >  0.  We  want  to  compute  a  direction  (∆x, ∆π , ∆s)  so  that 
+x + ∆x, ¯
+( ¯
+π + ∆π , s¯ + ∆s)  approximately  solves  the  central  path  equations. 
+We  set  up  the  system: 
+
+(1)  A( ¯x + ∆x) = b 
+
+(2)  AT ( ¯
+s + ∆s) = c
+π + ∆π) + (¯
+
+(3)  ( ¯ X + ∆X )(S ¯ + ∆S )e = θe  . 
+
+We  linearize  this  system  of  equations  and  rearrange  the  terms  to 
+obtain  the  Newton  equations  for  the  current  point  ( ¯ π , s¯):
+x, ¯
+
+(1)  A∆x = b − A ¯x =: r1 
+(2)  AT ∆π + ∆s = c − AT ¯π − s¯ =: r2 
+(3)  S¯∆x + X∆s = θe − X S e =: r3 
+¯ ¯
+¯ 
+
+We  refer  to  the  solution  (∆x, ∆π , ∆s)  to  the  above  system  as  the  primal-
+dual  Newton  direction  at  the  point  ( ¯ π , ¯
+x, ¯ s).  It  diﬀers  from  that  derived 
+earlier  only  in  that  earlier  it  was  assumed  that  r1  = 0  and  r2  = 0. 
+Given  our  current  point  ( ¯ π , s¯)  and  a  given  value  of  θ , we  compute 
+x, ¯
+the Newton direction (∆x, ∆π , ∆s) and we update our variables by choosing 
+primal  and  dual  step-sizes  αP  and  αD  to  obtain  new  values: 
+( ˜ π , s˜) ← ( ¯
+π + αD ∆π , s¯ + αD ∆s)  . 
+x + αP ∆x, ¯
+x, ˜
+
+18 
+
+In  order  to  ensure  that  ˜
+s >  0,  we  choose  a  value  of  r
+x >  0 and  ˜
+satisfying 0 < r < 1 (r = 0.99 is a common value in practice), and determine 
+αP  and  αD  as  follows: 
+(cid:28)(cid:28) 
+(cid:27) 
+(cid:27) 
+¯
+xj 
+∆xj <0  −∆xj 
+αP  = min  1, r  min 
+(cid:27) 
+(cid:28)(cid:28) 
+(cid:27) 
+s¯j
+∆sj <0  −∆sj 
+αD  = min  1, r  min 
+
+. 
+
+These  step-sizes  ensure  that  the  next  iterate  ( ˜ π , ˜
+x > 0
+x, ˜ s)  satisﬁes  ˜
+and  ˜s >0. 
+
+5.1  Decreasing  the  Path  Parameter  θ 
+
+We also want to shrink θ at each  iteration,  in order to (hopefully) shrink the 
+duality  gap.  The  current  iterate  is  ( ¯ π , ¯
+x, ¯ s),  and  the  current  values  satisfy: 
+
+We  then  re-set  θ  to 
+
+T ¯¯x s 
+θ ≈  n 
+
+(cid:25) 
+
+(cid:24) 
+(cid:19)  (cid:20)  ¯
+xT s¯
+1 
+10 
+n
+
+, 
+
+θ ← 
+
+where  the  fractional  decrease  1  is  user-speciﬁed. 
+10 
+
+5.2  The  Stopping  Criterion 
+
+We  typically declare  the problem  solved when  it  is “almost” primal  feasible, 
+“almost”  dual  feasible,  and  there  is  “almost”  no  duality  gap.  We  set  our 
+
+19 
+
+tolerance    to  be  a  small  positive  number,  typically   = 10−8 ,  for  example, 
+and  we  stop  when: 
+
+(1)  (cid:4)A ¯x − b(cid:4) ≤ 
+(2)  (cid:4)AT ¯
+s − c(cid:4) ≤
+π + ¯
+(3)  s¯ x ≤  
+T ¯
+
+5.3  The  Full  Interior-Point  Algorithm 
+
+1.  Given (x0 , π0 , s0 ) satisfying x0  > 0, s0  > 0, and θ0  > 0, and r satisfying 
+0 < r < 1,  and   > 0.  Set  k ← 0. 
+2.  Test  stopping  criterion.  Check  if: 
+(1)  (cid:4)Axk  − b(cid:4) ≤  
+(2)  (cid:4)AT πk  + sk  − c(cid:4) ≤ 
+(3)  (sk )T xk  ≤  . 
+(cid:25) 
+(cid:19)  (cid:20) (cid:24) 
+If  so,  STOP.  If  not,  proceed. 
+(xk )T (sk )
+3.  Set  θ ← 
+1
+10 
+n 
+
+4.  Solve  the  Newton  equation  system: 
+(1)  A∆x = b − Axk  =: r1 
+(2)  AT ∆π + ∆s = c − AT πk  − sk  =: r2 
+(3)  S k ∆x + X k ∆s = θe − X k S k e =: r3 
+
+20 
+
+5.  Determine  the  step-sizes: 
+
+(cid:27) 
+(cid:28)(cid:28) 
+(cid:27) 
+k 
+xj 
+∆xj <0  −∆xj 
+θP  = min  1, r  min 
+(cid:27) 
+(cid:27) 
+(cid:28)(cid:28) 
+k 
+sj 
+∆sj <0  −∆sj 
+θD  = min  1, r  min 
+
+. 
+
+6.  Update  values: 
+
+←  (xk  + αP ∆x, πk  + αD ∆π , sk  + αD ∆s)  . 
+k+1 )
+(xk+1 , πk+1 , s
+Re-set  k ← k + 1  and  return  to  (b). 
+
+5.4  Remarks  on  Interior-Point  Methods 
+•	 The  algorithm  just  described  is  almost  exactly  what  is  used  in  com-
+mercial  interior-point  method  software. 
+•	 A  typical  interior-point  code will  solve  a  linear  or  quadratic  optimiza-
+tion  problem  in  25-80  iterations,  regardless  of  the  dimension  of  the 
+problem. 
+•	 These  days,  interior-point  methods  have  been  extended  to  allow  for 
+the  solution  of  a  very  large  class  of  convex  nonlinear  optimization 
+problems. 
+
+6  Exercises  on  Interior-Point  Methods  for  LP 
+
+1.  (Interior  Point Method)  Verify  that  the  formulas  given  in  (11)  indeed 
+solve  the  equation  system  (10). 
+
+21 
+
+2.  (Interior  Point  Method)  Prove  Proposition  6.1  of  the  notes  on  New-
+ton’s  method  for  a  logarithmic  barrier  algorithm  for  linear  program-
+ming. 
+
+3.  (Interior Point Method) Create and implement your own interior-point 
+algorithm  to  solve  the  following  linear  program: 
+
+LP: 
+
+where 
+
+and 
+
+T
+minimize  c x 
+
+s.t.	
+
+Ax = b 
+x ≥ 0, 
+(cid:24)
+
+(cid:25)
+
+, b = 
+
+(cid:25)
+
+
+, 
+
+(cid:24) 
+
+A =
+
+1 0 
+1 
+1 
+1  −1 0 1 
+(cid:14)	
+
+T  =c	
+
+−9  −10 0 0 
+
+100
+
+50 
+(cid:15) 
+. 
+
+In  running  your  algorithm,  you  will  need  to  specify  the  starting  point 
+(x0 , π0 , s0 ),  the  starting  value  of  the  barrier  parameter  θ0 ,  and  the 
+value  of  the  fractional  decrease  parameter  α.  Use  the  following  values 
+and  make  eight  runs  of  the  algorithm  as  follows: 
+•  Starting  Points: 
+–  (x0 , π0 , s0 ) = ((1, 1, 1, 1), (0, 0), (1, 1, 1, 1)) 
+–  (x0 , π0 , s0 ) = ((100, 100, 100, 100), (0, 0), (100, 100, 100, 100)) 
+•  Values  of  θ0 : 
+–  θ0  = 1000.0 
+–  θ0  = 10.0 
+•  Values  of  α: 
+–  α = 1 −  √ 
+1
+10  n 
+–  α =	 1 
+10 
+4.  (Interior  Point  Method)  Suppose  that  x >  0  is  a  feasible  solution  of 
+¯
+
+the  following  logarithmic  barrier  problem:
+
+
+22 
+
+P (θ): 
+
+(cid:7) 
+minimize  c x − θ 
+n 
+T
+ln(xj ) 
+j=1 
+
+s.t.	
+
+Ax = b 
+x ≥ 0, 
+and that we wish to test if  ¯x  is  a β -approximate  solution  to P (θ)  for  a 
+given  value  of  θ .  The  conditions  for  ¯x  to  be  a  β -approximate  solution 
+to  P (θ)  are  that  there  exist  values  (π , s)  for  which: 
+⎧ ⎪  A ¯
+⎪ ⎪ ⎪ ⎪ ⎨ 
+x > 0
+x = b, ¯
+⎪ ⎪ ⎪ ⎪ ⎪ 
+AT π + s = c	
+⎩  (cid:4) 1 X s − e(cid:4) ≤ β .
+¯ 
+θ 
+Construct an analytic  test  for whether or not  such  (π , s) exist by  solv-
+ing  an  associated  equality-constrained  quadratic  program  (which  has 
+a closed form solution).  HINT: Think of trying to minimize (cid:4) 1 X s − e(cid:4)
+¯
+θ 
+over  appropriate  values  of  (π , s). 
+
+(17) 
+
+(cid:7) 
+5.  Consider  the  logarithmic  barrier  problem: 
+P (θ) :  min  c x − θ 
+n 
+T
+ln xj 
+j=1 
+s.t.  Ax = b 
+
+x > 0. 
+
+¯ 
+x > 0 and A ¯
+Suppose  ¯	
+x = b. Let X  = diag( ¯
+x is a feasible point,  i.e.,  ¯
+x).
+a.   Construct the (primal) Newton direction d at  ¯x.  Show that d can 
+(cid:20) 
+(cid:19) 
+be  written  as: 
+−1AX )  e − 
+d = X (I − X AT (AX 2AT )
+1 X c 
+¯ 
+¯
+¯ 
+¯
+¯
+. 
+θ 
+b.  Show  in  the  above  that  P  = (I − X AT (AX 2AT )−1AX ) is a pro-
+¯
+¯ 
+¯	
+jection matrix. 
+
+23 
+
+c.   Suppose  AT ¯
+s =  c  and  ¯
+π + ¯
+s >  0  for  some  ¯ s.  Show  that  d  can 
+π , ¯
+(cid:19) 
+(cid:20) 
+also  be  written  as: 
+d = X (I − X AT (AX 2AT )
+−1AX )  e −  X s¯ . 
+1
+¯ 
+¯
+¯
+¯ 
+¯
+θ 
+
+d.  Show  that  if  there  exists  ( ¯ s) with  AT ¯
+π + ¯
+π , ¯
+s > 0,  and 
+s = c  and  ¯
+4 ,  then  (cid:4)X −1d(cid:4) ≤  1 
+¯ s(cid:4) ≤  1
+(cid:4)e − 1 X ¯
+¯
+4 ,  and  then  the  Newton  iterate 
+θ 
+satisﬁes  ¯x + d > 0. 
+
+24 
+
+

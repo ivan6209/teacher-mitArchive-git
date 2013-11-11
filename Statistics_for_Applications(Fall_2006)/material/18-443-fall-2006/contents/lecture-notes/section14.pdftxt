@@ -1,0 +1,1399 @@
+Section  14 
+
+Simple  linear  regression. 
+
+Let us  look  at  the  ’cigarette’  dataset  from  [1]  (available  to download  from  journal’s website) 
+and  [2].  The  cigarette  dataset  contains  measurements  of  tar,  nicotine,  weight  and  carbon 
+monoxide  (CO)  content  for  25  brands  of  domestic  cigarettes. We  are  going  to  try  to  predict 
+CO  as  a  function  of  tar  and  nicotine  content.  To  visualize  the  data  let  us  plot  each  of  these 
+variable  against others,  see ﬁgure  14.1. Since  the  variables  seem  to have  a  linear  relationship 
+we  ﬁt  a  least-squares  line,  which  we  will  explain  below,  to  ﬁt  the  data  using  Matlab  tool 
+’polytool’.  For  example,  if  our  vectors  are  ’nic’  for  nicotine,  ’tar’  for  tar  and  ’carb’  for  CO 
+then,  for  example,  using 
+
+polytool(nic,carb,1) 
+
+will  produce  ﬁgure  14.1  (a),  etc.  We  can  also  perform  statistical  analysis  of  these  ﬁts,  in  a 
+sense  that  will  gradually  be  explained  below,  using  Matlab  ’regress’  function.  For  carbon 
+monoxide  vs.  tar: 
+
+[b,bint,r,rint,stats]=regress(carb,[ones(25,1),tar]); 
+
+b  =	
+
+2.7433 
+0.8010 
+
+bint  =  1.3465  4.1400 
+0.6969  0.9051 
+
+stats  =  0.9168  253.3697  0.000  1.9508, 
+
+for  carbon monoxide  vs.  nicotine 
+
+[b,bint,r,rint,stats]=regress(carb,[ones(25,1),nic]); 
+
+b  =	 1.6647 
+12.3954 
+
+bint  =  -0.3908 
+3.7201 
+10.2147  14.5761 
+
+stats  =  0.8574  138.2659  0.000  3.3432 
+
+91 
+
+35 
+
+30 
+
+25 
+
+20 
+
+15 
+
+10 
+
+5 
+
+0 
+
+−5 
+
+Carbon monoxide 
+
+Tar 
+15 
+
+5 
+
+10 
+
+20 
+
+25 
+
+30 
+
+35 
+
+30 
+
+25 
+
+20 
+
+15 
+
+10 
+
+5 
+
+0 
+
+−5 
+
+35 
+
+30 
+
+25 
+
+20 
+
+15 
+
+10 
+
+5 
+
+0 
+
+−5 
+
+Carbon monoxide 
+
+0.2
+
+0.4
+
+0.6
+
+0.8 
+
+Nicotine	
+1.2
+1 
+1.4
+1.6
+1.8 
+2	
+PSfrag replacements
+
+Nicotine 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+Tar 
+1 
+1.2 
+
+1.4 
+
+1.6 
+
+1.8 
+
+2 
+
+PSfrag replacements
+
+PSfrag replacements
+
+Figure 14.1: Least-squares line (solid line). (a) Carbon monoxide content (mg.) vs. nicotine content 
+(mg.).  (b)  Carbon monoxide  vs.  tar  content.  (c)  Tar  content  vs.  nicotine  content. 
+
+and  for  nicotine  vs.  tar 
+
+[b,bint,r,rint,stats]=regress(tar,[ones(25,1),nic]); 
+
+b  =	 -1.4805 
+15.6281 
+
+bint  =  -2.8795 
+14.1439 
+
+-0.0815 
+17.1124 
+
+stats  =  0.9538  474.4314  0.000  1.5488 
+
+The  output  of  ’regress’  gives  a  vector  ’b’  of  parameters  of  a  ﬁtted  least-squares  line,  95% 
+conﬁdence  intervals  ’bint’  for  these  parameters,  and  ’stats’  contains  in  order: 
+
+R2  statistic,  F  statistic,  p-value  of  F  statistic,  MLE  πˆ 2  of  the  error  variance. 
+All  of  these  will  be  explained  below. 
+
+92
+
+
+Simple  linear  regression  model. 
+Suppose  that we  have  a  pair  of  variables  (X, Y )  and  a  variable  Y  is  a  linear  function  of 
+X  plus  random  noise: 
+
+Y  = f (X ) + χ = �0  + �1X + χ, 
+where  a  random  noise  χ  is  assumed  to  have  normal  distribution  N (0, π 2 ).  A  variable  X  is 
+called  a predictor  variable, Y  - a  response  variable  and  a  function  f (x) = �0 + �1x  - a  linear 
+regression  function. 
+Suppose  that  we  are  given  a  sequence  of  pairs  (X1 , Y1 ), . . . , (Xn , Yn)  that  are  described 
+by  the  above  model: 
+
+Yi  = �0  + �1Xi  + χi 
+and χ1 , . . . , χn  are i.i.d. N (0, π 2 ). We have three unknown parameters - �0 , �1  and π 2  - and we 
+want  to estimate  them using a given  sample. The points X1 , . . . , Xn  can be either  random or 
+non random, but from the point of view of estimating  linear regression  function the nature of 
+X s  is  in  some  sense  irrelevant  so we will  think  of  them  as ﬁxed  and non  random  and assume 
+that  the  randomness  comes  from  the  noise  variables  χi . For a ﬁxed Xi ,  the  distribution  of Yi 
+is  equal  to N (f (Xi ), π 2 )  with  p.d.f. 
+
+2  P (Yi−f (Xi ))2 
+n
+i=1
+
+1 
+(y−f (Xi ))2 
+e− 
+≥2απ 
+2�2 
+and  the  likelihood  function  of  the  sequence  Y1 , . . . , Yn  is: 
+  1  �n 
+  1  �n 
+= ⎠
+⎠
+n 
+e−  1  Pi
+=1 (Yi−�0−�1Xi )2 
+1
+e− 
+≥2απ 
+≥2απ 
+.
+2�2 
+2�
+Let us ﬁnd  the maximum  likelihood  estimates  of �0 , �1  and π 2  that maximize  this  likelihood 
+function.  First  of  all,  it  is  obvious  that  for  any  π 2  we  need  to minimize 
+n 
+ 
+L  := �
+(Yi  − �0  − �1Xi )2 
+i=1 
+over  �0 , �1 .  The  line  that minimizes  the  sum  of  squares  L  is  called  the  least-squares  line. To 
+ﬁnd  the  critical  points  we  write: 
+
+�L 
+��0 
+
+�L 
+��1 
+
+n 
+ 
+�
+2(Yi  − (�0  + �1Xi )) = 0 
+=  − 
+i=1 
+ 
+n
+�
+2(Yi  − (�0  + �1Xi ))Xi  = 0 
+=  − 
+i=1 
+If  we  introduce  the  notations 
+ 
+ 
+1 �
+1 �
+1 �
+¯
+Yi , 
+Xi , Y  = 
+n 
+n
+n
+then  the  critical  point  conditions  can  be  rewritten  as 
+X¯2 
+¯
+¯
+¯
+¯
+�0  + �1X  = Y  and  �0X + �1  = X Y . 
+
+ 
+X 2 
+¯
+i  ,  X Y  = 
+
+¯
+X  = 
+
+X¯2 
+
+= 
+
+ 
+XiYi 
+
+1 �
+n 
+
+93 
+
+Solving  for  �0  and  �1  we  get  the MLE 
+
+.
+
+πˆ 2  =
+
+¯
+X¯ ¯
+X Y  −  Y
+X¯ and  ˆ = 
+ˆ = ¯
+Y  − �ˆ1 
+�0 
+�1 
+X¯2  X¯ 2− 
+These  estimates  are  used  to  plot  least-squares  regression  lines  in  ﬁgure  14.1. Finally,  to  ﬁnd 
+the MLE  of  π 2  we  maximize  the  likelihood  over  π 2  and  get: 
+n 
+ 
+1 �
+0  − �ˆ
+(Yi  − �ˆ
+1Xi )2 . 
+n 
+i=1 
+The  diﬀerences  ri  = Yi − Yˆi  between  observed  response  variables  Yi  and  the  values predicted 
+by  the  estimated  regression  line 
+Yˆi  = �ˆ0  + �ˆ1Xi 
+are  called  the  residuals.  The  R2  statistic  in  the  examples  above  is  deﬁned  as 
+R2  = 1 − �i
+n 
+=1 (Yi  − Yˆi)2 
+.
+�n 
+i=1 (Yi  − Y¯ )2 
+The  numerator  in  the  last  sum  is  the  sum  of  squares  of  the  residuals  and  the  numerator  is 
+the  variance  of  Y  and  R2  is  usually  interpreted  as  the  proportion  of  variability  in  the  data 
+explained  by  the  linear model. The  higher R2  the  better  our model  explains  the  data. Next, 
+we  would  like  to  do  statistical  inference  about  the  linear model. 
+
+1.  Construct  conﬁdence  intervals  for  parameters  of  the  model  �0 , �1  and  π 2 . 
+2.  Construct  prediction  intervals  for  Y  given  any  point  X  (dotted  lines  in  ﬁgure  14.1). 
+3. Test  hypotheses  about  parameters  of  the model. For  example, F -statistic  in  the  output 
+of  Matlab  function  ’regress’  comes  from  a  test  of  the  hypothesis  H0  : �0  = 0, �1  = 0  that  the 
+response  Y  is  not  ’correlated’  with  a  predictor  variable  X. 
+
+In spirit all these problems are similar to statistical inference about parameters of normal 
+distribution  such  as  t-tests,  F -tests,  etc.  so  as  a  starting  point  we  need  to  ﬁnd  a  joint 
+distribution  of  the  estimates  �ˆ
+0 , �ˆ
+1  and  ˆπ 2 . 
+To  compute  the  joint  distribution  of  �ˆ0  and  �ˆ1  is  very  easy  because  they  are  linear 
+combinations  of  Yi s  which  have  normal  distributions  and,  as  a  result,  �ˆ0  and  �ˆ1  will  have 
+normal  distributions.  All we  need  to  do  is  ﬁnd  their means,  variances  and  covariance,  which 
+is  a  straightforward  computation.  However,  we  will  obtain  this  as  a  part  of  a  more  general 
+computation  that will  also  give  us  joint  distribution  of  all  three  estimates  �ˆ0 , �ˆ1  and  ˆπ 2 . Let 
+us  denote  the  sample  variance  of X s  by 
+2  X¯2  − X¯ 2 
+= 
+. 
+πx 
+
+Then  we  will  prove  the  following: 
+
+94 
+
+ 1
+
+⎠
+�0 ,  +
+
+n
+
+
+π 2
+
+�
+
+.
+
+
+3.
+
+X¯ 2
+�
+nπ 2 
+x 
+
+⎠
+= N �0 ,
+
+π 2 
+�
+X 2  ,
+
+nπ 2 
+x 
+
+π 2 
+�
+⎠
+⎠
+,
+ �ˆ0  � N 
+1. �ˆ1  � N �1 , 
+nπ 2 
+x 
+¯X π 2 
+Cov( �ˆ0 , �ˆ1 ) = − 
+. 
+nπ 2 
+x 
+2. πˆ 2  is  independent  of  �ˆ
+0  and  �ˆ
+1 .
+
+nπˆ 2
+
+π 2  has  ∂2 
+n−2  distribution  with  n − 2  degrees  of  freedom. 
+Remark. Line 1 means that ( �ˆ
+0 , �ˆ
+1 ) have  jointly normal distribution with mean (�0 , �1 ) and 
+covariance matrix 
+�
+�
+π 2 
+X 2  −X¯
+2  −X¯
+1 
+nπx 
+⎠
+a2  = (a21 , . . . , a2n )  where  a2i  = 
+
+1
+
+�
+≥n 
+¯
+Xi  − X 
+.
+
+�
+nπ 2 
+x 
+It  is  easy  to  check  that  both  vectors  have  length  1  and  they  are  orthogonal  to  each  other 
+since  their  scalar  product  is 
+
+Proof.  Let  us  consider  two  vectors
+
+
+
+ 1
+, . . . , 
+≥n 
+
+a1  = (a11 , . . . , a1n ) = 
+
+and 
+
+� =
+
+
+= 0.
+
+
+1
+
+≥n 
+
+a1ia2i  = 
+
+a1  a2  = 
+·
+
+n 
+n
+¯
+Xi  − X
+�
+�
+�
+nπ 2 
+x 
+i=1 
+i=1 
+Let  us  choose  vectors  a3 , . . . , an  so  that  a1 , . . . , an  is  orthonormal  basis  and,  as  a  result,  the 
+matrix 
+
+ 
+ 
+�
+⎞
+⎜⎜⎜⎝
+���
+ 
+�
+Y  = (Y1 , . . . , Yn ), µ = EY  = (EY1 , . . . , EYn ) 
+
+· · · 
+an1
+· · · 
+an2
+. 
+. 
+. 
+. 
+. 
+. 
+· · ·  ann 
+
+is  orthogonal.  Let  us  consider  vectors 
+
+a11 
+a12 
+. 
+. 
+. 
+a1n 
+
+A =
+
+
+and 
+
+= ⎠ Y1  −  EY1 , . . . , 
+Yn  − EYn 
+Y  − µ 
+�
+Y �  = (Y1� , . . . , Y n� ) = 
+π 
+π 
+π
+so  that  the  random  variables  Y1� , . . . , Y n� are  i.i.d.  standard  normal. We  proved  before  that  if 
+
+we  consider  an  orthogonal  transformation  of  i.i.d.  standard  normal  sequence: 
+
+Z �  = (Z1� , . . . , Zn� ) = Y �A 
+
+95 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+then  Z1� , . . . , Zn� will  also  be  i.i.d.  standard  normal.  Since 
+ 
+Y A − µA 
+Z �  = Y �A = ⎠ Y  − µ �
+A = 
+π 
+π
+Y A = πZ �  + µA. 
+
+this  implies  that 
+
+Let  us  deﬁne  a  vector 
+
+Z  = (Z1 , . . . , Zn) = Y A = πZ �  + µA. 
+Each  Zi  is  a  linear  combination  of  Yi s  and,  therefore,  it  has  a  normal  distribution.  Since  we 
+made  a  speciﬁc  choice  of  the  ﬁrst  two  columns  of  the matrix A we  can write  down  explicitly 
+the  ﬁrst  two  coordinates  Z1  and  Z2  of  vector  Z. We  have, 
+n	
+n 
+ 
+ 
+1 
+Yi  = ≥nY  = ≥n(�ˆ0  + �ˆ1X ) 
+n �
+Z1  = �
+¯	
+¯
+ai1Yi  =  ≥
+i=1 
+i=1 
+and  the  second  coordinate 
+
+�ˆ1  =
+
+n 
+ (Xi  − X )Yi
+n
+¯
+�
+�
+Z2  = 
+ai2Yi  = 
+�nπ 2 
+x 
+i=1 
+i=1 
+n 
+ (Xi  − X )Yi  = �nπ 2 �ˆ1 .
+¯
+=  �nπ 2 �
+x	
+x
+nπ 2 
+x 
+i=1 
+Solving  these  two  equations  for  �ˆ0  and  �ˆ1  we  can  express  them  in  terms  of  Z1  and  Z2  as 
+¯
+1 
+1 
+X
+Z2  and  �ˆ0  =
+Z1  − �nπ 2 
+≥n
+Z2 .
+�nπ 2 
+x 
+x	
+This  easily  implies  claim  1. Next  we  will  show  how  ˆπ 2  can  also  be  expressed  in  terms  of Zi s. 
+ 
+n	
+n 
+ 
+1 (Xi  − X¯ ) �2 
+1Xi )2  = �⎠
+nπˆ 2  =  �
+(Yi  − Y¯ ) − �ˆ
+(Yi  − �ˆ
+0  − �ˆ
+i=1 
+i=1
+
+n 
+n
+
+ 
+�n
+)(Xi  − X¯ ) 
+Y¯
+i=1 (Yi  − 
+2 �
+=	 �
++�ˆ
+(Yi  − Y¯ )2  − 2�ˆ1nπx 
+2 
+1
+2 
+nπ
+ 
+ 
+ 
+x
+i=1 
+i=1
+⎛
+��
+⎟
+�ˆ1 
+n 
+n	
+ 
+ 
+2 
+2  = �
+=	 �
+2  − n(Y¯ )2 − �ˆ1
+(Yi  − Y¯ )2  − �ˆ
+2 
+2nπx 
+nπx 
+Yi 
+ 
+1
+⎟ �� ⎛
+⎟ �� ⎛
+i=1	
+i=1 
+Z 2 
+Z 2 
+2 
+1
+ 
+ 
+n 
+n	
+2  = �
+=	 �
+2 .
+2  − Z1
+2  − Z1
+2  − Z2
+2  = Z 2 
+2  − Z2
++ Zn
+3  + · · · 
+Zi 
+Yi 
+i=1	
+i=1 
+In  the  last  line  we  used  the  fact  that  Z  =  Y A  is  an  orthogonal  transformation  of  Y  and 
+since  orthogonal  transformation  preserves  the  length  of  a  vector  we  have, 
+n 
+ 
+ 
+n
+�
+�
+2  = 
+2 . 
+Yi 
+Zi 
+i=1 
+i=1 
+
+0  = Y¯ − �ˆ
+{since  �ˆ
+1X¯ }
+ 
+(Xi  − X¯ )2 
+
+96 
+
+
+If  we  can  show  that  Z3 , . . . , Zn  are  i.i.d.  with  distribution  N (0, π 2 )  then 
+nπˆ 2 
+⎠ Zn �2 
+⎠ Z3 �2 
+2 
+� ∂n
++ . . . + 
+π 2  =
+−2
+π 
+π
+has ∂2 -distribution with n − 2 degrees  of  freedom,  because Zi/π � N (0, 1). Since we  showed 
+above  that 
+Z  = µA + πZ �  ≤ Zi  = (µA)i  + πZi� , 
+the  fact  that  Z1� , . . . , Zn� are  i.i.d.  standard  normal  implies  that  Zi s  are  independent  of  each 
+other  and  Zi  � N ((µA)i , π 2 ).  Let  us  compute  the mean  EZi  = (µA)i : 
+ 
+ 
+ 
+n 
+n 
+n
+�
+�
+�
+(µA)i  =  EZi  = E 
+aj iYj  = 
+aj iEYj  = 
+aj i(�0  + �1Xj ) 
+j=1 
+j=1 
+j=1 
+n 
+�
+¯
+¯
+aj i (�0  + �1X + �1 (Xj  − X )) 
+j=1 
+ 
+ 
+n 
+n
+�
+�
+¯X ) 
+= (�0  + �1 
+aj i  + �1 
+aj i (Xj  −
+j=1 
+j=1 
+Since the matrix A is orthogonal its columns are orthogonal to each other. Let a i  = (a1i , . . . , ani ) 
+be  the vector  in the  ith column and  let us consider  i � 3. Then  the  fact that ai  is orthogonal 
+to  the  ﬁrst  column  gives 
+
+¯X ).
+
+= 
+
+ 
+
+aj i  = 0 
+
+1
+
+≥n
+
+ai  a1  = 
+· 
+
+ 
+aj 1aj i  = 
+
+n 
+n
+�
+�
+j=1 
+j=1 
+and  the  fact  that  ai  is  orthogonal  to  the  second  column  gives 
+n
+1
+
+
+ �
+¯
+(Xj  − X )aj i  = 0.
+�
+nπ 2 
+x j=1 
+
+· 
+ai  a2  = 
+
+This  show  that  for  i � 3 
+
+aj i  = 0  and 
+
+n 
+n 
+�
+�
+j=1 
+j=1 
+and  this  proves  that  EZi  = 0  for  i � 3  and  Zi  � N (0, π 2 )  for  i � 3.  As  we  mentioned  above 
+this  also  proves  that  nπˆ 2/π 2  � ∂2 
+n−2 . 
+Finally,  πˆ 2  is  independent  of  �ˆ0  and  �ˆ1  because  πˆ 2  can  be  written  as  a  function  of 
+0  and  �ˆ
+Z3 , . . . , Zn  and  �ˆ
+1  can  be  written  as  functions  of  Z1  and  Z2 . 
+
+aj i (Xj  −
+
+¯X ) = 0 
+
+Statistical  inference  in  simple  linear  regression.  Suppose  now  that  we  want  to 
+ﬁnd  the  conﬁdence  intervals  for  unknown  parameters  of  the  model  �0 , �1  and  π 2 .  This  is 
+
+97 
+
+
+
+
+
+nπˆ 2 
+π 2  � ∂2 
+n−2 
+
+straightforward  and  very  similar  to  the  conﬁdence  intervals  for  parameters  of  normal  dis­
+tribution.  For  example,  using  that  nπˆ 2 /π 2  �  ∂n
+2 
+−2 ,  if  we  ﬁnd  the  constants  c1  and  c2  such 
+that 
+1 − � 
+1 − � 
+∂2 
+and  ∂2 
+(c2 , +∼) = 
+(0, c1 ) = 
+n−2
+n−2
+2 
+2
+
+nπˆ 2 /π 2 
+c2 .  Solving  this  for  π 2  we  ﬁnd  the  �
+
+� 
+� 
+then  with  probability  �  we  have  c1 
+conﬁdence  interval: 
+nπˆ 2 
+nπˆ 2 
+c2  � π 2  � 
+. 
+c1 
+Similarly,  we  ﬁnd  the  �  conﬁdence  interval  for  �1 .  Since 
+ 
+�
+ 
+π 2 
+�
+(�ˆ1  − �1 ) 
+2  � N (0, 1)  and 
+nπx 
+ 
+ 
+�
+�
+1  nπˆ 2 
+nπ 2 �
+(�ˆ1  − �1 ) 
+x
+n − 2  π 2  � tn−2 
+π 2 
+has  Student  tn−2 -distribution  with  n − 2  degrees  of  freedom.  Simplifying,  we  get 
+ 
+�
+(n − 2)π 2 
+(�ˆ1  − �1 )
+x
+� tn−2 . 
+πˆ 2 
+Therefore,  if  we  ﬁnd  c  such  that  tn−2 (−c, c) = �  then  with  probability  �: 
+ 
+�
+(n − 
+2)π 2 
+x 
+−c �  (�ˆ
+1  − �1 )
+πˆ 2 
+and  solving  for  �1  we  obtain  the  �  conﬁdence  interval: 
+ 
+�
+�
+πˆ 2 
+πˆ 2 
+(n − 2)π 2  � �1  � �ˆ1  + c 
+�ˆ1  − c 
+.
+(n − 2)π 2 
+x 
+x
+Similarly,  to  ﬁnd  the  conﬁdence  interval  for  �0  we  use  that 
+ 
+ 
+= ( �ˆ0  − �0 ) ��
+  ��
+�ˆ0  − �0 
+πˆ 2  ⎠
+ 
+�⎠
+n − 2 
+�
+1  +  X¯ 2 
+π 2 
+n�2 
+n 
+x 
+and  �  conﬁdence  interval  for  �0  is: 
+ 
+�
+  X¯ 2 �
+ 
+πˆ 2  ⎠
+x  � �0  � �ˆ0  + c
+1 + 
+n − 2 
+π 2 
+
+  X¯ 2 �
+1 + 
+π 2 
+x 
+
+2 
+
+1  n
+πˆ
+n − 2 
+2
+π
+
+πˆ 2  ⎠
+n − 2 
+
+� tn−2 
+
+ 
+1 + 
+
+ 
+
+¯
+2 �
+X
+2
+π
+x 
+
+� c 
+
+ 
+
+ 
+
+�
+
+ 
+. 
+
+(14.0.1)
+
+(14.0.2) 
+
+then 
+
+�ˆ0  − c
+
+We  can  now  construct  various  t-tests  based  on  t-statistics  (14.0.1)  and  (14.0.2). 
+
+98 
+
+Linear  combinations  of parameters. More generally, let us compute the distribution 
+of  a  linear  combination 
+
+c0�ˆ0  + c1�ˆ1 
+of  the  estimates.  This  will  allow  us  to  construct  conﬁdence  intervals  and  t-tests  for  linear 
+combinations  of  parameters  c0�0  + c1�1 .  Clear,  the  distribution  of  this  linear  combination 
+will  be  normal  with mean 
+
+ˆ
+( �
+c
+E
+0 0
+
++
+
+c
+
+ˆ
+� ) =  �
+c
+1 1
+0 0
+
++
+
+c
+
+�
+1 1
+
+.
+
+=  c
+
+We compute its variance: 
+Var(c0�ˆ0  + c1�ˆ1 ) =  E(c0�ˆ0  + c1�ˆ1  − c0�0  − c1�1 )2  = E(c0 (�ˆ0  − �0 ) + c1 (�ˆ1  − �1 ))2 
+ˆ
+ˆ
+ˆ
+ˆ
+2
+2
+2
+2
+=  c
+−
+−
+−
+−
+(�
+� )
++
+(�
+c
+� ) +2
+c c
+(�
+� )(�
+� )
+E
+E
+E
+0
+0
+1
+1
+0 1
+0
+0
+1
+1
+1 
+ 
+0
+⎟
+⎟
+��
+⎛
+��
+⎛
+⎛
+��
+⎟
+covariance 
+variance of 
+variance of 
+ˆ
+ˆ
+�
+�
+0 
+1
+ 
+¯
+1 
+2
+2
+⎠
+�
+X
+π
+2
+2
++ 
+−
+2
+c c0 1
++
+π
+c
+1 
+n
+
+nπ 2 
+nπ 2 
+x
+x
+ 
+(c0X¯ − c1 )2 �
+2 
+⎠ c0
+=  π 2
+. 
+n 
+2nπx 
+ 
+(c0X¯ − c1 )2 ��
+2 
+c0�0  + c1�1 , π 2⎠ c0
+�ˆ0  + c1�ˆ1  � N ⎠
+c0 
+n
+
+2nπx 
+Using  (c0 , c1 ) = (1, 0) or  (0, 1), will  give  the  distributions  of  �ˆ0  and  �ˆ1 . 
+
+This  proves  that 
+
+¯
+X π
+nπ 2 
+x
+
++ 
+
++
+
+ 
+.
+
+
+2
+0
+
+2
+
+(14.0.3)
+
+
+Prediction  Intervals.  Suppose  now  that we  have  a  new  observation X  for which  Y  is 
+unknown and we want to predict Y  or ﬁnd the conﬁdence  interval  for Y . According to simple 
+regression  model, 
+
+Y  = �0  + �1X + χ 
+and  it  is natural  to  take  Yˆ = �ˆ
+0 + �ˆ
+1X  as  the prediction  of Y . Let us ﬁnd  the distribution  of 
+their  diﬀerence  Yˆ − Y .  Clearly,  the  diﬀerence  will  have  normal  distribution  so  we  only  need 
+to  compute  the mean  and  the  variance.  The mean  is 
+E(Yˆ − Y ) = E�ˆ0  + E�ˆ1X − �0  − �1X − Eχ = �0  + �1X − �0  − �1X − 0 = 0. 
+Since  a  new  pair  (X, Y )  is  independent  of  the  prior  data  we  have  that  Y  is  independent  of 
+ˆY . Therefore,  since  the  variance  of  the  sum  or diﬀerence  of  independent  random  variables  is 
+equal  to  the  sum  of  their  variances,  we  get 
+Var( Yˆ − Y ) = Var( Yˆ ) + Var(Y ) = π 2  + Var( Yˆ ), 
+where  we  also  used  that  Var(Y )  =  Var(χ) =  π 2 .  To  compute  the  variance  of  Yˆ we  can  use 
+the  formula  above  with  (c0 , c1 ) = (1, X ) 
+Var( Yˆ ) = Var( �ˆ0  + X �ˆ1 ) = π 2⎠
+99 
+
+(X¯ − X )2 �
+2nπx 
+
+ 1
+n 
+
+ 
+. 
+
++
+
+Therefore,  we  showed  that 
+
+⎠
+ˆ
+Y  − Y  � N 
+
+ 
+0, π 2⎠
+
+ 
+1 + 
+
+1 
+n
+
++ 
+
+ 
+(X¯ − X )2 ��
+.
+2 
+nπx 
+
+As  a  result,  we  have: 
+
+ 
+
+2 
+
+� ��
+
+1  n
+πˆ
+n − 2 
+2
+π
+
+Yˆ − Y 
+ 
+� ⎠
+(X¯ −X )2 
+1  +  n�2 
+π 2  1 +  n 
+x 
+and  the  1 − �  prediction  interval  for  Y  is 
+ 
+�
+�
+ 
+ 
+(X¯ − 
+2 
+2 
+X )2 �
+2 ⎠
+2 ⎠
+π
+π
+Yˆ − c 
+� Y  � Yˆ + c 
+n + 1 + 
+− 
+− 
+2 
+πx 
+These  are  the  dashed  curves  created  by Matlab  ’polytool’  function. 
+
+� tn−2 
+
+n
+
+n
+
+ 
+
+ 
+n + 1 + 
+
+ 
+. 
+
+(X¯ − 
+X )2 �
+2 
+πx 
+
+Simultaneous  conﬁdence  set  for  (�0 , �1 )  and  F -test.  We  will  now  construct  a 
+statistic  that  will  allow  us  to  give  a  conﬁdence  set  for  both  parameters  �0 , �1  at  the  same 
+time  and  test  the  hypothesis  of  the  type 
+
+H0  : �0  = 0  and  �1  = 0. 
+
+(14.0.4) 
+
+The  values  (0, 0) could be  replaced  by  any  other predetermined  values. Looking at  the proof 
+of  the  joint  distribution  of  the  estimates,  as  an  intermediate  step  we  showed  that  estimates 
+�ˆ0  and  �ˆ1  can  be  related  to 
+Z1  = ≥n(�ˆ
+1X )  and  Z2  = �nπx 
+ˆ
+0  + �ˆ
+2�1 
+where  normal  random  variables  Z1 , Z2  are  independent  of  each  other  and  independent  of 
+nπˆ 2 
+2 
+π 2  � ∂n
+−2 . 
+Also,  Z1  and  Z2  have  variance  π 2 .  Standardizing  these  random  variables  we  get 
+≥n 
+((�ˆ0  − �0 ) + ( �ˆ1  − �1 )X¯ ) � N (0, 1)  and  B =  �nπx 
+2 
+(�ˆ1  − �1 ) � N (0, 1)
+π 
+π
+which  implies  that  A2  + B 2  � ∂2
+2 -distribution.  By  deﬁnition  of  F -distribution, 
+(A2  + B 2 ) � nπˆ 2 
+n − 2
+2 
+π 2 
+Simplifying  the  left-hand  side  we  get 
+ 
+n − 2 ⎠
+(�ˆ0  − �0 )2  + X¯2 (�ˆ1  − �1 )2  + 2 X¯ (�ˆ0  − �0 )(�ˆ1  − �1 ) �
+2 ˆπ 2 
+100 
+
+� F2,n−2 . 
+
+� F2,n−2 . 
+
+F  := 
+
+A = 
+
+ 
+
+This  allows  us  to  obtain  a  joint  conﬁdence  set  (ellipse)  for  parameters  �0 , �1 . Given  a  conﬁ­
+dence  level  �  ∞  [0, 1]  is  we  deﬁne  a  threshold  c  by  F2,n−2 (0, c) =  �  then  with  probability  � 
+we  have 
+ 
+ 
+n − 2 ⎠
+1  − �1 ) �
+0  − �0 )2  + X¯2 (�ˆ
+(�ˆ
+1  − �1 )2  + 2 X¯ (�ˆ
+0  − �0 )(�ˆ
+� c. 
+2 ˆπ 2 
+This  inequality  deﬁnes  an ellipse  for  (�0 , �1 ). To  test  the hypothesis  (14.0.4), we use  the  fact 
+that  under  H0  the  statistic 
+
+F  := 
+
+F  := 
+
+n − 2
+2 ˆπ 2 
+
+2  + X¯2�ˆ
+(�ˆ
+2  + 2 X¯ �ˆ0�ˆ1 ) � F2,n−2
+0
+1
+
+and  deﬁne  a  decision  rule  by 
+
+ 
+�
+β =  H0  :  F  � c 
+H1  :  F  > c, 
+where  F2,n−2 (c, ∼) = �  - a  level  of  signiﬁcance. 
+F -statistic  output  by Matlab  ’regress’  function  will  be  explained  in  the  next  section. 
+
+References. 
+[1] ”Using Cigarette Data for An Introduction to Multiple Regression.” by Lauren McIn­
+tyre,  Journal  of  Statistics  Education  v.2,  n.1  (1994). 
+[2] Mendenhall,  W.,  and  Sincich,  T.  (1992),  Statistics  for  Engineering  and  the  Sciences 
+(3rd  ed.),  New  York:  Dellen  Publishing  Co. 
+
+101
+
+
+

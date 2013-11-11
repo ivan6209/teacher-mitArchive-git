@@ -1,0 +1,349 @@
+Lecture  3:  09/12/2005 
+
+6.854   Advanced   Algorithms  
+
+Scribes:  Xin  Zhang 
+
+Lecturer:  David  Karger 
+
+Splay  Trees 
+
+3.1 
+
+Introduction 
+
+Splay  trees  are  binary  search  trees with  good  balance properties when  amortized over  a  sequence  of 
+operations. 
+
+When a node x  is accessed, we perform a  sequence of  splay steps   to move x  to  the  root of the  tree. 
+There  are  6  types  of  splay  steps,  each  consisting  of  1  or  2  rotations  (see  Figures  3.1,  3.2,  and  3.3). 
+
+1 
+
+z 
+
+2 
+
+y 
+
+D 
+
+A 
+
+x 
+
+C 
+
+x 
+
+B 
+
+y
+
+z 
+
+A 
+
+B 
+
+C 
+
+D 
+
+Figure  3.1:  The  rr  splay   step:   This  is  performed  when  x  and  x’s  parent  are  both  left  children. 
+The  splay  step  consists  of  ﬁrst  a  right  rotation  on  z  and  then  a  right  rotation  on  y  (hence  rr).  The 
+ll  splay  step,  for  x  and  x’s  parent  being  right  children,  is  analogous. 
+
+We  perform  splay  steps  to  x  (rr,  ll,  lr, or  rl,  depending  on  whether  x  and  x’s  parent  are  left  or 
+right children) until x  is either  the  root or a  child of  the  root.  In  the  latter  case, we need  to  perform 
+either  a  r  or  l  splay  step  to  make  x  the  root.  This  completes  a  splay   of  x. 
+
+We  will  show  that  splay  operations  have  amortized  cost  O(log n),  and  that  consequently  all  splay 
+tree  operations  have  amortized  cost O(log n). 
+
+3.2   Analysis   of   Splay   Steps  
+
+For  amortized  analysis, we  deﬁne  the  following  for  each  node  x: 
+
+3-1 
+
+Lecture   3:   09/12/2005  
+
+3-2 
+
+2 
+
+z 
+
+y 
+
+1 
+
+D 
+
+A 
+
+x 
+
+B 
+
+C 
+
+x 
+
+y 
+
+z
+
+A 
+
+B 
+
+C 
+
+D 
+
+Figure  3.2:  The  lr  splay   step:   This  is  performed  when  x  is  a  right  child  and  x’s  parent  is  a  left 
+child.  The  splay  step  consists  of  ﬁrst  a  left  rotation  on  y  and  then  a  right  rotation  on  z . The  rl 
+splay  step,  for  x  being  a  left  child  and  x’s  parent  being  a  right  child,  is  analogous. 
+
+1 
+
+y 
+
+x 
+
+x 
+
+C
+
+A 
+
+y 
+
+A 
+
+B 
+
+B 
+
+C 
+
+Figure  3.3:  The  r  splay   step:   This  is  performed  when  x  is  the  left  child  of  the  root  y . The  splay 
+step  consists  of a  right  rotation on the  root.  The  l  splay  step,  for x  being  the  right child  of  the  root, 
+is  analogous. 
+
+•	 a  constant  weight  w(x) > 0  (for  the  analysis,  this  can  be  arbitrary) 
+(cid:1) 
+•	 weight  sum  s(x) = 
+w(y )  (where  subtree(x)  is  the  subtree  rooted at x,  including 
+y∈subtree(x) 
+x) 
+•	 rank  r(x) =  log s(x) 
+
+(cid:1) 
+We  use  r(x)  as  the  potential  of  a  node.  The  potential  function  after  i  operations  is  thus  φ(i) = 
+x∈tree r(x). 
+Lemma   1   The  amortized  cost  of  a  splay  step  on  node  x  is  ≤  3(r(cid:2) (x) − r(x)) + 1, where  r  is  rank 
+(cid:2) 
+before  the  splay  step  and  r is  rank  after  the  splay  step.  Furthermore,  the  amortized  cost  of  the  rr, 
+ll,  lr, and  rl  splay steps  is  ≤ 3(r(cid:2) (x) − r(x)).  
+
+Proof: 
+
+Lecture   3:   09/12/2005  
+
+3-3 
+
+We  will  consider  only  the  rr  splay  step  (refer  to  Figure  3.1).  The  actual  cost  of  the  splay  step  is  2 
+(for  2  rotations).  The  splay  step  only  aﬀects  the  potentials/ranks  of  nodes  x,  y , and  z ; we observe 
+that  r(cid:2) (x) = r(z ),  r(y ) ≥ r(x),  and  r(cid:2) (y ) ≤ r(cid:2) (x). 
+The  amortized  cost  of  the  splay  step  is  thus: 
+amortized  cost  =  2 + φ(i + 1) − φ(i) 
+(z )) − (r(x) + r(y ) − r(z )) 
+(cid:2)
+(cid:2)
+(cid:2)
+= 2 + (r 
+(y ) + r 
+(x) + r 
+(x) − r(z )) + r 
+(z ) − r(x) − r(y ) 
+(cid:2)
+(cid:2)
+(cid:2)
+= 2 + (r 
+(y ) + r 
+(z ) − r(x) − r(x) 
+≤  2 + 0 + r 
+(cid:2)
+(cid:2)
+(x) + r 
+(z ) − 2r(x) 
+(cid:2)
+(cid:2)
+= 2 + r 
+(x) + r 
+(cid:3) 
+(cid:2) 
+The  log  function  is  concave,  i.e.,  log a+log   b  ≤  log 
+a+b 
+. Thus  we  also  have  (s  is  weight  sum  before 
+the  splay  step  and  s(cid:2)  is  weight  sum  after  the  splay  step): 
+2 
+2 
+(cid:4) 
+(cid:5) 
+s(x) + s(cid:2) (z )
+log(s(x)) + log(s(cid:2) (z )) 
+≤ 
+log 
+(cid:4) 
+(cid:5) 
+2
+2 
+s(x) + s(cid:2) (z )
+r(x) + r(cid:2) (z ) 
+≤ 
+(note  that  s(x) + s(cid:2) (z ) ≤ s(cid:2) (x))
+(cid:4) 
+(cid:5) 
+log 
+2
+2 
+s(cid:2) (x)
+≤ 
+log 
+2 
+(x) − 1 
+(cid:2)
+=  r 
+(x) − r(x) − 2 
+(z )  ≤  2r 
+(cid:2)
+
+(cid:2)
+r 
+
+Thus  the  amortized  cost  of  the  rr  splay  step  is  ≤ 3(r(cid:2) (x) − r(x)). 
+The  same  inequality  must  hold  for  the  ll  splay  step;  the  inequality  also  holds  for  the  lr  (and  rl) 
+splay  steps.  The  +1  in  the  lemma  applies  for  the  r  and  l  cases. 
+
+Corollary  1  The  amortized  cost  of  a  splay  operation  on  node  x  is  O(log n). 
+
+Proof: 
+
+The  amortized  cost of a  splay operation on x  is  the  sum  of  the  amortized costs  of  the  splay  steps  on 
+(cid:6) 
+x  involved: 
+cost(splay  stepi ) 
+amortized  cost  = 
+(cid:6) 
+(cid:3)
+i  (cid:2) 
+≤ 
+i+1 (x) − r
+i (x) 
+3(r 
+i 
+= 3(r(root) − r(x)) + 1 
+
++ 1 
+
+Lecture   3:   09/12/2005  
+
+3-4 
+
+The  +1  comes  from  the  last  r  or  l  splay  step  (if  necessary).  If  we  set  w(x) = 1  for  all  nodes  in  the 
+tree,  then  r(root) =  log n  and  we  have: 
+amortized  cost ≤ 3 log n + 1 = O(log n) 
+
+3.3   Analysis   of   Splay   Tree   Operations  
+
+3.3.1  Find 
+
+For  the  ﬁnd  operation,  we  perform  a  normal  BST  ﬁnd  followed  by  a  splay  operation  on  the  node 
+found  (or  the  leaf node  last  encountered,  if  the key was not  found).  We  can  charge the  cost of going 
+down  the  tree  to  the  splay  operation.  Thus  the  amortized  cost  of  ﬁnd  is O(log n). 
+
+3.3.2 
+
+Insert 
+
+∆φ  = 
+
+(yj ) − r(yj )) 
+
+For  the  insert operation, we perform a normal BST  insert  followed by a  splay operation on the node 
+inserted.  Assume node x  is  inserted at depth  k .  Denote  the  parent of x  as y1 ,  y1 ’s parent as  y2 , and 
+so on  (the  root of  the  tree  is  yk ).  Then  the  change  in potential due  to  the  insertion of x  is  (r  is  rank 
+before  the  insertion  and  r(cid:2)  is  rank  after  the  insertion,  s  is  weight  sum  before  the  insertion): 
+k (cid:6) 
+(cid:2)
+(r 
+k (cid:6) 
+j=1  
+(log(s(yj ) + 1) − log(s(yj )) 
+(cid:4) 
+(cid:5) 
+k (cid:6) 
+j=1  
+s(yj ) + 1 
+log 
+⎞ 
+⎛ 
+s(yj ) 
+j=1  
+k (cid:9)  s(yj ) + 1
+⎠ 
+⎝
+(note  that  s(yj ) + 1 ≤ s(yj+1 ))
+= log 
+(cid:4) 
+(cid:5) 
+s(yj )
+j=1  
+· 
+s(y2 )  s(y3 ) 
+s(yk ) + 1 
+log 
+(cid:4) 
+(cid:5) 
+s(y1 )  s(y2 ) 
+s(yk ) 
+s(yk ) + 1 
+= log 
+s(yk )
+
+≤ 
+
+log n
+
+
+· · · 
+
+s(yk ) 
+s(yk−1 ) 
+
+· 
+
+= 
+
+= 
+
+≤ 
+
+The  amortized  cost  of  the  splay  operation  is  also  O(log n),  and  thus  the  amortized  cost  of  insert  is 
+O(log n). 
+
+Lecture   3:   09/12/2005  
+
+We  have  proved  the  following:
+
+
+Theorem  1  Al l  splay  tree  operations  have  amortized  cost  O(log n).
+
+
+3-5 
+
+

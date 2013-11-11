@@ -1,0 +1,546 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854 Advanced Algorithms 
+
+November 3, 2008 
+
+Lecture  16:  Approximation Algorithms 
+Michel  X.  Goemans 
+
+1  Approximation  Algorithms 
+
+Many optimizations problems arising in practice are  N P  hard.  Under  the  widely accepted  conjecture 
+6 N P , we cannot  compute eﬃciently  and  exactly  an optimal  solution for all possible instances 
+that  P 
+= 
+of  these  problems.  Several  approaches  have  been  used  to  deal  with  this  intractability.  On  one 
+hand,  dynamic  programming,  branch  and  bound,  and  implicit  enumeration  algorithms  always  ﬁnd 
+an  optimal  solution  by  navigating  the  space  of  feasible  solutions  in  a  more  eﬃcient  way  than  an 
+exhaustive search, but their  running  time is  not guaranteed  to be polynomial in the input’s  size.  On 
+the other hand,  heuristic  algorithms provide a sub-optimal  solution to the problem, but their running 
+time  is  polynomial  in  the  size  of  the  input  problem.  In   this  lecture  we  will  focus  on  approximation 
+algorithms,  which  are  heuristics  that  always  ﬁnd  a  solution  whose  ob jective  value  is  guaranteed  to 
+be  within  a  certain  factor  of  the  optimum  solution. 
+
+Deﬁnition 1 (Approximation Algorithm)  Let P  be a minimization  (resp.  maximization)  prob­
+lem  with  instances  I  ∈ I .  An  α-approximation  factor  for  α  ≥  1  (resp.  α  ≤  1)  algorithm  for  P  is 
+an  algorithm  A  whose  running  time  is  polynomial  in  the  size  of  the  given  instance  I ,  and  outputs  a 
+feasible  solution  of  cost  cA  such  that  cA  ≤ α · OP TI  (resp.  cA  ≥ α · OP TI ),  where  OP TI  is  the  cost 
+of  the  optimal  solution  for  instance  I . 
+
+In  this  lecture,  we  will  discuss  three  general  techniques  of  designing  approximation  algorithms 
+for NP-hard problems: 
+
+1.  Using  optimal  value  in  the  analysis  without  explicitly  knowing  it. 
+
+2.  Linear programming  relaxation  and  rounding. 
+
+3.  Primal-dual  technique. 
+
+2  A  3/2-Approximation  Algorithm  for  the  Metric  TSP 
+
+The  Traveling  Salesman  Problem  is  one  of  the  most  extensively  studied  problems  in  combinatorial 
+optimization. 
+In  the  metric  version  of  the  problem,  an  instance  is  a  complete  undirected  graph 
+G  = (V , E ) and  c  :  E  → R+ ,  where  c  satisﬁes  the  metric  property:  c(u, v) =  c(v , u) for  all  u, v  ∈ V , 
+and  the  triangle  inequality,  c(u, v) ≤  c(u, w) +  c(w, v),  for  all u, v , w  ∈  V .  The  ob jective  is  to  ﬁnd 
+tour, that is  a  cycle  visiting  every  vertex  exactly  once (also  called  a  tour ) minimum  cost  . 
+A  3  approximation algorithm for this problem by  Christoﬁdes [1]  is as follows. 
+2 
+
+1.  Find  a  minimum  spanning  tree  T  of  G. 
+
+2.  Compute  a  minimum  cost  perfect  matching  M  on  the  set  of  odd-degree  vertices  Vodd  ⊆ T . 
+
+3.  Find  an  Eulerian  tour  C  (a  cycle  visiting all  the  edges  exactly  once)  in  M  ∪ T . 
+′ 
+
+′ 
+4.  Output  the  tour  C  that  visits  the  vertices  of  G  in the order of  their  ﬁrst appearance in the  C  . 
+
+Lec 16-1 
+
+1 
+
+2	
+
+4 
+
+5 
+
+6 
+
+1 
+
+7 
+
+8 
+
+9 
+
+2 
+
+4 
+
+5 
+
+6 
+
+2 
+
+4
+
+5 
+
+6 
+
+1 
+
+7 
+
+8 
+
+9 
+
+3 
+
+11 
+
+3 
+
+11	
+
+3 
+
+10 
+
+10 
+
+7
+
+8
+
+9
+
+11 
+
+10 
+
+Figure  1:  Execution  of  Christoﬁdes’  algorithm  on  an  instance.  The  ﬁrst  ﬁgure  shows  a  minimum 
+cost  spanning  tree.  The second ﬁgure shows the addition of  a minimum cost  matching  on odd degree 
+vertices  in  the  tree,  and  the  third  ﬁgure  shows  a  cycle  obtained  after  “shortcutting”  an  Eulerian 
+tour in the previous graph,  starting  from  vertex 1. 
+
+Theorem 1  The  above  algorithm  is  a  3/2-approximation  algorithm  for  the  metric  TSP. 
+
+Proof: 
+It  is  clear  that  all  steps  in  the  algorithm  can  be  implemented  in  polynomial  time.  The 
+minimum  spanning  tree  can  be  found  using  a  greedy  algorithm,  and  the  minimum  cost  matching 
+for  Vodd  can  be  found  in  polynomial  time  using  the  ellipsoid  algorithm,  as  discussed  in  one  of  the 
+previous  lectures  (or  by  a  purely  combinatorial  algorithm  also  based  on  the  linear  program  we 
+discussed).  Note that  c(T ) ≤ OP T , because the optimal  tour without an edge becomes a tree.  Also, 
+c(M ) ≤ OP T /2.  To  see this,  consider  any  optimal  tour,  and  then  short-cut it to get  a  cycle  visiting 
+only  vertices  in  Vodd  with  cost  at  most  OP T .  Since  the  cycle  induces  two  matchings  consisting  of 
+alternating  edges, at least  one of  them will have cost  at  most  OP T /2.  From this, the total  cost  of  the 
+Eulerian cycle, an upper bound  of  the  cost  of  the algorithm, is at  most  OP T  + OP T /2  = 3/2 · OP T . 
+� 
+Note  that  in  the  analysis  of  the  algorithm,  we  used  the  value  of  OP T  even  without  explicitly 
+computing  it  exactly,  or getting  a lower bound  on it.  Figure 1  shows  an instance  of  the  metric TSP, 
+and  the  execution  of  the  algorithm  on  this  instance. 
+A  few  remarks: 
+
+•	 The  above  analysis  for  the  algorithm  is  tight,  i.e.  ∀ε >  0  there  is  an  instance  I  such that the 
+algorithm  returns  a  solution  which  is  3/2 − ε  times  the  optimal  solution. 
+
+•	 Currently,  no  algorithm  with  an  approximation  factor  better  than  3/2  is  known  for  metric 
+TSP. 
+
+•	 TSP is known to be MAX-SNP hard [5]  even for the  case when distances  are either 1  or 2. 
+Also, Papadimitriou and Vempala [4] have proved  that  a 1.01  approximation algorithm for the 
+metric  TSP  will  imply  P  =  N P . 
+
+3  Designing  Approximation  Algorithms  via  Relaxations 
+
+One  of  the  most  important  paradigms  in  the  design  of  approximation  algorithms  are  relaxations. 
+Consider the following (hard)  minimization problem. 
+
+min f (x) 
+s.t.  x  ∈ S. 
+
+Lec 16-2 
+
+One  approach  to  solve  this  problem  is  to  extend  S  to  a  bigger  set  P  ⊇  S  where  the  same  problem 
+is  easier  to  solve.  Namely,  we  extend  the  function  f  to  a  function  g  :  P  →  R  satisfying  g (x) = 
+f (x), ∀x  ∈ S  (or g (x) ≤ f (x)).  If   this  condition  holds,  then 
+
+min  f (x) ≥ min  g (x), 
+x∈P 
+x∈S
+
+which  gives  a  lower  bound  for  the  value  of  the  optimal  solution.  Therefore,  if  an  algorithm  gives  a 
+solution  x ∗  ∈  S  which  satisﬁes  f (x ∗ ) ≤  α minx∈P  g (x),  then  this  is  an α- approximation  algorithm 
+for the problem. 
+For  example,  many  combinatorial  optimization  problems  can  be  expressed  as 
+
+min c T  x 
+b, 
+s.t.	 Ax  = 
+x  ∈ {0, 1}n . 
+
+A  natural  relaxation  is  to  replace  the  integrality  constraint  xi  ∈ {0, 1}  by  the  linear  constraint 
+0  ≤ xi  ≤ 1,  we  obtain  the  LP  relaxation  of  the  integer  program  above. 
+
+min  c T  x 
+Ax  = 
+b, 
+s.t.	
+0  ≤  xi  ≤ 1, 
+
+∀i  = 1, . . . , n. 
+
+In  some  cases,  the  polytope  corresponding  to  the  LP  relaxation  has  all  integral  extreme  points. 
+In  such  cases,  it  is  suﬃcient  to  solve  the  LP  relaxation  to  solve  the  original  problem  exactly.  But 
+this  is  not  true  in  general. 
+
+3.1	 LP  Relaxation  for  the  Vertex  Cover  Problem 
+Given  an  undirected  graph  G  = (V , E ),  a  vertex  cover  of  G  is  a  collection  of  vertices  C  ⊂  V  such 
+in  E  satisfy  C  ∩ {u, v}  = 
+∅.  The  Vertex  Cover  problem  on  an  instance 
+that  all  edges  e  = (u, v) 
+G  = (V , E ), c  :  E  → R+  is  to  ﬁnd  a  cover  C  of  G  of  minimum  cost  c(C ) =  �v∈C  c(v).  This  is  known  
+to be  an NP-hard problem. 
+A  natural formulation using  integer variables and linear  constraints is the following.  We deﬁne a 
+variable  xu  ∈ {0, 1} which  takes  value  1  if  it  is  in  the  vertex  cover,  0  otherwise.  Then  the  following 
+is  an integer programming  formulation for the  vertex  cover problem. 
+
+ 
+
+cv xv 
+
+min  �
+v∈V 
+∀(u, v) ∈ E , 
+s.t.	 xu  +  xv  ≥  1, 
+∀u  ∈ V . 
+xu  ∈ {0, 1}, 
+
+The LP  relaxation for the  vertex  cover problem is 
+
+ 
+
+cv xv 
+
+min  �
+v∈V 
+s.t.	 xu  +  xv  ≥  1, 
+xu  ≥  0, 
+
+∀(u, v) ∈ E , 
+∀u  ∈ V . 
+
+(1a) 
+
+(1b) 
+
+(1c) 
+
+(2a) 
+
+(2b) 
+(2c) 
+
+Note that we removed  the  xu  ≤ 1 constraints, since if  xu  >  1 we can change it to  xu  = 1 without 
+increasing  the  cost,  and  still  have  a  feasible  solution. 
+
+Lec 16-3 
+
+6
+x1  = 1/2 
+
+x2  = 1/2 
+
+x3  = 1/2 
+
+Figure 2: An example where the LP relaxation for the Vertex Cover does not have an integer optimal 
+solution. 
+
+The LP relaxation does not  necessarily have an optimal integral  solution in general.  For example, 
+consider the graph given in Figure 3.1  with  all  costs equal to 1.  The optimal solution for this instance 
+has  cost  OP T  = 2  ,  but  the  optimal  solution  for  the  LP  relaxation  has  cost  LP  = 3/2,  as  shown  in 
+the  ﬁgure.  What  this  example  shows  is  not  only  that  LP  < OP T  in general, but  also an interesting 
+fact  about  the  strength  of  this  relaxation.  Suppose  that  we  are  going  to  use  LP  as  a  lower  bound 
+on  OP T  in  order  to  prove  an  approximation  guarantee.  As  we  will  see  in  the  next  subsection,  we 
+will  be  able  to  ﬁnd  a  cover  C  with  cost  at  most  2LP .  Therefore,  we  can  say 
+
+c(C ) ≤ 2LP  ≤ 2OP T 
+
+to prove  an  approximation guarantee  of 2, However, the  example proves that  we  will  not be  able to 
+decrease this factor beyond 4/3.  This  follows  from  the  fact  that 
+
+OP T  ≤ c(C ) ≤ αLP  ≤ αOP T  ⇒ OP T /LP  ≤ α 
+
+then  the  best  we  can  hope  for  is  at  most  4/3  by  using  this  relaxation.  This  important  property  of 
+the  “bad  examples”  is captured in the concept of integrality gap. 
+
+Deﬁnition 2 (Integrality gap)  Given  a  relaxation  LP (Π)  for  an  integer  program  I P (Π)  that 
+formulates  a  combinatorial  (minimization)  optimization  problem  on  a  col lection  of  instances  {Π}, 
+the  integrality gap  of  the linear program  relaxation  is  the  largest  ratio  between  the  optimal  solution 
+of  both  formulations,  namely: 
+
+I P (Π) 
+Integrality  gap = sup 
+Π  LP (Π) 
+
+For  the  Vertex  Cover  LP  relaxation,  the  integrality  gap  is  exactly  2.  To  see  that  it  is  at  least 
+2,  consider  the  complete  graph  G  =  Kn ,  with  unitary  costs.  The  minimum  vertex  cover  has  cost 
+n  − 1,  while  the  linear  program  relaxation  can  assign  1/2  to  all  variables,  which  gives  a  total  cost 
+of  n/2.  Therefore,  the  integrality  gap  is  at  least  2(n
+−1)  →  2.  The  upper  bound  follows  from  the 
+n 
+2-approximation  algorithm  we  will  see  in  the  next  subsection. 
+
+3.2  A  2-approximation  Algorithm  for  Vertex  Cover 
+
+A  natural  approach  to  get  an  integral  solution  from  a  fractional  solution  is  to  round  the  fractional 
+values.  A  simple  rounding  scheme  for  the  vertex  cover  is  as  follows. 
+
+1.  Solve the linear programming  relaxation given by (2a)-(2c), to get the fractional  solution  x ∗  . 
+
+Lec 16-4 
+
+2.  Compute  the  vertex  cover  as  C  =  {v  ∈ V , x∗ 
+v  ≥ 1/2} (i.e.,  round each  fractional  variable  to  the 
+nearest integer). 
+
+Theorem 2  The  above  rounding  scheme  is  a  2-approximation  algorithm  for  the Vertex Cover  prob­
+lem. 
+
+Proof:  First, we need to check that C  is indeed a vertex cover. For each  e  = (u, v) ∈ E ,  xu
+∗  ≥ 1, 
+∗  +xv 
+so  at  least  one  of  x ∗ 
+u ,  x ∗ 
+v  has  value  at  least  1/2,  and is in  C .  Next,  the  cost  of  this  vertex  cover 
+satisﬁes 
+ 
+ 
+
+c(C ) =  �
+v:x ∗≥1/2 
+v 
+
+cv  ≤ 2 �
+v∈V 
+
+cv xv  = 2LP  ≤ 2OP T , 
+∗ 
+
+� 
+hence  the  LP  rounding  is  a  2-approximation  algorithm  for  the  vertex  cover  problem. 
+This is  a  very basic (the  simplest)  example  of  rounding;  more sophisticated  rounding procedures 
+have  been  used  to  design  approximation  algorithms;  we’ll  see  some  in  coming  lectures. 
+
+4  The  Primal  Dual  Technique 
+
+Yet  another  way  of  designing  approximation  algorithms  for  intractable  problems  is  the  primal  dual 
+method.  The  basic  idea  of  the  primal  dual  scheme  is  this:  At  every  point  of  the  algorithm,  we 
+keep  a  feasible  dual  solution,  and  a  corresponding  infeasible  integer  primal  solution.  The  dual 
+variables  are  then  modiﬁed  at  every  step  and  so  is  the  infeasible  primal  solution,  so  as  to  achieve 
+primal feasibility.  At  this point,  the dual gives  a lower bound (for  minimization problems)  on  the 
+optimal  primal  ob jective  function  value,  which  is  used  to  derive  the  approximation  factor  for  the 
+algorithm.  The  interesting  thing  about  this  technique  is  that  we  do  not  need  to  explicitly  solve  the 
+linear program (as is  the  case in  rounding);  the linear program is  used  only in  the  analysis  of  the 
+algorithm. 
+We illustrate this  method for the  vertex  cover problem.  The linear program for the  vertex  cover 
+problem is given by (2a)-(2c).  The dual  of  this linear program is given by 
+
+ 
+ye 
+
+max 
+
+�
+e∈E 
+ 
+s.t.  �
+e∈δ(v) 
+
+ye  ≤  cv 
+
+∀v  ∈ V , 
+
+ye  ≥  0 
+
+∀e  ∈ E . 
+
+(3) 
+
+In  the  algorithm,  C 
+The  primal  dual  algorithm  for  the  vertex  cover  problem  is  as  follows. 
+corresponds to the  set  of  vertices in the (supposed to be)  vertex  cover,  and  F  is  the  set  of  edges  in 
+the  graph  not  yet  covered  by  C . 
+
+1.  y (v) ← 0  ∀v  ∈ V ,  C  ← ∅, F  ← E . 
+
+2.  While  F 
+
+∅= 
+
+3. 
+
+4. 
+
+5. 
+
+6. 
+
+Let  e  = (u, v) be  any  edge  in  F . 
+
+Increase  ye  until the  constraint (3)  becomes tight for  u  or  v . 
+
+Add that corresponding  vertex (say  it is  v) to  C . 
+
+F  ← F  \ δ(v). 
+
+Theorem 3  The  above  algorithm  achieves  an  approximation  ratio  of  2  for  the  vertex  cover problem. 
+
+Lec 16-5 
+
+6
+y = 3 
+
+4
+
+
+2
+4 
+
+y = 1 
+
+2 
+
+3 
+
+3 
+3 
+
+3 
+3 
+
+4
+
+3 
+
+y = 3 
+
+y = 3 
+
+2
+4 
+
+2 
+4
+
+
+3 
+3 
+
+3 
+
+y = 1 
+
+3 
+
+y = 1 
+
+2 
+
+Figure  3:  Illustration  of  the  primal-dual  algorithm  for  the  vertex  cover  problem.  The  cost  of  the 
+vertices  are  indicated  next  to  each  vertex.  Dotted  edge  denotes  the  edge  currently  under  considera­
+tion, thick  edges denote those already  covered by  the  current vertex cover.  The  vertices in the  cover 
+are  shown  as  solid  circles. 
+
+Proof: 
+First  of  all,  it  is  clear  that  the  set  C  returned  by  the  algorithm  is  a  vertex  cover.  Let 
+y  be  the  dual  solution  returned.  Observe  that  by  construction,  this  solution  is  dual  feasible  (we 
+maintain  dual  feasibility  throughout  the  execution).  Furthermore,  for  any  v  ∈  C ,  we  have  that 
+cv  =  �e∈δ(v) ye .  Let  us  now  compute  the  cost  of  the  vertex  cover  returned  by  the  algorithm. 
+ 
+ 
+ 
+ 
+ 
+�
+�
+αeye  ≤  2
+cv  =
+( 
+ye 
+v∈C e∈δ(v) 
+
+�
+v∈C
+
+ye ) = 
+
+�
+e∈E
+
+�
+e∈E 
+≤  2LP 
+≤  2OP T , 
+
+(4a) 
+(4b) 
+
+where  αe  =  2,  for  edge  e  = (u, v) if both  u, v  ∈  C , 1 otherwise.  The inequality (4a)  follows from 
+weak  duality,  and  inequality  (4b)  follows  from  the  fact  that  the  primal  LP  is  a  relaxation  of  the 
+� 
+vertex  cover problem. 
+Figure  3  illustrates  the  execution  of  the  primal-dual  algorithm  on  a  graph.  For  this  instance, 
+the  algorithm  returns  a  vertex  cover  of  cost  9,  whereas  the  optimal  solution  in  this  instance  has 
+
+Lec 16-6 
+
+cost 7 (corresponding  to the two  vertices  on the diagonal  edge).  The lower bound given by  the dual 
+solution has value 3 + 1 + 1  = 5. 
+A  few  ﬁnal  remarks: 
+
+•	 Dinur  and Safra [2]  have proved  that it is NP-hard  to  approximate to the  vertex  cover  with  a 
+factor better than 1.36. 
+
+•	 Currently, there is no algorithm for the vertex cover problem which  achieves an approximation 
+ratio better than 2.  So the two (simple!)  algorithms presented here are, in fact, the present 
+best  known  approximation  algorithms  for  this  problem. 
+
+•	 Khot  and Regev [3]  have proved that it is UGC-hard to  approximate vertex cover  within  a 
+factor 2 − ε,  for  any  ε >  0. 
+
+References 
+
+[1]  Christoﬁdes, N. (1976). Worst-case analysis of a new heuristic for the travelling  salesman problem, 
+Report  388,  Graduate  School  of  Industrial  Administration,  CMU. 
+
+[2]  Dinur, I.  and S. Safra (2002). The importance  of being biased. In  Proceedings  of  the  34th  ACM 
+Symposium  on  Theory  of  Computing, pp. 33-42. 
+
+[3]  Khot,  S.  and  O.  Regev  (2008).  Vertex  cover  might  be  hard  to  approximate  to  within  2  − ε. 
+Journal  of  Computer  and  System  Sciences, 74:335-349. 
+
+[4]  Papadimitriou, C.H.  and S. Vempala (2000). On the  approximability  of the travelling  salesman 
+problem.  In  Proceedings  of  the  32nd  ACM  Symposium  on  Theory  of  Computing,  pp.  126-133. 
+
+[5]  Papadimitriou, C.H.  and M. Yannakakis (1993). The travelling  salesman problem with distances 
+one  and  two.  Mathematics  of  Operations  Research, 18:1-11. 
+
+Lec 16-7 
+
+

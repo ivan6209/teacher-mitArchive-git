@@ -1,0 +1,635 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Testing and Coverage
+
+Rob Miller
+Fall 2008
+
+Today’s Topics
+why testing is important and hard
+
+choosing inputs
+(cid:190) input space partitioning
+(cid:190) boundary testing
+
+how to know if you’ve done enough
+(cid:190) coverage
+
+testing pragmatics
+(cid:190) stubs,  drivers, oracles
+(cid:190) test-first development
+(cid:190) regression testing
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Real Programmers Don’t Test!(?)
+top 5 reasons not to test
+5) I want to get this done fast – testing is going to slow me down.
+4) I started programming when I was 2. Don’t insult me by testing my perfect 
+code!
+code!
+3) testing is for incompetent programmers who cannot hack.
+2) we’re not Harvard students – our code actually works!
+1) “Most of the functions in Graph.java, as implemented, are one or two line 
+functions that rely solely upon functions in HashMap or HashSet. I am 
+assuming that these functions work perfectly, and thus there is really no 
+need to test them.” – an excerpt from a 6.170 student’s e-mail
+
+WHY TESTING MATTERS
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/6/2008
+
+1
+
+Who Says Software is Buggy?
+Ariane 5 self-destructed 37 seconds after launch
+
+Another Prominent Software Bug
+Mars Polar Lander crashed
+
+Photographs of the Ariane 5 rocket 
+removed due to copyright restrictions.
+
+Diagrams of the Mars Polar Lander 
+removed due to copyright restrictions.
+
+reason:  a control software bug that went undetected
+(cid:190) conversion from 64-bit floating point to 16-bit signed integer caused an 
+exception
+p
+• because the value was larger than 32767 (max 16-bit signed integer)
+(cid:190) but the exception handler had been disabled for efficiency reasons
+(cid:190) software crashed ... rocket crashed ...  total cost over $1 billion
+
+© Robert Miller 2008
+
+(cid:190) sensor signal falsely indicated that the craft had touched down when it was 
+still 130 feet above the surface.
+(cid:190) the descent engines shut down prematurely... and it was never heard from 
+again
+the error was traced to a single bad line of code
+(cid:190) Prof. Nancy Leveson: these problems "are well known as difficult parts of 
+the software-engineering process”... and yet we still can’t get them right
+© Robert Miller 2008
+
+The Challenge
+we want to
+(cid:190) know when product is stable enough to launch
+(cid:190) deliver product with known failure rate (preferably low)
+(cid:190) offer warranty?
+(cid:190) offer warranty?
+but
+(cid:190) it’s very hard to measure or ensure quality in software
+(cid:190) residual defect rate after shipping:
+• 1 - 10 defects/kloc (typical)
+• 0.1 - 1 defects/kloc (high quality: Java libraries?)
+• 0 01 - 0 1 defects/kloc (very best: Praxis  NASA)
+0.01 - 0.1 defects/kloc (very best: Praxis, NASA)
+(cid:190) example: 1Mloc with 1 defect/kloc  means you missed 1000 bugs!
+
+© Robert Miller 2008
+
+Testing Strategies That Don’t Work
+exhaustive testing is infeasible
+(cid:190) space is generally too big to cover exhaustively
+(cid:190) imagine exhaustively testing a 32-bit floating-point multiply operation, a*b
+• there are 2^64 test cases!
+• there are 2^64 test cases!
+statistical testing doesn’t work for software
+(cid:190) other engineering disciplines can test small random samples (e.g. 1% of 
+hard drives manufactured) and infer defect rate for whole lot
+(cid:190) many tricks to speed up time (e.g. opening a refrigerator 1000 times in 24 
+hours instead of  10 years)
+(cid:190) gives known failure rates (e.g. mean lifetime of a hard drive)
+(cid:190) but assumes continuity or uniformity across the space of defects, which is 
+true for physical artifacts 
+(cid:190) this is not true for software
+• overflow bugs (like Ariane 5) happen abruptly
+• Pentium division bug affected approximately 1 in 9 billion divisions
+© Robert Miller 2008
+
+10/6/2008
+
+2
+
+Two Problems
+often confused, but very different
+(a) problem of finding bugs in defective code
+(b) problem of showing absence of bugs in good code
+approaches
+approaches
+(cid:190) testing: good for (a), occasionally (b)
+(cid:190) reasoning: good for (a), also (b)
+theory and practice
+(cid:190) for both, you need grasp of basic theory
+(cid:190) good engineering judgment essential too
+
+Aims of Testing
+what are we trying to do?
+(cid:190) find bugs as cheaply and quickly as possible
+reality vs. ideal
+ i
+(cid:190) ideally, choose one test case that exposes a bug and run it
+   b   d 
+  h  
+ 
+ 
+(cid:190) id ll   h
+ 
+(cid:190) in practice, have to run many test cases that “fail” (because they don’t 
+expose any bugs)
+in practice, conflicting desiderata
+(cid:190) increase chance of finding bug
+(cid:190) decrease cost of test suite (cost to generate, cost to run)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Practical Strategies
+design testing strategy carefully
+(cid:190) know what it’s good for (finding egregious bugs) and not good for 
+(security)
+(cid:190) complement with other methods: code review, reasoning, static analysis
+(cid:190) complement with other methods: code review, reasoning, static analysis
+(cid:190) exploit automation (e.g. JUnit) to increase coverage and frequency of 
+testing
+(cid:190) do it early and often
+
+Basic Notions
+what’s being tested?
+(cid:190) unit testing: individual module (method, class, interface)
+(cid:190) subsystem testing: entire subsystems
+(cid:190) integration  system  acceptance testing: whole system
+(cid:190) integration, system, acceptance testing: whole system
+how are inputs chosen?
+(cid:190) random:  surprisingly effective (in defects found per test case), but not 
+much use when most inputs are invalid (e.g. URLs)
+(cid:190) systematic:  partitioning large input space into a few representatives
+(cid:190) arbitrary: not a good idea, and not the same as random!
+how are outputs checked?
+how are outputs checked?
+(cid:190) automatic checking is preferable, but sometimes hard (how to check the 
+display of a graphical user interface?)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/6/2008
+
+3
+
+Basic Notions
+how good is the test suite?
+(cid:190) coverage: how much of the specification or code is exercised by tests?
+when is testing done?
+  h   d
+(cid:190) test-driven development: tests are written first, before the code
+ b f
+ fi
+i
+ 
+ 
+d i
+ d
+l
+ 
+(cid:190)
+(cid:190) regression testing: a new test is added for every discovered bug, and tests 
+are run after every change to the code
+essential characteristics of tests
+(cid:190) modularity: no dependence of test driver on internals of unit being tested
+(cid:190) automation: must be able to run (and check results) without manual effort
+
+CHOOSING  TESTS
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Example: Thermostat
+specification
+(cid:190) user sets the desired temperature Td
+(cid:190) thermostat measures the ambient temperature Ta
+(cid:190) want heating if desired temp is higher than ambient temp 
+(cid:190) want heating if desired temp is higher than ambient temp 
+(cid:190) want cooling if desired temp is lower than ambient temp
+
+if Td > Ta, turn on heating
+if Td < Ta, turn on air-conditioning
+if Td = Ta, turn everything off
+
+How Do We Test the Thermostat?
+arbitrary testing is not convincing
+(cid:190) “just try it and see if it works“ won’t fly
+exhaustive testing is not feasible
+i
+(cid:190) would require millions of runs to test all possible (Td,Ta) pairs
+ibl  (Td T ) 
+ld 
+i
+ 
+illi
+  f 
+ 
+ 
+  ll 
+(cid:190)
+key problem: choosing a test suite systematically
+(cid:190) small enough to run quickly
+(cid:190) large enough to validate the program convincingly
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/6/2008
+
+4
+
+Key Idea: Partition the Input Space
+input space is very large, but program is small
+(cid:190) so behavior must be the “same” for whole sets of inputs
+ideal test suite
+ b h i
+(cid:190) identify sets of inputs with the same behavior
+i h  h  
+ 
+(cid:190) id
+if  
+ 
+f i
+(cid:190) try one input from each set
+
+if Td > Ta  turn on heating
+if Td > Ta, turn on heating
+if Td < Ta, turn on air-conditioning
+if Td = Ta, turn everything off
+
+10/6/2008
+
+approach 1: 
+titi
+t
+partition inputs 
+i
+separately, 
+then form all 
+combinations
+
+More Examples
+java.math.BigInteger.multiply(BigInteger val)
+(cid:190) has two arguments, this and val, drawn from BigInteger
+(cid:190) partition BigInteger into: 
+• BigNeg  SmallNeg   1  0  1  SmallPos  BigPos
+• BigNeg, SmallNeg, -1, 0, 1, SmallPos, BigPos
+(cid:190) pick a value from each class
+• -265, -9 -1, 0, 1, 9, 265
+(cid:190) test the 7 × 7 = 49 combinations
+static int java.Math.max(int a, int b)
+(cid:190) partition into: 
+• a < b  a = b  a > b
+a < b, a = b, a > b
+(cid:190) pick value from each class
+• (1, 2), (1, 1), (2, 1)
+
+approach 2: 
+titi
+h l
+partition the whole 
+th
+input space (useful 
+when relationship 
+between inputs 
+matters)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+More Examples
+Set.intersect(Set that)
+(cid:190) partition Set into: 
+• ∅,  singleton, many
+(cid:190) partition whole input space into:
+(cid:190) partition whole input space into:
+• this = that,  this ⊆ that,    this ⊇ that,  this ∩ that ≠ ∅,   this ∩ that = ∅
+
+use both approaches
+
+Boundary Testing
+(cid:190) include classes at boundaries of the input space
+• zero, min/max values, empty set, empty string, null
+(cid:190) why? because bugs often occur at boundaries
+• off-by-one errors
+off by one errors
+• forget to handle empty container
+• overflow errors in arithmetic
+
+(cid:190) pick values that cover both partitions
+p
+p
+• {},{}       {},{2}        {},{2,3,4}
+• {5},{}     {5},{2}     {4},{2,3,4}
+• {2,3},{}  {2,3},{2}   {1,2},{2,3}
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+5
+
+Exercise
+recall our quiz grammar
+(cid:190) partition the input space of quizzes
+(cid:190) devise a set of test quizzes
+
+Option ::= Value? Text
+Value ::= [ digit+ ]
+Text ::= char*
+Rule ::= Range Message
+Range ::= digit+ - digit+ :
+Message ::= char*
+g
+
+(cid:190) what important class of inputs
+are we leaving out?
+
+COVERAGE
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Coverage
+how good are my tests?
+(cid:190) measure extent to which tests ‘cover’ the spec or code
+spec coverage for state machines
+state machine being tested
+
+kinds of 
+coverage
+
+all actions
+
+all states
+
+all transitions
+all transitions
+
+all paths
+
+(cid:190) all-actions, all-states ≤ all-transitions ≤ all-paths
+
+State Diagram for Thermostat
+
+if Td > Ta, turn on heating
+if Td < Ta, turn on air-conditioning
+if Td = Ta  turn everything off
+if Td = Ta, turn everything off
+
+(cid:190) a test case is a trace of (Td,Ta) pairs
+(cid:190) all actions: (Td<Ta), (Td=Ta), (Td>Ta)
+• e.g., using actual temperatures: (67, 70), (67, 67), (70, 67)
+(cid:190) all states: the same trace would cover all states
+(cid:190) all transitions: (Td<Ta)  (Td=Ta)  (Td > Ta)  (Td=Ta)
+(cid:190) all transitions: (Td<Ta), (Td=Ta), (Td > Ta), (Td=Ta)
+• e.g. (67, 70), (67, 67), (70, 67), (70, 70)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/6/2008
+
+6
+
+Code Coverage
+view control flow graph as state machine
+(cid:190) and then apply state machine coverage notions
+example
+if (  < 10)  ++
+if (x < 10) x++;
+
+10/6/2008
+
+How Far Should You Go?
+for spec coverage
+(cid:190) all-actions: essential
+(cid:190) all-states, all-transitions: if possible
+(cid:190) all paths: generally infeasible  even if finite
+(cid:190) all-paths: generally infeasible , even if finite
+for code coverage
+(cid:190) all-statements, all-branches: if possible
+(cid:190) all-paths: infeasible
+industry practice
+(cid:190) all-statements is common goal, rarely achieved (due to unreachable code)
+(cid:190) f t  
+difi d 
+ “MCDC”  
+i  (
+it
+ 
+  d
+ h  
+l i d t
+iti
+(cid:190) safety critical industry has more arduous criteria (eg, “MCDC”, modified 
+decision/condition coverage)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+A Typical Statement Coverage Tool
+(cid:190) EclEmma Eclipse plugin
+
+covered
+covered
+
+uncovered
+
+coverage statistics 
+for packages and 
+classes
+
+Black Box vs. Glass Box Testing
+black box testing
+(cid:190) choosing test data only from spec , without looking at implementation
+
+glass box (white box) testing
+i
+) 
+ 
+i
+ (
+ 
+(cid:190) choosing test data with knowledge of implementation
+• e.g. if implementation does caching, then should test repeated inputs
+• if implementation selects different algorithms depending on the input, 
+should choose inputs that exercise all the algorithms
+(cid:190) must take care that tests don’t depend on implementation details
+• e g  if spec says “throws Exception if the input is poorly formatted”  
+• e.g. if spec says  throws Exception if the input is poorly formatted , 
+your test shouldn’t check specifically for a NullPtrException just 
+because that’s what the current implementation does
+(cid:190) good tests should be modular -- depending only on the spec , not on the 
+implementation
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Courtesy of The Eclipse Foundation.  Used with permission.
+
+7
+
+Black Box vs. Glass Box Testing
+best practice
+(cid:190) generate black-box test cases until code coverage is sufficient
+
+too low
+
+PRAGMATICS
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Testing Framework
+driver
+(cid:190) just runs the tests
+(cid:190) must design unit to be drivable!
+(cid:190) eg: program with GUI should have API
+(cid:190) eg: program with GUI should have API
+stub
+(cid:190) replaces other system components
+(cid:190) allows reproducible behaviours (esp. failures)
+oracle
+(cid:190) determines if result meets spec
+(cid:190) f
+t
+ti   d f
+t
+bl  
+(cid:190) preferably automatic and fast
+(cid:190) varieties: computable predicate (e.g. is the result odd?), comparison with 
+literal (e.g. must be 5), manual examination (by a human)
+(cid:190) in regression testing, can use previous results as “gold standard”
+
+Example: the Quote Generator
+
+Quoter
+Quoter
+
+QuoteFormatter
+QuoteFormatter
+
+Generator
+Generator
+
+Yahoo
+
+want a stub for 
+the network, to 
+test without live 
+server
+
+HTMLGenerator
+
+RTFGenerator
+
+QuoteApp
+
+need an oracle for 
+testing generators
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+10/6/2008
+
+8
+
+Test-First Development
+write tests before coding
+(cid:190) specifically, for every method or class:
+1) write specification
+2) write test cases that cover the spec
+2) write test cases that cover the spec
+3) implement the method or class
+4) once the tests pass (and code coverage is sufficient), you’re done
+
+writing tests first is a good way to understand the spec
+(cid:190) think about partitioning and boundary cases
+(cid:190) if the spec is confusing  write more tests
+(cid:190) if the spec is confusing, write more tests
+(cid:190) spec can be buggy too
+• incorrect, incomplete, ambiguous, missing corner cases
+• trying to write tests can uncover these problems
+
+Regression Testing
+whenever you find and fix a bug
+(cid:190) store the input that elicited the bug
+(cid:190) store the correct output
+(cid:190) add it to your test suite
+(cid:190) add it to your test suite
+why regression tests help
+(cid:190) helps to populate test suite with good test cases
+• remember that a test is good if it elicits a bug – and every regression 
+test did in one version of your code
+(cid:190) protects against reversions that reintroduce bug
+(cid:190) the bug may be an easy error to make (since it happened once already)
+g
+y
+y
+(
+pp
+y)
+test-first debugging
+(cid:190) when a bug arises, immediately write a test case for it that elicits it
+(cid:190) once you find and fix the bug, the test case will pass, and you’ll be done
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Summary
+testing matters
+(cid:190) you need to convince others that your code works
+(cid:190) testing generally can’t prove absence of bugs, but can increase quality by 
+reducing bugs
+reducing bugs
+test early and often
+(cid:190) unit testing catches bugs before they have a chance to hide
+(cid:190) automate the process so you can run it frequently
+(cid:190) regression testing will save time in the long run
+be systematic
+(cid:190) use input partitioning  boundary testing  and coverage
+(cid:190) use input partitioning, boundary testing, and coverage
+(cid:190) regard testing as a creative design problem
+use tools and build your own
+(cid:190) automated testing frameworks (JUnit) and coverage tools (EclEmma)
+(cid:190) design modules to be driven, and use stubs for repeatable behavior
+
+© Robert Miller 2008
+
+10/6/2008
+
+9
+
+

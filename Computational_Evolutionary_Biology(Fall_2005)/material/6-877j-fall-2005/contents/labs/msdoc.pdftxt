@@ -1,0 +1,939 @@
+ms  ­ a  program  for  generating  samples  under 
+neutral  models 
+
+Richard   R.  Hudson 
+
+December  11,  2004 
+
+This  document  describes  how   to  use  ms,  a  program  to  generate  samples 
+under  a  variety  of  neutral  models.  The  purpose  of  this  program  is  to  allow  one  
+to  investigate  the  statistical   properties  of  such  samples,  to  evaluate  estimators 
+or  statistical  tests,  and  generally  to  aid   in  the  interpretation   of  polymorphism 
+data  sets.   The  typical   data  set   is  obtained   in  a  resequencing  study   in   which  
+the  same  homologous  segment  is  sequenced   in  several  individuals  sampled  from 
+a  population.   The   classic  example   of  such   a  data  set  is  the   Adh   study  of 
+Kreitman(1983)  in  which   11  copies  of  the  Adh   gene  of  Drosophila  melanogaster 
+were  sequenced.   In  this   case,  the   copies  were   isolated   from  11  diﬀerent  strains 
+of  D.  melanogaster  collected  from  scattered  locations  around   the  globe. 
+The  program  ms   can   be  used  to  generate   many  independent  replicate   sam­
+ples  under   a  variety  of  assumptions  about  migration,  recombination  rate   and 
+population  size  to  aid  in  the  interpretation   of  such  polymorphism  studies.  The  
+samples  are  generated   using  the   now  standard   coalescent  approach   in  which   the  
+random  genealogy  of  the  sample  is  ﬁrst  generated  and   then   mutations  are   ran­
+domly  place  on  the   genealogy  (Kingman,  1982;  Hudson,  1990;  Nordborg,  2001). 
+The  usual   small  sample   approximations  of   the  coalescent  are   used.  An  inﬁnite­
+sites  model  of   mutation   is  assumed,  and  thus  multiple­hits  and   back  mutations 
+do  not  occur.  In  addition,  the  gene  trees  themselves  can  be   output.  These   gene  
+trees  can  be  used   as  input  to  other  programs  which  will  evolve  the  sequences 
+under  a  variety  of  ﬁnite­site  models. 
+The  program  is   intended  to  run  on  Unix,  or  Unix­like   operating systems,  such  
+as  Linux  or  MacOsX.   The  next  section  describes  how  to  download   and   compile  
+the  program.  The  subsequent  sections  described   how  to  run  the   program  and 
+in   particular  how  to  specify  the  parameter  values  for  the  simulations. 
+If  you   use  ms   for  published  research,  the   appropriate  citation  is: 
+
+Hudson,  R.  R.  (2002)  Generating   samples  under  a  Wright­Fisher  neutral 
+model   of   genetic  variation.  Bioinformatics  18:  337­338. 
+
+1 
+
+Downloading  and  compilation 
+at  http://home.uchicago.edu/ � rhudson1.  Download  this  tar  ﬁle  to   your 
+All  relevant  ﬁles   including  this  pdf ﬁle   are  included   in  the  tar  ﬁle  ms.tar  available  
+machine  then  extract  the  ﬁles  from  the   archive  with:  tar   ­xvf  ms.tar   .  After 
+extracting,  type  cd   msdir,  then  compile  the  programs  by typing: 
+
+gcc  ­o   ms  ms.c  streec.c  rand1.c   ­lm 
+
+or 
+
+gcc  ­o   ms  ms.c  streec.c  rand2.c   ­lm 
+
+or  alternatively,   typing  clms,  which  contains  this  compilation  line  with   rand1.c. 
+The  choice  of  these  compilations  depends  on   which   random   number  generator 
+one  has  available.  rand1.c   and  rand2.c  call  drand48()  and,  rand(),  respec­
+tively.   I  make  no  claims  concerning  the   properties  of  these  generators,  and  it  
+would   be  straightforward  to  replace   these  by  another  generator,  such  as  one   of 
+those  described   in  Numerical  Recipes  in  C  (Press  et  al.,  1992). 
+With   rand1.c   and   rand2.c,  ms  ﬁrst  looks  for  the  ﬁle   “seedms”   to  ﬁnd  the 
+seed  values  for   initializing  the  random  number  generator.  If  no  seedms  ﬁle   is 
+found  the   generator   is  seeded  with   a  default  value.  In   either  case,  the  seed  is 
+printed  on   the  second   line  of  the  output  ﬁle,  so  that   the  same  set  of  samples 
+can   be  generated  again  if  desired.  When   the   simulation  is  ﬁnished,  the  state  
+of  the  random  number   generator  is  output   to   seedms.  In  this  way,  each  time 
+ms   is  invoked  a  new  set  of  results  is  produced.  If  one   wishes  to  produce   the  
+same  set  of  samples,   seedms  can  be  edited  to  contain  the   value(s)  indicated   on 
+the  second  line  of  the   output  ﬁle.  (  The  program  can  also  be  compiled   with 
+rand1t.c   or  rand2t.c,   which  use  the  system  clock  for  seeding  the  generators 
+and   don’t  utilize  the  ﬁle  seedms  at  all.) 
+
+The  basic  command  line:  
+
+ms  nsam  nreps  ­t  θ 
+
+The  above  line  shows  the  simplest   usage   of  ms  which generates  samples  under  the 
+basic  neutral  model,  with  constant  population  size,  no  recombination,  panmixis, 
+and   an   inﬁnite­sites   model.  In  this  case  there  are   three  arguments  to  ms:  nsam, 
+nreps,  and,  following  the  switch  “­t”,  the  parameter  θ .  The   two  arguments, 
+nsam  and  nreps   are  required  and  must  appear  in  this  order.(Although  there   are  
+exceptions,  most  of  the  switches  can  appear  in   any  order.)  nsam  is  the   number 
+of  copies  of   the  locus  in   each   sample,  and   nreps  is  the   number  of  independent 
+samples  to  generate.  The   third  parameter  here  is  the  mutation  parameter, 
+θ  = (4N0µ) ,  where  N0  is  the  diploid  population  size   and  where   µ  is  the   neutral 
+mutation   rate  for  the  entire  locus.  (Note:  As  described  later,when  the  ­I   switch 
+is  used,   ms   can   generate  samples  under  models  with   population  structure.  In 
+those  cases   N0  is  the  number  of  diploids  in  each   subpopulation.)  At  least  one 
+
+2 
+
+of  the  options,   ­t   ­s  or  ­T   must  be   used.  The  latter  two   options  are   described 
+later.  After  nsam   and  nreps,  any  or  all  other  switches  with   their  parameters 
+can   be  read   from  a  ﬁle  using   ­f  filename. 
+Here  is  an  example  command  line: 
+
+ms   4   2  ­t  5.0 
+
+In  this  case,   the  program  will  output  2  samples,  each  consisting  of  4  chromo­
+somes,  generated  assuming  that  θ  = 5.0. 
+
+The  output 
+
+The  output  from   the   example   command   in  the   previous  section   would   look  like  
+this  (the  exact  output  will  depend  on   the   random  number  generator)  : 
+
+ms   4   2  ­t  5.0 
+27473  36154   10290 
+
+//  
+segsites:  4  
+positions:  0.0110  0.0765   0.6557  0.7571 
+0010  
+0100  
+0000  
+1001  
+
+//  
+segsites:  5  
+positions:  0.0491  0.2443   0.2923  0.5984  0.8312 
+00001 
+00000 
+00010 
+11110 
+
+The  ﬁrst  line  of  the  output  is  the   command  line.  The  second   line  shows  the  ran­
+dom  number  seeds(described   in   the   “Downloading  and   compilation”  section.)  
+Following  these  two  lines   are  a  set   of  lines  for  each   sample.  Each   sample   is 
+preceded  by  a  line   with   just  “//”  on  it.  That  line  is  followed   by  “segsites:” 
+and  the  number  of  polymorphic   sites  in  the  sample.  Following  that   line   is  a  line  
+which begins  with  “positions:”  which is  followed by the  positions  of  each poly­
+morphic  site,  on   a  scale   of  (0,1).  The  positions  are  randomly   and   independently  
+assigned  from  a  uniform  distribution.  (With  recombination,  the   distribution   is 
+somewhat  more  complex.)  Following   the  positions,  the  haplotypes  of  each  of 
+
+3 
+
+the  sampled  chromosomes  are   given,  each  as  a  string  of  zeros  and  ones.  The  
+ancestral  state  is  coded  with  a  zero,  and  the  mutant,  or  derived state,  indicated 
+with   a  one.  When  a  sample  has  no   polymorphic   sites,  the   line  with   positions 
+and   the  sample   haplotypes  are   omitted. 
+
+Output  gene  trees:  
+
+ms  nsam  nreps  ­T 
+
+When   the  option   ­T   is  used  the   trees  representing  the  history  of  the  sampled  
+chromosomes  are   output.  For  example,  the  command  line  ms  5  2  ­T  results  in 
+the  following  output: 
+
+ms   5   2  ­T
+
+3579   27011  59243
+
+
+//  
+((2:0.074,5:0.074):0.296,(1:0.311,(3:0.123,4:0.123):0.187):0.060); 
+
+//  
+(2:1.766,(4:0.505,(3:0.222,(1:0.163,5:0.163):0.059):0.283):1.261); 
+
+This  output  represents  the   trees  for  two   samples.  The  tree  format  is  the   Newick 
+format  utilized  by  Phylip  and  a  number  of  applications.  The  branch   lengths 
+are  in  units  of  4N0  generations.  The  sampled  chromosomes  are  labelled  1,  2 
+...  corresponding  to  ordered  sampled  chromosomes.  This  labelling  is  irrelevant  
+with   unstructured   models,  but  with  island  models  described   later,  the  labelling 
+can   be  important.  
+With   recombination  a  tree  is  output  for  each   segment  within   which  no  re­
+combination  has  occurred  in  the  history  of  the  sample. 
+The  gene  trees  output  by  ms  can  be  used   as  input  to  other  programs.  To  
+illustrate,   we  use  seq­gen,  the  sequence   evolution  program  of  Rambaut   and 
+Grassly(1997)  which  can  simulate  the  evolution   of  sequences  under  a  variety  of 
+mutation   models.  The  following  lines  generate  2  samples  of  sequences  40  base  
+pairs  long,   according  to  a  simple   ﬁnite­sites  model  with  θ  per  base  pair  of  0.2. 
+
+ms   5   2  ­T  |   tail  +4  |  grep  ­v  //  >treefile  
+seq­gen   ­mHKY  ­l  40  ­s  .2   <treefile   >seqfile 
+cat  seqfile  
+5  40  
+1 
+2 
+3 
+4 
+5 
+
+GGCGTCCGGCCAAAGGTTCTTGACACACGATACCTTAGTT 
+GGCGTCCGGCCAAAGGTTCTTGACACACGATACCTTAGTT 
+GGCGACCTGACAAAGGGTCTTGACACACGATACGTTAGTT 
+GGCGACCGGACAAAGGGTCTTGACACACGATACGTTAGTT 
+GGCGACCGGACAAAGGGTCTTGACACACGATACGTTAGTT 
+
+4 
+
+5  40  
+3 
+2 
+5 
+1 
+4 
+
+ACCAGGGCTCGGAACTCTCTGGGTTTGCCTAAGTGCCCTT 
+ACCAGGGCTCGGATCTCTCTGGGTTTGCCTAAGTGCCCTT 
+ACCAGGGCTCGGATCTCTCTGGGTTTGCCTAAGTGCCCTT 
+ACCAGAGCTCGCTACTATCCGGGTGTGCCTAAGATCCCAC 
+ACCAGAGCTCGCTACTTTACGGGTGTGCCTTAGTGGCGCA 
+
+The  tail   +4   command  is  used  to   strip  oﬀ  the   ﬁrst  four  lines  output  by  ms. 
+The  grep   ­v   //  command  removes  the  lines  with   double   slashes  from  the   ms 
+output.  The  ­mHKY  command   for  seq­gen   speciﬁes  (in  this  case)  the   Jukes­
+Cantor  mutation   model.  The  ­s  command   for  seq­gen  scales  the   branch lengths 
+so  that  θ  per  site  is   0.2,   in  this  case.  This  can   also  work  with  recombination  but 
+�
+seq­gen  requires  that  one  specify  the  maximum  number  of  recombinational 
+segments.  One  cannot  know  this  ahead  of  time   but  one  can  guess  that   the  
+n−1 1
+number  of   segments  will   be  less  than  say  10ρ 
+i  Here   is  an  example,  for 
+i=1 
+generating  2  samples   of  sequences  1000   base   pairs  long   with   ρ  = 3.0: 
+
+ms   5   2  ­T  ­r   3.   1000   |  tail  +4  |  grep  ­v  //  >treefile 
+<treefile   >seqfile 
+seq­gen   ­l  1000   ­s  .2  ­p  50 
+
+The  ­p   option  for  seq­gen   speciﬁes  the   maximum   number  of  recombinational 
+segments.   The  argument  of  the  ­l  option  of  seq­gen   must  match  the  number  of 
+sites  of  the  ­r   option  of  ms.  The  ­r  option  of  ms  is  described  in  a   later  section. 
+
+Fixed  number  of  segregating  sites: 
+
+ms  nsam  nreps  ­s  segsites 
+
+As  described   in  Hudson(1993)  ,  one   may  in  some  cases  wish  to  generate  samples 
+in   such   a  way  that  every  sample   has  the  same   number  of  segregating   sites 
+(regardless   of  the  size  of  the  genealogy  generated.)  This  is  done   by   using  the   ­s 
+option  on   the  command   line.  For  example, 
+
+ms   10  3   ­s 7  
+
+will   output  3  samples,   each  consisting  of  10  chromosomes.  Each  sample   will 
+have  exactly  7  polymorphic  sites.  It  should  be  emphasized  that  this  method   of 
+generating samples  is  not  equivalent  to  specifying  a   value   of  θ ,  and  then  condi­
+tioning  on  some   ﬁxed  number  of  polymorphic  sites.  Rather,  these  samples  are  
+produced   by  randomly  placing  a  ﬁxed  number  of  mutations  on  each   genealogy 
+generated. 
+If  both  the  ­s   option  and  the  ­t  option  are  used,  there   will  be  one  additional 
+line  of  output  for   each  sample.  This  line,  which   appears  after  the  segsites  line, 
+begins   with  prob:  which   is  followed  by  the  probability  of  the  speciﬁed   number 
+of  segregating  sites   given   the  genealogical  history  of  the  sample  and  the  value  
+of  θ  speciﬁed   with   the  ­t   option.  For  example,  ms 5  2  ­t  3.0  ­s 5  produces 
+the  following  output: 
+
+5 
+
+ms 5   2  ­t  3.0  ­s 5
+
+3579   27011  59243
+
+
+// 
+
+segsites:  5 
+
+prob:  0.145142
+
+positions:  0.0803  0.1516  0.2276   0.8501  0.8636
+
+01110
+
+10000
+
+00001
+
+00001
+
+10000
+
+
+// 
+
+segsites:  5 
+
+prob:  0.0709507 
+
+positions:  0.0856  0.1591  0.2881   0.2901  0.6601
+
+11000
+
+11010
+
+01001
+
+01001
+
+00100
+
+
+Crossing  over: 
+
+ms   nsam  nreps  ­t  θ  ­r  ρ  nsites 
+ms   will   generate  samples  under  a   ﬁnite­sites  uniform  recombination   model  (Hud­
+son,  1983).  In   this  model,  the  number  of  sites  between   which   recombination   can  
+occur  is  ﬁnite  and  speciﬁed  by  the  user  (with  the   parameter  nsites).  Despite  
+the  ﬁnite  number  of  sites  between   which   recombination  can   occur,  the   muta­
+tion  process   is  still  assumed   to  occur  according  to  the  ”inﬁnite­sites”  model, 
+in   that  no  recurrent  mutation   occurs,  and  the  positions  of  the   mutations  are  
+speciﬁed   on   a  continuous  scale  from  zero  to  one,  as  in  the   no­recombination 
+case.  To  include  crossing­over  (recombination)   in   the  model,  one   uses  the   ­r 
+switch   and  speciﬁes  the   cross­over  rate  parameter,  ρ  which  is  4N0 r ,  where  r  is 
+the  probability  of  cross­over  per  generation  between  the  ends  of   the  locus  being 
+simulated.  In  addition,   the  user  speciﬁes  the  numbers  of  sites,  nsites,  between 
+which   recombination   can   occur.  One   should   think  of  nsites  as  the  number  of 
+base  pairs  in  the  locus. For   example,  to  simulate   samples  of  size  15  for  a  locus 
+which   is  2,501  base  pairs  long  with   cross­over  probability  between   adjacent  base  
+pairs  of  10−8  per  generation,  and  assuming   N0  = 106  one  enters: 
+
+6 
+
+ms   15  1000  ­t  10.04  ­r  100.0   2501  
+
+In  this  case,  ρ  =  100,  since  the  cross­over  probability  between  the  two   ends  of 
+the  locus  is  10−8 (2501 − 1)  = 2.5× 10−5 ,  and  thus  ρ  = 4× 106  × 2.5× 10−5  = 100. 
+(In  addition  we  have  assumed   that  the  neutral  mutation  rate  is  10−9  per  site  to 
+obtain  θ .)  Once  again,  although  we   obtained  θ  by  multiplying   the  number  of 
+sites  by  the  mutation   rate   per  site,  the  program  assumes  an  inﬁnite­sites  model 
+in   which   no  recurrent  mutation  occurs. 
+
+Crossing­over  and  gene  conversion: 
+
+ms   nsam  nreps  ­t  θ  ­r  ρ  nsites  ­c  f  λ 
+
+In  addition   to  crossing­over,  gene   conversion   (intra­locus  non­cross­over  ex­
+change)  can  be  included  in  the   simulations.  We  assume  a  model  like  that   of 
+Wiuf  and  Hein(2000).  Gene   conversion  is  assumed   to  initiate  between  a  speci­
+ﬁed   pair  of   sites   in   a  given  chromosome  with  probability  g .  We   let  f  denote  the 
+ratio,   g/r,  where  r  is  the  probability  per  generation  of  crossing­over  between 
+adjacent  sites.(The  parameters  g  and  r  are  the  same   parameters  that  appear  in 
+Wiuf  and   Hein.)  The  parameter  f  is  input  to  the  program,  as  well  as  the  mean  
+conversion  tract  length,   λ,   after  the   ­c  switch.  (The  mean  track  length   is  equal 
+to  1/q  in   the  notation  of  Wiuf  and  Hein.)  The  conversion  tract  is  assumed  to 
+extend,  say  to  the  right,   for  a   random  number  of  sites  (denoted   L),  which  is 
+geometrically  distributed:  
+P rob[L  =  j ] =  pj−1 (1  − p),
+
+j  = 1, 2, .  .  .  . 
+
+where 
+
+. 
+
+λ − 1 
+λ 
+To  carry  out  simulations  with  gene  conversion  but no  crossing­over,  one  uses 
+the  ­r   option  with   ρ  equal   to  zero,  and the  ­c  option.  In  this  case  value  following 
+the  ­c   option  is  the  value   of  4N0 g ,  rather  than   the  ratio  g/r. 
+
+p  = 
+
+Exponentially  growing   or  shrinking  population 
+size: 
+
+ms  nsam  nreps  ­t  θ  ­G  α 
+
+The  switch   ­G   is  used  to  specify  that  the   population  has  been  growing  (or 
+shrinking)  exponentially.   That  is,  the  population   size   is  given  by:  N (t) = 
+N0  exp−αt ,  where  t  is  the  time  before   the   present,  measured   in  units  of  4N0 
+generations.   (A  negative  value  of  α  means  that  the   population  was  larger  in  
+the  past  than  at  present.)  Negative   values  of   α  are  allowed,  however,  other 
+past  demographic  events  must  also  be  speciﬁed   to  prevent  a   situation  where   no 
+
+7 
+
+coalescent  event  ever  occurs.  These  additional  demographic  events  are  speciﬁed 
+with   the  ­e   options   described   below. 
+It  is  important  to  realize  that  the   parameters  θ ,  ρ  and  4N0m  (described 
+later)  are  deﬁned   in  terms  of  the   present   population  size,  N0 . 
+Under  island  models,  speciﬁed   with  the  ­I  option  described  below,  the   ­G 
+option  speciﬁes  that  all  subpopulations  grow  at  the  same   rate.  (See  switch   ­g 
+for  specifying  diﬀerent  growth   rates  for  diﬀerent   subpopulations.) 
+
+Spatial  structure  and  migration:  
+
+ms   nsam  nreps  ­t  θ  ­I  npop  n1  n2  .  .  .  [4N0m] 
+
+The  program,   ms,  can  produce  samples  under  island  models  with   arbitrary  mi­
+gration   rates,  and   diﬀerent  population  sizes.  To   produce   samples  under  an 
+island  model,  one  adds  the  switch  ­I  followed  by  the  number  of  subpopulations, 
+npop,  and  the  sample  conﬁguration.  The  sample   conﬁguration   is  a  list  of  npop  
+integers  (n1  n2  .  .  .  )  indicating   the   number  of  chromosomes  sampled   from  each 
+subpopulation. (Note:   The  subpopulations  are  numbered   from  1   to  npop.)   By 
+default  all  subpopulations   are   assumed to   consist  of  the   same  number  of  diploids, 
+denoted  N0 .  For  a  symmetric  island  model,  one   can  enter  the   migration   param­
+eter  4N0m  after  the  sample  conﬁguration  as  illustrated   in   the  template  above. 
+In  this  case,  each   subpopulation  receives  migrants  at  the  same  rate  from  each 
+of  the  other  subpopulations.  ( m  is  the  fraction  of  each   subpopulation  made   up  
+of  new  migrants  each  generation.)  The   migration  rate   parameter  is  optional. 
+If  this  parameter  is   not  provided,  the   migration  rate   is  set  to  zero.  Thus  the  
+command  line:  
+
+ms 15  1000  ­t  2.0 ­I   3  10   4  1  5.0  
+
+will   generate  1000  samples  of  size   15,  where  the   ﬁrst   10  chromosomes  in  each  
+sample  are  from  subpopulation   1,  the  next  4 chromosomes  are   sampled  from  sub­
+population  2,  and  one  chromosome  is  sampled   from  subpopulation   3.  (If,  in  this 
+example,  the  ­T   option  were  used,  the   chromosomes  from  the  ﬁrst  subpopula­
+tion  would  be  labelled  1  to  10,  the  chromosomes  from  the   second   subpopulation  
+would   be  labelled   11   to  14,  etc.)  In  this  example  all  three  subpopulations  are 
+assumed  to  be  the  same  size,  and   receive  migrants  at  the  same   rate   from  each 
+of  the  other  subpopulations.  The  migration   parameter,  4N0m  is  5.0  . 
+When   the  ­I   switch   is  employed,  the   mutation   parameter  and  the  recom­
+bination  parameters,  entered  with  the   ­t  and  ­r  options,  are  deﬁned  in  terms 
+of  the  subpopulation   size  rather  than  the  total  population  size.  That  is,  θ  is 
+deﬁned  as   4N0µ,  with   N0  being  the  subpopulation   size,  and similarly  ρ  is  4N0 r , 
+where  N0  is  the  subpopulation  size.  Again,  in  the  output,  the  ﬁrst  n1  haplotypes 
+represent  the  sampled   chromosomes  from  subpopulation  1,  and  the   following   n2 
+haplotypes  are  from  subpopulation   2,  etc. 
+ms   will   also  produces  samples  under  models  with  arbitrary  backward  mi­
+gration   matrices.   This   is  done  by   ﬁrst  using   the  ­I  option  and   its  arguments 
+
+8 
+
+(with   or  without  the  migration  rate   parameter.)  This  establishes  the  number 
+of  subpopulations,   the  sample   conﬁguration,  and   assigns  preliminary  values  to  
+the  elements  of  the  migration  matrix.  The  elements  of  the  migration  matrix 
+are  Mij  = 4N0mij ,  i, j  = 1, . . . ,npop  ,  where  mij  is  the   fraction   of   subpopu­
+lation  i  which   is  made  up  of  migrants  from  subpopulation  j  each  generation. 
+The  ­I   option  sets  all   elements  of  the   migration  matrix,  Mij , i   =�
+j ,  equal  to  
+4N0m/(npop­1)  (or  to  the  default  value  zero.)  To   modify  any  non­diagonal 
+elements  of  this  matrix,  one  can  use  the  ­m  or  ­ma   options  as  described  next. 
+The  command  line: 
+
+ms   15  1000   ­t  2.0   ­I  3  10  4  1   5.0  ­m 1  2  10.0   ­m 2  1  9.0 
+will   generate  samples  as  described  in   the   last  example   but  with   a   slightly   modi­
+ﬁed   migration  matrix.   In  this  case  all  elements  of   the   matrix  are  2.5  (=  5.0/(3­1)  
+),  except  elements  M12  and  M21  which  have   been  set  to   10.0  and  9.0,  respec­
+tively.   Any  number   of  ­m   commands  can   be  speciﬁed.  The   ­ma   option  is  used  
+to  specify  an  entire  migration   matrix.  The  option   is  followed  by  a  list  of   all  the  
+elements   of  the  migration  matrix:  M11 , M12 , M13 , M21 , M22 , . . .  .  As  indicated, 
+entries  for  the  diagonal  elements,  Mi,i ,  must  be   included  on  the  command  line, 
+but  are  meaningless  and  ignored   by   the  program.  Here  is  an   example: 
+
+ms 15  1000  ­t  10.0 ­I  3  10   4  1  ­ma x  1.0  2.0  3.0 x  4.0  5.0 
+6.0  x 
+where  the  migration   parameters  are   M12  = 1.0, M13  = 2.0, M21  = 3.0, M23  = 
+4.0, M31  = 5.0  and  M32  = 6.0.  It  is  handy  to  indicate  the  diagonal  elements 
+with   x’s,   or   any  symbol  one  chooses  to   make   the  matrix  more  readable. 
+It  is   the  user’s  responsibility  to  provide  sample  conﬁgurations,  migration  
+matrices  and  past  demographic  events  for  which   the  sampled   chromosomes  will 
+eventually  coalesce.  If  the  user  speciﬁes  a  sample  conﬁguration   from  subpop­
+ulations  that  do  not  communicate,  the   program  will,  in  some   cases,  happily 
+continue  tracing  the  lineages  back  in  time,  forever. 
+Another  suboption  of  ­I  is  the   ­n  option  which   allows  the  user  to  specify  
+that  a  particular  subpopulation  has  a  diﬀerent  size  relative  to  N0 .  For  example, 
+following  a  ­I   option  with  its  required  arguments,  the  option  ­n  3  .5  sets  the 
+population  size  of  the   third   subpopulation   to  0.5 ∗ N0 .  (Note  that  this  command 
+does  not  change  N0  and  will  not  change   any  of  the  parameters,  mij ,  or  any  of 
+the  elements  of  the  migration   matrix,  Mij ,  which  are  deﬁned   in   terms  of  N0 
+and  the  mij .  However   the  number  of  migrant  copies  arriving  each   generation 
+from  a  particular  population,  or  from  all  other  subpopulations,  to  population  3 
+is  half  as  large  as  a  consequence  of  this  command.  This  is  because   the   fraction 
+of  migrants  is  the  same,   but  the   total  number  of  individuals  is  half   what  it  
+would   have  been   without  the  ­n  command.)  To  set  other  subpopulations  to 
+other  sizes,  additional   ­n   i   size  commands  are  appended. 
+The  ­G   option  sets  the  growth  rate   of  all  subpopulations  to   one  value   (as 
+indicated   before.)  To  set  individual  subpopulations  to  have   diﬀerent  growth 
+rates,   the  ­g   i   αi  command  is  used  to  set  the  growth   rate  of  subpopulation   i 
+to  αi . 
+
+9 
+
+It  is  important  to  realize   that  ­m,  ­ma,  ­n  and  ­g  are  suboptions  of  ­I   and 
+must  appear  only  after  the  ­I  option  has  been  used   to  establish  the  number 
+of  subpopulations  (npop)  and  the   sample  conﬁguration.  ­G  α  commands  can  
+appear before  or  after  ­I   commands,  and  will  in  either  case   set  the   growth  
+parameters  for   all  subpopulations  to  the   same  value.  Note  however,  that  a  
+­g   i   αi  command  that  precedes  a  ­G  command  on  the  command  line  will  be 
+overridden  by  the  ­G   command  and  thus  will  have   no  eﬀect.  Thus  ­g  options 
+should  only  appear  after  any  ­G  options. 
+
+Past  demographic  events:  
+
+To  specify  that  demographic   parameters  change  at  speciﬁc  times  in  the   past, 
+the  ­e   switches  are  used.  These  switches  are:  ­eG,  ­eg,  ­eN,  ­en,  ­em,  ­ema, 
+­es  and  ­ej.   In   each  case   the  ﬁrst  parameter  following   the  switch  is  the  time 
+when   the  demographic   change   occurred,  measured   from  the  present  in  units 
+of  4N0  generations.   In  all  cases,  the  parameter  values  speciﬁed  apply   to  the  
+time  interval  immediately  farther  in  the  past   from  the  time   point  speciﬁed. 
+(Henceforth,  the   term  ”past­ward”   will  be  used  to  indicated  farther  in   the  past.)  
+The  arguments   which   follow  the  time  parameter  specify  subpopulations  and  
+other  relevant  parameters,  as  indicated  in  the  following  list: 
+
+­eG  t  α 
+
+­eg  t  i  αi 
+
+­eN  t  x 
+
+­en  t  i  x 
+zero. 
+
+­eM  t  x 
+1)  at  time  t. 
+
+Set  all  growth   rates  to  α  at  time   t. 
+
+Set  growth  rate  of  subpop  i  to  αi  at  time   t. 
+Set  all  subpop’s  to  size   x  ∗ N0  and  growth  rates  to   zero. 
+Set  subpop   i  size  to  x  ∗ N0  at  time  t  and  growth   rate   to 
+
+Set  all  elements  of  the  migration  matrix,  Mij ,  to   x/(npop −
+
+Set  Mij (=  4N0mij )  to   x  at  time  t.  mij  is  the  fraction  of 
+­em  t  i  j x 
+subpopulation  i  made  up  of   migrants  each  generation  from  subpopulation 
+j . 
+
+­ema 	 t  npop   M11  M12  M13  M21 
+migration  matrix. 
+
+.  .  .  Assign  new  values  to  all  elements  of  the  
+
+Split  subpopulation  i  into  subpopulation  i  and  a  new  sub­
+­es  t  i  p 
+population,   labeled  npop  + 1.  Each   ancestral  lineage  in  subpopulation  i  is 
+randomly  assigned   to   subpopulation   i  with  probability  p  and  subpopula­
+tion  npop  +  1  with  probability  1 − p.  The  size  of  subpopulation  npop  +  1 
+is  set  to  N0 .  Migration   rates  to   and   from  the   new   subpopulation  are  as­
+sumed  to  be  zero  and   the  growth   rate   of   the   new  subpopulation   is  set  to 
+zero.  Subpopulation   i  retains  the  same  growth  rate   and  migration  rates 
+
+10  
+
+as  before  the  event.  In  the  forward  direction   this  corresponds  to  popu­
+lation  admixture.  The   size,  growth  rates  and  migration  parameters  for 
+the  new  subpopulation  can  be  immediately  modiﬁed  by  following  the  ­es  
+command  with   appropriate   additional  ­e  commands.  Remember,  that  if 
+changed  population   size   and  growth  rates  are   desired  at  the  same  time 
+point,  that  one  must  put  the   size  change  command  ﬁrst  followed   by  the 
+growth   rate  change   command.  This  is  because  the   size   change   command 
+changes  the  growth  rate   to  zero. 
+
+Move  all  lineages  in  subpopulation   i to  subpopulation  j at 
+­ej  t i j 
+time  t.  Migration   and   growth  rates  are  unchanged.  In  the   forward  direc­
+tion  this  corresponds  to  population  splitting. 
+
+It  is  important   to  note  that  ms  generates  genealogical  histories  by  working  
+back  from  the  present,  and  that  each  of   these   ­e  commands  changes  the   pa­
+rameters   for  the  period   immediately  past­ward  (farther  back  in  the   past  from) 
+the  time  point speciﬁed. For  example,  ms  10  30   ­t   4.0   ­eN   0.2  .02  
+spec­
+iﬁes   that  the  population   size   was  constant  at   size  N0  from   the  present   back  to  
+time  0.2  ∗ 4N0 ,  and   farther   back  in   time   the   population   size   was  0.02  ∗ 4N0 . 
+The  population   size  change  was  instantaneous  and  occurred  at  time  0.2 ∗ 4N0 
+generations  before  the  present. 
+Also,  note  that  the  ­eN  and  ­en   commands  change  the  population  size(s), 
+but  also  change  the  growth   rate(s)  to  zero.  If  one  desires  the  growth   rate  to  be  
+non­zero  in  the  time   period  immediately  past­ward   of   a  population   size  change, 
+one  needs  to  add  a  ­eG  or  ­eg   command  right  after  the  ­eN   t  x  or  ­en   t  i 
+x  command. 
+And   ﬁnally,  note  that  changes  in  subpopulation   sizes  do   not  change  m,  the  
+migration   fraction  for  any  subpopulation.  Thus,  if   one  changes  a  subpopula­
+tion  size,   it  implicitly  changes  the  number  of  migrants  that  arrive  per  genera­
+tion  into  a  subpopulation. For  example,  consider  the  command: 
+ms  10  100 
+­t   2.0  ­I  2   5  5   6.0   ­en   0.1 2  .25  .  The  phrase,  ­I  2  5  5  6.0,  speci­
+ﬁes  that  there  are  two  subpopulations,  each   of  size   N0 ,  with  migration  rate  
+4N0m = 6.0  .  If  we  denote  the  subpopulation  sizes  by  N1  and  N2 ,  these  sizes 
+in   the  most  recent  interval  of  time  are  N1  =  N2  =  N0 .  And   each   subpopulation 
+receives  2N0m = 3.0  migrant  copies  of  the  gene   per  generation.  (Recall  that 
+m is  the  fraction   of  the  population  which  are  new   migrants  each  generation, 
+and   since  the  subpopulation  size  is  N0  diploids,  the   number  of  migrant  copies  is 
+2N0m.)  The  phrase  ­en  0.1   2  .25  speciﬁes  that  past­ward   of  this  event,  the 
+size  of   subpopulation   2,  call   it  N2 ,  is  one   quarter  of  its  size  in  recent  times.  But 
+m is  not  changed   so  the   fraction   of  subpopulation  2   which  are  new   migrants 
+each   generation  is  still   m.  So  the   number  of  migrants  arriving  in  subpopulation 
+2,  2N2  ∗ m,  which  is   only  0.75   per  generation,  past­ward  of  time   point  0.1.  If 
+one  wishes  the  number  of  migrant  copies  to  be   maintained  at  3  per  genera­
+tion,  one  must  increase  the   migration  parameter,  ­em   0.1  2  1   24.0.  With   or 
+without  the  later  phrase,  subpopulation   1   still  receives  three  migrant   copies  per 
+generation.  
+
+11  
+
+Some  examples:
+
+
+Instantaneous  population  size  changes
+
+Here  is  an  example  of  a  command   line  using  a  ­e  command   is  : 
+
+ms   15  1000  ­t  2.0  ­eN  1.0   .1   ­eN  2.0   4.0  
+
+which speciﬁes   that  the  population  size   was  one­tenth  its  current  size  between 
+4N0  and  8N0  generations  ago,  and   prior  to   that  the   population  size  was  4   times 
+the  current  population  size. 
+
+Generating  an  outgroup  sequence 
+Here  is  an  example  showing  how  an  outgroup   sequence  can   be  produced: 
+
+ms 11  3  ­t   2.0 ­I   2  1   10   ­ej  6.0 1  2 
+
+This  command   establishes   that  there  are  two  subpopulations  with   zero  migra­
+tion  between  them.   One  sampled  chromosome  (the  outgroup  sequence)   from 
+subpopulation  one,  and  10  chromosomes  from  subpopulation   two.  The  two   sub­
+populations  can  be   considered  separate   species.  The   ­ej   command   moves  all 
+lineages  from  subpopulation  1  to  subpopulation  2  at  time   24N0  generations  be­
+fore  present.   In  the   output  the  outgroup   sequence   appears  ﬁrst  on   the  list   of 
+each   sample.  The  ten   ingroup   sequences  follow. 
+
+Instantaneous  size  change  followed  by   exponential  growth 
+In  this  example,   we  have  one   panmictic  population   that  underwent  a  size   reduc­
+tion,  followed  by  a  period  of  constant  size,  followed   by  population  expansion. 
+This  demographic  history  is  shown   in  ﬁgure  1.  To  be   concrete  let  us  suppose  
+that  the  population  sizes  are  N1  =  10,  000,  N2  = 5,  000,  and   N3  =  20,  000. 
+Also  suppose  that  the   neutral  mutation   rate  is  10−8  per  site  per  generation 
+and   that  we  are  considering  a  segment  8,000   base  pairs  long.  In  this  case,  if 
+we  take  N0  to  be  20,000,  we  have   θ  = 4  ∗ 20,  000  ∗ 10−8  ∗ 8,  000  = 6.40.  Sup­
+pose  that  T1  is  16,000  generations,  or  16,000/(4*20,000)  =  0.2  in  units  of  4N0 
+generations.  Similarly,   suppose   that  T2  is  24,000   generations  or  0.3  in  units  of 
+4N0  generations.  To  specify  the   exponential  growth   on   the  command  line   we  
+need  to  calculate  the  growth  parameter  α.  To  obtain  α  we  solve  the   equation, 
+5,  000  = 20,  000  ∗ exp−α0.2 ,  which  is  α  =  −(1/0.2)  ∗ log(5,  000/20,  000)  = 6.93. 
+Thus  the  command  line   to  generate   1000   samples  of   size  15  is: 
+
+ms   15  1000   ­t  6.4   ­G  6.93   ­eG  0.2  0.0  ­eN  0.3  0.5  . 
+
+The  phrase  ­G   6.93  speciﬁes  that  the   population  decreases  as  we   go   back  in  
+time  according  to  the  equation,  N (t) =  N0  exp−6.93t .  The   phrase  ­eG   0.2   0.0 
+speciﬁes   that  the  growth   rate   changes  to  zero  at  time   0.2,  and   the  population 
+size  preceding  this  time  will  be  N0  exp−6.93∗0.2  =  N0  ∗ 0.25.  The   phrase  ­eN  
+0.3  0.5  speciﬁes   that  the  population  size  before  0.3  times  units  was  half  of  N0 . 
+
+12  
+
+˙
+Figure  1:  An   example  demographic   history  with  population  size  changesIn  this
+example,  the  population  had  an  ancestral  population   size  of   N1  which  at  time   T2 
+instantaneously  shrank  to  size   N2 .  (All  times  are  measured  from  the  present.)  It 
+remained   constant  at  size  N2  until  T1  time  units  before   present,  at  which point  it  
+began   expanding exponentially  until  the  present  at   which  point  the  population 
+size  is   N3 .  The  command   line   to  simulate   under  this  model  is  described  in  the 
+text. 
+
+Two  species  with  population  size  diﬀerences  
+In  this  example,  we  consider  a  population  with  two  subpopulations  which   were  
+derived  from  a  single  ancestral  population. The  sample   consists  of  three   copies 
+drawn  from  one  subpopulation  and  12  copies  drawn  from   a  distinct   isolated  
+subpopulation.  The   demographic   history  is  shown  in  ﬁgure  2.  We   suppose   that 
+N1  = 10, 000, N4  = 40, 000, T1  = 5, 000  generations, T3  = 15, 000  generations, T2  = 
+10, 000  generations, N2  = 2, 000  and  N3  = 5, 000.  We   also   suppose  that  the  mu­
+tation   per   site  per   generation  is  10−8 ,  and  that  we  are  interested  in   a  segment 
+7,000  base  pairs  long.  Let  us  take   N0  to  be   40,000.  (As  will  be  discuss  below, 
+we  can   assign   N0  to  be  any  value  we  choose  if  we   make   appropriate  adjustments 
+in   command  line  parameters.)  In  this  case,  θ  =  10−8  ∗ 4  ∗ 40, 000  ∗ 7, 000  = 
+
+13  
+
+Figure  2:  A  demographic  history  in  which   a   subpopulation  splits  oﬀ  from  an 
+ancestral  population.   In  this  example,  a  population   of  ancestral  size  N1 ,  began 
+growing  exponentially  T1  time   units  in  the  past  and  reached  a  present  size  of 
+N4 .  At  time  T3 ,  it  gave  rise  to   an  instantaneously  isolated   subpopulation   which  
+initially  was  of  size  N2 ,  and  which   at  time  T2 ,  instantaneously  expanded  to 
+size  N3 ,  and   remained  at  that  size   until  the  present.  The  command   line   for 
+simulating  samples  under   this  model  is  described  in  the   text. 
+
+11.2.  We  need  to  convert  all  times  into   units  of  4N0  generations,  which  means 
+simply  dividing  the  times  by  4*40,000  =  160,000.  So  the  times  are  T1  = 
+5, 000/160, 000  = 0.03125, T2  =  10/160  = 0.0625,  and  T3  = 5/160   = 0.09375. 
+Since  the  ﬁrst  population  decreases  from  40,000   to  10,000  in   .03125  time  units, 
+40, 000  ∗  exp−α∗0.03125 
+we  ﬁnd   the  growth  rate  by  solving  10, 000  = 
+.  Thus, 
+α =  − ln(10, 000/40, 000)/0.03125  =  44.36.  Thus,  here   is  the   command  line: 
+ms   15  100   ­t   11.2   ­I  2  3   12  ­g  1  44.36  ­n   2   0.125   ­eg   0.03125  1 
+0.0  ­en  0.0625  2   0.05  ­ej   0.09375   2  1 
+Here  are  explanations  for  each  item   on  the   command  line: 
+
+ms   15  100  Generate  100  samples  of  size   15. 
+
+­t   11.2  Sets  θ to  11.2  as  explained   above. 
+
+14  
+
+­I   2   3  12  Establishes   that  there   are   two  isolated   subpopulations,  with   three 
+sampled  copies  from  subpopulation  one   and  12   sampled   from  subpopu­
+lation  two  (for  a  total  of  ﬁfteen   as  indicated  by  the  ﬁrst  command  line 
+argument.) Migration  rate   is  not  speciﬁed,  so  it  is  set  to   the   default  value 
+of  zero. 
+
+­g   1   44.36   Sets  growth  parameter  of  subpopulation  one   to   44.36,  as  calculated 
+above. 
+­n   2   0.125   Sets  the  initial  size   of  subpopulation  2  to  0.125   ∗ N0  (since  N3  is 
+one­eighth  of  N4  =  N0 .) 
+
+­eg  0.03125  1  0.0   Speciﬁes  that  the   growth  rate   for  subpop  1  changes  to 
+zero  at  time  0.03125. 
+­en  0.0625   2   0.05   Speciﬁes  that  subpopulation  2  size  changes  to  0.05   ∗ N0  at 
+time  0.0625  . 
+
+­ej  0.09375  2  1  Speciﬁes  than  lineages  of  subpopulation  2   are  moved   to   sub­
+population  1  at  time   0.09375. 
+
+Note  that  we  can  assign   N0  to  have  any  convenient  value  if  we   make  all  the 
+appropriate  changes  in   the  times  and   other  parameters.  For   example,  if  we   set  
+N0  = 10, 000,  then   because  N0  is  one  quarter  of  what  is  was,  theta  is  one  fourth 
+as  large  (  =  11.2/4),   all  the  times  are   four  times  larger,  and   the   growth  rate  
+is  one  quarter  as  large   as  before.  In  this  case,  the  present  population  size   for 
+subpopulation  1  is  4  times  N0 ,  and   the  present   population  size   of  subpopulation 
+2  is  one­half  of  N0  which  also  must  be  speciﬁed   on   the  command  line.  Then  the  
+command  line  becomes:  
+ms   14  100   ­t   2.8  ­I  2   2  12  ­g  1  11.09  ­n 1  4.0  ­n 2   0.5   ­eg   0.125  
+1  0.0  ­en  0.25  2  .2   ­ej   0.375   2  1 
+The  statistical  properties  of  samples  produced  with  the  alternative  command  
+line  are  identical  to  those  produced  by  the  ﬁrst  one. 
+
+Stepping  stone  model   with  recent  barrier 
+In  this  example  we  set  up  6  subpopulations  with   migration  between  subpopu­
+lations  1  and   2,  between  2  and   3,  between   4  and  5,  and   between   5   and  6,  only. 
+At  time,   say  T=  2.0  time   units  we   remove   the  barrier  between  3   and   4.  The  
+command  line  is  : 
+ms   15  100   ­t   3.0  ­I  6   0  7  0   0  8  0  ­m 1  2  2.5  ­m 2   1   2.5   ­m 2  3  2.5 
+­m 3   2   2.5   ­m 4  5   2.5   ­m 5   4  2.5  ­m 5  6   2.5   ­m 6  5  2.5  ­em   2.0 3   4  
+2.5  ­em  2.0 4  3   2.5  
+The  phrase,  ­I   6   0  6   0  0   6  0,  sets  up   6 subpopulations  with   zero  migra­
+tion  rate  between  them  and  establishes  that  a   sample  of  size  7   is  taken  from 
+subpopulation  2  and  a   sample  of  size   8   is  taken   from  subpopulation  5.  (In  the  
+output  the  ﬁrst  7  haplotypes  are   from  subpopulation   2   and   the  next  8  are   from 
+subpopulation  5.  The  ”­m  ”  commands  set  up  migration,  4N m  = 2.5 ,  between 
+
+15  
+
+Figure  3:  A  demographic  history  of  six  subpopulations  that  exchange   migrants 
+in   a  stepping­stone  model.   At   a  time  T  time  units  in  the   past  a  barrier  to  gene  
+ﬂow  arose,  such   that  no  further  gene   ﬂow  occurs  between  subpopulation  3  and 
+subpopulation  4.  The  command  line   to   generate  this  history  is  described  in  the  
+text. 
+
+the  neighboring  subpopulations  (except  between  subpopulation  3  and  4).  The  
+”­em”  commands  modify  the  migration   matrix  at   time  2.0  in   the  past  such 
+that  pastward   of  this  time,  migration   at  rate   4N m  = 2.5  occurs  also   between 
+subpopulation  3  and  4. 
+
+Summary  of  command  line  options 
+
+­f   ﬁlename  Read  switches  and   parameters  from  “ﬁlename”. 
+
+­t   θ 
+
+­s   j 
+
+­T  
+
+Set  value  of   4N0u. 
+
+Make  samples  with  ﬁxed  number  of  segregating   sites,  j . 
+
+Output  gene  trees. 
+
+16  
+
+Recombination:  ρ = 4N0 r  where  r  is  the  recombination  rate 
+­r   ρ	 nsites 
+between  the  ends  of  the   segment   being  simulated  (not   the   per  site  rate) 
+and  nsites   is  the  number  of  sites  between   which   recombination  can  occur. 
+
+Gene  conversion:  f  =  g/r,  where  g   is  the  conversion   rate   per 
+­c   f 	 λ 
+site.  (If  r  = 0, f  = 4N0 g .)  λ is  the  mean   conversion  tract  length.  Even   if 
+ρ = 0,  the  ­r   switch must  be   invoked  to   specify nsites. 
+
+­G   α 
+
+Set  growth  parameter  to   α.  If  island   model,  set  growth   rate  of  all 
+subpopulations   to  α. 
+
+­I   npop   n1  n2  . . .  [4N0m  ] 
+Assume  island  model  with   symmetric   migra­
+tion  rate,  4N0m,  and   sample  conﬁguration   n1,  n2  . . .  . 
+Set  size  of  subpopulation  i to  x ∗ N0 .
+
+­n  i x 
+Set  growth  rate  of  subpopulation  i to  αi .
+
+­g  i  αi 
+Set  (i, j ) element of migration  matrix  to  Mij .
+
+­m  i  j  Mij 
+Assign  values  to   the   elements  of
+
+­ma  M11  M12 
+. . .  . . . 
+. . . M21  M22 
+migration  matrix. 
+
+­eG  t  α 
+
+­eg  t  i  αi 
+
+­eN  t x 
+
+­en  t  i x 
+
+­eM  t x 
+time  t. 
+
+Set  all  growth   rates  to   α at  time   t. 
+
+Set  growth   rate  of   subpop  i to  αi  at  time  t. 
+Set  all  subpop’s  to  size   x ∗ N0  and  growth  rates  to   zero. 
+Set  subpop  i size  to   x ∗ N0  at  time   t  and  growth  rate  to  zero. 
+Set  all  elements  of  the   migration   matrix  to   x/(npop  − 1)  at 
+
+Set  4N0mij  to  x at  time  t.  (mij  is  the  fraction  of  subpopulation 
+­em  t  i  j x 
+i made  up   of  migrants  each  generation   from  subpopulation  j .) 
+
+­ema 	 t  npop   M11  M12  M13  . . .  M21 
+trix. 
+
+. . .  Assign  new  values  to  the  migration  ma­
+
+Split  subpopulation  i into  subpopulation   i and  subpopulation 
+­es  t  i  p 
+npop+1.   Each  lineage  in   subpopulation   i is  randomly  assigned   to  subpop­
+ulation   i with   probability  p and  subpopulation  npop  +1   with   probability 
+1− p.  Migration   rate  to  and  from  new   subpopulation   is  assumed  to  be  zero 
+and   its  growth  rate  is  set  to   zero.  The   size  of   the   new   subpopulation  is  set 
+to  N0 . Subpopulation  i retains  same  growth  rate   and  migration  rates  as 
+before  the  event.  In   the  forward   direction   this  corresponds  to   population 
+admixture. 
+
+Move  all  lineages  in  subpopulation   i  to  subpopulation  j  at 
+­ej  t  i  j 
+time  t.  Migration   and   growth  rates  are   unchanged.  In   the  forward  direc­
+tion  this  corresponds   to  population   splitting. 
+
+17  
+
+Using  ms  with  sample  stats 
+
+Included   in  the  ms.tar  ﬁle  is  a  program  sample  stats.c  which  will  process 
+the  output  of   ms   and   calculate   a  small  set  of  sample  statistics  for  each   gen­
+erated   sample.  (  sample  stats  is  compiled  as  follows:  gcc   ­o  sample  stats 
+sample   stats.c   tajd.c   ­lm.)  For  example,  the   output  of: 
+
+ms   30  4  ­t  3.0   |  sample  stats 
+
+is 
+
+pi:  7.708046  
+pi:  0.519540  
+pi:  1.429885  
+pi:  3.190805  
+
+ss:  25   D: 
+D: 
+ss:  6 
+ss:  5 
+D: 
+ss:  15   D: 
+
+0.788423  
+­1.874712 
+0.362688  
+­0.529742 
+
+thetaH:   7.533333 
+thetaH:   3.894253 
+thetaH:   4.087356 
+thetaH:   0.809195 
+
+H:  ­0.174713 
+H:  3.374713 
+H:  2.657471 
+H:  ­2.381609 
+
+The  output  consists  of  one  line  for  each  sample.  On   this  line  is  the  average  
+number  of   pairwise  diﬀerences  between  sequences  (labeled   pi),the   number  of 
+segregating  sites   (labeled  ss:  ),  Ta jima’s  D  (labeled   D:),  and  Fay  and   Wu’s  θH 
+(labeled  thetaH)  and  the   diﬀerence  between  θH  and  pi.  If  both  the   ­t  and  ­s 
+switches   are  used,  the  output  contains  one  additional  column  which  contains 
+the  values  of  “prob”.  
+One  can  further  process   the  output  of  sample  stats  to  obtain  mean,  stan­
+dard   deviation   and  percentile   estimates  of  any  of  these  quantities  using   the  
+program,  stats.c  also  provided  in  ms.tar.  For  example, 
+
+ms   30  10000  ­t   3.0   ­eN  .2  
+\ 
+| 
+0.1
+cut  ­f  6  |   stats  .025  .5  .975  
+> 
+sample_stats  |  
+
+will   output  the  estimated  mean,  standard   deviation,  2.5th   percentile,  median, 
+and  the  97.5th  percentile  of  the   distribution  of  Ta jima’s  D  for  a  model  in   which  
+the  population  has  experienced   a  recent  rapid   increase  in   size.  ( In   this  example, 
+the  population   size  was   one­tenth   the  current   size  until  0.2  ∗ 4N0  generations 
+ago.)(  cut  is  a  Unix  utility  which   can  “cut”  out  a   speciﬁed   column   of  a  ﬁle. 
+Since  Ta jima’s  D  is   output  in   the   6th  column  of  the  output  of  sample  stats 
+we  use  “cut  ­f  6”  to  get  the   D values.)  
+
+References  
+
+Hudson,  R.  R.  (1983).   Properties  of  a  neutral  allele  model  with  intragenic  
+recombination.   Theoretical  Population  Biology,  23:183–201. 
+
+Hudson,  R.   R.   (1990).  Gene   genealogies  and   the   coalescent  process.  In   Futuyma, 
+D.   and   Antonovics,  J.,  editors,  Oxford  Surveys  in   Evolutionary   Biology,  Vol. 
+7,  pages  1–43.  Oxford  University  Press,  Oxford. 
+
+Hudson,  R.   R.   (1993).  The  how   and  why  of  generating  gene   genealogies.  In  
+Takahata,  N.  and   Clark,  A.  G.,  editors,  Mechanisms   of  Molecular  Evolution, 
+pages   23–36.  Sinauer  Associates,  Sunderland,  MA. 
+
+18  
+
+Kingman,  J.  F.  C.  (1982).   On   the  genealogy  of  large   populations.  J.  Appl. 
+Probab.,  19A:27–43.  
+
+Kreitman,  M.  (1983).   Nucleotide  polymorphism   at  the  alcohol  dehydrogenase  
+locus  of  drosophila  melanogaster.  Nature,  304:412–7. 
+
+Nordborg,  M.  (2001).  Coalescent   theory.  In   Balding,  D.  J.,  Bishop,  M.  J.,  and 
+Cannings,  C.,  editors,  Handbook  of  Statistical  Genetics,  pages  179–212. 
+John   Wiley  and   Sons,  Chichester,  UK. 
+
+Press,   W.  H.,  Teukolsky,  S.   A.,  Vetterling,  W.  T.,  and  Flannery,  B.  P.  (1992). 
+Numerical  Recipes  in  C.  Cambridge   University  Press,  Cambridge. 
+
+Rambaut,   A.  and  Grassly,   N.  C.  (1997).  Seq­gen:  An   application  for  the  monte  
+carlo  simulation  of  dna  sequence   evolution  along   phylogenetic  trees.  Com­
+put.  Appl.  Biosci.,  13:235–238. 
+
+Wiuf,  C.  and   Hein,  J.  (2000).  The   coalescent  with  gene  conversion.  Genetics, 
+155:451–62. 
+
+19  
+
+

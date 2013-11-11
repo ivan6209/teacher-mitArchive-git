@@ -1,0 +1,581 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Today’s Topics 
+object-oriented programming in Java 
+¾ exceptions
+
+¾ classes
+
+¾¾ subclassing
+subclassing
+
+
+Classes 
+
+Rob Miller 
+Fall 2008 
+
+© Robert Miller 2008 
+
+© Robert Miller 2007 
+
+Review: How To Write a Method 
+
+1. Write the method signature 
+1. Write the method signature
+n type, arguments 
+(name, retur
+(name, return type, arguments
+/* 
+* Returns the contents of the web page identified 
+which 
+* by urlString, 
+must be a valid URL. 
+* e.g. fetch("http://www.mit.edu") 
+* returns the MIT home page as a string of HTML. 
+*/ 
+public static String fetch(String urlString) { 
+2. Write a specification (a comment 
+2. Write a specification (a comment 
+that defines what it returns, any side‐
+that defines what it returns, any side‐
+effects, and assumptions about the 
+effects, and assumptions about the 
+arguments. 
+arguments.
+
+... 
+
+} 
+
+3. Write the method body so that it conforms to your 
+3. Write the method body so that it conforms to your 
+specification.  (Revise the signature or specification if 
+specification.  (Revise the signature or specification if 
+you discover you can’t implement it!)
+you discover you can’t implement it!) 
+
+© Robert Miller 2007 
+
+Getting Data from the Web 
+import java.net.URL; 
+imports the class URL from 
+imports the class URL from 
+the java.net package
+the java.net package 
+/* 
+* Returns the contents of the web page identified 
+* by urlString. e.g. fetch("http://www.mit.edu") 
+* returns the MIT home page as a string of HTML.
+
+*/
+
+public static String fetch(String urlString) {
+
+URL url = new URL(urlString);
+
+...
+
+
+} 
+
+constructs a new URL object 
+constructs a new URL object
+
+© Robert Miller 2007 
+
+1 
+
+Classes in Other Packages 
+Java classes are arranged in packages 
+¾ java.lang.String
+
+¾ java.lang.Math
+
+¾¾ java net URL
+java.net.URL
+
+Import statements at top of Java file bring in the classes 
+you need 
+¾ import java.net.URL;
+
+¾ import java.net.*;
+
+¾ java.lang.* package is imported automatically, so we don’t have to do this 
+
+with Stringg  or Math,,  for exampple 
+
+Exceptions 
+Exceptions are abnormal return conditions from a 
+
+method
+
+¾ Instead of returning a value normally, the method throws an exception 
+¾¾ Exceptions usually indicate error conditions  but not necessarily
+Exceptions usually indicate error conditions, but not necessarily 
+¾ Exceptions are objects.  Usually just have a message, but can carry other 
+data as well 
+Throwing an exception 
+
+¾ throw statement throws an exception object
+
+throw new MalformedURLException(“bad URL: “ + urlString);
+
+¾ throw is like return – the method immediatelyy sto pps,, but instead of
+
+returning a value, it propagates the exception 
+
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+Two Ways To Deal With Exceptions 
+public static String fetch(String urlString) {
+
+try {
+
+URL url = new URL(urlString);
+
+catch the exception and deal 
+...
+
+with it 
+} catch (MalformedURLException e) { 
+} catch (MalformedURLException e) { 
+System.out.println(“Badly formed URL: “ + urlString); 
+e.printStackTrace(); // 
+System.exit(0); 
+Exiting the whole program is generally not useful.  Catching the exception 
+Exiting the whole program is generally not useful.  Catching the exception 
+makes sense when there’s something fetch() can do to fix the problem. 
+makes sense when there’s something fetch() can do to fix the problem. 
+public static String fetch(String urlString) 
+throws MalformedURLException { 
+throws MalformedURLException {
+
+URL url = new URL(urlString);
+
+...
+
+
+} 
+
+}
+
+} 
+This is probably the right thing to do in this 
+This is probably the right thing to do in this 
+case, because it ’s the caller ’s fault for passing a 
+case, because it ’s the caller ’s fault for passing a 
+nonsensical URL.  fetch() can’t fix it.
+nonsensical URL.  fetch() can’t fix it. 
+© Robert Miller 2007 
+
+declare the exception in the 
+declare the exception in the 
+method signature, so that 
+method signature, so that 
+it ’s passed on to the caller of 
+it ’s passed on to the caller of 
+fetch() to deal with it 
+fetch() to deal with it
+
+Getting Data from the Web 
+public static String fetch(String urlString) 
+throws MalformedURLException, IOException { 
+URL url = new URL(urlString); 
+
+// open a stream from the web server
+// open a stream from the web server 
+InputStream input = url.openStream();
+
+InputStreamReader reader = new InputStreamReader(input);
+
+
+// create a stream that appends data together into a String
+StringWriter writer = new StringWriter(); 
+
+// copy from the web server stream to the string stream
+
+// (defined in a few slides)
+
+// (defined in a few slides) 
+copyStream(reader, writer); 
+
+// return the string we created 
+return writer.toString();
+
+
+}
+
+
+© Robert Miller 2007 
+
+2 
+
+Bytes vs. Chars 
+Byte is an 8-bit value 
+¾ Older programming systems used 7-bit (ASCII) or 8-bit character sets, 
+
+which could represent at most 256 different characters
+
+¾ The multilingual Web demands a lot more! 
+¾ The multilingual Web demands a lot more!
+
+¾ But network connections and files are still generally represented as a
+
+sequence of 8-bit byte values
+
+¾ java.io.InputStream and java.io.OutputStream are streams of bytes
+
+Char is a 16-bit value 
+¾ Java characters are Unicode characters 
+¾ Unicode is an extension of ASCII), which has thousands of characters  
+
+(including Latin alphabets, Greek, Cyrillic , Chinese/Japanese/Korean 
+
+characters, symbols, accents, etc .) 
+
+¾ java.lang.String is a sequence of Unicode characters, and java.io.Reader and 
+java.io.Writer are streams of Unicode characters 
+¾ If it’s human-readable text, use Unicode; if it’s binary data (like an image) 
+
+use bytes
+
+
+© Robert Miller 2007 
+
+Reading and Writing Streams 
+/* 
+* Copies all data from the "from" stream to 
+* the "to" stream, then closes both streams. 
+* Throws IOException if any error occurs.
+
+*/
+
+public static void copyStream(Reader from, Writer to) 
+throws IOException { 
+char[] buffer = new char[10000]; 
+// any size buffer would work, but bigger 
+// performs better 
+while (true) {
+int n = from.read(buffer); 
+if (n == -1) break; // “from” stream is done 
+to.write(buffer, 0, n);
+
+It ’s important to close the streams to 
+mark the end of the stream and free 
+up resources. But will the streams 
+always be closed in this code? 
+© Robert Miller 2007 
+
+}
+
+reader.close();
+
+writer.close();
+
+
+} 
+
+Try/Finally 
+public static void copyStream(Reader from, Writer to) 
+
+throws IOException {
+
+try {
+
+char[] buffer = new char[10000];
+
+// any size buffer would work, but bigger 
+// performs better 
+while (true) { 
+int n = from.read(buffer); 
+if (n == -1) break; // at the end of the stream 
+to.write(buffer, 0, n); 
+}
+
+} finally
+{
+
+reader.close(); 
+writer.close();
+
+
+finally clause is run no matter how 
+finally clause is run no matter how 
+control leaves the try block – whether 
+control leaves the try block – whether 
+by falling out normally or by throwing 
+by falling out normally or by throwing 
+an exception 
+an exception 
+
+}
+
+
+}
+
+
+© Robert Miller 2007 
+
+Overloading a Method 
+public static String fetch(String urlString) 
+throws MalformedURLException, IOException { 
+URL url = new 
+URL(urlString); 
+return fetch(url); 
+return fetch(url); 
+
+Overloaded methods have the 
+Overloaded methods have the 
+same name but different number 
+or types of arguments 
+
+} 
+public static String fetch(URL url)
+throws IOException {
+// open a connection to the web server 
+InputStream input = url.openStream(); 
+InputStreamReader reader = new InputStreamReader(input); 
+... 
+
+} 
+Java automatically chooses which overloaded method to call based on the 
+Java automatically chooses which overloaded method to call based on the 
+types of the arguments you give it 
+types of the arguments you give it
+fetch(“http://www.mit.edu”); 
+fetch(new URL(“http://www.mit.edu”));
+© Robert Miller 2007 
+
+3 
+
+A Class Representing Web Pages 
+public class Page {
+
+private URL url;
+
+private String content;
+
+
+fields are variables stored in 
+fields are variables stored in 
+the object 
+the object
+
+public Page(String urlString) throws MalformedURL... { 
+public Page(String urlString) throws MalformedURL... { 
+this.url = new URL(urlString); 
+.url); 
+this.content = Web. 
+fetch(this
+constructors create new objects 
+constructors create new objects
+
+} 
+
+public URL getURL() { 
+return this.url;
+
+
+}  
+
+public String getContent() {
+
+public String getContent
+() {
+
+return this.content;
+
+
+methods are functions that 
+methods are functions that 
+act on an object 
+act on an object
+
+}
+
+
+}
+
+
+this refers to the object itself in a method or constructor 
+this refers to the object itself in a method or constructor
+
+Access Control 
+¾ public can be used anywhere in the program 
+public URL getURL() 
+¾ private can be used only in this class 
+ate U
+u
+private URL url
+p 
+Access control provides greater safety 
+¾ We want Page to be immutable (never changes once created). What if its 
+fields were public? 
+public URL url; 
+¾ Then it would be possible to change the field anywhere in the program,
+
+and Page would no longer be immutable
+
+Page p = new Page(“http://www.mit.edu”) 
+p.url = new URL(“http://www.google.com”); 
+¾ With private, it’s much easier to guarantee that the url is never changed 
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+Final 
+Another way to control changes to a field 
+¾ Fields and variables marked final may not be reassigned after initialization 
+¾ So Page could be kept immutable even if it’s public 
+public final URL url;
+public final URL url; 
+¾ It’s good practice to use final for any variable that shouldn’t be reassigned 
+(even local variables) 
+public static String fetch(final String urlString) throws ... { 
+final URL url = new URL(urlString);
+final InputStream input = url.openStream(); 
+final InputStreamReader reader = new InputStreamReader(input); 
+final StringWriter writer = new StringWriter(); 
+... 
+} 
+
+Caching Pages 
+Web browsers store downloaded pages in a cache 
+¾ So that they don’t have download the page each time it’s used
+
+¾ Let’s add a cache to the Page class
+
+
+/* Returns the cached Page object for url, 
+or null if no such Page in the cache. */ 
+private static Page getPageFromCache(URL url) { ... } 
+
+/* Stores page in the cache. */ 
+private static void putPageInCache(Page page) { ... } 
+
+Returning an invalid value (like null) is one 
+Returning an invalid value (like null) is one 
+way to signal an error condition.  How else 
+way to signal an error condition.  How else 
+could we have designed this method to 
+could we have designed this method to 
+signal an error to its caller? 
+signal an error to its caller?
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+4 
+
+Static Fields and Methods 
+¾ Fields and methods declared static are associated with the class itself,
+
+rather than an individual object
+
+•	 A static field has only one value for the whole program (rather than 
+one value per object) 
+–  All objects of the class share that single copy of the static field 
+•  A static method has no this object 
+•	 Static methods and fields are referenced using the class name (e.g. 
+Web.fetch()) rather than an object variable 
+•  Some classes are purely containers for static code (e.g. Hailstone,Web, 
+java.lang.Math), and no objects of the class are ever constructed
+
+¾ Fields and methods not declared static are called instance fields or
+
+¾ Fields and methods not declared static are called instance fields or
+
+methods
+
+¾ static final is commonly used for constants, e.g.:
+
+public static final PI = 3.14159; 
+
+Implementing the Cache 
+private static final Page[] cache = new Page[100];
+
+private static int cachePointer = 0; 
+
+// index of next page to replace in the cache  
+
+private static Page getPageFromCache(URL url) { 
+for (Page p : cache) { 
+if (p != null && p.getURL().equals(url)) return p; 
+
+} 
+return null; 
+// page not found 
+why might p be null?
+why might p be null? 
+what happens if we don’t check?
+what happens if we don’t check? 
+private static void putPageInCache(Page page) {
+
+cache[cachePointer] = page;
+
+++cachePointer;
+
+if (cachePointer >= cache.length) cachePointer = 0;   
+
+
+}
+
+
+} 
+
+© Robert Miller 2007 
+
+© Robert Miller 2007 
+
+Using the Cache 
+
+public Page(URL url) throws IOException { 
+this.url = url; 
+
+Page p = getPageFromCache(url); 
+if (p != null) { 
+this.content = p.content; 
+} else { 
+this.content = Web.fetch(url); 
+putPageInCache(this); 
+
+}
+
+
+}
+
+
+Summary 
+Exceptions 
+¾ Exceptions are abnormal returns from a method 
+¾ Exceptions can be caught or declared 
+Classes
+Classes 
+¾ Members (fields, constructors, methods)
+
+¾ Access control (public , protected, private) 
+
+¾ Static members 
+
+¾ Overloading
+
+
+© Robert Miller 2007	
+
+© Robert Miller 2007 
+
+5 
+
+

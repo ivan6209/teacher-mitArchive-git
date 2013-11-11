@@ -1,0 +1,246 @@
+Lecture  19	 
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Fall  2011
+ 
+
+Lecture  19:  Dynamic  Programming  I: 
+Memoization,  Fibonacci,  Shortest  Paths,  Guessing 
+
+Lecture  Overview 
+•	 Memoization  and  subproblems 
+•	 Examples 
+
+–	 Fibonacci 
+
+–	 Shortest  Paths 
+•	 Guessing  &  DAG  View 
+
+Dynamic  Programming  (DP) 
+
+Big  idea,  hard,  yet  simple 
+•	 Powerful  algorithmic  design  technique 
+•	 Large  class  of  seemingly  exponential  problems  have  a  polynomial  solution  (“only”) 
+via  DP 
+•	 Particularly  for  optimization  problems  (min / max)  (e.g.,  shortest  paths) 
+*  DP  ≈  “controlled  brute  force” 
+*  DP  ≈  recursion  +  re-use 
+
+History 
+
+Richard  E.  Bellman  (1920-1984) 
+Richard  Bellman  received  the  IEEE  Medal  of  Honor,  1979.  “Bellman  . . . explained  that 
+he  invented  the  name  ‘dynamid  programming’  to  hide  the  fact  that  he  was  doing  mathe­
+matical  research  at  RAND  under  a  Secretary  of  Defense  who  ‘had  a  pathological  fear  and 
+hatred  of  the  term,  research’.  He  settled  on  the  term  ‘dynamic  programming’  because  it 
+would  be  diﬃcult  to  give  a  ‘pejorative  meaning’  and  because  ‘it  was  something  not  even  a 
+Congressman  could  ob ject  to’  ”  [John  Rust  2006] 
+
+Fibonacci  Numbers 
+
+Goal:  compute  Fn 
+
+F1  = F2  = 1;  Fn  = Fn−1  + Fn−2 
+
+1
+ 
+
+Lecture  19 
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Fall  2011
+ 
+
+Naive  Algorithm 
+
+follow  recursive  deﬁnition 
+
+ﬁb(n): 
+if  n ≤ 2:  return  f  = 1 
+else:  return  f  = ﬁb(n − 1) + ﬁb(n − 2) 
+=⇒  T (n) = T (n − 1) + T (n − 2) + O(1) ≥ Fn  ≈ ϕn 
+≥ 2T (n − 2) + O(1) ≥ 2n/2 
+EXPONENTIAL —  BAD! 
+
+Figure  1:  Naive  Fibonacci  Algorithm. 
+
+Memoized  DP  Algorithm 
+
+Remember,  remember 
+
+memo  =  { } 
+ﬁb(n): 
+
+if  n  in memo:  return memo[n] 
+else:  if  n ≤ 2 : f  = 1 
+else:  f  =  ﬁb(n − 1) + ﬁb(n − 2) 
+memo[n] = f 
+return  f 
+
+2
+ 
+
+FnFn-1Fn-2Fn-2Fn-3Fn-3Fn-4Lecture  19	 
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Fall  2011
+ 
+
+•	  =⇒  ﬁb(k)  only  recurses  ﬁrst  time  called,  ∀k 
+•	  =⇒  only  n  nonmemoized  calls:  k = n, n − 1, . . . , 1 
+•	 memoized  calls  free  (Θ(1)  time) 
+•	  =⇒  Θ(1)  time  per  call  (ignoring  recursion) 
+
+POLYNOMIAL —  GOOD! 
+
+*  DP  ≈  recursion  +  memoization 
+•  memoize  (remember)  &  re-use  solutions  to  subproblems  that  help  solve  problem 
+
+–	 in  Fibonacci,  subproblems  are  F1 , F2 , . . . , Fn 
+*	 =⇒  time  =  #  of  subproblems  ·  time/subproblem 
+•	 Fibonacci:  #  of  subproblems  is  n,  and  time/subproblem  is  Θ(1)  =  Θ(n)  (ignore 
+recursion!). 
+⎫ ⎪⎪⎪⎪⎪⎪⎪⎬
+ 
+Bottom-up  DP  Algorithm 
+ﬁb  =  {}
+
+⎫ ⎪⎬
+
+for  k  in  [1,  2,  . . . ,  n]: 
+
+⎪⎪⎪⎪⎪⎪⎪⎭ 
+if  k ≤ 2:  f  = 1
+ 
+⎪⎭ 
+else:  f  =  ﬁb[k − 1]  +  ﬁb[k − 2] 
+ﬁb[k ] =  f 
+return  ﬁb[n] 
+•  exactly  the  same  computation  as memoized  DP  (recursion  “unrolled”)
+ 
+•  in  general:  topological  sort  of  subproblem  dependency  DAG 
+
+Θ(n)
+ 
+
+Θ(1)
+ 
+
+•	 practically  faster:  no  recursion 
+•	 analysis  more  obvious 
+•	 can  save  space:  just  remember  last  2  ﬁbs  =⇒  Θ(1) 
+
+[Sidenote:  There  is  also  an  O(lg n)-time  algorithm  for  Fibonacci,  via  diﬀerent  techniques] 
+
+3
+ 
+
+Fn-2Fn-1Fn.   .   .Lecture  19	 
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Fall  2011
+ 
+
+Shortest  Paths 
+  
+δ(s, v) = min{w(u, v) + δ(s, u)  (u, v)  ∈  E } 
+•	 Recursive  formulation: 
+•	 Memoized  DP  algorithm:  takes  inﬁnite  time  if  cycles! 
+in  some  sense  necessary  to  handle  negative  cycles 
+
+Figure  2:  Shortest  Paths 
+
+•	 works  for  directed  acyclic  graphs  in  O(V  + E ) 
+eﬀectively  DFS/topological  sort  +  Bellman-Ford  round  rolled  into  a  single  recursion 
+
+*  Subproblem  dependency  should  be  acyclic 
+•	 more  subproblems  remove  cyclic  dependence:
+ 
+δk (s, v) =  shortest  s → v  path  using  ≤ k  edges 
+ 
+  
+•	 recurrence: 
+δk (s, v)  =  min{δk−1 (s, u) + w(u, v)  (u, v) ∈ E } 
+∞ for s = v (base  case) 
+δ0 (s, v) = 
+δk (s, s)  =  0 for  any  k (base  case,  if  no  negative  cycles) 
+
+•	 Goal :  δ(s, v) = δ|V |−1 (s, v)  (if  no  negative  cycles) 
+•	 memoize 
+#
+  
+- #
+  
+-
+•	 time:  #  subproblems · time/subproblem
+· 
+|V |·|V | 
+= 0(V 3 ) 
+O(v) 
+ 
+•	 actually  Θ(indegree(v))  for  δk (s, v) 
+•	  =⇒  time  =  Θ(V
+v∈V  indegree(V )) = Θ(V E ) 
+BELLMAN-FORD! 
+
+4
+ 
+
+ts 
+Lecture  19	 
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Fall  2011
+ 
+
+Guessing 
+
+How  to  design  recurrence 
+•  want  shortest  s → v  path 
+
+•	 cost  is 
+
+•	 what  is  the  last  edge  in  path?  dunno 
+•	 guess  it  is  (u, v) 
+#	
+-
+  
+shortest s → u path  +  edge  (u, v)
+•	 path  is 
+by  optimal  substructure 
+  
+#
+-
+δk−1 (s, u)
++ w(u, v)
+another  subproblem 
+•	 to  ﬁnd  best  guess,  try  all  (|V |  choices)  and  use  best 
+•	 *  key:  small  (polynomial)  #  possible  guesses  per  subproblem —  typically  this  domi­
+nates  time/subproblem 
+*  DP  ≈  recursion  +  memoization  +  guessing 
+
+DAG  view 
+
+•	 like  replicating  graph  to  represent  time 
+•	 converting  shortest  paths  in  graph →  shortest  paths  in  DAG 
+*  DP  ≈  shortest  paths  in  some  DAG 
+
+5 
+
+svu.   .   .0123timeMIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

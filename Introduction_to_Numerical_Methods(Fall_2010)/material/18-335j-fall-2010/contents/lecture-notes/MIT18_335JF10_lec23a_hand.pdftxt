@@ -1,0 +1,310 @@
+A Brief Overview 
+
+of Optimization Problems�
+
+
+Steven G. Johnson�
+
+MIT course 18.335, Fall 2008�
+
+
+Why optimization?�
+
+•�  In some sense, all engineering design is 
+optimization: choosing design parameters to 
+improve some objective� 
+•�  Much of data analysis is also optimization: 
+extracting some model parameters from data while 
+minimizing some error measure (e.g. ﬁtting)� 
+•�  Most business decisions = optimization: varying 
+some decision parameters to maximize proﬁt (e.g. 
+investment portfolios, supply chains, etc.)� 
+
+A general optimization problem�
+
+
+min 
+x � n 
+
+f0 ( x ) 
+
+subject to m constraints� 
+fi ( x ) � 0 
+i = 1, 2,…, m 
+
+x is a feasible point if it� 
+satisﬁes all the constraints�
+
+feasible region = set of all feasible x�
+
+
+minimize an objective function f0� 
+with respect to n design parameters x� 
+(also called decision parameters, optimization variables, etc.)� 
+— note that maximizing g(x)�
+ corresponds to f0 (x) = –g(x)� 
+
+note that an equality constraint� 
+h(x) = 0� 
+yields two inequality constraints� 
+fi(x) = h(x) and fi+1(x) = –h(x)� 
+(although, in practical algorithms, equality constraints 
+�typically require special handling)� 
+
+Important considerations� 
+
+•�  Global versus local optimization� 
+•�  Convex vs. non-convex optimization� 
+•�  Unconstrained or box-constrained optimization, and 
+other special-case constraints� 
+•�  Special classes of functions (linear, etc.)� 
+•�  Differentiable vs. non-differentiable functions� 
+•�  Gradient-based vs. derivative-free algorithms� 
+•�  …� 
+•�  Zillions of different algorithms, usually restricted to 
+various special cases, each with strengths/weaknesses� 
+
+Global vs. Local Optimization� 
+•�  For general nonlinear functions, most algorithms only 
+guarantee a local optimum� 
+–�  that is, a feasible xo such that f0(xo) �  f0(x) for all feasible x 
+within some neighborhood ||x–xo|| < R (for some small R)� 
+•�  A much harder problem is to ﬁnd a global optimum: the 
+minimum of f0 for all feasible x� 
+–�  exponentially increasing difﬁculty with increasing n, practically 
+impossible to guarantee that you have found global minimum 
+without knowing some special property of f0� 
+–� many available algorithms, problem-dependent efﬁciencies� 
+•�  not just genetic algorithms or simulated annealing (which are popular, 
+
+easy to implement, and thought-provoking, but usually very slow!)�
+
+•�  for example, non-random systematic search algorithms (e.g. DIRECT), 
+partially randomized searches (e.g. CRS2), repeated local searches from 
+different starting points (“multistart” algorithms, e.g. MLSL), …� 
+
+Convex Optimization�
+
+[ good reference: Convex Optimization by Boyd and Vandenberghe,� 
+free online at www.stanford.edu/~boyd/cvxbook ]� 
+
+All the functions fi (i=0…m) are convex:� 
+ +  = 1 
+fi ( x + y) �  fi ( x ) +  fi ( y)  where� 
+,  [0,1]  
+
+convex:� 
+
+f(x)� 
+
+not convex:� 
+
+f(x)� 
+
+( y )
+
+ 
+
+�
+
+  +   �f
+
+�f
+
+( x )
+
+f(�x+�y)� 
+
+x� 
+
+y� 
+
+x� 
+
+y� 
+
+For a convex problem (convex objective & constraints)� 
+any local optimum must be a global optimum� 
+�� efﬁcient, robust solution methods available� 
+
+Important Convex Problems�
+
+
+•�  LP (linear programming): the objective and 
+Tx + �
+constraints are afﬁne: fi(x) = ai 
+i� 
+•�  QP (quadratic programming): afﬁne constraints + 
+convexquadratic objective xTAx+bTx� 
+•�  SOCP (second-order cone program): LP + cone 
+constraints ||Ax+b||2  � aTx + �� 
+•�  SDP (semideﬁnite programming): constraints are that 
+�Akxk is positive-semideﬁnite� 
+
+all of these have very efﬁcient, specialized solution methods� 
+
+Important special constraints�
+
+•�  Simplest case is the unconstrained optimization 
+problem: m=0� 
+–�  e.g., line-search methods like steepest-descent, 
+nonlinear conjugate gradients, Newton methods …� 
+•�  Next-simplest are box constraints (also called 
+min  � xk  � xk 
+max� 
+bound constraints): xk 
+–�  easily incorporated into line-search methods and many 
+other algorithms� 
+–� many algorithms/software only handle box constraints� 
+•�  …� 
+•�  Linear equality constraints Ax=b� 
+–�  for example, can be explicitly eliminated from the 
+problem by writing x=Ny+�, where � is a solution to 
+A�=b and N is a basis for the nullspace of A� 
+
+Derivatives of fi� 
+•�  Most-efﬁcient algorithms typically require user to 
+
+supply the gradients 
+xfi  of objective/constraints � 
+–� you should always compute these analytically� 
+•�  rather than use ﬁnite-difference approximations, better to just 
+use a derivative-free optimization algorithm� 
+•�  in principle, one can always compute 
+xfi with about the same 
+cost as fi, using adjoint methods� 
+–� gradient-based methods can ﬁnd (local) optima of 
+problems with millions of design parameters� 
+•�  Derivative-free methods: only require fi values� 
+–�  easier to use, can work with complicated “black-box” 
+functions where computing gradients is inconvenient� 
+–� may be only possibility for nondifferentiable problems� 
+–� need > n function evaluations, bad for large n� 
+
+Removable non-differentiability� 
+consider the non-differentiable unconstrained problem:� 
+min  f0 ( x ) 
+x � n 
+
+f0(x)� 
+
+equivalent to minimax problem:� 
+min (max { f0 ( x ), � f0 ( x )}) 
+x �� n 
+…still nondifferentiable…� 
+
+optimum� 
+
+–f0(x)� 
+
+x� 
+
+…equivalent to constrained problem with a “temporary” variable t:� 
+t  �  f0 ( x ) 
+min  t 
+t  � � f0 ( x ) 
+x � n , t � 
+
+( f1 ( x ) =  f0 ( x ) � t ) 
+( f2 ( x ) = � f0 ( x ) � t ) 
+
+subject to:� 
+
+Example: Chebyshev linear ﬁtting�
+
+ﬁt line� 
+ax1+x2� 
+
+b� 
+
+ﬁnd the ﬁt that minimizes�
+
+the maximum error:�
+
+� bi  )
+
+min (max  x1ai 
+x1 , x2 
+i 
+… nondifferentiable minimax problem� 
+
++ x2 
+
+N points� 
+(ai,bi)� 
+
+a� 
+
+equivalent to a linear programming problem (LP):� 
+
+min t 
+x1 , x2 , t
+
+subject to 2N constraints:� 
+� t  � 0 
++ x2 
+� bi 
+x1ai 
+� t  � 0 
+� x2 
+� x1ai 
+bi 
+
+Relaxations of Integer Programming� 
+
+If x is integer-valued rather than real-valued (e.g. x  {0,1}n),�
+
+the resulting integer programming or combinatorial optimization�
+
+problem becomes much harder in general.�
+
+
+However, useful results can often be obtained by a continuous� 
+relaxation of the problem — e.g., going from x  {0,1}n to x  [0,1]n� 
+… at the very least, this gives an lower bound on the optimum f0 
+� 
+
+Example: Topology Optimization� 
+design a structure to do something, made of material A or B…�
+
+let every pixel of discretized structure vary continuously from A to B�
+
+
+density of each pixel�
+
+varies continuously from 0 (air) to max�
+
+
+force� 
+
+Object removed due to copyright restrictions. 
+
+ex: design a cantilever� 
+to support maximum weight� 
+with a ﬁxed amount of material� 
+
+optimized structure,�
+deformed under load� 
+
+[ Buhl et al, Struct. Multidisc. Optim. 19, 93–104 (2000) ]� 
+
+Some Sources of Software
+• Decision tree for optimization software:
+http://plato.asu.edu/guide.html
+   — lists many packages for many problems
+• CVX: general convex-optimization package
+http://www.stanford.edu/~boyd/cvx
+• NLopt: implements many nonlinear optimization algorithms 
+  (global/local, constrained/unconstrained, derivative/no-derivative)
+http://ab-initio.mit.edu/nlopt
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods 
+Fall 2010
+ 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

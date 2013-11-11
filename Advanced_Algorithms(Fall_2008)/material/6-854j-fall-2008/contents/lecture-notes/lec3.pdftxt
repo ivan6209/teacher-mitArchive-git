@@ -1,0 +1,347 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+September  10,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  3 
+
+1 
+
+Introduction 
+
+Today  we  continue  our  discussion  of  maximum  ﬂows  by  introducing  the  fattest  path  augmenting 
+algorithm,  an  improvement  over  the  Ford-Fulkerson  algorithm,  to  solve  the  max  ﬂow  problem.  We 
+also  discuss  the  minimum  cost  circulation  problem. 
+
+2  Maximum  Flow 
+
+In  a  maximum  ﬂow  problem,  the  goal  is  to  ﬁnd  the  greatest  rate  (ﬂow)  at  which  material  can  be 
+sent  from  a  source  s  to  a  sink  t.  Several  problems  can  be modeled  as  a max-ﬂow  problem,  including 
+bipartite  matching,  which  will  be  discussed  today.  We  will  also  discuss  ﬂow  decomposition  and  the 
+fattest  augmenting  path  algorithm. 
+
+2.1  Maximum  Cardinality  Matching  in  Bipartite  Graphs 
+A bipartite  graph  is a graph G = (V , E ) whose vertex  set V  can be partitioned  into  two disjoint  sets, 
+A  and  B ,  such  that  every  edge  connects  a  vertex  in  A  to  one  in  B . A matching  M  is  a  subset  of  E 
+such  that  the  endpoints  of  all  the  edges  in  M  are  distinct.  In  other  words,  two  edges  in  M  cannot 
+share  a  vertex.  We  are  interested  in  solving  the  following  problem:  Given  an  undirected  bipartite 
+graph  G = (V , E )  where  V  = A ∪ B ,  ﬁnd  a matching M  of maximum  cardinality. 
+We  can  formulate  this  maximum  cardinality  matching  problem  as  a  max-ﬂow  problem.  To  do 
+that,  consider  the  network  shown  in  Figure  1. 
+
+Figure  1:  The  ﬁgure  on  the  left  represents  a  matching  in  a  bipartite  graph.  The  ﬁgure  on  the  right 
+shows  how  the  bipartite  graph  can  be  converted  into  a max-ﬂow  network  by  imposing  a  capacity  of 
+1  on  arcs  out  of  s  and  into  t. 
+
+3-1 
+
+The  network  is  constructed  as  follows:  We  orient  each  edge  in G  from A  to B  and  assign  them  a 
+capacity  of  1  (any  capacity  greater  than  1  works  too).  We  also  add  two  new  vertices,  s  and  t,  and 
+arcs  from  s  to  every  vertex  in  A,  and  from  every  vertex  in  B  to  t.  All  the  new  arcs  are  given  unit 
+capacity. 
+Theorem  1  Let  G  = (V , E )  be  a  bipartite  graph  with  vertex  partition  V  =  A ∪ B ,  and  let  G�  = 
+(V � , E � )  be  the  capacitated  network  constructed  as  above.  If  M  is  a  matching  in  G,  then  there  is  an 
+integer-valued  ﬂow  f  in  G�  with  value  |f |  =  |M |.  Conversely,  if  f  is  an  integer-valued  ﬂow  in  G� , 
+then  there  is  a  matching  M  in  G  with  cardinality  |M | = |f |. 
+Proof:  Given  M ,  deﬁne  a  ﬂow  f  in  G�  as  follows:  if  (u, v)  ∈  M ,  then  set  f (s, u) =  f (u, v) = 
+f (v , t)  =  1  and  f (u, s) =  f (v , u) =  f (t, v) =  −1.  For  all  other  edges  (u, v)  ∈  E � ,  let  f (u, v)  =  0. 
+Each  edge  (u, v)  ∈ M  corresponds  to  1  unit  of  ﬂow  in  G�  that  traverses  the  path  s →  u →  v  →  t. 
+The paths  in M  have distinct vertices,  aside  from s and  t.  The net ﬂow across  the cut  (A ∪ s  : B ∪ t) 
+is  equal  to  |M |.  We  know  that  the  net  ﬂow  across  any  cut  is  the  same,  and  equals  the  value  of  the 
+ﬂow.  Thus,  we  can  conclude  that  |M | =  |f |.  To  prove  the  converse,  let  f  be  an  integer-valued  ﬂow 
+in  G� .  By  ﬂow  conservation  and  the  choice  of  capacities,  the  net  ﬂow  in  each  arc  must  be  -1,  0  or 
+1.  Let  M  be  the  set  of  edges  (u, v),  with  u  ∈ A,  v  ∈ B  for  which  f (u, v) =  1.  It  is  easy  to  see,  by 
+ﬂow  conservation  again,  that M  is  indeed  a matching  and,  using  the  same  argument  as  before,  that 
+|M | = |f |. 
+� 
+Since  all  the  capacities  of  this  maximum  ﬂow  problem  are  integer  valued,  we  know  that  there 
+always  exists  an  integer-valued maximum ﬂow,  and  therefore  the  theorem  shows  that  this maximum 
+ﬂow  formulation  correctly  models  the maximum  cardinality  bipartite  matching. 
+
+2.2  Flow  Decomposition 
+In  an  (raw)  s-t  ﬂow,  we  have  the  following  building  blocks: 
+•  Unit  ﬂow  on  an  s-t  directed  path. 
+•  Unit  ﬂow  on  a  directed  cycle. 
+Any  (raw)  s-t  ﬂow  can  be  written  as  a  linear  combination  of  these  building  blocks. 
+
+Theorem  2  Any  (raw)  s-t  ﬂow  r  can  be  decomposed  into  at most m  ﬂows  along  either  paths  from  s 
+to  t  or  cycles,  where  m  is  the  number  of  edges  in  the  network.  More  precisely,  it  can  be  decomposed 
+into  at  most  |{e : r(e) > 0}| ≤ m  paths  and  cycles. 
+
+Proof:  By  tracing  back  the  ﬂow  on  an  edge  e  and  tracing  forward  the  ﬂow  on  e,  we  either  get  an 
+s-t  path  T ,  or  a  cycle  T  with  r(e) > 0  for  all  e ∈ T .  Denote  the  min  ﬂow  on  T  by Δ(T ): 
+
+Δ(T ) = min r(e). 
+e∈T 
+
+We want  to  decrease  the  ﬂow  on  T  such  that  at  least  one  edge  goes  to  0  (by  subtracting  out Δ(T )), 
+and keep doing  that until  there are no more  edges with non-zero ﬂows.  More precisely,  the  following 
+algorithm  extracts  at most m  paths  and  cycles. 
+
+(i)  While  there  is  a  directed  cycle  C  with  positive  ﬂow: 
+
+(a)  Decrease  the  ﬂow  on  this  cycle  by Δ(C ) 
+(b)  Add  this  cycle  as  an  element  of  the  ﬂow  decomposition 
+
+(ii)  (The  set  of  arcs  with  positive  ﬂow  now  form  an  acyclic  graph.)  While  there  is  a  path  P  from 
+s  to  t  with  positive  ﬂow: 
+
+3-2 
+
+(a)  Decrease  the  ﬂow  on  this  path  by Δ(P ). 
+(b)  Add  this  path  as  an  element  of  the  ﬂow  decomposition. 
+
+Each  time  we  decrease  the  ﬂow  on  a  path  or  a  cycle  T ,  we  zero  out  the  ﬂow  on  some  edge. 
+When  we  do  this,  the  new  raw  ﬂow  is  rnew (e) =  r(e) − Δ(T )  if  e  ∈  T ,  or  r(e)  otherwise.  Since 
+there  are  |{e  :  r(e)  >  0}|  ≤  m  edges  with  positive  ﬂow  in  the  graph,  there  will  be  at  most  that 
+number  of  decreases  in  the  ﬂow,  and  consequently,  at  most  that  number  of  paths  or  cycles  in  the 
+� 
+ﬂow  decomposition. 
+
+2.3  Fattest  Augmenting  Path  Algorithm  (Edmonds-Karp  ’72) 
+Flow  decomposition  is  a  key  tool  in  the  analysis  of  network  ﬂow  algorithms,  as  we  will  illustrate 
+now. 
+As  we  saw  in  the  last  lecture,  the  Ford-Fulkerson  algorithm  for  ﬁnding  a  maximum  ﬂow  in  a 
+network  may  take  exponential  time,  or  even  not  terminate  at  all,  if  the  augmenting  path  is  not 
+chosen  appropriately.  We  proposed  two  speciﬁc  choices  of  augmenting  paths,  both  due  to  Edmonds 
+and  Karp,  that  provide  a  polynomial  running  time.  One  was  the  shortest  augmenting  path,  the 
+other was the  fattest  augmenting path or maximum-capacity  augmenting  path :  the augmenting path 
+that  increases  the  ﬂow  the  most.  This  is  the  variant  we  analyze  now. 
+For  an  augmenting  s-t  path  P  ∈ Gf ,  deﬁne 
+ε(P ) =  min  uf (v , w) 
+(v ,w)∈P 
+
+where  the  uf  are  the  residual  capacities.  The  minimum  residual  capacity  ε(P )  (the  bottleneck)  is 
+the  maximum  ﬂow  that  can  be  pushed  along  the  path  P .  We  wish  to  ﬁnd  the  fattest  augmenting 
+path  P  such  that  ε(P )  is  maximized.  The  fattest  augmenting  path  P  can  be  eﬃciently  found  with 
+Dijkstra’s  algorithm  in  O(m + n log n)  time  1 . 
+
+Theorem  3  Assuming  that capacities are  integral and bounded by U ,  the optimal ﬂow  for a network 
+can  be  found  in  O(m log(mU )) = O(m log(nU ))  iterations  of  augmenting  along  the  fattest  path. 
+Proof:  Start with  a  zero  ﬂow,  f  = 0.  Consider  a maximum  ﬂow  f ∗ .  Its  value  is  at most  the  value 
+of  any  cut,  which  is  bounded  by mU : 
+|f ∗ | ≤ mU. 
+Consider  the  ﬂow  f ∗ − f  (this  is,  f ∗ (e) − f (e)  for  all  edges  e)  in  the  residual  graph Gf  with  residual 
+capacities  uf  = u − f . 
+We  can  decompose  f ∗  − f  into  ≤ m  ﬂows  using  ﬂow  decomposition.  As  a  result,  at  least  one  of 
+these  paths  carry  a  ﬂow  of  value  at  least  1  (|f ∗ | − |f |).  Suppose  now  that  we  push  ε(P )  units  of 
+m 
+ﬂow  along  the  fattest  path  in  the  residual  graph  Gf  and  obtain  a  new  ﬂow  f new  of  value: 
+|f new | = |f | + ε(P ). 
+Since  the  fattest  path  provides  the  greatest  increase  in  ﬂow  value,  we  must  have  that  ε(P )  ≥
+m (|f ∗ | − |f |).  Thus  we  have  the  following  inequality 
+1 
+1 
+|f new | ≥ |f | + 
+(|f ∗ | − |f |), 
+m 
+
+1Actually,  it  can  be  found  in  O(m)  time  under  the  condition  that  we  have  the  capacities  sorted  beforehand,  see 
+the  forthcoming  problem  set. 
+
+3-3 
+
+which  implies 
+
+|f ∗ | − |f� 
+� 
+|f ∗ | − |f new |  = 
++ |f | − |f new |
+| 
+1 
+(|f ∗ | − |f |) . 
+1 − 
+≤ 
+m 
+�k 
+After  k  iterations,  we  get  a  ﬂow  fˆ such  that �
+1 
+|f ∗ | − |fˆ| ≤  1 − 
+m 
+| − |
+| 
+|
+Eventually  f ∗
+fˆ <  1  which  implies  f ∗  =  fˆ since,  for  integral  capacities,  all  intermediate  ﬂows 
+will  be  integral.  Since  (1 −  m )m  ≤  e  for  all  m  ≥  2,  the  number  of  iterations  required  for  the 
+1
+1
+diﬀerence  to  go  below  1  is 
+k = m log(mU ). 
+
+mU. 
+
+Combining  the  results  mentioned  above  we  have  the  following  corollary. 
+
+� 
+
+Corollary  4  We can ﬁnd a maximum ﬂow in an integer-capacitated network with maximum capacity 
+U  in  O((m + n log n)m log(nU ))  time  2 . 
+
+3 
+
+Minimum  Cost  Circulation  Problem  (MCCP) 
+
+A  circulation  is  simply  a  ﬂow where  the  net  ﬂow  into  every  vertex  (there  are  no  sources  or  sinks)  is 
+zero.  Notice  that  we  can  easily  transform  an  s − t  ﬂow  to  a  circulation  by  adding  one  arc  from  t  to 
+s  (with  inﬁnite  capacity)  which  carries  a  ﬂow  equal  to  the  s − t  ﬂow  value. 
+
+Deﬁnition  1  A  circulation  f  satisﬁes 
+� 
+(i)  Skew-Symmetry:  ∀ (v , w) ∈ E ,  f (v , w) = −f (w, v). 
+(ii)  Flow  Conservation:  ∀ v ∈ V , 
+f (v , w) = 0. 
+w 
+(iii)  Capacity  Constraints:  ∀ (v , w) ∈ E ,  f (v , w) ≤ u(v , w). 
+Deﬁnition  2  A  cost  function  c  : E  �→ R  assigns  a  cost  per  unit  ﬂow  to  each  edge.  We  assume  the 
+cost  function  satisﬁes  skew  symmetry:  c(v , w) =  −c(w, v).  For  a  set  of  edges  C  (e.g.  a  cycle),  we 
+� 
+denote  the  total  cost  of  C  by  : 
+c(C ) = 
+(v ,w)∈C 
+� 
+Deﬁnition  3  The  goal  of  the  Minimum  Cost  Circulation  Problem  (MCCP)  is  to  ﬁnd  a  circulation 
+f  of  minimum  cost  c(f )  where 
+(v ,w) 
+
+c(v , w)f (v , w). 
+
+c(v , w). 
+
+c(f ) = 
+
+The  MCCP  is  a  special  case  of  a  Linear  Programming  (LP)  problem  (an  optimization  problem 
+with  linear  constraints  and  a  linear  ob jective  function).  But  while  no  strongly  polynomial  time 
+algorithms  are  known  for  linear  programming,  we  will  be  able  to  ﬁnd  one  for MCCP. 
+
+2Using  the  previous  footnote,  we  can  do  this  in  O(m2  log(nU ))  time. 
+
+3-4 
+
+3.1  Vertex  Potentials 
+Before  we  can  solve  MCCP,  it  is  necessary  to  introduce  the  concept  of  vertex  potentials,  or  simply 
+potentials. 
+Deﬁnition  4  A  vertex  potential  is  a  function  p  :  V  �→ R  that  assigns  each  vertex  a  potential.  The 
+vertex  potential  deﬁnes  a  reduced  cost  function  cp  such  that 
+cp (v , w) = c(v , w) + p(v) − p(w). 
+Proposition  5  The  function  cp  satisﬁes  the  fol lowing  properties: 
+(i)  Skew-Symmetry:  cp (v , w) = −cp (w, v). 
+(ii)	 Cycle  Equivalence:  for  a  cycle  C ,  c(C ) =  cp (C );  i.e.,  the  reduced  cost  function  agrees  with 
+the  cost  function. 
+
+(iii)	 Circulation  Equivalence:  for  al l  circulations,  the  reduced  cost  function  agrees  with  the  cost 
+function,  c(f ) = cp (f ). 
+Proof:  The  ﬁrst  property  is  trivial.  The  second  property  follows  since  all  the  potential  terms 
+� 
+cancel  out.  And  we’ll  prove  the  third  property.  By  deﬁnition 
+(c(v , w) + p(v) − p(w))(f (v , w)) 
+� 
+� 
+� 
+� 
+(v ,w) 
+=  c(f ) + 
+p(w) 
+p(v) 
+w:(v ,w)∈E 
+v :(w,v)∈E 
+w
+v
+
+f (v , w) − 
+
+cp (f ) = 
+
+f (v , w). 
+
+Now by ﬂow conservation,  the  inner sums are all zero.  Hence cp (f ) = c(f ).  (The  third property also 
+follows  easily  from  ﬂow  decomposition,  as  the  decomposition  of  a  circulation  only  contains  cycles 
+� 
+and  thus  the  cost  and  the  reduced  cost  of  a  circulation  are  the  same  because  of  (ii).) 
+
+3.2  Klein’s  Cycle-Cancelling  Algorithm 
+We present a pseudo-algorithm  for  removing negative-cost cycles.  While  there  exists a negative-cost 
+cycle  C  in  Gf ,  push  a  ﬂow  ε  along  the  cycle  C ,  where  ε  is  the  minimum  residual  ﬂow: 
+
+ε =  min  uf (v , w). 
+(v ,w)∈C 
+
+Of course, this doesn’t lead to a straight-forward implementation, since we haven’t speciﬁed which 
+negative-cost  cycle  to  select  or  how  to  ﬁnd  them.  We  should  also  consider  whether  the  algorithm  is 
+eﬃcient  and  whether  it  will  terminate.  We’ll  answer  these  questions  in  the  next  lecture.  However, 
+we  will  show  now  that  if  it  terminates,  then  the  circulation  output  is  of minimum  cost. 
+
+3.3  Optimality  Conditions 
+We  now  present  a  theorem  that  speciﬁes  the  conditions  required  for  f  to  be  a  minimum  cost  circu­
+lation. 
+
+Theorem  6  (Optimality  Condition)  Let  f  be  a  circulation.  The  fol lowing  are  equivalent: 
+
+(i)  f  is  of  minimum  cost. 
+
+(ii)  There  exists  no  negative-cost  cycle  in  the  residual  graph  Gf . 
+
+3-5 
+
+(iii)  There  exists  a  potential  function  p  such  that  for  al l  (v , w) ∈ Ef ,  cp (v , w) ≥ 0. 
+Proof:  To show that (i) implies (ii), we’ll prove the contrapositive.  Suppose there exists a negative 
+cost  cycle  C  in  the  residual  graph  Gf  where  f  is  the  optimal  circulation.  Denote  by  C �  the  reverse 
+cycle  (i.e.  following  the  arcs  in  the  reverse  order).  We  deﬁne  a  new  circulation  f �  for  any  edge  e  as 
+follows.  If  e ∈ C ,  f � (e) = f (e) + ε.  And  if  e ∈ C � ,  then f � (e) = f (e) − ε.  Otherwise,  let f � (e) = f (e). 
+Then  we  compute  the  cost  of  this  new  ﬂow  as 
+c(f � ) =  c(f ) + (ε)(c(C )) + (−ε)(−c(C )) 
+=  c(f ) + 2εc(C ) 
+< c(f ), 
+
+where  the  last  step  follows  since  C  is  a  negative  cost  cycle.  Thus  we’ve  shown  that  f  is  indeed  not 
+optimal.  Hence  (i)  implies  (ii). 
+Now  we  show  that  (ii)  implies  (iii).  Add  zero-cost  (or  of  arbitrary  cost)  arcs  from  a  new  vertex 
+s  to  every  vertex  in Gf  (this  is  to make  sure  that  s  can  reach  every  vertex  in  V ).  Deﬁne  a  potential 
+p  such  that  p(v)  is  the  length  of  the  shortest  simple  path  from  s  to  v .  Then,  since  there  are  no 
+negative  cost  cycle,  we  have  the  optimality  conditions  for  the  shortest-path  lengths: 
+p(w) ≤ p(v) + c(v , w)  ∀ (v , w) ∈ Ef , 
+as  one  way  to  go  from  s  to  w  is  to  go  to  v  by  a  shortest  path  and  then  go  directly  to  w. 
+Here,  we  have  implicitly  used  the  fact  that  Gf  has  no  negative  cost  cycles.  For  if  the  shortest 
+path  from  s  to  v  already  goes  through  w  then  adding  (v , w),  we  create  a  cycle  C  (and  the  resulting 
+path  is not simple).  However,  this cycle can’t be of negative cost by assumption.  Thus, by removing 
+it,  we  obtain  a  simple  path  to  w  of  cost  less  or  equal  to  p(v) + c(v , w).  Rearranging  the  inequality 
+gives  the  desired  result 
+cp (v , w) ≥ 0  ∀ (v , w) ∈ Ef . 
+Now  we  prove  that  (iii)  implies  (i)  by  showing  the  contrapositive.  Suppose  we  have  an  optimal 
+circulation  f ∗  and  a  suboptimal  one  f :  c(f ∗ ) < c(f ).  Consider  the  cost  of  the  circulation  f ∗  − f : 
+� 
+c(f ∗  − f ) =  cp (f ∗  − f ) 
+cp (v , w)[f ∗ (v , w) − f (v , w)] 
+� 
+= 
+(v ,w)∈E 
+cp (v , w)[f ∗ (v , w) − f (v , w)] 
+= 2 
+(v ,w):f ∗−f >0 
+≥  0 
+by  (iii).  Note  that  in  the  second  to  last  step,  we  utilized  the  skew-symmetry  of  the  cost  of  reverse 
+arcs  (with  ﬂows  of  opposite  parity).  But  since  f ∗  is  supposed  to  be  strictly  better  than  f ,  we  have 
+� 
+a  contradiction. 
+
+References 
+
+[EK72]  Jack  Edmonds,  and  Richard  M.  Karp,  Theoretical  improvements  in  algorithmic  eﬃciency 
+for  network  ﬂow  problems,  Journal  of  the  ACM  19  (2):  248–264,  1972. 
+
+[Klein67]  Klein, M. A primal method  for minimum  cost ﬂows with application  to  the assignment and 
+transportation  problem. Management  Science  14:  205-220,  1967. 
+
+3-6 
+
+

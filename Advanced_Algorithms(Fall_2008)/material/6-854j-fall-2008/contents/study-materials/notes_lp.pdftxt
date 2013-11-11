@@ -1,0 +1,1460 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18 .41516 .854   Advanced  Algorithms 
+
+October  1994 
+
+Linear  Programming 
+Lecturer:  Michel  X .   Goemans 
+
+An  Introduction to  Linear  Programming 
+
+Linear  programming is  a  very  impor tan t   class of  problems, bo th   algorithmically  and 
+combinatorially.  Linear  programming  has  many  applications.  From  an   algorithmic 
+point-of-view,  t h e   simplex  was  proposed  in  t h e  forties  (soon  after  t h e  war,  and  was 
+motivated by military applications) and ,  although  i t  has performed  very well in  prac- 
+tice, is known  t o  run   in  exponential  t ime  in  t h e  worst-case.  On  t h e  other hand ,  since 
+t h e  early seventies when t h e  classes P and  N P  were defined, it was observed t h a t  linear 
+programming is in  N P n co-NP although no polynomial- t ime algorithm was  known  a t  
+t h a t   t ime .   The  first  polynomial-time algorithm, t h e  ellipsoid algorithm, was  only dis- 
+covered a t  t h e  end of  the  seventies.  Karmarkar's algorithm in t h e  mid-eighties lead  t o  
+very active research in t h e  area of  interior-point methods for linear programming.  We 
+shall present  one of  t h e  numerous  variations  of  interior-point  methods in  class.  From 
+a combinatorial perspective, systems of  linear inequalities were already  studied  a t  t h e  
+end of  t h e  last  century by  Farkas and Minkovsky.  Linear programming, and especially 
+t h e   notion  of  duality,  is  very  impor tan t   as  a  proof  technique.  We  shall  illustrate  i ts  
+power  when  discussing approximation  algorithms.  We  shall  also  talk  about  network 
+flow  algorithms  where  linear  programming  plays  a  crucial  role  both  algorithmically 
+and  combinatorially.  For  a  more  in-depth  coverage of  linear  programming,  we  refer 
+t h e  reader  t o   [ I ,  4 ,   7,  8, 51. 
+A  linear  program  is  t h e  problem  of  optimizing a  linear  objective function  in   t h e  
+decision variables,  X I   . . . x n ,  subject t o  linear  equality or  inequality constraints  on t h e  
+xi's.  In  s tandard  form, i t   is  expressed  as: 
+
+Min  C ~ j x j  
+
+(objective function) 
+
+subject  to :  
+
+n 
+
+j  = 1 . . . n 
+
+(non-negativity constraints) 
+
+(constraints) 
+
+where  {aii, bi,  c j )   are given. 
+A  linear program  is  expressed more conveniently using matrices: 
+
+m incTx   subject  t o   0 
+
+Ax  =  b
+
+where 
+
+Basic Terminology 
+Definition  1  If  x  satisfies  A x  = b ,  x 2 0 ,   then  x  is feasible. 
+Definition  2  A  linear  program  ( L P )   is  feasible  if  there  exists  a   feasible  solution, 
+otherwise  it  is  said  to   be   infeasible. 
+Definition  3  A n   optimal  solution  x* is  a  feasible  solution  s.t.  cTx* = min{cTx  : 
+Ax= b , x 2 0 ) .  
+Definition  4  L P  is unbounded  ( from  below)  if  VX  E R ,   3  a feasible  x* s . t .   cTx* 5 A .  
+
+Equivalent  Forms 
+
+A  linear  program  can  take  on  several  forms.  We  might  be   maximizing  instead  of 
+minimizing.  We  might  have  a  combination  of  equality  and  inequality  contraints. 
+Some variables  may  be  restricted  t o   be  non-positive  instead  of  non-negative,  or  be 
+unrestricted  in  sign.  Two forms  are said  t o  be  equivalent  if  they  have t h e  same set  of 
+optimal  solutions  or  are both  infeasible or bo th   unbounded. 
+1. A  maximization problem  can  be  expressed  as  a minimization problem. 
+
+2.  An  equality  can  be  represented  as  a  pair  of  inequalities. 
+
+maxcTx  H min --cTz 
+
+3.  By  adding  a  slack  variable,  an  inequality  can  be  represented  as  a  combination 
+of  equality  and  non-negat ivit y  constraints. 
+a i  x  < bi  H a;  X  + Si  = b;,  Si  2 0. 
+T 
+T
+
+4.  Non-positivity  constraints can  be  expressed  as  non-negativity  constraints. 
+To  express  xj 5  0,  replace  xj everywhere with  - y j   and  impose  t h e   condition 
+Yj > 0.-
+
+5.  x  may  be  unrestricted in   sign. 
+
+If  x is  unrestricted in  sign, i.e.  non-positive  or  non-negative, everywhre replace 
+xj by  xf  - xy , adding  t h e  constraints  x:, 
+xy  2 0. 
+
+In  general, an   inequality  can  be  represented  using  a  combination of  equality  and 
+non-negativity  constraints, and  v ice   ve rsa .  
+Using these rules, min {cTx  s . t .   Ax  2 b)  can be transformed into min {cTx+ - cTx-
+s . t .   Axf  - Ax- - I s  = b,  x+, x- ,   s  2 0) .   The  former  LP  is  said  t o  be  in  canonical 
+form, the  la t te r  in  standard form. 
+Conversely, an  LP  in   s tandard  form may be  written  in  canonical  form.  min {cTx 
+I x  2 0).
+s . t .   Ax  = b ,   s 2 0 )   is  equivalent  t o   min{cTx  s . t .   Ax  2 b,  -Ax  2 -b ,  
+( -h  )
+(  ) 
+and  b  = 
+-
+
+This may be  rewritten  as  A'X   2 b',  where  A' = 
+
+. 
+
+Example 
+
+Consider t h e  following linear program: 
+
+min x2  subject  t o  
+
+3x1  - x2  2  0
+21  +  x2  2  6 
+
+The  optimal  solution  is  ( 4 , 2 )  of  cost  2  (see Figure  1). If  we  were  maximizing  x2 
+instead  of  minimizing  under  t h e   same  feasible  region,  t h e   resulting  linear  program 
+would  be  unbounded  since x 2  can  increase  arbitrarily.  From  this  picture,  t h e  reader 
+should  be  convinced t h a t ,  for  any  objective function  for  which  t h e  linear program  is 
+bounded,  there  exists  an  optimal  solution  which  is  a  "corner"  of  t h e  feasible region. 
+We  shall formalize this  notion  in  t h e  next  section. 
+
+Figure  1: Graph  representing primal  in  example. 
+
+An  example of  an  infeasible linear program  can be  obtained  by  reversing some of 
+the  inequalities of  the  above LP: 
+
+The  Geometry  of  L P  
+5 
+Let  P  = { x  : A x  = b ,   x  2 0 )   & Rn. 
+Definition  5  x  is  a vertex  of  P  if  B y  # 0 s . t .  x  + y ,   x  - y  E P .  
+
+Theorem  1  Assume  m i n { c T x  : x  E  P )  is finite,  then V x  E P, 3  a  vertes x'  such  that 
+cTx' 5 c T x .  
+
+Proof: 
+If  x  is  a  vertex,  then  take x' = x .  
+If  x  is  not  a  vertex,  then,  by  definition, 39  #  O s.t.  x  + y ,   x  - y  E  P.  Since 
+A ( x +  y )  = b a n d  A ( x  - y )  = b,  Ay  = 0. 
+WLOG,  assume c T y  5 0  (take either y  or  - y ) .   If  c T y  = 0,  choose  y  such tha t   3 j  
+s.t.  yj  < 0.  Since y  # 0  and  c T y = 
+c ~ ( - ~ )0,  this must  be  t rue  for  either y  or  -y .  
+=
+Consider  x + X y ,   X  > 0 .   c T ( x + Xy)   = c T x  + XcTy  5 c T x ,  since c T y  is  assumed 
+non-positive. 
+
+Figure  2:  A  polyhedron  with  no  vertex. 
+
+Case  1  3 j  such  t h a t   y j  < 0 
+As  X  increases,  component  j  decreases until  x + Xy  is  no  longer  feasible. 
+Choose  X  = m i n ~ j : y i < o l { ~ j / - y j }= xk /-yk   .  This  is  t h e   largest  X  such  t h a t  
+x + Xy  2 0.  Since Ay  = 0,  A(x  + Xy)  = Ax + XAy  = Ax  = b.  So  x + Xy  E P, 
+and  moreover x + Xy  has  one more zero  component,  ( x  + Xy),,  than   x. 
+Replace x  by  x + Xy. 
+Case  2  y j  2 O b ' j  
+By  assumption, cTy < 0  and  x + Xy  is feasible for  all  X  2 0,  since A(x  + Xy)  = 
+Ax + XAy  = Ax  = b,  and  x + Xy  2 x  2 0.  But  cT(x+ X y )   = cTx+ XcTy + -co 
+as  X  + m, implying  L P  is  unbounded,  a  contradiction. 
+
+Case  1 can  happen  a t  most  n  times, since x  has  n  components.  By  induction  on 
+the  number of  non-zero  components of  x ,  we  obtain  a  vertex  x'. 
+
+Remark:  The   theorem  was  described  in  terms   of  t h e   polyhedral  set  P  = {x  : 
+Ax  =  b  : x  2 0).  Strictly  speaking,  t h e   theorem  is  not  t rue   for  P  =  {x  : Ax  2 
+b ) .   Indeed,  such  a  set  P  might  not  have  any  vertex.  For  example,  consider  P  = 
+{ ( x l , x 2 )  : 0 5 2 2  5 1)  (see Figure  2).  This  polyhedron  has  no  vertex,  since for  any 
+x  E P ,  we  h a v e x + y ,  x - y   E P, where  y  = (1, 0) .   I t   can  be  shown  t h a t   P has  a 
+vertex  iff  R a n k (A )  = n .   Note  t h a t ,  if  we  transform  a  program  in  canonical form  into 
+Rank   [ -:] = n 
+s tandard  form, t h e  non-negativity  constraints  imply  t h a t   the   resulting ma tr ix  A  has 
+full  column  rank,  since 
+
+Corollary  2  If  min{cTx  : Ax  = b, x  > 0)  is finite,  There  exists  an  optimal  solution, 
+x*,  which  is  a  vertex. 
+
+Proof: 
+Suppose  no t .   Take  an   optimal  solution.  By  Theorem  1 there   exists  a  vertex 
+costing  no more  and  this  vertex must  be  optimal as well. 
+Corollary 3 If  P = {x  : Ax  = b, x 2 0)  # 0,  then P  has  a  vertex. 
+Theorem  4  Let  P = {x  : Ax  = b, x  2 0 ) .   For  x  E P ,   let  Ax  be  a  submatrix  of  A 
+corresponding  to  j  s.t.  x j   > 0.  Then  x  is  a  vertex  iff  Ax  has  linearly  independent 
+Example A =   [ o7  3  2  5 ]1  x =   [ i ] A x =   [!! I ,   a n d x i s a v e r t e x .  
+columns.  (i.e.  Ax  has full  column  rank.) 
+2 1 3 0  
+Proof: 
+Show  T i  + i i i .  
+Assume x  is  not  a  vertex.  Then ,  by  definition,  3 y  #  0  s . t .   x + y ,   x - y  E P. 
+Let  Ay be  subma tr ix  corresponding  t o  non-zero  components of  y. 
+As  in  t h e  proof  of  Theorem  1, 
+
+Therefore, A,  has  dependent  columns  since y  # 0. 
+Moreover, 
+
++ y j  = 0 whenever x j  = 0. 
+
+x  - y  >  0 
+Therefore  Ay  is  a  submatrix  of  A,.  Since  Ay  is  a  subma tr ix   of  Ax,  Ax  has 
+linearly  dependent  columns. 
+. .
+Show  1 2 2  + l i .  
+Suppose  Ax  has  linearly  dependent  columns.  Then  3y  s.t .  Axy  = 0,  y  #  0. 
+Extend  y  t o   R n  by  adding  0  components.  Then  3y  E  R n  s . t .   Ay  = 0,  y  #  0 
+and   y j  = 0 wherever  z j  = 0. 
+Consider  y' = Xy  for  small X  > 0.  Claim  t h a t   x + y ' ,   x - y '   E  P, by  argument 
+analogous  t o  t h a t   in  Case  1 of  t h e  proof  of  Theorem  1, above.  Hence, x  is  not 
+a  vertex. 
+
+Bases 
+Let  x  be  a  vertex  of  P  = { x  : A x  = b, x   > 0) .   Suppose first  t h a t   [{ j: x j   > O ) I   = m 
+(where A  is m  x  n ) .   In  th is   case we  denote  B = { j : x j   > 0) .   Also  let  AB = A,;  we 
+use  this  notation  not  only  for  A  and  B, bu t   also for  x  and  for  other  sets  of  indices. 
+Then  AB  is  a  square  ma tr ix   whose  columns  are  linearly  independent  (by Theorem 
+4 ) ,   so  i t   is  non-singular.  Therefore  we  can  express  x  as  x j   = 0  if  j  $ B,  and  since 
+A B x B  = b, i t  follows t h a t   X B   = ~ i ' b .The  variables  corresponding t o  B will be  called 
+basic.  The  others will be  referred  t o  as  nonbasic.  The  set  of  indices corresponding  t o  
+nonbasic  variables  is  denoted  by  N = ( 1 , .  . . ,n} - B .   Thus ,  we  can write  t h e  above 
+as  x~   = A k l b   and  X N  = 0. 
+Without  loss of  generality we  will  assume  t h a t   A has  full row  rank, rank (A )  = m .  
+Otherwise  either  there   is  a  redundant  constraint  in  t h e   system  A x  = b  (and  we  can 
+remove i t ) ,  or  the   system has  no  solution  a t   all. 
+If  1 { j : x j   > 0) I  < m ,  we  can  augment  A,  with  additional  linearly  independent 
+columns, un t i l  it  is  an  m  x  m  submatrix of  A of  full rank,  which we  will  denote  AB .  
+In  other  words,  although  there   may  be   less  than   m  positive  components  in  x ,  i t   is 
+convenient t o  always have a  basis  B such t h a t   IBI  = m  and  AB is non-singular.  This 
+enables  us  t o  always  express  x  as we  did  before,  X N  = 0,  X B   = A i ' b .  
+
+Summary  x  is  a  vertex of  P  iff  there  is  B 
+
+(1,. . . ,n )   such  t h a t   IBI  = m  and 
+
+1.  X N  = 0  for N = (1, . . .  , n }  - B 
+
+2 .   AB is  non-singular 
+
+In  th is  case we  say  t h a t   x  is a  basic feasible  so lu t ion .   Note  t h a t   a vertex  can have 
+several  basic  feasible  solution  corresponding  t o   it  (by  augmenting  { j  : x j   > 0)  in 
+different ways).  A  basis  might  not  lead  t o   any  basic  feasible  solution  since  ~ i ' bis 
+not  necessarily nonnegative. 
+
+Example: 
+
+We  can  select  as  a  basis  B = { I ,2).  Thus, N = (3)   and 
+
+Remark.  A  crude upper  bound on t h e  number of  vertices of  P is  (:). 
+This number 
+is  exponential  ( i t   is upper  bounded  by  nm ) .  We  can  come up  with  a  tighter  approx- 
+imation  of  (";?), 
+though  this  is  still  exponential.  The   reason  why  t h e   number  is 
+much  smaller  is  t h a t   most  basic  solutions  t o   t h e  system Ax  = b  (which we  counted) 
+are not  feasible, t h a t   is,  they  do not  satisfy  x  2 0. 
+
+The  Simplex Method 
+
+The   Simplex  algorithm  [Dantzig,l947]  [2]  solves  linear  programming  problems  by 
+focusing on basic feasible solutions.  The  basic idea is t o  s ta r t  from some vertex  v  and 
+look  a t   the  adjacent  vertices.  If  an  improvement  in  cost  is possible by  moving t o  one 
+of  the   adjacent  vertices, then  we  do  so.  Thus ,  we  will  s ta r t  with  a  bfs  corresponding 
+t o  a basis B and ,  a t  each i tera t ion ,  t r y  t o  improve t h e  cost of  the  solution by removing 
+one variable  from t h e  basis  and  replacing  i t   by  another. 
+We  begin  t h e  Simplex algorithm  by  first  rewriting our  LP  in  t h e  form: 
+
+min  	 cgxg  + CNXN  
+s.t.  	 ABxB+ ANxN= b 
+X B , X N   2 0 
+Here B is  t h e  basis  corresponding  t o   t h e  bfs  we  are s tar t ing  from.  Note  t h a t ,  for 
+any  solution  x ,  XB   = Ajjlb - A i lAN xN  and  t h a t   i t s  to ta l   cost,  cTx can  be  specified 
+as follows: 
+
+We  denote t h e   reduced cost  of  t h e  non-basic variables by  EN ,   EN   = CN   - cBA i lAN ,  
+i.e.  t h e   quan t i ty  which  is  the   coefficient  of  X N   above.  If  there  is  a  j  E N  such  t h a t  
+
+E j   < 0,  then   by  increasing  x j   (up  from  zero)  we  will  decrease  t h e   cost  ( t h e  value  of 
+t h e  objective function).  Of  course XB   depends on  x ~ ,
+ 
+and we  can  increase x j  only  as 
+long  as  all  t h e  components of  XB   remain  positive. 
+So in a  step of  t h e  Simplex me thod ,  we find a j  E N  such t h a t   E;  < 0, and increase 
+i t   as much  as  possible while  keeping x e  2 0.  I t   is  not  possible  any more  t o   increase 
+x j ,  when  one  of  t h e   components  of  x~  is  zero.  Wha t   happened  is  t h a t   a  non-basic 
+variable  is  now  positive  and  we  include  i t   in   t h e  basis,  and  one  variable  which  was 
+basic  is now  zero, so we  remove i t   from t h e  basis. 
+If,  on  t h e   other  hand ,   there   is  no  j  E  N  such  t h a t   E;  <  0,  then   we  s top ,   and 
+t h e   current  basic  feasible  solution  is  an   optimal  solution.  This follows from  t h e  new 
+expression for  c T x  since X N   is nonnegative. 
+
+Remarks: 
+
+1.  Note  t h a t   	 some of  t h e  basic  variables  may  be   zero  t o   begin  with,  and  in   this 
+case it  is  possible t h a t   we  cannot  increase  x j  a t   all.  In  this  case we  can  replace 
+say  j  by  k  in  the   basis,  bu t   without  moving  from  t h e  vertex  corresponding  t o  
+the   basis.  In   the   next  s tep   we  might  replace  k  by  j,  and  be  stuck  in  a  loop. 
+Thus,  we  need  t o   specify  a  "pivoting  rule"  t o   determine which  index  should 
+enter  t h e  basis,  and which  index should  be  removed from  t h e  basis. 
+
+2 .   	 While many  pivoting  rules  (including those  t h a t   are used  in  practice)  can  lead 
+t o   infinite  loops,  there  is  a  pivoting  rule which  will not  (known as  t h e  minimal 
+index  rule  - choose the  minimal j  and  k  possible  [Bland, 19771). This  fact  was 
+discovered by  Bland  in  1977.  There are other methods of  "breaking  ties"  which 
+eliminate infinite loops. 
+
+3 .   	 There  is  no  known  pivoting  rule  for  which  the   number  of  pivots  in   t h e   worst 
+case  is  be t te r   than   exponential. 
+
+4. 	 The   question  of  t h e   complexity  of  the   Simplex  algorithm  and  t h e   last  remark 
+leads  t o   the   question  of  what  is  the   length  of  the   shortest  pa th   between  two 
+vertices  of  a  convex polyhedron, where  t h e  p a t h   is  along edges, and   t h e  length 
+of  the  pa th   in measured  in  terms  of  the  number  of  vertices  visited. 
+
+Hirsch  Conjecture:  For  m  hyperplanes  in  d  dimensions  t h e   length  of  t h e  
+shortest  pa th   between  any  two vertices  of  t h e  arrangement  is  a t   most  m - d. 
+This  is  a  very  open  question - there   is  not  even  a  polynomial  bound  proven 
+on  th is  length. 
+
+On  t h e  other  hand ,   one  should  note  t h a t   even if  t h e  Hirsch Conjecture  is  t rue ,  
+it  doesn't  say  much  about  t h e   Simplex Algorithm,  because  Simplex generates 
+paths  which  are monotone  with  respect  t o   t h e  objective function,  whereas  t h e  
+shortest  pa th   need  not  be monotone. 
+
+Recently,  Kalai  (and   others)  has  considered  a  randomized  pivoting  rule.  The  
+idea  is  t o  randomly  permu te  t h e  index  columns of  A  and  t o  apply  t h e  Simplex 
+-  - 
+me thod ,  always  choosing  t h e   smallest  j  possible.  In  this  way,  i t   is  possible  t o  
+show  a  subexponential  bound  on  t h e  expected number  of  pivots.  This  leads  t o  
+a  subexponential bound  for  t h e  diameter of  any  convex polytope  defined  by  m 
+hyperplanes  in  a  d  dimension  space. 
+
+The   question  of  t h e   existence  of  a  polynomial  pivoting  scheme  is  still  open 
+though.  We will  see la ter  a  completely different algorithm which  i s  polynomial, 
+although  not  strongly polynomial  ( t h e  existence of  a  strongly polynomial  algo- 
+r i thm  for  linear programming is also open).  Tha t   algorithm will not  move from 
+one  vertex  of  t h e  feasible domain  t o  another  like t h e  Simplex, bu t   will  confine 
+i ts  interest  t o  points  in  t h e  interior  of  t h e  feasible domain. 
+
+A  visualization  of  t h e   geometry  of  t h e   Simplex  algorithm  can  be  obtained  from 
+considering t h e  algorithm  in  3 dimensions  (see Figure  3).  For  a  problem  in  t h e  form 
+min{cTx  : Ax   5  b)  t h e   feasible  domain  is  a  polyhedron  in  R3,and  t h e   algorithm 
+moves from vertex  t o  vertex  in  each  step  (or  does  not  move a t   all). 
+
+/ Objective 
+function 
+Figure  3:  Traversing t h e  vertices  of  a  convex body  (here a  polyhedron  in R3). 
+
+When  is  a Linear  Program Feasible  ? 
+
+We  now  tu rn   t o   another question  which will  lead us  t o  impor tan t  properties  of  linear 
+programming.  Let  us  begin with  some examples. 
+We  consider linear programs  of  t h e  form A x  = b,  x  2 0 .   As  t h e  objective function 
+has  no  effect  on  t h e  feasibility  of  t h e  program,  we  ignore  i t .  
+We  first  restrict  our  a t ten t ion   t o   systems  of  equations  (i.e.  we  neglect  t h e   non- 
+negativity  constraints) . 
+
+Example:  Consider  t h e  system of  equations: 
+2 1   + 
+2 2   + 
+2 3   =  6 
+
+2x1  +  3 x 2   + 
+2 3   =  8 
+
+2x1  + 
+x2  +  3 x 3   =  0 
+
+and  t h e  linear  combination  
+
++ 
+X I   + 
+x 
+=  6
+
+-4 
+2 2  
+~3 
+1  x  2x1  +  3 x 2   + 
+x3  =  8 
+
+1  x  2x1  + 
+x2  +  3 x 3   =  0 
+
+The  linear  combination results  in  t h e  equation  
+
+
+which  means  of  course  t h a t   t h e  system of  equations  has  no  feasible solution. 
+In  fac t ,   an   elementary  theorem  of  linear  algebra  says  t h a t   if  a  system  has  no 
+solution,  there   is  always  a  vector  y  such  as  in  our  example  ( y  = ( - 4 , 1 , 1 ) )   which 
+proves  t h a t   t h e  system has  no  solution. 
+
+Theorem 5  Exactly  one  of  the following  is  true for  the  system  A x  = b: 
+
+I .   There  is  x  such  that  A x  = b .  
+
+2.  There  is y  such  that  A T y  = 0  but  y T b  = 1 .  
+
+This  is  not  quite  enough  for  our  purposes,  because  a  system  can  be  feasible, 
+bu t   still  have  no  non-negative  solutions  x  2 0 .   Fortunately,  t h e   following  lemma 
+establishes  t h e  equivalent  results  for  our  system A x  = b, x  2 0 .  
+
+Theorem 6  (Farkas' Lemma)  Exactly  one  of  the following  is  true for  the  system 
+A x = b , x > O :  
+
+1.  There  is  x  such  that  A x  = b ,   x  2 0 .  
+
+2.  There  is  y  such  that 
+
+2 O  but  b T y   < 0 .  
+
+LP-11 
+
+Proof: 
+We  will first  show tha t   the  two conditions cannot happen  together, and then than 
+a t   least  one of  them  must  happen. 
+Suppose we  do  have both  x  and  y  as  in the  statement  of  the  theorem. 
+
+but  this  is  a  contradiction,  because  y T b   <  0 ,   and  since  x  2 O  and  ATy  2 0,  so 
+aTATy2 0. 
+The other direction is less  trivial, and  usually shown  using  properties  of  the  Sim-
+plex algorithm, mainly duality. We will use another tool, and later use Farkas' Lemma 
+t o  prove properties about  duality in linear programming.  The tool we  shall use is the  
+Projection  theorem, which we  s ta te  without  proof: 
+
+Theorem  7  (Projection Theorem)  Let  K  be   a  closed  convex  (see Figure  4 )  non-
+empty  set  in  I t n ,   and  let  b  be  any point  in  Rn. The projection  of  b  onto K  is a point 
+p  E  K  that  minimizes  the  Euclidean  distance  ilb  - p l l .   Then p  has  the  property  that 
+for  all  t E  K ,  ( z  - p ) T ( b   - p )   5 0  (see Figure  5 )   non-empty set. 
+
+not convex 
+
+convex 
+
+
+Figure 4:  Convex and  non-convex sets in R2. 
+
+We  are  now  ready  t o  prove  the  other  direction of  Farkas' Lemma.  Assume tha t  
+there is no x  such tha t   Ax  = b,  x  2 0; we  will show  tha t   there is  y  such tha t   ATy 2 0 
+but  y T b   < 0. 
+Let  K = {Ax  : s 2 0)  2 Rm ( A is an  m  x n  matrix). K  is  a cone  in  IWm   and  i t  is 
+convex, non-empty  and  closed.  According  to  our  assumption, A s  = b,  x 2 0 has  no 
+solution, so  b  does  not  belong  to  K .   Let  p be  the  projection  of  b  onto K. 
+Since p  E  K ,  there  is  a  w  2 0  such  tha t   Aw  = p.  According  t o   the  Projection 
+AX-^)^(^-^) 5 0
+5 0 That  is, for all x 2 0 
+Theorem, for all z  E  EK,  ( ~ - ~ ) ~ ( b - ~ )  
+W e define y  = p- b ,  which implies (Ax- p ) T y   2 0.  Since Aw  = p ,   (Az  
+2
+- A W ) ~ ~  
+2 0  for  all  x  2 0  (remember tha t   w  was  fixed by  choosing  6 ) .  
+0.  ( x  - w ) ~ ( A ~ ~ )
+
+Figure 5:  The Projection  Theorem. 
+
+vector with  a  1 in  the   i- th   row).  Note  tha t   x 
+
+is non-negative, because w 2 0. 
+This will extract  the  i-th column of  A,  so we  conclude tha t   the  i - th  component of 
+ATy is non-negative  (ATy ) i2 0 ,  and  since this  is  true  for  all i ,  ATy 2 0. 
+Now  it  only remains to  show  tha t   yTb   < 0. 
+y t b  = ( p - ~ ) ~ y= pTy -yTy   Since  AX-^)^^ 2 0 for all x 2 0 ,  taking x  to  be zero 
+5 0.  Since b  @  I ( ,   y  = p - b  # 0, so yT y   > O .   So y T b   = pTy  - yTy   < 0. 
+shows tha t  
+
+Using  a very  similar proof  one can  show  the  same for  the  canonical form: 
+
+Theorem 8  Exactly  one  of  the following  is  true for  the  system  Ax  5 b: 
+
+I .   There  is x  such  tha t  As  5 b .  
+
+2.  There  is y  2 0  such  tha t  ATy = 0  but  y T b   < 0. 
+
+The intuition behind  the precise form for  2.  in  the previous theorem lies in  the  proof 
+tha t   both  cannot  happen.  The contradiction 0  = Ox  = (yTA)x = yT(Ax) = y T b   < 0 
+is obtained  if  ATy = O  and  y T b   < 0. 
+
+Duality 
+
+Duality  is  t h e   most  impor tan t   concept  in  linear  programming.  Duality  allows  t o  
+provide  a  proof  of  optimality.  This  is  not  only  impor tan t   algorithmically bu t   also  i t  
+leads  t o  beautiful  combinatorial s ta temen ts .   For  example, consider t h e  s ta temen t  
+
+In  a  graph, t h e   smallest  number  of  edges in  a  pa th  between  two  spec- 
+ified  vertices  s  and  t  is  equal  t o   t h e  maximum number  of  s - t  cuts  (i.e. 
+subsets  of  edges whose  removal disconnects  s and  t ) .  
+
+This result  is  a  direct  consequence of  duality for  linear  programming. 
+Duality  can  be  motivated  by  t h e   problem  of  trying  t o  find  lower  bounds  on  t h e  
+value  of  t h e   optimal  solution  t o   a  linear  programming  problem  (if  t h e   problem  is 
+a  maximization  problem,  then   we  would  like  t o   find  upper  bounds).  We  consider 
+problems  in  s tandard  form: 
+
+min  c T x  
+s e t .   A x = b  
+$ 2 0  
+
+Suppose we wanted  t o  ob ta in  t h e  best  possible upper  bound  on  t h e  cost  function. 
+By  multiplying  each  equation  A,z  = b,  by   some number  9,  and  summing u p   t h e  
+resulting  equations,  we  obtain  t h a t   yTAx  = bTy.  if  we  impose t h a t   t h e  coefficient of 
+x j  in  t h e  resulting  inequality is less or equal t o  cj then  b T y   must  be  a lower bound  on 
+the  optimal value since xj is constrained  t o  be  nonnegative.  To get  t h e  best  possible 
+lower bound, we  want  t o  solve t h e  following problem: 
+
+max  bT 
+s . t .   A T y < c  
+
+This is another linear program.  We  call th is  one t h e  dual of  t h e  original one, called 
+the  primal.  As we  just  argued, solving this dual LP will give us  a lower bound  on  t h e  
+optimum value of  t h e  primal problem.  Weak  duality says precisely this:  if  we  denote 
+the   optimum  value  of  t h e  primal  by  z ,  z  = min cTx, and  t h e   op t imum  value  of  t h e  
+dual  by  w ,  then  w  5 z .   We will use  Farkas' lemma t o  prove strong duality which  says 
+t h a t   these  quantities  are  in  fact  equal.  We  will  also  see  t h a t ,  in  general, t h e   dual  of 
+t h e  dual  is  t h e  problem. 
+
+Example: 
+
+x = min  X I   +  2x2  +  4 x 3  
+x1  +  x2   +  2x3  =  5 
+2x1  +  x z   +  3x3  =  8 
+The  first  equality gives  a  lower  bound  of  5  on  t h e  optimum value  z ,  since x l  + 2x2 + 
+4 x 3  2 x1 + x2  + 2 x 3  = 5 because  of  nonnegativity  of  t h e   xi.  We  can  get  an   even 
+
+be t ter   lower  bound  by  taking  3  times  t h e  first  equality minus  t h e  second  one.  This 
+gives  x1 + 2x2 + 3x3  = 7  5  X I   + 2x2 + 4x3,  implying  a  lower  bound  of  7  on  z .   For 
+x  = (  ) , t h e  objective function is precisely 7, implying o p t im a l i t .  The  mechanism 
+of  generating lower bounds  is  formalized by  t h e  dual  linear  program: 
+
+y l  represents t h e  multiplier for t h e  first  constraint  and y2  t h e  multiplier for t h e  second 
+constraint,  This  LP's  objective function  also  achieves a  maximum  value of  7 a t   y  = 
+
+( ? I ) *  
+We  now  formalize t h e  notion  of  duality.  Let  P and D be t h e  following pair  of  dual 
+linear  programs: 
+
+T
+(P)   z  = min{c  x  : Ax  = b,  x  2 0) 
+( D )   w = m a x { b T y : A T y < c ) .  
+
+(P ) is  called  t h e  primal  linear  program  and   ( D )  t h e   dual linear  program. 
+In  t h e   proof  below,  we  show  tha t   t h e   dual  of  the   dual  is  t h e   primal.  In  other 
+words,  if  one  formulates  ( D )  as  a  linear  program  in  s tandard   form  (i.e.  in  t h e   same 
+form  as  (P ) ) ,i t s   dual  D ( D )  can  be  seen  t o  be  equivalent  t o  t h e  original  primal  ( P ) .  
+In  any  s ta temen t ,  we may  thus  replace  t h e  roles  of  primal and dual without  affecting 
+t h e  s ta temen t .  
+Proof: 
+The  dual problem  D  is  equivalent  t o  mini-bTy  : ATy+ I s  = c, s  2 0) .   Changing 
+forms we  get m in i-bTy+   + bTy -
+: ATy+- ATy- + I s  = c ,   and  y t ,   y - ,   s  2 0).  Taking 
+the  dual of  this  we  obtain:  max i-cTx   : A(-x)   < -b ,   -A(-x)  < b,  I ( - x )   < 0 ) .   Bu t  
+this  is  the   same as  min{cTx  : Ax  = b ,  x  2 0)  and we  are done. 
+We  have  the  following results  relating  w  and  z .  
+
+Lemma  9  (Weak  Duality)  z  2 w .  
+
+Proof: 
+Suppose  x  is  primal  feasible  and  y  is  dual  feasible.  Then ,   cTx  2 yTAx  = y T b ,  
+thus   z  = min{cTx: Ax  = b ,x  2 0)  2 max{bTy : A T y  < c)  = w. 
+From  t h e  preceding  lemma we  conclude t h a t   t h e  following cases  are  not  possible 
+(these are dual  sta t ement s) : 
+
+1. P is  feasible and  unbounded  and D feasible. 
+
+2.  P is  feasible and  D  is feasible and  unbounded. 
+
+We  should point  out  however  t h a t   bo th   t h e  primal and  t h e  dual might  be  infeasible. 
+To  prove  a  stronger  version  of  t h e   weak  duality  lemma ,   let's recall  t h e  following 
+corollary of  Farkas'  L emm a   (Theorem 8) :  
+
+Corollary  10  Exactly  one  of  the  following  i s   t rue :  
+1. 32' : A'x'  < b'. 
+2 - 3Y'  2 0  : (A')Ty'  = 0  and  (b')Tyf  < 0 .  
+
+Theorem  11  (Strong  Dua l i ty)   If  P  or  D  is  feasible  t h e n  z  = w. 
+
+Proof: 
+We  only need  t o  show t h a t   z  5 w.  Assume without  loss of  generality  (by  dua l i ty)  
+t h a t   P is feasible.  If  P is  unbounded,  then   by  Weak  Dua l i ty ,  we  have  t h a t   z  = w  = 
+-00.  Suppose P is bounded,  and   let  x* be  an   optimal  solution,  i.e.  Ax* = b,  x* 2 0 
+and  cTx* = Z .   We  claim  tha t   3 y   s . t .   ATy  5  c  and  bTy   2 z .   If  so  we  are  done. 
+Suppose  no  such  y  exists.  Then ,   by  t h e   preceding  corollary,  with  A'  = 
+b t =   ( 
+) ,  x t =  y ,   y t =   (  ) ,  3s  > 0 ,   X  2 0  such t h a t  
+- 2  
+Ax   = X b  
+c T x < X z .  
+
+and 
+
+We  have  two  cases 
+Case  1:  X  # 0 .   Since we  can  normalize  by  X  we  can  assume  t h a t   X  = 1.  This 
+means  tha t   32 2 0  such  t h a t   Ax  = b  and  cTx < Z .   Bu t   this  is  a  contradiction 
+with  t h e  optimality of  x*. 
+
+Case  2:  X  = 0.  This means t h a t   32 2 0  such t h a t   Ax  = 0  and  cTx < 0.  If  this 
+is  the   case then   'v'p 2 0 ,   x* + px  is feasible for  P and  i t s  cost  is  cT(x*+ p x )  = 
+cTx*+ p(cTx)  < Z ,  which  is  a  contradiction. 
+
+Rules  for  Taking  Dual  Problems 
+If  P is  a  minimization problem  then   D  is  a  maximization  problem.  If  P  is  a  maxi-
+mization  problem  then   D  is  a  minimization problem.  In  general, using  t h e  rules  for 
+transforming  a  linear  program  into  s tandard  form, we  have  t h a t   t h e  dual  of  ( P ) :  
+z  = min  c,  x1 + c,  x 2 + c:x3 
+T 
+T
+
+A1121 + A1222  + A1323  =  b l  
+A2121 + A2222  + A23~3  >  b2 
+A3121 + A3222 + A3353  5  b3 
+x,  2 0  , x2  5 0 , x3  UIS 
+
+(where UIS  means  "unrestricted  in   sign"  t o   emphasize  t h a t   no  constraint  is  on  t h e  
+variable)  is  (D )  
+w  = =ax  b,  y1  + bTy2  + bTy3 
+T 
+s . t .  
+
+Complementary Slackness 
+
+Let  P and  D  be 
+
+(P )   z  = min{cTx  : Ax  = b,  x  2 0) 
+
+and let  x be feasible in P, and  y  be fesible in D.  Then ,  by weak  duality, we  know  t h a t  
+cTx > bTy.  We  call t h e  difference cTx - bTy  t h e   duality gap.  Then  we  have  t h a t   t h e  
+duality gap  is  zero  iff  x  is  optimal  in  P, and  y  is  optimal  in  D.  Tha t   is,  t h e   duality 
+gap  can  serve  as  a  good  measure  of  how  close  a  feasible x  and  y  are  t o   t h e  optimal 
+solutions  for P and  D .   The  duality  gap will be  used  in  t h e  description  of  t h e  interior 
+point  method  t o  monitor  t h e  progress  towards  optimality. 
+It  is  convenient t o  write  t h e  dual of  a  linear  program  as 
+w  = max{bTy : ATy + s  = c  for  some s  2 0)  
+
+Then we  can  write  t h e  duality gap  as follows: 
+
+
+since ATy  + s  = C. 
+The  following theorem allows  t o  check optimality of  a  primal and /or   a  dual  solu- 
+tion. 
+
+Theorem  12   (Complementary  Slackness) 
+Let  x*,  ( y * ,  s * )  be  feasible  for   (P ) ,(D )  respectively.  The following  are  equivalent: 
+
+1 .   x*  is  an  optimal solution  to  (P) and  ( y * , s * )  is  an  optimal solution  to  (D ) .  
+
+4 .   If s j  > 0  then  x j  = 0. 
+Proof: 
+Suppose  (1)holds,  then ,  by  strong  duality, cTx* = bTy*. Since c = ATy*+ s*  and 
+Ax* = b,  we  get  t h a t   (y* )TAx*+ ( s * ) ~ x *= ( x * ) ~ A ~ ~ * ,
+and  thus ,   ( s * ) ~ x *= 0  (i.e (2) 
+holds).  It  follows,  since  xJ ,   s*  > 0 ,   tha t   xjs;  = 0 ,  'ij  = 1 , . . . ,n  (i.e.  ( 3 )  holds).
+Hence, if  s j  > 0  then   x j  = 0 ,  'v'  3  = 1,. . . , n  (i.e.  (4 )  holds).  The  converse also holds, 
+3 ,
+and  thus  t h e  proof  is  complete. 
+In t h e  example of  section 9 ,  t h e  complementary slackness equations corresponding 
+t o  the  primal  solution  x = ( 3 , 2 , o ) ~would be: 
+
+Note  t h a t   this  implies  t h a t   y l   = 3  and   y2  = -1.  Since this  solution  satisfies t h e  
+other  constraint  of  the  dual, y  is dual feasible, proving t h a t   x  is  an  optimum solution 
+t o  the  primal  (and  therefore y  is  an  optimum  solution  t o  t h e  dua l) .  
+
+Size of  a Linear  Program 
+
+11.1  S ize   of the  Input 
+If  we  want  t o   solve  a  Linear  Program  in   polynomial  t ime ,   we  need  t o   know  what 
+would  t h a t   mean,  i.e. what  would  t h e  size of  the   input  be.  To  this  end  we  introduce 
+two  notions  of  the   size of  t h e   inpu t   with  respect  t o  which  t h e   algorithm  we  present 
+will  run   in  polynomial  time.  The  first  measure  of  t h e   input  size will  be  t h e   size  of 
+a  LP ,   but  we  will  introduce  a  new  measure  L  of  a  L P  t h a t   will  be  easier  t o   work 
+with.  Moreover, we  have  t h a t   L  5  s ize (LP ) ,  so  t h a t   any  algorithm  running  in  t ime  
+polynomial  in  L  will  also run  in  t ime  polynomial  in  size(LP). 
+Let's consider  t h e  linear  program  of  t h e  form: 
+
+min cTx 
+s . t .  
+Ax  = b 
+x > o  
+
+where  we  are  given  as  inpu ts   t h e   coefficients of  A  (an   rn x  n  ma t r ix ) ,   b  (an   rn x  1 
+vector), and  c  (an  n  x  1 vector), whith  rationial  entries. 
+We  can  fur ther   assume, without  loss  of  generality,  t h a t   t h e  given  coefficients are 
+all integers, since any  L P  with  rational  coefficients can be  easily transformed  into  an  
+equivalent  one  with  integer  coefficients  (just  multiply  everything  by  1. c. d. ) .  In   t h e  
+rest  of  these notes,  we  assume  t h a t   A ,  b,  c  have integer  coefficients. 
+For  any  integer n ,  we  define  i ts   size as follows: 
+
+where t h e  first  1 stands for t h e  fact  t h a t  we  need one bit  t o  store t h e  sign of  n ,  size(n) 
+represents  t h e  number  of  bits  needed  t o  encode  n  in  binary.  Analogously,  we  define 
+t h e  size of  a p  x  1 vector  d, and  of  a p  x  1 ma tr ix  M  as follows: 
+
+We  are then   ready  t o  talk  about  t h e  size of  a  LP .  
+
+Definition  6  (Size of  a  linear program) 
+
+A  more  convenient definition  of  t h e  size of  a  linear  program  is  given next. 
+
+Definition  7 
+
+where 
+
+d e t  
+
+a 
+= 
+
+m;x(l 
+
+det (A') I )  
+
+and A'  is  any  square  submatrix  of  A. 
+
+Proposition  13   L  < size(LP), b'A, b, c .  
+
+Before proving  this  result, we  first  need  t h e  following lemma: 
+
+Lemma 14 
+
+I .   If  n  E  Z then  In1  5 2s"e(n)-1  - 1 .  
+
+LP-19  
+
+2 .   If v E Z n  then  llvll  5  llvlll  5 2""""(")-" - 1 .  
+
+3. If A E Z n x n  then  ldet(A)I 5 2s"e(A)-n2- 1 .  
+
+Proof: 
+
+1.  By  definition. 
+2 - 1+ llvll  I1+ 1 1 ~ 1 1 1   = 1+C Ivil  5 n ( l+lv i l )   5 n 2s i z e ( v i  )-I  -- 2 s i z e (v ) -n   where 
+n 
+n 
+n 
+i=l 
+i=l 
+i=l  
+
+we  have used  I .   
+
+
+3.  Let  a l ,  . . . ,a n  be  t h e  columns of  A.  Since  idet (A ) I  represents the  volume of  t h e  
+parallelepiped  spanned  by  a l ,  . . . ,a,,  we  have 
+
+Hence, by  2, 
+
+We  now  prove Proposition  13. 
+Proof: 
+If  B is a  square submatrix of  A then ,  by  definition,  s i z e ( B )  5 s i z e (A ) .  Moreover, 
+by  lemma  14, 1+ Idet ( B )  I  5 2s"e(B)-1.  Hence, 
+
+Let  v E Z p .  Then  s i z e ( v )  2 s ize (max j  1vj I
+)
+
+  + p - 1 = [lo&+  max j  1vjl)l + p.  Hence, 
+
+Combining equations  (1) and  (2) ,  we  obtain  t h e  desired  result. 
+
+Remark 1  d e tm a x *  bmax* cmax * 2"+"  < 2L, since fo r   any  integer a ,  2size(n)> 1a1. 
+
+In what  follows we  will work  with  L  as  t h e  size of  t h e  inpu t   t o  our  algorithm.  
+
+
+LP-20 
+
+
+11.2  S i z e   o f t h e  O u t p u t  
+
+In  order  t o  even hope  t o   solve a  linear program  in polynomial  t ime ,  we  be t ter   make 
+sure t h a t   t h e  solution  is representable in  size polynomial  in  L .   We  know  already t h a t  
+if  t h e   L P  is  feasible,  there   is  a t   least  one vertex  which  is  an  optimal  solution.  Thus, 
+when  finding  an  optimal  solution  t o   t h e  LP ,  it  makes  sense  t o  restrict  our  a t ten t ion  
+t o   vertices  only.  The   following  theorem  makes  sure  t h a t   vertices  have  a  compact 
+represent ation. 
+Theorem  15   Let x  be  a  vertex  of  the  polyhedron defined  by  Ax  = b, x  > 0.  Then, 
+
+where  pi  ( i  = 1 , .. . , n ) ,  q  E  N, 
+
+and 
+
+Proof: 
+Since s is  a  basic feasible solution, 3 a  basis  B such  t h a t   X B   = ~
+l
+b
+~
+and  X N   = 0. 
+Thus ,   we  can  set  pj  = 0,  V  j  E  N ,  and  focus  our  a t ten t ion   on  t h e   X ~ ' Ssuch  t h a t  
+j  E  B. We  know  by  linear  algebra  t h a t  
+
+where  cof  (AB )  is  t h e  cofactor  ma tr ix   of  AB.  Every  en try  of  AB  consists of  a  deter-
+minant  of  some subma tr ix  of  A.  Let  q  = Idet(AB)1 ,   then   q  is  an  integer since AB has 
+integer  components, q  > 1 since AB is invertible, and  q  5 detmax  < 2 L .   Finally, note 
+t h a t   PB  = ~ X B= Icof  ( A ~ ) b l ,thus  pi  5 Cy=l I
+C
+O
+~  ( A ~ ) i ~ l l b j 15 m  detmax  bmax  < 2 L .  
+
+Complexity  of  linear  programming 
+
+In  this  section, we  show  t h a t   linear  programming  is  in  NP n   co-NP. This  will  follow 
+from duality and t h e  estimates on  t h e  size of  any vertex given in  t h e  previous  section. 
+Let  us  define  the  following decision problem: 
+
+Definition  8  ( L P )  
+Integral A,  b,  c ,  and  a  rational  number  A ,  
+Input: 
+Question:  Is min{cTx  : Ax  = b,  x  2 0 )   5 A? 
+
+Theorem  16  LP   E NP  n co-NP 
+
+Proof: 
+F irs t ,  we  prove  t h a t   L P   E NP. 
+If  t h e  linear  program  is  feasible and  bounded,  t h e   "certificate"  for  verification of 
+instances  for  which  min{cTx  : Ax  = b,  x  2 0)  5  A  is  a  vertex  x'  of  {Ax = b, x  2 0 )  
+s . t .   cTx' 5 A.  This vertex x'  always exists since by  assumption  t h e  minimum is finite. 
+Given x', i t   is easy  t o  check in polynomial  t ime  whether  Ax' = b  and  x' 2 0.  We  also 
+need  t o   show  t h a t   t h e  size of  such  a  certificate is  polynomially  bounded  by  t h e   size 
+of  t h e  inpu t .   This was  shown  in  section  11.2. 
+If  t h e  linear program  is feasible and  unbounded,  then ,  by  strong  duality, t h e  dual 
+is infeasible.  Using  Farkas' lemma on  t h e  dual, we  obtain  t h e  existence of  2:  A2 = 0, 
+2  2 0  and  cT2 = -1  < 0.  Our  certificate  in   this  case  consists  of  bo th   a  vertex  of 
+{Ax  = b,  x  2 0 )   ( t o  show  feasiblity)  and  a  vertex  of  {Ax  = 0,  x  2 0 ,   cTx = -1) 
+( t o  show  unboundedness  if  feasible).  By  choosing  a  vertex  x'  of  {Ax  = 0,  x  2 0, 
+cTx = -11,  we  insure  t h a t   x'  has  polynomial  size  (again, see Section  11.2). 
+This  proves  t h a t   LP   E  NP.  (Notice t h a t   when  t h e   linear  program  is  infeasible, 
+t h e  answer  t o  LP   is  "no",  bu t   we  are not  responsible t o  offer  such an  answer  in order 
+t o  show LP   E NP ) .  
+Secondly, we  show  t h a t   L P   E co-NP, i.e.  ZF E N P ,  where ZF is  defined  as: 
+Inpu t :  A ,   b,  c,  and  a  rational  number  A ,  
+Question:  Is min{cTx  : Ax  = b,  x  2 0)  > A ?  
+If  {x  : Ax  = b,  x  2 0)  is nonempty, we  can use  strong duality t o  show  t h a t  Z F  is 
+indeed equivalent  to: 
+Inpu t :  A,  b,  c,  and  a  rational  number  A ,  
+Question:  Is  max{bTy : ATy 5 c)  > A ?  
+which  is  also in  NP ,   for  t h e  same reason  as L P   is. 
+If  t h e   primal  is  infeasible,  by  Farkas'  lemma we  know  the   existence  of  a  y  s . t .  
+ATy 2 0 and  bTy  = -1  < 0.  This  completes  the  proof  of  the   theorem. 
+
+Solving a Liner  Program  in Polynomial Time 
+
+The  first  polynomial-time algorithm  for  linear programming is  t h e  so-called  ellipsoid 
+algorithm which was proposed by Khachian in  1979 [6]. The  ellipsoid algorithm was  in 
+fact first  developed for convex programming  (of which linear programming is a special 
+case) in a  series of  papers by  the  russian mathematicians A.Ju. Levin  and ,  D.B. Jud in  
+and  A.S.  Nemirovskii,  and  is  related  t o   work  of  N.Z.  Shor.  Though  of  polynomial 
+running  t ime ,   t h e   algorithm  is  impractical for  linear  programming.  Nevertheless  i t  
+has  extensive  theoretical  applications  in  combinatorial  optimization.  For  example, 
+t h e   stable  set  problem  on  t h e   so-called perfect  graphs  can  be  solved  in  polynomial 
+t ime  using  t h e   ellipsoid  algorithm.  This  is  however  a  non-trivial  non-combinatorial 
+algorithm. 
+
+In  1984, Karmarkar  presented  another  polynomial- t ime algorithm  for  linear  pro- 
+gramming.  His  algorithm  avoids  t h e   combinatorial  complexity  (inherent  in  t h e  sim- 
+plex  algorithm)  of  t h e   vertices,  edges  and  faces  of  t h e   polyhedron  by  staying  well 
+inside  t h e  polyhedron  (see Figure  13).  His  algorithm  lead  t o  many  other  algorithms 
+for linear programming based on similar ideas.  These algorithms are known as  interior 
+point  methods. 
+
+Figure  6:  Exploring  t h e  interior  of  a  convex body. 
+
+It  still remains  an  open  question  whether  there exists a  strongly polynomial  algo- 
+r i thm   for  linear  programming,  i.e.  an  algorithm  whose  running  t ime   depends  on  m 
+and  n  and  not  on  t h e  size of  any  of  t h e  entries of  A ,   b  or  c .  
+In  t h e  rest  of  these notes, we  discuss an  interior-point method for  linear program- 
+ming  and  show  it s polynomiality. 
+High-level description of  an   interior- point  algorithm : 
+
+1 .   If  x  (current solution)  is  close  t o  t h e  boundary,  then  map  the  polyhedron  onto 
+another  one  s . t .   x  is well  in  t h e  interior  of  t h e  new  polyhedron  (see Figure  7). 
+
+2.  Make  a  s tep  in  t h e  transformed  space. 
+
+3 .   Repeat  ( a )  and (b )  until we  are close enough  t o  an   optimal  solution. 
+
+Before  we  give  description  of  t h e   algorithm  we  give  a  theorem,  t h e   corollary  of 
+which will be a key tool used in  determinig when we  have reached  an  optimal solution. 
+
+Theorem  17   Let  X I ,   x2  be   vertices  of  Ax  = b ,  
+x  2 0. 
+
+If  cTxl # cTx2 then  lcTxl - cTx21> 2-2L. 
+
+Proof: 
+By  Theorem  15, 3 qi,  q 2 ,   such  t h a t   1 5 ql,q2  < 2L, and  qlxl,qzx2  E Wn .   Further-
+more, 
+
+since cTxl - cTx2 # 0 ,   q l ,  q 2   2 1 
+
+since ql ,q2  < 2L. 
+
+Corollary  18 Assume  z  = min{cTx  : Ax  = b  x > 0  .d 
+polyhedron  P 
+Assume  x  is feasible  to P ,  and  such  that  cTx 5 z  + 2-2L. 
+
+Then ,   any  vertex xr  such  that  cTx' 5 cTx  is  an  optimal  solution  of  the  LP .  
+
+Proof: 
+Suppose  x f  is not  optimal.  Then ,   3x*, an  optimal vertex, such  t h a t   cTx* = z .  
+Since x'  is not  optimal, cTx' # cTx*, and  by  Theorem  17 
+
+by  definition of  x 
+by  definition of  x' 
+
+a  contradiction. 
+Wha t   this corollary tells us is t h a t  we do not  need t o  be very precise when choosing 
+an   optimal  vertex.  More  precisely we  only  need  t o   compute  t h e   objective  function 
+with  error less  than  2-2L. If  we  find a vertex  t h a t   is within  t h a t  margin of  error, then  
+i t  will be  optimal. 
+
+Figure 7:  A  centering mapping.  If  x  is  close t o  the  boundary, we  map the  polyhedron 
+P  onto  another one PI,  s.t.  the  image x'  of  x  is  closer t o  the  center of  PI. 
+
+13.1  Ye's  Interior  Point  Algorithm 
+In  the  rest  of  these  notes we  present  Ye's  [9]  interior  point  algorithm for  linear pro- 
+gramming.  Ye's algorithm (among several others) achieves the  best  known asymptotic 
+running time in the  literature, and our present at ion incorporates some simplifications 
+made by  Freund  [3]. 
+We  are going  to  consider the  following  linear programming problem: 
+
+minimize  Z  = cTx 
+subject  to   Ax = b, 
+a: 2 0 
+
+and  its  dual 
+
+maximize  W = bTy 
+subject  to   ATy + s = c ,  
+s  > 0. 
+The  algorithm  is  primal-dual,  meaning  tha t   i t   sirnult aneously  solves  both  the  
+primal  and  dual problems.  I t   keeps  track  of  a primal solution  and  a vector of  dual 
+slacks 3  (i.e.  3 j j   : ATjj = c - S )   such  tha t   > 0  and  3  > 0.  The  basic  idea  of  this 
+algorithm  is  to   stay  away  from  the   boundaries  of  the   polyhedron  ( the  hyperplanes 
+xj 2 0  and sj 2 0,  j  = 1 , 2 ,  . . . ,n )  while  approaching optimality.  In other words, we 
+want  to  make the  duality gap 
+
+c T 5  -
+
+> 0 
+bTy= 
+z T ~
+
+very small but  stay away from the  boundaries.  Two tools will be used  to  achieve this 
+goal in polynomial  time . 
+To01  1: Scaling (see Figure  7 )  
+Scaling is  a crucial ingredient in interior point  methods.  The  two  types  of  scaling 
+commonly used  are projective  scaling ( the  one used  by  Karmarkar)  and  a f i n e  sealing 
+( the  one we  are going  to  use). 
+
+5 2 , .   . . ,T ~ ) ~ ,
+Suppose  t h e  current  i tera te  is 3 > 0  and  > 0 ,  where 3 = ( z 1 ,  
+then
+the   affine  scaling maps  x  t o  x'  as  follows. 
+
+ 
+
+Notice  this  transformation  maps f t o   e = ( 1 , . . . , I ) ~ .
+ 
+--
+X  1 x  or  x  = 
+We  can  express  t h e   scaling  transformation  in  ma tr ix   form  as  x'  = 
+-
+X x ' ,  where 
+
+z1  0 
+
+0 
+
+X =  
+
+. . .   X n - 1  
+0 
+0 
+. . .  
+0 
+0 
+Using  ma tr ix   notation  we  can  rewrite  t h e   linear  program  (P )  in   terms  of  t h e   trans- 
+formed  variables  as: 
+
+minimize  Z  = c T X x '  
+subject  t o   A X x '   = b, 
+x'  2 0 .  
+If  we  define Z  = X c  (no te  t h a t   X  = X T ) and  2 = AX  we  can  get  a  linear  program 
+in  the  original form as  follows. 
+
+minimize  Z  = ETx' 
+-
+subject  t o   Ax'  = b, 
+x'  > 0 .  
+We  can  also write  the   dual problem  (D )  as: 
+
+or, equivalently, 
+
+W = bTy  
+maximize 
+subject  t o   AX)^^  + Xs = E ,  
+X s  > 0 
+-
+
+maximize  W = b T y  
+subject  t o   zTY+ S'  = 2 ,  
+s'  > 0 
+
+where  s'  = x s ,  i.e. 
+
+One  can  easily  see t h a t  
+
+and ,  therefore, the  duality gap xT s  = C j x j s j  remains unchanged  under affine scaling. 
+As  a  consequence,  we  will  see  la ter   t h a t   one  can  always  work  equivalently  in  t h e  
+transformed  space. 
+
+Tool  2:  Potential  Function 
+Our  potential  function  is  designed  t o  measure  how  small  t h e   duality  gap  is  and 
+how  far  the   current  i te ra te  is  away  from  the  boundaries.  In  fact  we  are going  t o  use 
+the  following  "logarithmic  barrier  function". 
+
+Definition  9  (Potential  Function,  G ( x ,  s ) )  
+
+for  some q, 
+
+where  q  is  a  parameter  tha t   must  be  chosen  appropriately. 
+Note t h a t   t h e  first  term  goes  t o  -m  as  t h e  duality gap tends t o  0 ,  and  t h e  second 
+te rm  goes  t o  +m as  xi  -+ 0  or  Si  -+0  for  some i.  Two  questions  arise  immediately 
+concerning th is  potential  function. 
+
+Question  1:  How  do we  choose  q? 
+
+Lemma   19  Let  x ,  s  > 0  be  vectors  in  Rnxl.  Then 
+
+n l n x T s  - C l n x j s j  2 n l n n .  
+
+Proof: 
+Given any  n  positive  numbers 11 ,  . . . ,t,,  we  know  t h a t   their  geometric mean  does 
+not  exceed their  ar i thme t ic  mean, i.e. 
+
+Taking  t h e  logarithms  of  bo th   sides we  have 
+
+Rearranging  th is  inequality we  get 
+
+(In  fact  t h e  last  inequality can be  derived directly from the  concavity of  t h e  logarith-
+mic function).  The  lemma follows if  we  set t j  = x jsj  . 
+Since our  objective is t h a t   G +--m  as  x T s  + 0  (since our  primary goal  is  t o  get 
+close  t o   op t ima l i ty) ,  according  t o   Lemma  19, we  should  choose  some q  > n  (notice 
+t h a t   in x T s  + -m  as x T s  + 0 )   . In  particular,  if  we  choose q  = n + 1, t h e  algorithm 
+will  term ina te  after  O ( nL )  iterations.  In fact  we  are going  t o  set  q  = n + fi,which 
+gives us  t h e  smallest  number - O(&L)  - of  iterations by  this method. 
+Question  2:  When  can  we  stop? 
+Suppose  tha t   x T s   5 2 - 2 L ,   then   c T x  - Z  5 c T x  - b T y   = x T s  5 2 - 2 L ,  where  Z  is 
+the   optimum  value  t o   t h e   primal  problem.  From  Corollary  18,  t h e   following  claim 
+follows  immediately. 
+
+Claim 20  i f  x T s  5 2 - 2 L ,   then   any  vertex  x* satisfying  cTx*  5 c T x   is  optimal. 
+
+In  order  t o   find  x*  from  x ,   two  methods  can  be  used.  One  is  based  on  purely 
+algebraic  techniques  (bu t   is  a  bit  cumbersome  t o   describe),  while  t h e   other  ( t h e  
+cleanest  one  in  l i tera ture)   is  based  upon  basis  reduction  for  lattices.  We  shall  not 
+elaborate  on  th is   topic,  although  we'll get  back  t o   th is   issue  when  discussing basis 
+reduction  in  lattices. 
+
+Lemma 21   Let  x ,  s  be  feasible  primal-dual  vectors  such  that  G ( x , s )  5 -k f i L   for 
+some  constant  k .   Then  
+
+Proof: 
+By  t h e  definition of  G ( x ,s )  and  t h e  previous  theorem we  have: 
+
+>  & l n x T s   + n l n n .  
+
+Rearranging we  obtain 
+
+Therefore 
+
+xT s  < e-lcL. 
+The   previous  lemma  and  claim  tell  us  t h a t   we  can  stop  whenever  G ( x , s )   5 
+- 2 f i L .  
+In  practice, t h e  algorithm  can  term ina te  even earlier, so i t  is a  good  idea  t o  
+check from  t ime  t o  t ime  if  we  can get  t h e  optimal solution  right  away. 
+
+Please  notice  t h a t   according  t o   Equation  ( 3 )   t h e   affine  transformation  does  not 
+change  t h e  value of  t h e  potential  function.  Hence we  can  work  either  in  the  original 
+space or  in  t h e  transformed  space when  we  talk  about  t h e  potential  function. 
+
+Description of  Ye's Interior  Point  Algorithm 
+
+Initialization: 
+Set  i  = 0. 
+Choose  xO> 0,  s o  > 0,  and  y o   such  t h a t   Ax0 = b,  ATy' + s o  = c  and   G (xO ,s o )  = 
+O ( f i L ) .   (Details  are  not  covered  in   class  but  can  be  found  in   t h e   appendix.  The  
+general idea is as follows.  By augmenting t h e  linear program with additional variables, 
+it is easy t o  obtain a feasible solution.  Moreover, by  carefully choosing t h e  augmented 
+linear program,  it  is possible t o  have feasible primal and  dual  solutions  x  and  s  such 
+t h a t   all  x j's  and   s j ' s  are  large  (say  2L).  This  can  be   seen  t o   result  in  a  potential  of 
+O ( f i L ) - )  
+It eration: 
+while  G(x$ s i )  > -2J;EL 
+either a  primal s tep   (changing  xi  only) 
+or  a  dual  step  (changing  si only) 
+i : = i + l  
+
+t o  get  (x i++ ' ,s"+l) 
+
+The   iterative  s tep   is  as  follows.  Affine  scaling  maps  ( x i , s"  t o   ( e ,s f ) .   In  this 
+transformed  space,  t h e   point  is  far  away  from  the   boundaries.  Either  a  dual  or 
+primal  s tep   occurs,  giving  ( 2 , s " )and  reducing  t h e   potential  function.  The   point  is 
+then  mapped  back  t o  t h e  original  space,  resulting  in  (x i++ ' ,sG1). 
+Next, we  are going t o  describe precisely how  t h e  primal or  dual  s tep  is made such 
+t h a t  
+
+7
+- ~ ( 2 , s ~ )5 -- < o 
+~ ( 2 + + l , ~ + + l )
+120 
+holds for  either a primal or  dual  step, yielding an  O ( f i L )   to ta l  number of  iterations. 
+
+~ u l lspace of A 
+{x:&=o} 
+
+Figure 8:  Null  space of  2 and gradient  direction g .  
+
+In  order  t o   find  the   new  point  (5,:)  given  t h e   current  i tera te   (e ,  s f )   (remember 
+we  are working  in  t h e  transformed  space), we  compute t h e  gradient  of  t h e  potential 
+function.  This is the  direction along which the  value of  t h e  potential function changes 
+a t   t h e  highest  ra te .   Let  g  denote  t h e  gradient.  Recall  t h a t   (e ,  s f )  is  t h e  map   of  t h e  
+current  i tera te ,  we  obtain 
+
+We  would  like  t o   maximize  t h e   change  in  G,  so  we  would  like  t o   move  in  t h e  
+direction of  - g .   However, we  must  insure t h e  new  point  is  still feasible (i.e. 2 5  = b ) .
+-
+Let  d  be  t h e   projection  of  g  onto  the   null  space  {x :  Ax = 0 )   of  2. Thus,  we  will 
+move in  the   direction of  -d. 
+
+Proof: 
+Since g  - d  is  orthogonal  t o   t h e   null  space  of  2, it  must  be  t h e   combination  of 
+some row  vectors  of  71.  Hence we  have 
+
+( Z d = 0  
+
+This  implies 
+
+(normal equations). 
+
+Solving t h e  normal  equations, we  get 
+
+and 
+
+-T  --T  -1-
+-T 
+( A A   )  A g = ( I - A  
+d = g - A  
+
+--T 
+-1-
+( A A   )  A)g. 
+
+A  potential  problem  arises  if  g  is  nearly  perpendicular  t o   t h e  null  space  of  2. In 
+this  case,  1  Id11  will  be  very  small, and  each primal  s tep  will  not  reduce  t h e  potential 
+greatly.  Instead, we  will perform  a  dual  step. 
+In  particular,  if  1  Id1  1  = I  Id1  l
+  = d m  2 0.4, we  make  a  primal  step  as  follows. 
+z
+
+Claim 23  2  > 0 .  
+
+Proof: 
+Ic",.l-Iii>?>O 
+4  1p11  - 4 
+This  claim  insures  t h a t   t h e   new  i tera te   is  still  an   interior  point.  For  t h e   similar 
+reason, we  will  see t h a t   s"  > 0 when we  make  a  dual  step. 
+
+Proposition  24   W h e n  a  p r i m a l   s t e p   i s  m a d e ,   G ( 5 , g )  - G(e ,  s t )  5 -,. 
+
+7
+
+If  1  Id1  1  < 0.4, we  make  a  dual  step.  Again, we  calculate  t h e  gradient 
+
+Notice  t h a t   h j   = g j / s j ,   thus  h  and  g  can  be  seen  t o   be  approximately  in  t h e   same 
+direct ion. 
+Suppose the   current  dual feasible  solution  is  y',  s t  such  t h a t  
+
+Again, we  restrict  t h e  solution  t o  be  feasible,  so 
+
+Thus ,  in  t h e  dual  space, we move perpendicular  t o  the  null  space and in  t h e  direction 
+of  -(g   - d) .  
+Thus, we  have 
+
+For  any  p ,  3 y   x T Y + ic= 
+
+So, we  can  choose p  = 
+Therefore, 
+
+4  
+
+
+and  get zT(y'+ pw) + ." = C. 
+
+
+One can  show  tha t   9  > 0  as we  did  in   Claim  23.  So  such move is  legal. 
+
+Proposition  25   W h e n  a   d u a l   s t e p   is   m a d e ,   G(?,.") - G (e ,  s t )  5 -:1 
+
+According  t o   these  two  propositions,  t h e   potential  function  decreases  by  a  con- 
+s tan t   amount  a t   each  step.  So  if  we  s ta r t   from  an  initial  interior  point  ( xO ,  so )with 
+G (xo ,  s o )  = O ( J ; IL ) ,   then   after  O ( f i L )   iterations  we  will  obtain  another  interior 
+point  ( x i ,  s j )  with  G ( x j ,  s j )  5  -k J ; IL .   From  Lemma 21,  we  know  t h a t   t h e   duality 
+gap  (xj)'sj  satisfies 
+
+and  the   algorithm  terminates  by  t h a t   time.  Moreover, each  iteration  requires  O (n3 )  
+operations.  Indeed, in  each  iteration,  t h e  only  non-trivial  task  is  t h e  computation of 
+t h e  projected gradient d.  This can be done by  solving t h e  linear system (AAT)w = Ag 
+in  O ( n 3 )  t ime  using  Gaussian  elimination.  Therefore, t h e  overall t ime  complexity  of 
+th is   algorithm  is  O(n3-5L) .  By  using  approximate solutions  t o  t h e  linear  systems, we 
+can obtain  O ( n 2 . 5 )  t ime  per  i tera t ion ,  and  to ta l   t ime  O(n3L) .  
+
+Analysis  of  the Potential  Function 
+
+In th is  section, we  prove t h e  two propositions  of  t h e  previous section, which concludes 
+t h e  analysis  of  Ye's algorithm. 
+Proof  of  Proposition  24: 
+
+=  q l n   1 -( 
+
+) - k l n ( l - - ) .  
+411dlleTs' 
+j=l 
+
+4
+41  ldl  I 
+
+Using  the   relation 
+
+which  holds  for  1x1  5 a  < 1, we  get: 
+
+for  a = 114 
+
+Note  t h a t   gT d   =  1  Id1 1 2 ,   since  d  is  t h e  projection  of  g .   (This  is  where  we  use  t h e  
+fact  t h a t   d  is  t h e  projected  gradient!) 
+Before proving  Proposition  25, we  need  t h e  following lemma. 
+
+Lemma 26 
+
+Proof: 
+Using  t h e  equality  s"  = $(e   + d)  and  Equation  6 ,  which holds for  lx 1  5 a  < 1, we 
+see t h a t  
+
+Proof  of  Proposition  25: 
+Using  Lemma  26  and  t h e  inequality 
+
+which  follows from t h e  concavity  of  t h e  logarithm  function, we  have 
+
+On   t h e  other  hand ,  
+
+and  recall  t h a t   A  = eTs', 
+
+since,  by  Cauchy-Schwartz  inequality,  leTdl  5  Ilell  lldll  =  f i l l d l l .   Combining  t h e  
+above inequalities yields 
+G (e , .? )- G ( e , s ' )   5 & + f i l n ( 1   - Fz) 
+
+since n + z/;E 5 2n. 
+This  completes  t h e  analysis  of  Ye's algorithm. 
+
+Bit  Complexity 
+
+Throughout  t h e   present ation  of  t h e   algorithm,  we  assumed  t h a t   all  operat ions  can 
+be   performed  exactly.  This  is  a  fairly  unrealistic  assumption.  For  example,  notice 
+t h a t   lldll  might  be  irrational  since  i t   involves  a  square  root.  However,  none  of  t h e  
+thresholds  we  set  were  crucial.  We  could  for  example  test  whether  lldll  2 0.4  or 
+lldll  5  0.399.  To  test  th is ,   we  need  t o   compute  only  a  few  bits  of  ildll.  Also,  if 
+we  perform  a  primal  s tep   (i.e.  lldll  2 0.4)  and  compute  t h e   first  few  bits  of  lldll  SO 
+t h a t   t h e  resulting approximation  ildllaP satisfies (4/5)11dll  5 Ildlla,  5  lldll  then  if  we  go 
+through  t h e  analysis of  t h e  primal s tep  performed  in Proposition 1,we  obtain t h a t  t h e  
+reduction  in   t h e  potential  function  is  a t   least  191352  instead  of  t h e  previous  71120. 
+Hence,  by  rounding  lldll  we  can  still  maintain  a  constant  decrease  in   t h e   potential 
+function. 
+Another potential problem is when using Gaussian elimination t o  compute t h e  pro- 
+jected  gradient.  We  mentioned  t h a t   Gaussian  elimination requires  O ( n 3 )  ar i thme t ic  
+operations  but  we  need  t o  show  t h a t ,  during  t h e  computation, t h e  numbers involved 
+have polynomial  size.  For  t h a t   purpose,  consider  t h e  use  of  Gaussian  elimination  t o  
+solve a  system Ax  = b where 
+
+Assume  t h a t   a l l   #  0  (otherwise,  we  can  permu te   rows  or  columns).  In   t h e   first 
+times  the   first  row  from  row  i  where  i  = 2 , .  . . ,r n ,  
+(1)
+i tera t ion ,  we  substract  a n   /a$:) 
+resulting  in  the  following ma tr ix :  
+
+In  general,  A("') 
+is  obtained  by  subtracting  a$:)/a!i)  times  row  i  from  row  j  of  A ( ~ )  
+for  j  = i + l ,  . . .  , m .  
+
+Theorem 27   For  a l l   i  5 j ,  k ,  ayk)  c a n   be   written  i n   the  form  d e t ( B ) /  d e t (C )  where 
+B  a n d   C  are  some  submatrices  of  A. 
+
+Proof: 
+Let  Bi denote t h e  i x i  submatrix of  A("  consisting of  t h e  first  i entries of  t h e  first 
+i  rows.  Let  B:;)  denote  t h e   i  x  i  subma tr ix  of  A("  consisting  of  t h e   first  i - 1 rows 
+and  row  j ,  and  t h e   first  i - 1 columns  and   column  k .   Since Bi  and  B,(;) are  upper 
+triangular matrices, their determinants are t h e  products  of  t h e  entries along t h e  main 
+diagonal  and ,  as  a  result, we  have: 
+
+and 
+
+det (Bi) 
+a(!) : 
+det(Bi-1) 
+
+( 4  - det (B:;)) 
+a'k  - d e t (B i - l ) '  
+
+Moreover, remember  t h a t   row  operations  do not  affect  t h e  determinants  and ,  hence, 
+the  determinants of  B:;)  and Bimlare also determinants of  submatrices of  t h e  original 
+ma tr ix   A. 
+Using t h e  fact t h a t  t h e  size of  t h e  determinant of  any submatrix of  A  is a t  most  t h e  
+size of  t h e  ma tr ix  A, we  obtain t h a t   all numbers occuring during Gaussian elimination 
+require only  0 ( L )  bits. 
+Finally, we  need  t o  round  t h e  current  iterates x ,  y  and  s  t o  O (L )  bits.  Otherwise, 
+these  vectors would  require  a  constantly  increasing  number of  bits  as we  i tera te .   By 
+rounding  up  x  and   s ,  we  insure  t h a t   these  vectors  are  still  strictly  positive.  I t   is 
+fairly  easy  t o   check  t h a t   th is   rounding  does  not  change  t h e   potential  function  by  a 
+significant amount  and  so t h e  analysis of  t h e  algorithm is still valid.  Notice t h a t   now 
+the  primal and  dual constraints  might  be  slightly violated bu t   th is  can  be  taken  care 
+of  in  t h e  rounding  step. 
+
+Transformation for the Interior Point Algorithm 
+
+In  this  appendix,  we  show  how  a  pair  of  dual  linear  programs 
+
+M i n  
+cTx 
+s . t .   A x = b  
+x > o  
+
+M a x   bTy  
+s . t .   ATy   +  s  =  c 
+s > o  
+
+can be transformed so t h a t  we  know a strictly feasible primal solution xo  and a strictly 
+feasible vector  of  dual  slacks so  such  t h a t   G ( x o ;s o )  = O ( f i L )   where 
+
+and  q  = n + J;E. 
+
+Consider  t h e  pair  of  dual  linear programs: 
+
+M i n  
+(PI)  s . t .  
+
+and 
+
+M i n   
+
+s . t .   
+
+
+(Dl) 
+
+where  ICb  = 26L(n+ 1) - 2  c  e  is  chosen  in  such  a  way  tha t   x'  = (x ,  x,+1,  x , + ~ ) = 
+2L 	 T
+( 2 2 L e ,1,22L) is a  (strict) feasible solution to   (PI)and  k, = 2".  Notice tha t   (y', s')  = 
+with  s'  > 0. 
+( Y ,   Ym + 1 7   S, S n + l t  s ~ + ~ )   1,24Le,kc,24L) is a feasible solution t o  (D')
+= (0 ,  -
+xt and  (y',  s') serve as our  initial feasible solutions. 
+We  have t o  show: 
+1. G(x t ;s') = o(&?L)  where  n'  = n + 2, 
+2. 	 the  pair  (P')- (Dl) is equivalent  to   (P)- (D ) ,  
+
+3 .   	 the   input  size L'  for  ( P I ) as  defined  in  the   lecture notes  does  not  increase too 
+much. 
+
+The proofs  of  these  statements  are simple but  heavily use  the  definition of  L  and 
+the  fact  tha t   vertices have  all components bounded by  2L. 
+We  first  show  1.  Notice first  tha t   xis; = 26L for  all j ,  implying tha t  
+
+n ' 
+G ( x ' ; s l )  =  ( n l +  J;17)1n(xrTs') - C l n ( x i s : )  
+j = 1  
+=  (n' + 6) -
+ln(26Ln')  n' ln(ZGL) 
++ (n' + fi) 
+=  ~ G l n ( 2 ~ ~ )  
+ln(n')
+=  0 ( f i I J )  
+
+In  order  t o   show  tha t   (P')- (D l)   are  equivalent  to   (P)- (D),we  consider  an 
+optimal  solution  x*  t o   (P) and  an  optimal  solution  ( y* ,  s * )   to   (D )  ( the  case  where 
+(P)or  (D)is  infeasible is  considered in the  problem set).  Without  loss  of  generality, 
+we  can  assume tha t   2* and  (y*, s * )  are  vertices of  the   corresponding  polyhedra.  In 
+1 y;  1 ,   s;  < 2=. 
+particular,  this means tha t   z;, 
+
+Proposition  28   Let x' = (x* ,0, ( k b - ( 2 4L e -~ )T x * ) / 2 4L )and let (y ' ,  s f )= (y* ,  0, ,s* , kc-
+( b  - 2 2 L ~ e ) T y * ,0 ) .   Then 
+1.  x'  is  a feasible  solution  to  (P') with  x;+,  > 0, 
+2.  (y', s')  is  a feasible  solution  to  (D')  with  s;+,  > 0, 
+3.  x'  and  (y',  s f )  satisfy  complementary  slackness,  i.e.  they  constitute  a  pa ir   of 
+optimal solutions fo r   (P')- (D') .  
+Proof: 
+To  show  t h a t   x'  is  a  feasible  solution  t o   (P') with  x;+,  >  0,  we  only  need  t o  
+show  t h a t   kb - (24Le- c ) ~ x *> 0  ( t h e  reader  can  easily verify  t h a t   x'  satisfy  all  t h e  
+equalities defining  t h e  feasible region  of  ( P ' ) ) .  This  follows from t h e  fact  t h a t  
+
+and 
+kb  = P L ( n + 1)- 2 2 L ~ T e2 P L ( n  + 1) - 22Lnm+x lcj 1  2 P L n  + 26L- 23L > n P L  
+3 
+where we  have used  t h e  definition of  L  and  t h e  fact  t h a t   vertices have all their entries 
+bounded  by  2L. 
+To  show  t h a t   (y',  s') is  a  feasible solution  t o   (D') with  s;+,  > 0, we  only need  t o  
+show  t h a t   kc  - ( b  - 22LAe)Ty*> 0.  This  is  t rue  since 
+( b  - 2 2 L ~ e ) T y *5  bTY*  - 2 2 L e T ~ T y *  
+5  m max lbi12L + 22Lnmrnax laij12L 
+2 73 
+2 
+
+x'  and  (y', s t )  satisfy  complementary slackness since 
+x * ~ s *= 0 by  optimality of  x* and  ( y * ,  s * )  for  (P ) and  ( D )  
+
+X;+~S;+,  = 0  and 
+
+This proposition  shows t h a t ,  from an optimal solution  t o  (P)- (D ) , we  can  easily 
+construct  an   optimal  solution  t o   (P')- (D') of  t h e   same  cost.  Since  this  solution 
+has  s;+,  > 0,  any  optimal  solution  ;i.  t o   (P')must  have  ?,+I  = 0.  Moreover,  since 
+x;+,  > 0,  any  optimal  solution  (6,;) 
+t o   (D') must  satisfy  in+, = 0  and ,   as  a  result, 
+= 0.  Hence, from any  optimal  solution  t o   (P')- (D') ,  we  can  easily deduce  an  
+optimal  solution  t o   (P )- ( D ) .   This  shows  t h e  equivalence between  (P )- (D )  and 
+(PI)- (D'). 
+By  some  tedious  but  straightforward  calculations,  it  is  possible  t o   show  t h a t   L' 
+(corresponding t o  (P I ) - (D ' ) )   is a t  most 24L.  In other words, ( P ) - ( D )   and (P I ) - (D ' )  
+have equivalent  sizes. 
+
+References 
+
+[ I ]  V.  Chvatal.  Linear Programming.  W.H. Freeman and  Company,  1983. 
+
+[2]  G .   Dantzig.  Maximization  of  a  linear  function  of  variables  subject  t o   linear  in- 
+equalities. In T. Koopmans, editor, Activity Analysis of  Production and Allocation, 
+pages  339-347.  John Wiley & Sons, Inc., 1951. 
+
+[3] R.  M.  Freund.  Polynomial-time  algorithms  for  linear  programming  based  only 
+on  primal  scaling  and  project  gradients  of  a  potential  function.  Mathematical 
+Programming,  51:203-222,  1991. 
+
+[4] D .   Goldfarb  and  M.  Todd.  Linear  programming.  In   Handbook  in  Operations Re- 
+search  and Management  Science, volume  1, pages  73-1  70.  Elsevier  Science Pub-  
+lishers B.V.,  1989. 
+
+[5]  C.  C.  Gonzaga.  Path-following met hods  for  linear  programming.  SIA M Review, 
+34:167-224,  1992. 
+
+[6] L.  Khachian.  A  polynomial  algorithm  for  linear  programming.  Doklady  A kad. 
+Nauk  USSR,  244(5):1093-1096,  1979. 
+
+[7] K. Murty.  Linear Programming.  John  Wiley & Sons, 1983. 
+
+[8]  A .   Schrijver.  Theory  of  Linear  and  Integer  Programming.  John  Wiley  &  Sons, 
+1986. 
+
+[9] Y. Ye.  An  O (n3L )  potential  reduction  algorithm  for  linear  programming.  Math- 
+ematical  Programming,  50:239-258,  1991. 
+
+

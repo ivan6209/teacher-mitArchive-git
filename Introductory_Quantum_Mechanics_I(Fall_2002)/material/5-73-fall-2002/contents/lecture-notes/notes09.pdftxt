@@ -1,0 +1,941 @@
+5.73 Lecture #9
+Numerov -Cooley  Method : 1-D Schr. Eq.
+Last time:  Rydberg, Klein, Rees Method and Long-Range Model
+
+9 - 1
+
+G(v), B(v) rotation-vibration constants
+↓
+
+VJ(x) potential energy curve
+  ↓          x = R – Re
+Ev,J, ψv,J, all conceivable experiments
+∑ ψ
+a
+i
+i
+
+=
+
+e
+
+i
+
+( , )
+wp x t
+
+−
+
+iE t
+i
+
+h
+
+/
+
+initial preparation of wp:
+
+∫
+[
+a i = ψ i
+* wp(x, 0)
+
+]dx
+
+Method:  A(E,J) = area of V(x) below E:
+
+determined by VJ(x)
+free evolution of wp
+
+used WKB QC
+
+obtained x±(E,J)
+
+E
+
+V(x)
+
+Today:  What do we do when we have VJ(x) (especially when V(x) is not suited for WKB)?
+Solve Schr. Eq. numerically!
+
+No models
+
+15 digit reproducibility
+
+cheap
+
+This is the final tool we will develop for use in the Schrödinger representation.  To summarize
+the classes of 1–D problem we have solved:
+
+* piecewise constant potentials (matrix approach for joining at boundaries)
+
+* Airy functions (linear potential and joining JWKB across turning point)
+* JWKB (quantization condition and semi-classical wavefunctions)
+
+* numerical integration (today)
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+9 - 2
+
+Numerical Integration of the 1-D Schrödinger Equation
+
+widely used
+incredibly accurate
+no restrictions on V(x) or on E–V(x) [e.g. nonclassical region, near turning
+points, double minimum potential, kinks in V(x).]
+For most 1-D problems, where all one cares about is a set of {Ei, ψi}, where ψ i is
+defined on a grid of points xi, one uses Numerov-Cooley
+See
+1.  Cooley, Math. Comput. 15, 363 (1961).
+
+2.  Press et. al., Numerical Recipes, Chapters 16 and 17
+
+Handouts
+
+1.  Classic unpublished paper by Zare and Cashion with listing of Fortran
+program (now see LeRoy web site)
+
+2.  Tests of N-C vs. other methods by Tellinghuisen
+
+Basic Idea:  grid method
+
+* solve differential equation by starting at some xi and propagating trial
+solution from one grid point to the next
+
+* apply ψ(x) = 0 BCs at x = 0 and ∞ by two different tricks and then force
+agreement at some intermediate point by adjusting E.
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+Euler’s Method
+
+9 - 3
+
+h
+
+h
+
+h
+
+•
+
+•
+x0
+
+•
+x1
+
+•
+x2
+
+want ψ(x) at a series of grid points x0, x1, …xn=x0+nh
+ψi = ψ(xi)
+call these
+prescription for going n → n + 1 must
+Need a generating function f(xn, ψn)
+)
+(
+ψ n +1 = ψ n + hf x n , ψ n
+depend on both xn
+and ψn.  xn samples
+potential, ψ
+n samples
+↑
+previous value of ψ.
+increment
+in x
+xn+1  – xn = h [NOT Planck’s constant]
+(ψn is a number, not the entire wavefunction.)
+For the Euler method, the generating function is simply:
+= ψ n +1 − ψ n
+≈ ψ n +1 − ψ n
+) = dψ
+(
+f x n , ψ n
+x n +1 − x n
+dx x n
+h
+The value of this derivative actually comes from the
+differential equation that ψ must satisfy, not from
+prior knowledge of ψ(x) (which we do not yet have!)
+µ
+ψ
+2
+d
+2
+2
+dx
+h
+
+For the Schrödinger Eqn. 
+  
+
+−
+( ))
+E U x
+
+ψ
+
+=
+
+–
+
+(
+
+2
+
+C
+
+( )
+V x
+
+( )  
+U x
+
+is potential.
+
+All constants absorbed in V(x).  V(x) Must be in units of Å–2.
+2ψ
+d
+2 = V(x)ψ (x)
+]
+[
+−
+≡
+( )
+C U x
+E
+(
+)
+dx
+π µ
+=
+−
+16
+2
+10
+8
+c
+h
+≡ ψ i +1 − ψ i
+dψ
+µ
+=
+0 0593203146
+.
+)
+(
+12
+h
+dx x i
+ ,  
+  
+C
+amu
+2ψ
+ − ψ i − ψ i −1
+= ψ i +1 − ψ i
+
+
+
+
+d
+
+
+
+2
+
+h
+h
+dx
+]
+[
+−2 ψ i +1 − 2ψ i + ψ i −1
+
+µ A = m1m 2
+m1 + m 2
+
+
+
+ h
+
+h is increment of distance,
+
+= h
+
+
+
+
+x i
+
+A
+
+in Å.  E and U(x) are in
+-1
+cm  units (E / hc)
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+9 - 4
+Schr. Eq. tells us the rule for propagating ψ.  Employing Euler’s method (h is not
+Planck’s constant):
+[
+] = V iψ i
+−2 ψ i +1 − 2ψ i + ψ i −1
+h
+ψ i +1 − 2ψ i + ψ i −1 = h 2V iψ i
+ψ i +1 = 2ψ i − ψ i −1 + h 2V iψ i
+
+a recursion relationship.  Need
+both ψi and ψi–1 to get ψi+1.
+in order to get things  started we need two values of ψ starting at
+either edge of  the region wh ere ψ is defined and ψ starts out very
+small.
+
+See Press et. al. handout for di scussion of nth -order Runge-Kutta
+method.  The generator is chosen more cl everly than in  the
+Euler method so that  stepping errors are minimized by taking
+more derivatives at intermediate p oints in the xi, xi+1 interval.
+Cooley specifies
+=
+ψ
+2
+h V
+y
+2
++
+]
+[
+i
+i
+i
+1
+1
+= − (
+)
+ψ (and vice versa)
+h
+V
+1
+12
+i
+i
+* use ψi to get yi
+* use ψi and yi (and yi–1 ) to get y i+1
+* use yi+1 to get ψi+1
+
+−
+
++
+
+y
+
+y
+
+i
+
+i
+
+y
+
+−
+
+i
+
+2
+
+The result is that the error in y i +1 is on the order of 
+h 6
+ψ iV i   —  smaller error if h is smaller
+240
+
+(much better than Euler)
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+So what do we do?
+
+9 - 5
+
+0
+
+–De
+
+R–(E) Re
+
+0
+
+x ≡ R – Re
+
+R+(E)
+
+R
+
+=
+R D
+(
+ e.g., V
+)
+MORSE
+∞ =
+)
+(
+V
+
+, 
+
+0
+
+−[
+1
+e
+V R
+(
+)
+e
+
+−
+
+β
+
+e
+= −
+
+−(
+R R
+
+)
+
+e
+
+] −
+2
+
+D
+
+e
+
+D
+
+e
+
+at R = 0
+R = ∞
+
+x = –Re
+
+ψ(–Re) = 0
+ψ(∞) = 0
+
+
+
+boundary conditions
+
+2 boundary  conditions handled diffe rently because w e want
+to define a f inite # of equally spaced gr id points (not
+actually nece ssary — see Press: variable grid spacing which
+is needed to sample infini te range of x with a fini te number
+of grid poin ts)
+
+*
+
+at R = 0
+
+ψ0 ≡ 0
+ψ1 = 10–20
+
+(required)
+(arbitrarily ch osen small
+number to be co rrected
+later upon n ormalization)
+
+use this to start th e integration ou tward.  If we have made
+a wrong choi ce for ψ
+1, this can be corre cted merely by
+dividing all ψ
+i  i ≥ 1 by an i- independen t correction factor .
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+9 - 6
+
+At large R (the classically forbidden region), choose ψ
+n at the last grid point, xn,
+to be small and use WKB only once to compute the next to last grid point.  We do
+this because we have no reason to go to x → ∞.
+
+ψ
+n = 10–30
+ψ
+n
+ψ
+
+n
+
+−
+1
+
+(the final grid point)
+(
+−
+
+R
+
+V
+
+−
+1
+
+n
+
+n
+
+e
+
+=
+
+)
+
+1 2
+/
+
+−
+1
+)
+
+1 2
+/
+
+−
+
+(
+R V
+n
+
+n
+
+e
+
+The next to final grid point
+[This is the only place WKB
+enters into this problem!]
+
+recall ψ
+
+JWKB
+
+=
+|
+
+p
+
+|
+
+−
+1 2
+/
+
+e
+
+−
+
+1
+h
+
+∫
+x
++
+R E
+(
+
+)
+
+|
+
+|
+p dx
+
+p
+
+p
+
+n
+
+~
+
+−
+1
+
+n
+
+−
+1 2
+/
+
+1
+
+−
+
+x
+n
+
+∫
+R E
+( )
++
+
+numerator
+
+/
+1 2
+V
+n
+−
+
+exp
+−
+
+• pre-exponential factors are approximately equal
+• integrals in exponential factors are evaluated as summations
+• in ψn–1 /ψn, the common terms in the summations in the exponential factors cancel
+
+1
+h
+∫
+R E
+( )
++
+
+denominator
+
+exp
+
+1
+h
+
+−
+1 2
+/
+
+−
+1
+
+n
+
+dx
+
+dx
+
+p
+
+n
+
+p
+
+n
+
+
+
+
+
+
+
+p
+
+x
+n
+
+Once ψn-1 is generated from ψn by JWKB, return to Cooley’s method of numerical
+integration for all successive grid points.
+So now we propagate one ψ from i = 0 ou t toward right and the
+other one from  i = n  in toward the  left.  The “shooting” method.
+
+i  =  0
+
+m
+
+n
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+9 - 7
+Stop the inward propagation of ψ when a point is reached where, for the first
+ψ m ≤ ψ m +1
+          .
+time, 
+Since |ψi| is exponentially increasing from 10–30  at i=n until it reaches its first
+maximum inside the classically allowed region, this outer lobe of ψ is also the
+most important feature of ψ (because most of the probability resides in it).
+outermost
+lobe of ψ
+maximum
+of |ψ| at
+)
+(
+ψ xm +1
+
+V(x)
+
+(cid:1)
+
+xm+1
+
+asymptotic
+approach to 0
+
+Use outermost lobe because this is the global maximum of ψ(x), this minimizes
+the problem of precision being limited by finite number of significant figures in
+the computer.
+Set value of ψ
+m = 1.0 by  renormalizing  both function s
+ψ ψ
+ψ
+ψ
+− …
+, 
+replace each 
+ from n, 
+*  
+1
+n
+i
+for all i down to m.
+    (from the right)
+ψ
+ψ
+M
+*  
+, 
+ from  = 0, 1
+i
+replace each 
+for all i up to m.
+    (from the left)
+
+ψ ψ
+i
+
+ by 
+i
+
+ by 
+i
+
+…
+
+ 
+
+m
+
+ 
+
+m
+
+M
+
+m
+
+m
+
+′ψ i = ψ i
+ψ m
+
+′ψ m = 1
+
+ψ′ must be continuous, even at
+the joining grid point, m.
+
+The renormalized  ψ’s are denoted by ψ′.
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+9 - 8
+
+This ensures that ψ(x) is continuous everywhere and that it satisfies grid form of
+Schr. Eq. everywhere except i = m
+) + h 2V iψ i
+(
+0 = – y i +1 + 2y i − y i −1
+
+In order to satisfy Schr. Eq. for i = m, it is necessary to adjust E.  The above
+equation can be viewed as a nonlinear requirement on E.  At the crucial grid
+point i = m, define an error function, F(E).
+) + h 2Vm
+(
+) = – ym +1
+F E(
+E ψ m
+E − ym −1
++ 2ym
+E
+E
+E
+
+where we want to search for zeroes of F(E).
+
+Assume that F(E) can be expanded about E1 (E1 is the initial, randomly chosen
+value of E.)
+)   +  discard higher terms
+(
+) + dF
+) = F E1(
+F E(
+dE E1
+and solve for the value of E where F(E) = 0.
+Call this  E2
+
+E − E1
+
+= (
+F E
+
+1
+
+0
+
+E 2 = −
+
+(
+
+E
+
+) +
+
+dF
+dE
+E
+1
+)
+F E1(
+)
+(
+dF dE
+E1
+Correction to E1
+
+−
+
+E
+
+1
+
+2
+
+)
+
++ E1
+
+This gives an
+estimate of where
+the zero of F(E)
+nearest E1 is
+located.
+
+updated 9/1 8/0 2 8 :54 AM
+
+5.73 Lecture #9
+
+9 - 9
+
+) − F E1(
+(
+= F E1 + δ
+δ
+
+Usual approach:   compute  
+
+dF
+dE E1
+Once the derivative is known, use it to compute correction to E1 (assuming
+linearity).
+F E1(
+)
+)
+dF dE
+
+E 2 = E1 + ∆ ∆ ≡ –
+
+(
+
+)
+
+Newton-Raphson
+method for solving
+nonlinear equation
+
+E1
+
+Iterate until the correction, ∆, to E is smaller than a pre-set convergence
+criterion ε.
+
+Now we have an eigenfunction of H and eigenvalue, E.
+1/ 2 = N E
+
+∫
+Normalize ψ E  by dividing by  ψ * ψdx
+n∑
+i = 0
+
+ψ i
+
+h
+
+∫
+
+2
+
+integral evaluated by
+summation over grid points.
+
+ψ E x i(
+
+) =
+
+ψ * ψdx =
+ψ i
+2
+ψ j
+
+h
+
+ψ real for bound 1-D
+function
+
+box normalized:
+
+1/ 2
+
+
+
+
+
+
+
+
+This procedure has been used and tested by many workers.  A good version, “Level
+7.1” (schrq. f), is obtainable at Robert LeRoy’s web site:
+
+∑
+j
+
+http://theochem.uwaterloo.ca/~leroy/
+
+I will assign some problems based on Numerov-Cooley method for integrating the
+1-D Schr. Eq.
+
+updated 9/1 8/0 2 8 :54 AM
+
+

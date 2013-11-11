@@ -1,0 +1,822 @@
+ 
+
+Space Systems Product Development – Spring 2003 
+
+EMFFORCE OPS MANUAL 
+ 
+
+I Code  
+I.1 Control Test Code (LS, AB) 
+
+I.1.1 Test Case 1 Code 
+ 
+%r=0.1;       % Effective Radius [m] 
+%m=2;         % Estimated Body Mass [kg] 
+%I=0.5*m*r^2; % Estimated Inertia [kg-m^2] 
+ 
+I = 1;         % Estimated Inertia [kg-m^2] 
+ 
+A=[0 1 ; 0 0 ]; 
+B=[0 ; 1/I]; 
+ 
+lamda=1; 
+rho=lamda/4; 
+ 
+type=input('Input case(in quotes)'); % 0 for Regulator, 1 for Slew to Reference 
+switch type 
+case 'a' 
+    Rxx=[1e-5 0 ; 0 lamda]; 
+    Ruu=rho; 
+    [K,S,E]=lqr(A,B,Rxx,Ruu) 
+case 'b' 
+    n=1e-2; 
+    Rxx=[lamda 0 ; 0 lamda/1000]; 
+    Ruu=rho; 
+    [K,S,E]=lqr(A,B,Rxx,Ruu) 
+    C=[n^3 1];       
+    D=0;         
+    G = B; 
+    H = 0; 
+    sys=ss(A,[B G],C,[D H]); 
+    [Kest,L,P]=kalman(sys,n,n,n) 
+end 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Massachusetts Institute of Technology 
+
+1 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+I.1.2 Test Case 2 Code 
+ 
+clear all; 
+mu_b1 = 100*40*(.75/2)^2*pi; %Guess at value 
+mu_b2 = 1/10*mu_b1;          %arbitrary decision 
+mu_0  = 4*pi*1e-7; 
+ma = 15;                     %Estimate in kg 
+Ia = 1;                      %Inertia of a and b in z direction 
+Ib = 1;                      %Change this!!!! 
+r = 2;                       %separation distance in meters 
+n = 1e-5; 
+rho = 1/4;                   %weighting factor 
+ 
+c = input('Which case(in quotes)');  
+ 
+A = zeros(8); 
+A(1:4, 5:8) = eye(4); 
+ 
+B = zeros(8,4); 
+B(5,1) = -15*mu_b1*mu_0/(2*pi*r^4*ma); 
+B(5,2) = 15*mu_b2*mu_0/(4*pi*r^4*ma); 
+B(6,1) = 15*mu_b2*mu_0/(4*pi*r^4*ma); 
+B(6,2) = 15*mu_b1*mu_0/(4*pi*r^4*ma); 
+B(7,1) = -mu_b2*mu_0/(pi*r^3*Ia); 
+B(7,2) = -2*mu_b1*mu_0/(pi*r^3*Ia); 
+B(7,3) = 1/Ia; 
+B(8,1) = -2*mu_b2*mu_0/(pi*r^3*Ib); 
+B(8,2) = -mu_b1*mu_0/(pi*r^3*Ib); 
+B(8,4) = 1/Ib; 
+ 
+switch c 
+     
+case 'a' %two vehicles, 1 fixed, disturbance rejection 
+    A=A([1:6], [2:7]); 
+    B=B([2:7], [1:3]); 
+     
+    Q = n*eye(6); 
+    Q(4:6, 4:6) = eye(3); 
+     
+    R = diag([rho, rho, rho/2]); 
+     
+    [Ka, S, E] = lqr(A, B, Q, R); 
+    Ka  
+case 'b'  %two vehicles, 1 fixed, tracking 
+    A=A([1:6], [2:7]); 
+    B=B([2:7], [1:3]); 
+ 
+ 
+Massachusetts Institute of Technology 
+
+2 
+
+Space Systems Product Development – Spring 2003 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+     
+    Q = n*eye(6); 
+    Q(1:3, 1:3) = eye(3); 
+     
+    R = diag([rho, rho, rho/2]); 
+     
+    [Kb, S, E] = lqr(A, B, Q, R); 
+    Kb 
+case 'c'  %two vehicles, both free, disturbance rejection 
+    Q = n*eye(8); 
+    Q(5:8, 5:8) = eye(4); 
+     
+    R = diag([rho, rho, rho/2, rho/2]); 
+    [Kc, S, E] = lqr(A, B, Q, R); 
+    Kc 
+case 'd' %two vehicles, both free, tracking  
+    Q = n*eye(8); 
+    Q(1:4, 1:4) = eye(4); 
+     
+    R = diag([rho, rho, rho/2, rho/2]); 
+    [Kd, S, E] = lqr(A,B,Q,R); 
+    Kd 
+end 
+ 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+3 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+EMFFORCE OPS MANUAL 
+ 
+I.1.3 Test Case Three Code 
+ 
+clear 
+mu_b1 = 100*40*(.75/2)^2*pi; %Guess at value 
+mu_b2 = 1/10*mu_b1;          %arbitrary decision 
+mu_0  = 4*pi*1e-7; 
+ma = 15;                     %Estimate in kg 
+mb = 15;                     %Estimate in kg 
+mc = 15;                     %Estimate in kg 
+Ia = .5*ma*(.75/2)^2;        %Inertia estimates of a and b in z direction 
+Ib = .5*mb*(.75/2)^2;        %Inertia estimates of a and b in z direction 
+Ic = .5*mc*(.75/2)^2;        %Inertia estimates of a and b in z direction 
+r_ab = 2; 
+r_bc = 2; 
+n = 1e-5; 
+ 
+c = input('Which case(in quotes)'); 
+ 
+A=zeros(14); 
+A(1:7,8:14)=eye(7); 
+ 
+B=zeros(14,7); 
+B(8,1:2)=(15*mu_0/(2*pi*ma*r_ab^4))*[-mu_b1 mu_b2/2]; 
+B(9,3:4)=(15*mu_0/(2*pi*mc*r_bc^4))*[-mu_b1 mu_b2/2]; 
+B(10,1:2)=(15*mu_0/(4*pi*ma*r_ab^4))*[mu_b2 mu_b1]; 
+B(11,3:4)=(15*mu_0/(4*pi*mc*r_bc^4))*[mu_b2 mu_b1]; 
+B(12,1:2)=(-mu_0/(pi*Ia*r_ab^3))*[mu_b2 2*mu_b1]; 
+B(13,1:4)=(-mu_0/(pi*Ib))*[2*mu_b2/(r_ab^3) mu_b1/(r_ab^3) 2*mu_b2/(r_bc^3) 
+mu_b1/(r_bc^3)]; 
+B(14,3:4)=(-mu_0/(pi*Ic*r_bc^3))*[mu_b2 2*mu_b1]; 
+B(12,5)= 1/Ia; 
+B(13,6)= 1/Ib; 
+B(14,7)= 1/Ic; 
+ 
+switch c 
+     
+case 'a' %test case a is three vehicles with the center fixed doing distrubance rejection 
+rho = 1/4; 
+     
+A=A([1:5 7:12 14], [1:5 7:12 14]); 
+B=B([1:5 7:12 14], [1:5 7]); 
+ 
+Q=n*eye(6); 
+Q(7:12,7:12)=eye(6); 
+ 
+R=diag([rho rho rho rho rho/2 rho/2]); 
+ 
+ 
+Massachusetts Institute of Technology 
+
+4 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+[Ka, S, E] = lqr(A, B, Q, R); 
+Ka 
+     
+case 'b' %test case b is three vehicles with the center vehicle fixed doing tracking    
+rho = 1/4; 
+     
+A=A([1:5 7:12 14], [1:5 7:12 14]); 
+B=B([1:5 7:12 14], [1:5 7]); 
+ 
+Q=eye(6); 
+Q(7:12,7:12)=n*eye(6); 
+ 
+R=diag([rho rho rho rho rho/2 rho/2]); 
+ 
+[Kb, S, E] = lqr(A, B, Q, R); 
+Kb 
+     
+case 'c', %test case c is three free vehicles, disturbance rejection 
+rho = 1/4; 
+     
+Q=n*eye(7); 
+Q(8:14,8:14)=eye(7); 
+ 
+R=diag([ rho rho rho rho rho/2 rho/2 rho/2]); 
+  
+[Kc, S, E] = lqr(A, B, Q, R); 
+Kc 
+     
+case 'd', %test case d is three vehicles, tracking 
+rho = 1/4; 
+     
+Q=eye(7); 
+Q(8:14,8:14)=n*eye(7); 
+ 
+R=diag([ rho rho rho rho rho/2 rho/2 rho/2]); 
+     
+[Kd, S, E] = lqr(A, B, Q, R); 
+Kd 
+end 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+5 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+  
+ 
+ 
+ 
+ 
+
+I.1.4 Spin-up Approach 1 Code 
+ 
+%  Spinup dymanics 
+%  Calculated and written by Laila Elias, Leah Soffer, and Andre' Bosch 
+%  See Andre's Lab book page 14 with any questions 
+ 
+clear all; 
+close all; 
+ 
+ramp=2;           % 0 for constant k, 1 for ramp k, 2 for ramp higher than s.s. value 
+switch ramp 
+case 0 
+    steps = 200;                                % number of timesteps 
+    total_time = 25; 
+case 1 
+    steps = 100;                                % number of timesteps 
+    total_time = 85; 
+case 2 
+    steps = 100;                                % number of timesteps 
+    total_time = 10; 
+end 
+dt = total_time/steps;                      % timestep in seconds (time for total 
+maneuver/timesteps) 
+time = dt:dt:steps*dt; 
+mass = 20;                                  % in kg 
+I=1;                                        %inertia 
+thetadotdot = zeros(steps,1);               % enough for time steps of .05 seconds 
+thetadot = zeros(steps,1); 
+theta_a = 0;                                % coordinate system fixed on vehicle a 
+theta_b = zeros(steps,1); 
+theta_bdot = zeros(steps,1); 
+r = 1;                                      % radius is one meter 
+Frad = zeros(steps,1);                      % radial EM force 
+Ftan = zeros(steps,1);                      % tangential EM force 
+%F_rad = 3/(2*pi)*mu0*mua*mub/(2*r)^4 = m*omega^2*r 
+%k = 3*mu0*mua*mub/(4*pi); 
+mu0 = 4*pi*1e-7; 
+omega = 2*pi/60;                            %in steady state 
+%mu = sqrt(32*mass*(omega^2)*(r^5)/(3*mu0)*pi);   %mu for each coil in steady state; 
+d_coil= 0.83;                                %diameter of large coil in meters 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+6 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+n = 100;                                    %number of wraps in coil; 
+ 
+k = 40*(pi^2)/3600*16;                      % constant terms in front, also takes into 
+% account the mu's since we are saying they 
+% are constant in this case.  See lab book!k 
+ 
+switch ramp 
+case 0 
+    k=k*ones(1,steps); 
+case 1 
+    root_k = sqrt(k); 
+    ramp_time = 69.7; 
+    dk = root_k/ramp_time*dt; 
+    ramp_k = [dk:dk:root_k root_k*ones(1,(steps-ramp_time/dt))]; 
+    k = ramp_k.*ramp_k; 
+    %theta = zeros(steps,1); 
+case 2 
+    root_k = sqrt(k); 
+    max_root_k=1.5*root_k; 
+    ramp_time_1 = 1; 
+    ramp_time_2 = 8; % max_ramp_k time should be 8 or less to make sense 
+    ramp_time_3 = 1; 
+    ramp_time_4 = total_time-(ramp_time_1+ramp_time_2+ramp_time_3); 
+    dk_1 = max_root_k/(ramp_time_1)*dt; 
+    dk_3 = -(max_root_k-root_k)/ramp_time_3*dt; 
+    ramp_k = [dk_1:dk_1:max_root_k max_root_k*ones(1,ramp_time_2/dt) 
+max_root_k+dk_3:dk_3:root_k root_k*ones(1,ramp_time_4/dt)]; 
+    k = ramp_k.*ramp_k; 
+    %theta = zeros(steps,1); 
+end 
+ 
+% initial conditions      NOTE Coriolis effect not in thetadotdot 
+theta_b(1) = pi/2; 
+thetadotdot(1) =  (k(1)/mass/((2*r)^4)/r)*(sin(theta_b(1))*cos(theta_a)... 
+    +sin(theta_a)*cos(theta_b(1))); 
+ 
+for count = 2:(steps); 
+    thetadot(count) = thetadot(count-1) + thetadotdot(count-1)*dt; 
+    %theta(count) = theta(count-1) + thetadotdot(count-1)/2*dt^2;  %needs to add integral 
+of thetadot term 
+    Frad(count) = -((thetadot(count))^2)*r*mass; 
+     
+    theta_b(count) = acos(-Frad(count)*(2*r)^4/k(count)/2); 
+     
+    if imag(theta_b(count)) ~=0 
+        theta_b(count) = 0; 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+7 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+    end 
+    theta_bdot(count) = (theta_b(count) - theta_b(count-1))/dt;     
+    Ftan(count) = k(count)/((2*r)^4)*((sin(theta_b(count))*cos(theta_a))...   
+        +(sin(theta_a)*cos(theta_b(count))));    %r^5???? 
+    thetadotdot(count) = Ftan(count)/mass/r; 
+     
+end 
+real_k = k/3/(2*r)^3;                %k defined in packet as mu0*muA*muB/(4*pi*d^3) 
+delta = 0; chi = 0;                          %no rotation in plane 
+%EM Torques on vehicle noted     
+%T_EMxA = real_k'.*(sin(theta_a)*sin(theta_b)*sin(chi-delta)); 
+%T_EMyA = 
+real_k'.*(cos(theta_a)*sin(theta_b)*sin(delta)+2*sin(theta_a)*cos(theta_b)*sin(chi)); 
+T_EMzA = -
+real_k'.*(cos(theta_a)*sin(theta_b)*cos(delta)+2*sin(theta_a)*cos(theta_b)*cos(chi)); 
+%T_EMxB = real_k'.*(sin(theta_a)*sin(theta_b)*sin(delta-chi)); 
+%T_EMyB = 
+real_k'.*(2*cos(theta_a)*sin(theta_b(count))*sin(delta)+sin(theta_a)*cos(theta_b(count))
+*sin(chi)); 
+T_EMzB = -
+real_k'.*(2*cos(theta_a)*sin(theta_b)*cos(delta)+sin(theta_a)*cos(theta_b)*cos(chi)); 
+     
+%Torque on reaction wheels 
+theta_b_dotdot=[diff(diff(theta_b))]/dt^2; 
+theta_b_dotdot = [theta_b_dotdot; theta_b_dotdot(end); theta_b_dotdot(end)]; 
+T_RW_A = -(mass*r^2+I)*thetadotdot + T_EMzA;               %Torque History Needed 
+on RW A to Maintain Theta A at Zero 
+T_RW_B = -(mass*r^2+I)*thetadotdot +I*theta_b_dotdot + T_EMzB;    % Torque 
+History Needed on RW B to Maintain the Theta B History Calculated Above 
+ 
+ 
+%figure(5); set(gca,'fontsize',14); 
+subplot(2,2,2); 
+plot(time, theta_b); 
+xlabel('Time [s]') 
+ylabel('\theta_b [rad]') 
+title('Angle of Spacecraft B from Radial Line') 
+ 
+%figure(6); set(gca,'fontsize',14); 
+subplot(2,2,3); 
+plot(time, thetadotdot); 
+xlabel('Time [s]') 
+ylabel('\Theta_{dd} [rad/s^2]') 
+title('Angular Acceleration of Array') 
+ 
+%figure(7); set(gca,'fontsize',14); 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+8 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+subplot(2,2,4); 
+plot(time, thetadot); 
+xlabel('Time [s]') 
+ylabel('\Theta_{d} [rad/s]') 
+title('Angular Rate of Array') 
+ 
+mu = sqrt(k*4*pi/(3*mu0)); 
+i= mu/(n*pi*(d_coil/2)^2);            %amps needed in coil for steady 
+state?????????????????????????????? 
+%figure(11); set(gca,'fontsize',14); 
+subplot(2,2,1); 
+plot(time,i); 
+grid 
+xlabel('Time [s]') 
+ylabel('i [A]') 
+title('Current in EM') 
+ 
+figure; 
+%figure(8); set(gca,'fontsize',14); 
+subplot(2,1,1); 
+plot(time,T_EMzA, time, T_EMzB); 
+xlabel('Time [s]') 
+ylabel('Torque [Nm]') 
+title('Torque Needed From EM') 
+legend('T_{EMzA}' , 'T_{EMzB}' ,0) 
+ 
+%figure(9); set(gca,'fontsize',14); 
+subplot(2,1,2); 
+plot(time,T_RW_A, time, T_RW_B); 
+xlabel('Time [s]') 
+ylabel('Torque [Nm]') 
+title('Torque Needed From Reaction Wheel A and B') 
+legend('T_{RWA}', 'T_{RWB}', 0) 
+ 
+if 0 
+    figure(10); set(gca,'fontsize',14); 
+    plot(time,theta); 
+    xlabel('Time [s]') 
+    ylabel('') 
+    title('') 
+end 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+9 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+ 
+ 
+ 
+ 
+
+I.1.5 Spin-up Approach 2 Code (has bugs) 
+ 
+%  Spinup dymanics 
+%  Calculated and written by Laila Elias, Leah Soffer, and Andre' Bosch 
+%  See Andre's Lab book page 14 with any questions 
+ 
+clear all; 
+close all; 
+ 
+ 
+steps = 200;                                % number of timesteps 
+total_time = 25; 
+ 
+dt = total_time/steps;                      % timestep in seconds (time for total 
+maneuver/timesteps) 
+time = dt:dt:steps*dt; 
+mass = 20;                                  % in kg 
+I=1;                                        %inertia 
+thetadotdot = zeros(steps,1);               % enough for time steps of .05 seconds 
+thetadot = zeros(steps,1); 
+theta_a = 0;                                % coordinate system fixed on vehicle a 
+theta_b = zeros(steps,1); 
+theta_bdot = zeros(steps,1); 
+theta_b_dotdot = zeros(steps,1); 
+r = 1;                                      % radius is one meter 
+Frad = zeros(steps,1);                      % radial EM force 
+Ftan = zeros(steps,1);                      % tangential EM force 
+mu0 = 4*pi*1e-7; 
+mu2 = zeros(steps,1);                       %mu squared (muA*muB) 
+omega = 2*pi/60;                            %in steady state 
+%mu = sqrt(32*mass*(omega^2)*(r^5)/(3*mu0)*pi);   %mu for each coil in steady state; 
+d_coil= 0.83;                                %diameter of large coil in meters 
+n = 100;                                    %number of wraps in coil; 
+ 
+k = 3/(4*pi)*mu0/(2*r)^4; 
+ 
+ 
+% initial conditions      NOTE Coriolis effect not in thetadotdot 
+theta_b(1) = pi/2; 
+mu2(1) = 44.7*44.7;                        %steady state mu 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+10 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+thetadotdot(1) =  (k*mu2(1)/mass/r)*(sin(theta_b(1))*cos(theta_a)... 
+    +sin(theta_a)*cos(theta_b(1))); 
+ 
+for count = 2:(steps); 
+    theta_b(count) = pi/4*cos(pi/total_time*time(count))+pi/4; 
+ 
+    thetadot(count) = thetadot(count-1) + thetadotdot(count-1)*dt; 
+    Frad(count) = -((thetadot(count))^2)*r*mass; 
+         
+    mu2(count) = -
+Frad(count)/k/(2*cos(theta_a)*cos(theta_b(count))+sin(theta_b(count))*sin(theta_a)); 
+    Ftan(count) = k*mu2(count)*((sin(theta_b(count))*cos(theta_a))...   
+        +(sin(theta_a)*cos(theta_b(count)))); 
+    thetadotdot(count) = Ftan(count)/mass/r; 
+     
+end 
+real_k = k/3*(2*r)*mu2;                %k defined in packet as mu0*muA*muB/(4*pi*d^3) 
+delta = 0; chi = 0;                          %no rotation in plane 
+%EM Torques on vehicle noted     
+%T_EMxA = real_k.*(sin(theta_a)*sin(theta_b)*sin(chi-delta)); 
+%T_EMyA = 
+real_k.*(cos(theta_a)*sin(theta_b)*sin(delta)+2*sin(theta_a)*cos(theta_b)*sin(chi)); 
+T_EMzA = -
+real_k.*(cos(theta_a)*sin(theta_b)*cos(delta)+2*sin(theta_a)*cos(theta_b)*cos(chi)); 
+%T_EMxB = real_k.*(sin(theta_a)*sin(theta_b)*sin(delta-chi)); 
+%T_EMyB = 
+real_k.*(2*cos(theta_a)*sin(theta_b(count))*sin(delta)+sin(theta_a)*cos(theta_b(count))
+*sin(chi)); 
+T_EMzB = -
+real_k.*(2*cos(theta_a)*sin(theta_b)*cos(delta)+sin(theta_a)*cos(theta_b)*cos(chi)); 
+     
+%Torque on reaction wheels 
+theta_bdot=diff(theta_b)/dt; 
+theta_bdot= [theta_bdot(1); theta_bdot]; 
+theta_b_dotdot=[diff(theta_bdot)]/dt; 
+theta_b_dotdot = [theta_b_dotdot(3); theta_b_dotdot(3); theta_b_dotdot(3); 
+theta_b_dotdot(3:end)]; 
+T_RW_A = -(mass*r^2+I)*thetadotdot + T_EMzA;               %Torque History Needed 
+on RW A to Maintain Theta A at Zero 
+T_RW_B = -(mass*r^2+I)*thetadotdot +I*theta_b_dotdot + T_EMzB;    % Torque 
+History Needed on RW B to Maintain the Theta B History Calculated Above 
+ 
+ 
+%figure(5); set(gca,'fontsize',14); 
+subplot(2,2,2); 
+plot(time, theta_b); 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+11 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+xlabel('Time [s]') 
+ylabel('\theta_b [rad]') 
+title('Angle of Spacecraft B from Radial Line') 
+ 
+%figure(6); set(gca,'fontsize',14); 
+subplot(2,2,3); 
+plot(time, thetadotdot); 
+xlabel('Time [s]') 
+ylabel('\Theta_{dd} [rad/s^2]') 
+title('Angular Acceleration of Array') 
+ 
+%figure(7); set(gca,'fontsize',14); 
+subplot(2,2,4); 
+plot(time, thetadot); 
+xlabel('Time [s]') 
+ylabel('\Theta_{d} [rad/s]') 
+title('Angular Rate of Array') 
+ 
+mu = sqrt(k*4*pi/(3*mu0)); 
+i= mu/(n*pi*(d_coil/2)^2);            %amps needed in coil for steady 
+state?????????????????????????????? 
+%figure(11); set(gca,'fontsize',14); 
+subplot(2,2,1); 
+plot(time,i); 
+grid 
+xlabel('Time [s]') 
+ylabel('i [A]') 
+title('Current in EM') 
+ 
+figure; 
+%figure(8); set(gca,'fontsize',14); 
+subplot(2,1,1); 
+plot(time,T_EMzA, time, T_EMzB); 
+xlabel('Time [s]') 
+ylabel('Torque [Nm]') 
+title('Torque Needed From EM') 
+legend('T_{EMzA}' , 'T_{EMzB}' ,0) 
+ 
+%figure(9); set(gca,'fontsize',14); 
+subplot(2,1,2); 
+plot(time,T_RW_A, time, T_RW_B); 
+xlabel('Time [s]') 
+ylabel('Torque [Nm]') 
+title('Torque Needed From Reaction Wheel A and B') 
+legend('T_{RWA}', 'T_{RWB}', 0) 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+12 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+if 0 
+    figure(10); set(gca,'fontsize',14); 
+    plot(time,theta); 
+    xlabel('Time [s]') 
+    ylabel('') 
+    title('') 
+end 
+theta_b_dot = diff(theta_b)/dt^2; 
+figure; 
+subplot(3,1,1); 
+plot(time, theta_b); 
+xlabel('Time [s]') 
+ylabel('\theta_b [rad]') 
+subplot(3,1,2); 
+plot(time(1:end-1), theta_b_dot); 
+xlabel('Time [s]') 
+ylabel('\theta_{d}_b [rad/s]') 
+subplot(3,1,3); 
+plot(time, theta_b_dotdot); 
+xlabel('Time [s]') 
+ylabel('\theta_{dd}_b [rad/s^2]') 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+13 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+References 
+ 
+Schweighart, Samuel A.   Two Satellite Spin-up.   Massachusetts  Institute  of Technology, 
+2002. 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+14 
+
+Dept of Aeronautics and Astronautics 
+
+

@@ -1,0 +1,337 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms	
+
+October  6,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  9 
+
+9  Linear  Programming 
+
+Linear  programming  is  the  class  of  optimization  problems  consisting  of  optimizing  the  value  of  a 
+linear  ob jective  function,  sub ject  to  linear  equality  or  inequality  constraints.  These  constraints  are 
+of  the  form 
+
+a1x1  + · · · + anxn  {≤, =, ≥}  b, 
+where  ai , b ∈ R,  and  the  goal  is  to  maximize  or minimize  an  ob jective  function  of  the  form 
+· · · 
++ cnxn .
+c1x1  +
+
+In  addition,  we  constrain  the  variables  xi  to  be  nonnegative. 
+The  problem  can  be  expressed  in matrix  form.  Given  these  constraints 
+{≤, =, ≥} 
+≥ 
+
+Ax 
+x 
+
+b
+0,
+
+maximize  or minimize  the  value  of 
+
+Tc x, 
+
+where  x ∈ Rn , A ∈ Rm×n , b ∈ Rm , c ∈ Rn . 
+Linear  programming  has  many  applications  and  can  also  be  used  as  a  proof  technique.  In 
+addition,  it  is  important  from  a  complexity  point-of-view,  since  it  is  among  the  hardest  of  the  class 
+of  polynomial-time  solvable  problems. 
+
+9.1  Algorithms 
+Research  in  linear  programming  algorithms  has  been  an  active  area  for  over  60  years.  In  this  class, 
+we  will  discuss  three ma jor  (classes  of )  algorithms: 
+• 
+
+Simplex  method  (Dantzig  1947). 
+
+–	 Fast  in  practice. 
+–	 Still  the most-used  LP  algorithm  today. 
+–	 Can  be  nonpolynomial  (exponential)  in  the  worst  case. 
+
+• 
+
+Ellipsoid  algorithm  (Shor,  Khachian  1979). 
+
+–	 Polynomial  time;  this  was  the  ﬁrst  polynomial-time  algorithm  for  linear  programming. 
+–	 Can solve LP (and other more general) problems where the feasible region P  = {x : Ax = 
+b, x ≥  0}  is  not  explicitly  given,  but  instead,  given  a  vector  x,  one  can  eﬃciently  decide 
+whether  x ∈ P  or  if  not,  ﬁnd  an  inequality  satisﬁed  by  P  but  not  by  x. 
+–	 Very  useful  for  designing  polynomial  time  algorithms  for  other  problems. 
+–	 Not  fast  in  practice. 
+
+9-1 
+
+•	 Interior-point  algorithms  (Karmarkar  1984). 
+–	 This  is  a  class  of  algorithms  which  maintain  a  feasible  point  in  the  interior  of  P ;  many 
+variants  (by many  researchers)  have  been  developed. 
+–	 Polynomial  time. 
+–	 Fast  in  practice. 
+–	 Can  beat  the  simplex method  for  larger  problems. 
+
+9.2  Equivalent  forms 
+A  linear  programming  problem  can  be  modiﬁed  to  ﬁt  a  preferred  alternate  form  by  changing  the 
+ob jective  function  and/or  the  linear  constraints.  For  example,  one  can  easily  transform  any  linear 
+program  into  teh  standard  form:  min{cT x  :  Ax  =  b, x  ≥  0}.  One  can  use  the  following  simple 
+transformations. 
+� � 
+−→ 
+max{cT x} 
+min{−cT x}
+x ≤ bi
+
+aT
+
+−→ 
+T x = bi 
+ai
+i  x ≥ bi 
+i
+a
+T 
+⎧ 
++ s = bi  (s ∈ Rn ) 
+x 
+ai
+T 
+T x ≤ bi  −→ 
+⎨	
+ai
+≥ 
+0
+s 
+replace  xj  everywhere  by  x +  − x−
+xj  unrestricted  in  sign  −→  ⎩ 
+j 
+j
+xj  ≥ 0 
++
+j  ≥ 0 
+x−
+
+Maximize  to  minimize	
+Equality  to  inequality 
+
+Inequality  to  nonnegativity  constraint 
+
+Variables  unrestricted  in  sign 
+
+9.3  Deﬁnitions 
+Here  is  some  basic  terminology  for  a  linear  program. 
+
+Deﬁnition  1  A  vector  x  is  feasible  for  an  LP  if  it  satisﬁes  al l  the  constraints. 
+
+Deﬁnition  2  An  LP  is  feasible  if  there  exists  a  feasible  solution  x  for  it. 
+
+Deﬁnition  3  An  LP  is  infeasible  if  there  is  no  feasible  solution  x  for  it. 
+Deﬁnition  4  An  LP  min{cT x  : Ax = b, x ≥ 0}  is  unbounded  if,  for  al l  λ ∈ R,  ∃x ∈ Rn  such  that 
+Ax = b 
+x ≥ 0 
+cT x ≤ λ. 
+
+9.4  Farkas’  lemma 
+If  we  have  a  system  of  equations  Ax  =  b,  from  linear  algebra,  we  know  that  either  Ax  =  b  is 
+Indeed,  since  Im(A) =  ker(AT )⊥ ,  either  b 
+solvable,  or  the  system  AT y =  0,  bT y  =  0  is  solvable. 
+is  orthogonal  to  ker(AT )  (in  which  case  it  is  in  the  image  of  A,  i.e.  Ax  =  b  is  solvable)  or  it  is 
+not  orthogonal  to  it  in which  case  one  can  ﬁnd  a  vector  y ∈ ker(AT ) with  a  non-zero  inner  product 
+with  b  (i.e.  AT y = 0,  bT y = 0  is  solvable). 
+Farkas’  lemma  generalizes  this  when  we  have  also  linear  inequalities: 
+
+Lemma  1  ((Farkas’  lemma))  Exactly  one  of  the  fol lowing  holds: 
+1.	 ∃x ∈ Rn  : Ax = b, x ≥ 0, 
+
+9-2 
+
+�
+�
+2.  ∃y ∈ Rm  : AT y ≥ 0, bT y < 0. 
+Clearly,  both  cannot  simultaneously  happen,  since  the  existence  of  such  an  x  and  a  such  a  y 
+would mean: 
+
+yT Ax = yT (Ax) = y T b < 0, 
+
+while 
+
+yT Ax = (AT y)T x ≥ 0, 
+as  the  inner  product  of  two  nonnegative  vectors  is  nonnegative.  Together  this  gives  a  contradiction. 
+
+9.4.1  Generalizing  Farkas’  Lemma 
+Before  we  provide  a  proof  of  the  (other  part  of )  Farkas’  lemma,  we  would  like  to  brieﬂy  mention 
+other  possible  generalizations  of  the  solvability  of  system  of  equations. 
+First  of  all,  consider  the  case  in  which  we  would  like  the  variables  x  to  take  integer  values, 
+but  don’t  care  whether  they  are  nonnegative  or  not.  In  this  case,  the  natural  condition  indeed  is 
+necessary  and  suﬃcient.  Formally,  suppose  we  take  this  set  of  constraints: 
+
+Ax  =  b 
+∈ 
+Zn
+x 
+Then  if yT Ax = yT b,  and we  can ﬁnd  some yT A ∈ Zn  and  some yT b  that  is not  integral,  then  the 
+system  of  constraints  is  infeasible.  The  converse  is  also  true. 
+
+Theorem  2  Exactly  one  of  the  fol lowing  holds: 
+1.  ∃x ∈ Zn  : Ax = b, 
+2.  ∃y ∈ Rm  : AT y ∈ Zn  and  bT y ∈/ Z. 
+One could try to combine both nonnegativity constraints and integral restrictions but in that case, 
+the  necessary  condition  for  feasibility  is  not  suﬃcient.  In  fact,  for  the  following  set  of  constraints: 
+
+Ax  =  b 
+0≥ 
+x 
+∈ 
+Zn ,
+x 
+
+determining  feasibility  is  an NP-hard  problem,  and  therefore we  cannot  expect  a  good  characteriza­
+tion  (a  necessary  and  suﬃcient  condition  that  can  be  checked  eﬃciently). 
+
+9.4.2  Proof  of  Farkas’  lemma 
+We  ﬁrst  examine  the  pro jection  theorem,  which  will  be  used  in  proving  Farkas’  lemma  (see  Figure 
+1). 
+Theorem  3  (The  pro jection  theorem)  If  K  is  a  nonempty,  closed,  convex  set  in  Rm  and  b  ∈/
+K ,  deﬁne 
+�z − b�2 . 
+p = pro jK (b) = arg min 
+z∈K 
+Then,  for  al l  z ∈ K  : (z − p)T (b − p) ≤ 0. 
+
+(1) 
+
+9-3 
+
+Figure  1:  The  pro jection  theorem. 
+
+Proof  of  Lemma  1:  We  have  seen  that  both  systems  cannot  be  simultaneously  solvable. 
+So,  now  assume  that  �x  : Ax = b, x ≥ 0  and we would  like  to  show  the  existence  of  y  satisfying 
+the  required  conditions.  Deﬁne 
+
+K  = {Ax  : x ∈ Rn , x ≥ 0} ⊆ Rm . 
+By  assumption,  b  ∈/ K ,  and  we  can  apply  the  pro jection  theorem.  Deﬁne  p  =  pro jK (b).  Since 
+p ∈ K , we have  that p = Ax  for  some  vector x ≥ 0.  Let y = p − b ∈ Rm .  We  claim  that y  satisﬁes 
+the  right  conditions. 
+Indeed,  consider  any  point  z ∈ K .  We  know  that  ∃w ≥ 0 : z = Aw.  By  the  pro jection  theorem, 
+we  have  that  (Aw − Ax)T y ≥ 0,  i.e. 
+
+(w − x)T AT y ≥ 0, 
+(2) 
+for  all w ≥ 0.  Choosing w = x + ei  (where  ei  is  the  ith  unit  vector), we  see  that AT y ≥ 0.  We  still 
+need  to  show  that  bT y <  0.  Observe  that  bT y  = (p − y)T y  =  pT y − yT y  <  0  because  pT y  ≤  0 
+w  =  0:  −xT AT y  ≥  0, 
+and  yT y  >  0.  The  latter  follows  from  y  =  0  and  the  former  from  (2)  with 
+i.e.  −pT y ≥ 0. 
+� 
+
+9.4.3  Corollary  to  Farkas’  lemma 
+Farkas’  lemma  can  also  be  written  in  other  equivalent  forms. 
+
+Corollary  4  Exactly  one  of  the  fol lowing  holds: 
+1.  ∃x ∈ Rn  : Ax ≤ b, 
+2.  ∃y ∈ Rm  : y ≥ 0, AT y = 0, bT y < 0. 
+Again, x  and y  cannot  simultaneously  exist.  This  corollary  can be  either  obtained by massaging 
+Farkas’  lemma  (to  put  the  system  of  inequalities  in  the  right  form),  or  directly  from  the  pro jection 
+theorem. 
+
+9.5  Duality 
+Duality  is  one  of  the  key  concepts  in  linear  programming.  Given  a  solution  x  to  an  LP  of  value  z , 
+how  do  we  decide  whether  or  not  x  is  in  fact  an  optimum  solution?  In  other  words,  how  can  we 
+calculate  a  lower  bound  on min cT x  given  that Ax = b, x ≥ 0? 
+
+9-4 
+
+�
+Suppose we  have  y  such  that AT y ≤ c.  Then  observe  that  yT b = yT Ax ≤ cT x  for  any  feasible 
+solution  x.  Thus  yT b  provides  a  lower  bound  on  the  value  of  our  linear  program.  This  conclusion 
+is  true  for  all  y  satisfying  AT y ≤ c,  so  in  order  to  ﬁnd  the  best  lower  bound,  we  wish  to  maximize 
+yT b  under  the  constraint  of AT y ≤ c. 
+We  can  see  that  this  is  in  fact  itself  another  LP.  This  new  LP  is  called  the  dual  linear  program 
+of  the  original  problem,  which  is  called  the  primal  LP. 
+•  Primal  LP: min cT x,  given Ax = b, x ≥ 0, 
+•  Dual  LP: max bT y,  given AT y ≤ c. 
+
+9.5.1  Weak  Duality 
+The  argument  we  have  just  given  shows  what  is  known  as  weak  duality. 
+Theorem  5  If  the  primal  P  is  a  minimization  linear  program  with  optimum  value  z,  then  it  has  a 
+dual  D,  which  is  a  maximization  problem  with  optimum  value  w  and  z ≥ w. 
+Notice  that  this  is  true  even  if  either  the  primal  or  the  dual  is  infeasible  or  unbounded,  provided 
+we  use  the  following  convention: 
+
+infeasible  min.  problem  −→  value = +∞ 
+unbounded min.  problem  −→  value = −∞ 
+infeasible  max.  problem  −→  value = −∞ 
+unbounded max.  problem  −→  value = +∞ 
+
+9.5.2  Strong  Duality 
+What  is  remarkable  is  that one  even has  strong duality,  namely both  linear programs have  the  same 
+values  provided  at  least  one  of  them  is  feasible  (it  can  happen  that  both  the  primal  and  the  dual 
+are  infeasible). 
+
+Theorem  6  If  P  or  D  is  feasible,  then  z = w. 
+
+Proof:  We  assume  that  P  is  feasible  (the  argument  if D  is  feasible  is  analogous;  or  one  could  also 
+argue  that  the  dual  of  the  dual  is  the  primal  and  therefore  one  can  exchange  the  roles  of primal  and 
+dual). 
+If  P  is  unbounded,  z = −∞,  and  by  weak  duality, w ≤ z.  So  it must  be  that w = −∞  and  thus 
+z = w. 
+Otherwise  (if  P  is  not  unbounded),  let  x∗  be  the  optimum  solution  to  P,  i.e.: 
+z  =  cT x∗ 
+Ax∗  =  b 
+0≥ 
+x∗ 
+We  would  like  to  ﬁnd  a  dual  feasible  solution  with  the  same  value  as  (or  no  worse  than)  x∗ .  That 
+is,  we  are  looking  for  a  y  satisfying: 
+
+AT y  ≤  c 
+bT y  ≥  z 
+If  no  such  y  exists,  we  can  use  Farkas’  lemma  to  derive:  ∃x  ∈  Rn , x  ≥  0,  and  ∃λ  ∈  R, λ  ≥  0 : 
+Ax − λb = 0  and  cT x − λz < 0. 
+We  now  consider  two  cases. 
+
+9-5 
+
+• 
+
+• 
+
+Ax = b, 
+x ≥ 0 
+cT x < z. 
+
+⎧⎨ ⎩ 
+If  λ = 0,  we  can  scale  by  λ,  and  therefore  assume  that  λ = 1.  Then  we  get  that 
+This  result  is  a  contradiction,  because  x∗  was  the  optimum  solution,  and  therefore  we  should 
+⎧⎨ ⎩ 
+not  be  able  to  further minimize  z. 
+x ≥ 0 
+Ax = 0 
+cT x < 0. 
+Consider  now  x∗  + µx  for  any  µ > 0.  We  have  that 
+x∗  + µx  ≥  0 
+A(x∗  + µx) =  Ax∗  + µAx = b + 0 = b. 
+
+If  λ = 0  then 
+
+∃x ∈ Rn  : 
+
+∃x ∈ Rm  : 
+
+Thus,  x∗  + µx  is  feasible  for  any  µ ≥ 0.  But,  we  have  that 
+cT (x∗  + µx) = cT x∗  + µcT x < z , 
+
+a  contradiction. 
+
+� 
+
+9-6 
+
+�
+

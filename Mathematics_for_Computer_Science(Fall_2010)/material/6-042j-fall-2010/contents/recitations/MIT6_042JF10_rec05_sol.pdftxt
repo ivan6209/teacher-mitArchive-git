@@ -1,0 +1,273 @@
+6.042/18.062J Mathematics  for  Computer  Science 
+Tom  Leighton  and Marten  van  Dijk 
+
+September  24,  2010 
+
+Notes  for  Recitation  5 
+
+1  Exponentiation  and  Modular  Arithmetic 
+
+Recall  that  RSA  encryption  and  decryption  both  involve  exponentiation.  To  encrypt  a 
+message m,  we  use  the  following  equation: 
+m�  =  rem (m e , n) ≡ m e 
+And  to  decrypt  a message m� ,  we  use 
+m =  rem ((m� )d , n) ≡ (m� )d 
+
+(mod  n). 
+
+(mod  n). 
+
+In  practice,  e  and  d  might  be  quite  large.  But  even  for  relatively  small  values  of  these 
+variables,  the quantities m and (m� )d  can be very diﬃcult to compute directly.  Fortunately, 
+e
+there  are  tractable  and  eﬃcient  methods  for  carrying  out  exponentiation  of  large  integer 
+powers modulo  a  number. 
+Let’s  say  we  are  trying  to  encrypt  a message.  First,  note  that: 
+rem (a  b, c) ≡ a b  (mod  c)
+·
+· 
+≡  rem (a, c)  rem (b, c)  (mod  c)
+· 
+· 
+=  rem (( rem (a, c)  rem (b, c)), c)
+
+This  principle  extends  to  an  arbitrary  number  of  factors,  such  that: 
+a1  · a2  · . . .  an  ≡  rem (a1 , c)  rem (a2 , c) · . . .  rem (an , c)  (mod  c)
+· 
+·
+· 
+
+We  illustrate  this  point  with  an  example: 
+·
+· 
+Example:  Find  rem (23  61  19, 17).
+·
+· 
+We  could ﬁnd  the  remainder of 23  61  19 = 26657 divided by 17, but  that would be a  lot 
+of  unnecessary  work!  Instead,  we  notice  the  fact  that  23 ≡  6  (mod  17),  61 ≡  10  (mod  17), 
+and  19 ≡ 2  (mod  17).  Therefore,  23  61  19 ≡ 6  10  2  (mod  17). 
+·
+· 
+·
+· 
+·
+· 
+Similarly, we  can  reduce  the  remainder  of  6  10  2  divided  by  17.  We  notice  the  fact  that 
+10 2 = 20 ≡ 3  (mod  17), so 6 10 2 ≡ 6 3 = 18 ≡ 1  (mod  17).  We could have also calculated 
+·
+·
+·
+·
+6  10 = 60 ≡ 9  (mod  17)  to  get  the  same  answer  6  10  2 ≡ 9  2 = 18 ≡ 1  (mod  17).  While 
+·
+· 
+·
+· 
+both  methods  here  were  relatively  simple  to  use,  how  you  choose  to  associate  your  factors 
+may  sometimes  greatly  aﬀect  the  diﬃculty  of  a  calculation! 
+
+Recitation  5 
+
+2 
+
+Let’s  return  to  RSA.  Here’s  one  way  we  might  go  about  encrypting  our  message  (though 
+in  a  minute  we’ll  consider  a  more  eﬃcient  technique).  We  can  compute  m  =  rem (me , n) 
+by  breaking  the  exponentiation  into  a  sequence  of  e − 1  multiplications.  We  then  take  the 
+remainder  after  dividing  by  n  after  each  one  of  these multiplications. 
+
+Example:  Encrypt  the message m = 5  with  e = 6  and  n = 17. 
+·
+·
+·
+·
+· 
+We  are  trying  to  ﬁnd  rem (m , n).  We  know  that m = 56  = 5  5  5  5  5  5.
+e
+e
+52  ≡ 8  (mod  17) 
+53  ≡ 8 5 ≡ 6  (mod  17) 
+· 
+54  ≡ 6 5 ≡ 13  (mod  17) 
+· 
+55  ≡ 13  5 ≡ 14  (mod  17) 
+· 
+56  ≡ 14  5 ≡ 2  (mod  17) 
+· 
+
+OK,  that’s nice, but  for  large e,  e − 1  is  still a  lot of multiplications!  As we promised  earlier, 
+there’s  a  yet more  eﬃcient  way  to  do  the  exponentiation.  It’s  called  repeated  squaring. 
+
+Example:  Encrypt  a message m = 5  with  e = 149  and  n = 17. 
+Note  that  the  binary  expansion  of  149  is  10010101,  so  one  can  compute  rem (5149 , 17)  by 
+computing  rem (5128+16+4+1 , 17). 
+
+52  ≡ 8  (mod  17) 
+54  ≡ 8 8 ≡ 13  (mod  17) 
+· 
+58  ≡ 13  13 ≡ 16  (mod  17) 
+· 
+516  ≡ 16  16 ≡ 1  (mod  17) 
+· 
+532  ≡ 1 1 ≡ 1  (mod  17) 
+· 
+564  ≡ 1 1 ≡ 1  (mod  17) 
+· 
+5128  ≡ 1 1 ≡ 1  (mod  17) 
+· 
+
+We  used  only  7  multiplications  to  ﬁnd  the  remainders  of  52k  (mod  17)  by  repeatedly 
+squaring  each  previous  output  and  taking  the  remainder.  Then,  with  only  3  additional 
+multiplications to combine these products, we can compute 5128  516  54  51  ≡ 1  1 13 5 ≡ 14
+· 
+·
+·
+·
+·
+· 
+(mod  13).  This  saved  us  (149 − 1) − (7 + 3) = 138 multiplications! 
+You  may  notice  that  in  this  particular  case,  516  ≡  1  (mod  17),  so  we  could  have  even 
+stopped  our  squaring  at  516  and  reduced  the  problem  to  computing  rem (516·9+4+1 , 17)  ≡
+(516 )9  54  5 ≡ 19  13  5 ≡ 14  (mod  17).  For  this we only needed  (4 + 2) = 6 multiplications! 
+·
+· 
+·
+· 
+You may  ﬁnd  this  technique  very  useful  in  the  next  problem. 
+
+Recitation  5 
+2  RSA:  Let’s  try  it  out! 
+
+You’ll  probably  need  extra  paper.  Check  your  work  careful ly! 
+
+1.  As  a  team,  go  through  the  beforehand  steps. 
+
+3 
+
+(a)  Choose  primes  p  and  q  to  be  relatively  small,  say  in  the  range  5-15.  In  practice, 
+p  and  q  might  contain  several  hundred  digits,  but  small  numbers  are  easier  to 
+handle  with  pencil  and  paper. 
+Solution.  We  choose  p = 7  and  q = 11  for  our  example. 
+
+� 
+(b)  Calculate n = pq .  This number will be used to encrypt and decrypt your messages. 
+� 
+Solution.  In  our  example,  n = pq = 77. 
+(c)  Find  an  e > 1  such  that  gcd(e, (p − 1)(q − 1)) = 1. 
+The  pair  (e, n)  will  be  your  public  key.  This  value  will  be  broadcast  to  other 
+groups,  and  they  will  use  it  to  send  you messages. 
+Solution.  In  our  example,  p − 1 = 6 = 2  3 and  q − 1 = 10 = 2  5.  Therefore, 
+·
+· 
+any  e  that  is  odd  and  neither  a  multiple  of  5  nor  3  would  work.  We  choose 
+� 
+e = 13. 
+(d)  Now  you  will  need  to  ﬁnd  a  d  such  that  de ≡ 1  (mod  (p − 1)(q − 1)). 
+�  Explain  how  this  could  be  done  using  the  Pulverizer.  (Do  not  carry  out  the 
+computations!) 
+Solution.  We  can  rewrite  the  equation  de  ≡  1  (mod  (p − 1)(q − 1))  to  read 
+de − 1 =  k(p − 1)(q − 1)  for  some  integer  value  k .  Rearranging  this  yields  the 
+equation  de − k(p − 1)(q − 1) = 1.  Because  gcd(e, (p − 1)(q − 1)) = 1,  we  know 
+such a linear combination of e and (p − 1)(q − 1) exists!  Using the Pulverizer will 
+give us the coeﬃcient d, and then we can adjust d to be positive using techniques 
+from  class.  In  this  case  d = −23,  which  can  be  adjusted  to  37. 
+� 
+�  Find  d  using  Euler’s  Theorem  given  in  yesterday’s  lecture. 
+The  pair  (d, n)  will  be  your  secret  key.  Do  not  share  this  with  anybody! 
+Solution.  Since e and (p− 1)(q − 1) are relatively prime, we can claim by Euler’s 
+Theorem that eφ((p−1)(q−1))  ≡ 1  (mod  (p−1)(q−1)) and hence eφ((p−1)(q−1))−1  e ≡·
+1  (mod  (p − 1)(q − 1)). 
+This means d = eφ((p−1)(q−1))−1  is an inverse  of e  (mod  (p−1)(q −1)).  To ﬁnd the 
+value of d, we ﬁrst calculate φ((p− 1)(q − 1)).  In our example, the factorization of 
+(p−1)(q−1) is 22  3 5, so φ((p−1)(q−1)) = (22−21 )(31−30 )(51−50 ) = 2 2 4 = 16. 
+· ·
+· ·
+We substitute e and φ((p − 1)(q − 1)) into our equation to get d = 1316−1  = 1315 . 
+
+1315  is a huge number!  Therefore, we must reduce d to something more manage­
+able using repeated squaring.  In our example, we square 13 to get 132  = 169 ≡ 49 
+
+4 
+Recitation  5	
+(mod  60).  We square our result to get 134  = (132 )2  ≡ 492  = 2401 ≡ 1  (mod  60). 
+Once we know 134  ≡ 1  (mod  60), our job is much easier.  1315  = (134 )3  132  13 ≡
+·
+·
+13  49  13 = 637 ≡ 37  (mod  60).  This matches  our  answer  from  the  Pulverizer. 
+·
+· 
+Which  method  is  easier  depends  on  the  particular  numbers  that  we’ve  chosen. 
+� 
+
+When  you’re  done,  write  your  public  key  and  group members’  names  on  the  board. 
+
+2.  Now  ask  your  recitation  instructor  for  a message  to  encrypt  and  send  to  another  team 
+using  their  public  key. 
+The messages m  correspond  to  statements  from  the  codebook  below: 
+
+2  =  Greetings  and  salutations!
+
+3  = Wassup,  yo?
+
+4  =  You  guys  are  slow!
+
+5  =  All  your  base  are  belong  to  us.
+
+6  =  Someone  on  our  team  thinks  someone  on  your  team  is  kinda  cute.
+
+7  =  You  are  the  weakest  link.  Goodbye.
+
+
+3.	 Encode  the message  you  were  given  using  another  team’s  public  key. 
+
+Solution.  Let’s  say  our  message  was  m  =  3  and  the  other  team’s  public  key  was 
+(e, n)  =  (11, 35).  The  encrypted  message  would  then  be  m�  =  rem (311 , 35).  Using 
+repeated  squaring,  we  see  that  311  = 38+2+1 .  We  compute  32  =  9  (mod  35),  34  = 
+81 ≡ 11  (mod  35), 38  = (34 )2  ≡ 112  = 121 ≡ 16  (mod  35).  Therefore 311  ≡ 16 9 3 = 
+·
+·
+432 ≡ 12  (mod  35),  so  our message  is m�  = 12.	
+� 
+
+4.  Now	 decrypt  the  message  sent  to  you  and  verify  that  you  received  what  the  other 
+team  sent! 
+Solution.  Let’s  say  the  other  team  sent  you  the  encrypted message m�  = 26.  In  our 
+case,  our  private  key  was  (d, n)  =  (37, 77).  The  decrypted  original  message  would 
+� 
+then  be m =  rem (2637 , 77).  Using  repeated  squaring,  we  ﬁnd m = 5. 
+
+5.  Explain  how  you  could  read messages  encrypted  with RSA  if  you  could  quickly  factor 
+large  numbers. 
+
+Solution.  Suppose you  see a public key  (e, n).  If you  can  factor n  to obtain p and  q , 
+then  you  can  compute  d using  the Pulverizer  or Euler’s Theorem.  This  gives  you  the 
+secret  key  (d, n),  and  so  you  can  decode messages  as well  as  the  intended  recipient.� 
+
+Recitation  5 
+
+5 
+
+RSA  Public-Key  Encryption 
+
+Beforehand  The  receiver  creates  a  public  key  and  a  secret  key  as  follows. 
+
+1.  Generate  two  distinct  primes,  p  and  q . 
+2.  Let  n = pq . 
+3.  Select  an  integer  e  such  that  gcd(e, (p − 1)(q − 1)) = 1. 
+The  public  key  is  the  pair  (e, n).  This  should  be  distributed  widely. 
+4.  Compute  d  such  that  de ≡ 1  (mod  (p − 1)(q − 1)). 
+The  secret  key  is  the  pair  (d, n).  This  should  be  kept  hidden! 
+Encoding  The  sender  encrypts message m  to  produce m�  using  the  public  key: 
+
+m�  =  rem (m e , n) 
+Decoding  The  receiver  decrypts message m�  back  to message m  using  the  secret  key: 
+m =  rem ((m� )d , n). 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.042J / 18.062J Mathematics for Computer Science 
+Fall 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

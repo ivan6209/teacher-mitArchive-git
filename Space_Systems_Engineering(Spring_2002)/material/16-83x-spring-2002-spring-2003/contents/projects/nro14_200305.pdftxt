@@ -1,0 +1,5417 @@
+Electromagnetic Formation Flight 
+Progress Report: May 2003 
+ 
+
+ 
+
+Submitted to: 
+
+ 
+
+Lt. Col. John Comtois 
+Technical Scientific Officer 
+National Reconnaissance Office 
+ 
+
+NRO-000-02-C0387-CLIN0001 
+
+Contract Number: 
+ 
+MIT WBS Element:  6893087 
+
+ 
+
+Submitted by:   
+
+Prof. David W. Miller 
+ 
+Space Systems Laboratory 
+Massachusetts Institute of Technology 
+ 
+
+ 
+ 
+
+OVERVIEW 
+
+Description of the Effort 
+
+The  Massachusetts  Institute  of  Technology  Space  Systems  Lab  (MIT  SSL)  and  the 
+Lockheed Martin Advanced Technology Center  (ATC) are collaborating  to explore  the potential 
+for  an  Electro-Magnetic  Formation  Flight  (EMFF)  system  applicable  to  Earth-orbiting  satellites 
+flying in close formation. 
+
+Progress Overview 
+
+At  MIT,  work  on  EMFF  has  been  pursued  on  two  fronts:  the  MIT  conceive,  design, 
+implement and operate (CDIO) class, and the MIT SSL research group. 
+
+This  report  summarizes  recent  progress  made  in  the  MIT  CDIO  class  with  regards  to 
+system  dynamic modeling,  linear  control  design,  and  closed-loop  control  implementation  on  the 
+electromagnetic formation flight testbed being designed and built in the class. 
+
+First  the  testbed  control  requirements  and  experimental  testing  plan  (“test  cases”)  are 
+presented, and  the  linearized dynamic model of  the  testbed  system  is discussed.   Then  the  linear 
+control design methodology is reviewed, and the resulting control gains specific to each test case 
+are presented.  Finally, successful closed-loop dynamic results are presented for test cases 1a and 
+1b. 
+
+EMFFORCE OPS MANUAL 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+A  Control Algorithm Development 
+A.1  Control Requirements 
+Electromagnets and reaction wheels are used to provide the forces and torques necessary 
+to control position and attitude of the vehicles.  The interaction between electromagnets 
+of different vehicles can be controlled to either attract or repel the vehicles.  The reaction 
+wheels can rotate either clockwise or counterclockwise, providing control to either 
+accelerate or decelerate the vehicles rotationally.  Varying the current through the 
+magnets and changing the speed of the wheels control the actuators.  Controlling these 
+accurately allows for maneuvering the vehicles and disturbance rejection. 
+ 
+The responsibility of the control team was to build a robust controller for the project that 
+will command maneuvers and provide disturbance rejection.  The controller is located on 
+the avionics computer, and processes metrology inputs in order to calculate the necessary 
+commands to send to the actuators.  This is depicted in the block diagram in Figure 
+A.1-A. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+Preprogrammed 
++
+Trajectory 
+_ 
+
+Metrology 
+Algorithm 
+
+Σ
+
+ 
+Controller
+
+ 
+Sensors
+
+Actuators
+
+ 
+Plant
+
+Actual 
+Trajectory
+
+Figure A.1-A: Block Diagram of Controller 
+
+ 
+The control team designed controllers to meet the following requirements, derived from 
+the requirements document. 
+ 
+1.  Exhibit control in two modes 
+a.  Spin-up/spin-down 
+b.  Steady state 
+2.  Build a robust controller for two types of maneuvering 
+a.  Trajectory following 
+b.  Disturbance rejection 
+3.  Maximum allowable error in separation distance is 15 centimeters for a separation 
+distance of 2 meters between vehicles 
+
+ 
+Massachusetts Institute of Technology 
+ 
+
+1 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+4.  Maximum  allowable  error  in  angular  position  is  5  degrees  for  each  vehicle’s 
+orientation 
+5.  Rotation rate in steady state must be one revolution per minute 
+
+ 
+The first requirement specifies the modes in which the test-bed operates.  This is derived 
+from the test case in which two vehicles are at rest, spin-up to steady state, and then spin-
+down to rest.  Spin-up consists of controlling two vehicles initially at rest and positioned 
+so that the electromagnet of the first vehicle is perpendicular to that of the second, as 
+shown in Figure A.1-B.  When the electromagnets are turned on, the vehicles rotate and 
+shear in the directions of the arrows.  By controlling the electromagnets and reaction 
+wheels, thereby applying appropriate forces and torques on the vehicles, the vehicles will 
+follow the trajectory specified in Figure A.2-C, where the arrows point to the “north 
+pole” of the magnets. 
+ 
+This path will guide the vehicles to the steady state configuration, in which the 
+electromagnets are aligned along a common axis, as show Figure A.1-D, and spinning at 
+a constant rate, Ω, about their common center.  Finally, spin-down follows the same 
+trajectory as spin-up but in reverse.  In spin-down, as the magnets rotate in the opposite 
+direction relative to the radial line between the electromagnets to align perpendicularly, 
+the test-bed comes to rest.  A controller has been designed for spin-up, but has not yet 
+been tested. 
+ 
+
+Figure A.1-B: Spin-up Mode 
+Trajectory  
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+    
+
+ 
+
+Figure A.1-C: Spin-up 
+
+ 
+
+Figure A.1-D: Steady State Spin Mode 
+
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+2 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+EMFFORCE OPS MANUAL 
+ 
+ 
+ 
+ 
+To achieve a robust controller implies two responsibilities.  The test-bed must both reject 
+disturbances as well as have the control authority to reposition the vehicles.  Rejecting 
+disturbances implies both maintaining desired positions and desired angular rates, 
+whether finite or zero in the presence of external disturbances. The controller was 
+designed to demonstrate these capabilities in both the spin-up/spin-down as well as 
+steady-state modes. Repositioning of the vehicles was to be used during the spin-up and 
+spin-down maneuvers by following a user-supplied trajectory. 
+ 
+Requirements three and four set the displacement and angular accuracies required for a 
+successful controller.  When the controller determines the desired displacement and 
+angular position for each vehicle, they must reach these states with a set accuracy for the 
+controller to work.  These accuracies were derived from the accuracy of our system 
+model.  The model was obtained by adding a perturbation to the non-linear system 
+dynamics and linearizing the equations of motion.  In this process, higher order terms 
+were neglected. 
+ 
+To see when these higher order terms become negligible, further analysis was done by 
+comparing the linearized model with the full non-linear model for different size 
+perturbations.  The electromagnetic forces on each vehicle due to the electromagnetic 
+interaction between the vehicles were calculated in the x direction for each model.  This 
+calculation was done by creating a force balance, as shown in Figure A.1-D.  Holding all 
+terms except separation distance constant, the results are as follows: 
+1
+3
+3
+
+µµµ
+µµµ
+
+π
+π
++
+B
+A
+A
+B
+0
+1
+1
+2
+0
+2
+4
+δr)
+r
+(
+
+δ
+r
+411
+ −
+
+r
+r
+4
+
+
+3
+µµµ
+π
+B
+A
+0
+1
+1
+2
+
+3
+µµµ
+π
+A
+B
+2
+0
+4
+
+Equation A.1-2 
+
+Equation A.1-1 
+
+
+
+−
+
+
+
+
+F
+x
+
+F
+x
+
+linear
+
+linear
+
+
+
+
+
+,
+
+non
+
+−
+
+=
+
+
+
+
+
+ 
+
+2
+
+ 
+
+2
+
+−
+
+−
+
+−
+
+4
+
+=
+
+,
+
+ 
+where r is the separation distance, δδδδr is a perturbation added to the separation distance, 
+and the µµµµ terms are the magnetic moments for the different coils.  The ratio between the 
+linearized forces and non-linear forces is defined as αααα, where 
+δ
+4
+r
+r
+δ
+r
+r
+
+−
+non
+linear
+linearized
+
+ +
+11
+
+
+
+Equation A.1-3 
+
+−
+41
+
+=
+α
+
+
+
+
+
+=
+
+ 
+
+ 
+
+ 
+Substituting two meters for the separation distance r provides Figure A.1-E for αααα as a 
+function of perturbation size, δδδδr.  
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+3 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+Figure A.1-E: Alpha as a Function of Separation Distance Perturbation 
+
+ 
+At alpha equal to one, there is no difference between the linear model and actual model.  
+It was decided that a 10% difference between the models would still produce a functional 
+controller.  This difference is shown in the graph by the horizontal lines at alpha equal to 
+1.1 and 0.9.  Therefore, there is less than a 10% difference between models when the 
+distance error is between -0.22m and 0.17m, as shown by the vertical lines.  To be 
+conservative, the maximum separation distance error was set at ± 0.15m, guaranteeing 
+less than a 10% difference between the linearized model used to calculate the control and 
+the full non-linear system. 
+ 
+A similar approach of analyzing the linearized model was used to determine the 
+maximum allowable angle error.  The forces were examined again holding all terms 
+constant except the angle of the magnet with respect to the other magnet.  The 
+Mathematica code was used to try different size angular perturbations and compare the 
+output forces from both the linear and non-linear models.  A perturbation of 5 degrees 
+creates a difference of less than 10% between the two models, and therefore is used as the 
+limit for accuracy. 
+ 
+Finally, there was a requirement setting the rotation rate in steady state.  It must be at 
+least one revolution per minute.  This was to limit the duration of testing due to a limited 
+CO2 supply and battery life, as well as to allow the controller to dominate over frictional 
+forces and slopes in the flat floor.  At slower speeds, the frictional forces may become 
+significant, creating errors in the system models that do not account for friction.  
+Therefore, it was important to maintain a speed at which friction is not a factor so the 
+system model remains accurate and the controllers are effective. 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+4 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+A.2  Test Cases 
+There were several steps to designing the controller.  The first was to break down the 
+requirements into smaller test cases.  For each test case, the system was modeled, a 
+controller was designed and then coded onto the processor and integrated into the final 
+system.  These controllers were then tested and refined.  The test cases were defined as 
+follows: 
+ 
+
+1.  One vehicle (only reaction wheel control) 
+1a. 
+Disturbance rejection 
+Trajectory following 
+1b. 
+2.  Two vehicles (reaction wheel and electromagnet control) 
+2a. 
+One vehicle fixed, disturbance rejection 
+One vehicle fixed, trajectory following and slewing 
+2b. 
+Both vehicles free, disturbance rejection 
+2c. 
+Both vehicles free, trajectory following and slewing 
+2d. 
+2e. 
+Spin-up to steady state, then spin-down. 
+
+ 
+The first set of test cases uses only one vehicle, so there is no electromagnet control, 
+since this requires a second vehicle with an electromagnet.  In Test Case 1a, disturbance 
+rejection was demonstrated by maintaining both a zero rotation rate and finite rotation 
+rate by commanding the reaction wheel.  In Test Case 1b, trajectory following was 
+demonstrated by rotating the vehicle to a commanded angle.  
+ 
+The second set of test cases adds another vehicle, as well as the use of the electromagnet 
+actuators.  In the first two cases, one vehicle is fixed so it cannot move.  The other 
+vehicle will demonstrate disturbance rejection as well as trajectory following by moving 
+to commanded separation distances as well as commanded angular positions.  In the next 
+two cases, both vehicles are free.   Therefore both vehicles can be disturbed as well as 
+commanded to new positions.  Finally, a two vehicle spin-up, steady-state spin, and spin-
+down maneuver must be performed. 
+ 
+Originally, a Test Case 3 was designed in which three vehicles would have been 
+controlled.  A third vehicle was never built, so the third test case was never tested.  
+Controllers have been designed for this test case, however, and are therefore included as a 
+reference for future work.  Test Case 3 was defined as: 
+ 
+3.  Three vehicles (reaction wheel and electromagnet control) 
+3a. 
+Central vehicle fixed, disturbance rejection 
+Central vehicle fixed, trajectory following and slewing 
+3b. 
+All vehicles free, disturbance rejection 
+3c. 
+3d. 
+All vehicles free, trajectory following and slewing 
+Spin-up to steady state, then spin-down. 
+3e. 
+
+ 
+The third test case is similar to Test Case 2, with the addition of one more vehicle.  In the 
+first two parts of the test, the middle vehicle is fixed and the other two must demonstrate 
+disturbance rejection and slewing.  Then all the vehicles are freed. In the final test case, 
+three vehicles must perform the full spin-up, steady state, spin-down maneuver. 
+ 
+ 
+Massachusetts Institute of Technology 
+
+5 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+A.3  System Model 
+The design of the controller begins with a model of the system.  Because each vehicle has 
+inputs from both an electromagnet and a reaction wheel, and there are different states that 
+need  to  be  controlled,  a  state  space  model  of  the  system  is  used  to  model  the  system.  
+Since  the  system  has  no  inertial  reference,  a  coordinate  system  will  be  fixed  on  a 
+specified  body.    In  the  diagram  below  (Figure A.3-A),  the  coordinate  system  is  fixed  on 
+Vehicle A.  Here, the states of interest are the distance to the other vehicle (rAB), the angle 
+to  the other vehicle  from a  reference point  (θAB),  the angle  rotated by each vehicle about 
+its  own  center  of mass  (αA,  αB)  from  the  radial  line  between  vehicles,  the  rates  of  these 
+states, as well as the angular rate of the entire system (Ω). 
+
+Figure A.3-A: Definition of States 
+
+ 
+The states are organized into a vector x:  
+
+ 
+
+====
+
+x
+
+r
+
+
+θ
+
+α
+
+
+r
+
+
+
+θ
+
+
+α
+
+
+
+Ω
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+Equation A.3-1 
+
+ 
+where the first six states are vectors representing states for each vehicle.  These states are 
+named the Master State Array (MSA) and will be computed by metrology, transmitted by 
+communications, and entered as inputs to the controller. 
+ 
+By linearizing the equations of motion, system models were developed for each test case 
+of the form: 
+
+====D
+x
+====
+y
+
+Ax
+Cx
+
+++++
+++++
+
+Bu
+Du
+
+   
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+Equation A.3-2 
+
+Equation A.3-3 
+
+ 
+ 
+ 
+Massachusetts Institute of Technology 
+
+6 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+where x are the states, u are the inputs, and y are the measurements.  The A and B 
+matrices were determined for each test case with variable system parameters.  Estimates 
+were made and used to design the preliminary controllers, and were refined when new 
+system information was known. 
+ 
+For Test Case 1, the desired states were defined as 
+
+x
+
+θ
+
+=
+
+
+θ
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+Equation A.3-4 
+
+ 
+where θθθθ
+ is the angular position of the vehicle relative to its initial position, and θθθθC  is its 
+angular rate.  The driving dynamics of the system are the torque produced by the reaction 
+wheel, ττττ, and the resultant torque on the vehicle, IθθθθCC .  The vehicle was approximated as a 
+cylinder to determine the inertia, I.  The output of the system is the gyro reading, or θθθθC .  
+Putting these into state space form produces: 
+
+10
+=
+
++
+x
+
+00
+
+
+[
+]x
+10=
+
+ 
+
+x
+D
+
+y
+
+
+
+
+
+
+0
+1
+I
+
+
+τ
+
+ 
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Equation A.3-5 
+
+Equation A.3-6 
+
+ 
+For Test Case 2 the model is a bit more complex, thus we used Mathematica to compute 
+it.  Our model of the system uses Figure A.3-B as a reference for the variables in the 
+Mathematica script.   
+
+ 
+
+Figure A.3-B: Model of system for test case 2 
+For the purpose of this paper we will only analyze test case 2.  The analysis for test case 3 
+is done in the same way.  Figure A.3-B shows two vehicles, vehicles A and B, each with 
+two electromagnets, magnets 1 and 2.  We will use body coordinates fixed on vehicle B, 
+therefore vehicle B will not translate.  The angular position of vehicle A,  Aθ , will be 
+measured from the axis connecting vehicle A and vehicle B.  We start with the equations 
+of motion where the forces and torques, T and F, are for each of the interactions between 
+the coils – A1, A2, B1, B2 – in the direction indicated, x or y:   
+
+=DD
+xm
+A
+=DD
+ym
+A
+
+F
+xBA
+,1/1
+F
+yBA
+,1/1
+
++
+
++
+
+F
+xBA
+,2/1
+F
+yBA
+,2/1
+
++
+
++
+
+xB
+,1/2
+
+F
+A
+F
+yBA
+,1/2
+
++
+
+F
+A
++
+F
+A
+
+ 
+
+ 
+
+Equation A.3-7 
+
+xB
+,2/2
+
+   
+
+yB
+,2/2
+
+Equation A.3-8 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+7 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+I
+
+I
+
+=θDD
+AZA
+,
+=θDD
+BZB
+,
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+T
+BA
+1/1
+
+T
+AB
+1/1
+
++
+
++
+
+T
+BA
+2/1
+
+T
+AB
+2/1
+
++
+
++
+
+T
+A
+
+T
+B
+
+B
+1/2
+
+A
+1/2
+
++
+
++
+
+T
+A
+
+T
+B
+
+B
+2/2
+
+A
+2/2
+
++
+
++
+
+T
+RW
+
+,
+
+A
+
+T
+RW
+
+,
+
+B
+
+ 
+
+ 
+
+Equation A.3-9 
+
+Equation A.3-10 
+
+ 
+By linearizing these equations and dropping the higher order terms, one can construct the 
+=D
+A +
+x
+u
+x
+B
+state space model of the system.  The model for tests 2a and 2b, in the form 
+, 
+is shown in Figure A.3-C:   
+
+=
+
+x
+D
+
+001000
+010000
+100000
+000000
+000000
+000000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A
+
+x
+
+
+y
+
+A
+θ
+
+A
+
+x
+D
+
+
+y
+D
+A
+
+θ
+
+D
+
+A
+
+A
+
++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+0
+0
+µµ
+15-
+0
+B1
+π
+rm
+2
+4
+A
+µµ
+15
+B2
+0
+π
+rm
+4
+4
+A
+µµ
+-
+0
+B2
+π
+I
+r
+3
+
+ZA,
+
+0
+0
+0
+µµ
+15
+0
+B2
+π
+rm
+4
+4
+A
+µµ
+15
+B1
+0
+π
+rm
+4
+4
+A
+µµ
+2-
+0
+B1
+π
+I
+r
+3
+
+ZA,
+
+0
+0
+0
+0
+
+0
+
+1
+
+I
+
+ZA,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure A.3-C: State space equation for tests 2a and 2b 
+
+ 
+
+And the model for tests 2c, 2d, and 2e is given in Figure A.3-D: 
+
+µ
+
+A
+1
+
+µ
+
+A
+
+T
+
+
+RW
+
+2
+
+,
+
+A
+
+ 
+
+
+
+
+
+
+
+=
+
+x
+C
+
+00010000
+00100000
+01000000
+10000000
+00000000
+00000000
+00000000
+00000000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A
+
+x
+
+
+y
+
+A
+θ
+
+A
+
+θ
+
+B
+
+x
+C
+
+y
+
+C
+A
+
+θ
+C
+A
+
+θ
+
+C
+
+B
+
+A
+
++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+0
+0
+0
+µµ
+15-
+B1
+0
+π
+rm
+2
+4
+A
+µµ
+15
+B2
+0
+π
+rm
+4
+4
+A
+µµ
+-
+0
+B2
+π
+I
+r
+3
+ZA,
+µµ
+2-
+0
+B2
+π
+I
+r
+3
+
+ZB,
+
+0
+0
+0
+0
+µµ
+15
+0
+B2
+π
+rm
+4
+4
+A
+µµ
+15
+B1
+0
+π
+rm
+4
+4
+A
+µµ
+2-
+0
+B1
+π
+I
+r
+3
+ZA,
+µµ
+-
+0
+B1
+π
+I
+r
+3
+
+ZB,
+
+0
+0
+0
+0
+0
+
+0
+
+1
+
+I
+
+ZA,
+0
+
+0
+0
+0
+0
+0
+
+0
+
+0
+
+1
+
+I
+
+ZB,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+µ
+
+A
+1
+
+µ
+
+A
+T
+
+
+T
+
+
+RW
+
+RW
+
+2
+
+,
+
+,
+
+A
+
+B
+
+ 
+
+
+
+
+
+
+
+
+Figure A.3-D: State space equation for tests 2a, 2b, and 2c 
+
+ 
+
+where 
+
+r
+
+=
+
++
+
+x
+
+2
+A
+
+y
+
+2
+A
+
+. 
+
+The key difference between these models is the fact that for tests 2c, 2d, and 2e vehicle B 
+is not fixed, allowing for the use of its reaction wheel for control.  The state space models 
+for test case 3 are similarly found. The state space models above were computed using 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+8 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+specific values for the field strengths of the magnets on the fixed vehicle.  The model will 
+have to be recomputed to get the correct gains for different test case setups. 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+A.4  Reaction Wheel Motor Model 
+The reaction wheel assembly, which controls the attitude of the vehicle, is powered by a 
+single motor mounted in the center of the vehicle.  The behavior of the motor is essential 
+to overall vehicle dynamics.  The motor behavior was modeled to extract constants 
+needed for the controller.  The controller used initially for the motor used proportional 
+control.  The proportional controller did not provide precise enough control, so a first-
+order model was derived, beginning with the relationships: 
+R
+k
+
+Equation A.4-1 
+
++
+bT
+(
+
+=
+ω
+
+ω)
+
+k
+
+e
+
++
+
+ 
+
+a
+
+t
+
+V
+
+ 
+
+ 
+
+ 
+
+T
+
+t=
+ik
+
+    
+
+ 
+
+ 
+
+Equation A.4-2 
+
+ 
+where T is motor torque, b is a frictional constant, ω is the rate at which the motor shaft 
+aR  is the armature resistance of the motor, 
+tk  and 
+ek  are torque constants, and V is 
+spins, 
+the voltage required by the motor. 
+ 
+If you assume that the current supplied to the motor remains constant, only the frictional 
+constant needs to be found.  The frictional constant, b was found experimentally.  The 
+wheel was mounted on the motor and spun up to maximum speed.  The motor was then 
+turned off and measurements of ω were taken at regular intervals until the wheel came to 
+a complete stop.  The rate of rotation measurements were taken with the tachometer.  
+Test data is shown in Table A.4-1 below.  The time shown is the time since the motor 
+was turned off. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Massachusetts Institute of Technology 
+
+9 
+
+Dept of Aeronautics and Astronautics 
+
+Table A.4-1  Reaction wheel motor data 
+Time (s)  Trial 1 - ω (Hz)  Trial 2 - ω (Hz) 
+185 
+208 
+0 
+161 
+185 
+5 
+10 
+172 
+156 
+135 
+155 
+15 
+125 
+138 
+20 
+25 
+122 
+111 
+96 
+106 
+30 
+87 
+102 
+35 
+75 
+87 
+40 
+45 
+75 
+64 
+54 
+67 
+50 
+43 
+57 
+55 
+60 
+45 
+34 
+26 
+34 
+65 
+19 
+27 
+70 
+12 
+20 
+75 
+80 
+12 
+6 
+
+ 
+
+ 
+The frictional constant b was derived from the relationship: 
++ ΘΘ •
+••
+b
+ 
+
+ik
+t
+
+wheel
+
+=
+
+giving a value of b: 
+
+I
+
+ 
+
+ 
+
+.0−=b
+
+000379
+
+  
+
+kgm 2
+s
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+ 
+
+Equation A.4-3 
+
+Equation A.4-4 
+
+ 
+We also tried to make a better model by taking out our constant current assumption.  We 
+abandoned this as soon as the first order model was found to work but I will include the 
+work here anyway. 
+ 
+Integration of Equation A.5-3 gives: 
+
+ti
+)(
+
+=
+
+ce
+
+−
+
+R
+a
+L
+a
+
+t
+
++
+
+V
+R
+
+a
+
+ 
+
+ 
+
+ 
+
+Equation A.4-5 
+
+ 
+Taking data on the motor and solving Equation A.5-4 graphically for inductance gives: 
+=aL
+×
+−
+510
+33.1
+
+Equation A.4-6 
+
+  H  
+
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+10 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+A.5  Controller Design 
+The technique of control design used for the test-bed was the linear quadratic regulator, 
+providing an optimal controller.  The LQR approach minimizes the cost equation: 
+(
+)
++
+dtuRuxRx
+T
+T
+uu
+xx
+
+Equation A.5-1 
+
+=
+
+∫
+
+J
+
+ 
+
+ 
+
+ 
+where J is the cost, x is the state, u is the control input, Rxx is the cost associated with 
+state, and Ruu is the cost associated with the control.  When importance is placed on state 
+accuracy, and the amount of control, or current to the actuators, is less important, Rxx is 
+weighted high.  When minimizing the amount of control used is more important than the 
+accuracy of the state, Ruu is weighted high.  To find the minimal cost J, the following 
+equation must be solved for P: 
+
+=
+
+0
+
+R
+
+xx
+
++
+
+PA
+
++
+
+PA
+T
+
+−
+
+−
+PBR
+1
+uu
+
+PB
+T
+
+  
+
+Equation A.5-2 
+
+ 
+where A and B are the same matrices found in modeling the system.  The value of P can 
+be used to find the optimal gains, F, for the system, where: 
+
+1−=
+PBRF
+T
+uu
+
+ 
+
+ 
+
+ 
+
+Equation A.5-3 
+
+The optimal control is then, 
+
+u
+
+−=
+
+Fx
+
+ 
+
+Equation A.5-4 
+
+ 
+
+ 
+
+ 
+Substituting into Equation A.4-2, the closed loop A matrix can be determined, where 
+ 
+
+ACL
+
+=
+
+−
+
+A
+
+BF
+
+ 
+
+ 
+
+ 
+
+Equation A.5-5 
+
+ 
+This was calculated in Matlab using the LQR command.  After determining the A and B 
+matrices, as well as the weightings for Rxx and Ruu, these values are entered as parameters 
+for the LQR function.   
+[
+]
+)uu
+ESF
+xx RRBA
+,
+,
+,
+,
+,
+
+Equation A.5-6 
+
+lqr
+
+=
+
+(
+
+ 
+
+ 
+
+ 
+
+A.5.1  Test Case 1a 
+The angular rate of the vehicle was controlled through a simple feedback gain, using a 
+rate gyro for feedback.  This gain was determined using LQR techniques.   
+ 
+For this disturbance rejection case, the weightings were set to 
+
+R
+
+xx
+
+−
+10 5
+=
+
+0
+
+
+0
+1
+
+
+          
+
+
+
+     
+
+R
+uu
+
+=
+
+1
+4
+
+  
+
+Equation A.5-7 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+11 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+EMFFORCE OPS MANUAL 
+ 
+ 
+In the actual code, the matrix entries of zero were replaced with finite numbers due to the 
+fact that singularities were being created in the LQR function.  The higher weighting on 
+θ  in Rxx compared to the Ruu weighting indicates that it is more important to have an 
+accurate θ  than it is to conserve control energy.  The weightings along the diagonal of 
+Rxx place more importance on the second state, θ , than on the first state.  This is because 
+in disturbance rejection, the actual position is not controlled.  The rate of change of 
+position is driven to zero, and therefore the rate is weighted more heavily.  These 
+weightings were used in Matlab with the A and B matrices from Equation A.4-5.  For an 
+inertia of 1 kg*m2, the optimal gains are: 
+[
+.0=F
+
+Equation A.5-8 
+
+0063
+
+]2
+
+ 
+
+ 
+
+ 
+
+ 
+This inertia estimate includes the weight of the LN2.  If the test was run without the coils 
+filled, the inertia estimate lowers to 0.9 kg*m2 but the gains remain unaffected at  
+[
+]2
+.0=F
+
+Equation A.5-9 
+
+0063
+
+ 
+
+ 
+
+ 
+
+The controller was tested on a vehicle by giving manual disturbances.  The vehicle 
+successfully returned to a zero position, as shown in Figure A.5-A. 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+12 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Figure A.5-A: Vehicle response to manual disturbances 
+
+A.5.2  Test Case 1b 
+A controller was designed for Test Case 1b, a tracking problem.  The same system model 
+was used for this problem.  However, different costs were assigned, as shown below: 
+
+ 
+
+4
+
+=
+
+ 
+
+R
+
+xx
+
+0
+1
+1
+
+=
+          
+     
+
+
+−
+0
+10
+4
+
+
+In this case, the weightings along the diagonal of Rxx place more importance on the first 
+state, θθθθ.  In a tracking problem, the specific position is more important than the rate of 
+change of the position.  The accuracy of the state is still more important than the amount 
+of control used, as shown in the difference in magnitude between Rxx and Ruu.  The new 
+gains for were found to be: 
+
+Equation A.5-10 
+
+R
+uu
+
+[
+.2=F
+000
+[
+.2=F
+
+000
+
+.1
+
+]898
+ 
+]001
+
+.2
+
+I = 0.9 kg*m2   
+
+Equation A.5-11 
+
+   I = 1 kg*m2 
+
+ 
+
+Equation A.5-12 
+
+ 
+Comparing these gains to those calculated for Test Case 1a shows how the relative gain 
+on θθθθ increases in the slewing case of 1b, reflecting the shift in importance of position.     
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+13 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+ 
+This controller was tested by providing inputs, commanding the vehicle to rotate to 
+different angles.  There was a fairly significant time lag, which can be improved by 
+tweaking the gains.  The results of this test are shown in Figure A.5-B. 
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+Figure A.5-B: Vehicle response to commanded inputs 
+
+A.5.3  Test Cases 2 and 3  
+Optimal gains were determined for Test Cases 2 and 3 in the same manner using the 
+system models described above.  Weightings were chosen in a similar fashion to the ones 
+chosen for test case one, with the rates weighted more for disturbance rejection, and the 
+positions weighted more for trajectory following.  In all cases the states were weighted 
+more heavily than the control.  Sample gains for Test Case 2a are shown below in Table 
+A.5-1.  A vehicle mass of 15 kg was used, with an inertia of 1 kg*m2 for both vehicles. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+14 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+Ax  
+-0.0063 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Table A.5-1: Optimal Gains for Test Case 2a 
+Aθ  
+AyD
+AxD  
+Ay  
+ 
+1.9237 
+-23.9293 
+-0.0000 
+0.0004 
+
+AθD  
+-0.0000
+
+0.0004 
+
+0.0063 
+
+-0.0000 
+
+1.9237 
+
+33.7807 
+
+-0.0003
+
+0.0000 
+
+0.0000 
+
+0.0089 
+
+0.0001 
+
+0.0060 
+
+2.8316 
+
+ 
+1Aµ  
+2Aµ  
+RW ,τ  
+A
+
+ 
+There is a gain associated with each state and input pair.  Only the states and inputs of 
+vehicle A are used in Test Case 2a because the other vehicle is fixed.  The states of 
+interest are listed across the top row with the subscript A referring to vehicle A, and the 
+inputs are listed in the last column.  Here, x and y are the rectangular decomposition of 
+the position r described in Table A.5-1 above.  The inputs µµµµA1 and µµµµA2 refer to the current 
+needed to drive the two electromagnet coils per vehicle, and ττττRW,A is the torque required 
+from the reaction wheel.  Because Test Case 2a is a disturbance rejection problem, the 
+gains associated with the rates are higher.   
+ 
+ 
+The rest of the gains are given in section A.9.  For Test Case 3, a vehicle mass of 15 kg 
+was used and an inertia of 1.0547 kg*m2 was used.  There are no optimal gains listed for 
+Test Cases 2e and 3e.  This is due to the fact that the gains necessary for these maneuvers 
+were already calculated in Test Cases 2c, 2d, 3c, and 3d.  To perform Test Case 2e, a 
+trajectory following controller should be implemented using the gains from Test Case 2d 
+during spin-up and spin-down, while a disturbance rejection controller should be 
+implemented using the gains from Test Case 2c during the steady state spin.  In the same 
+way, the gains from Test Case 3d should be used in a trajectory following controller 
+during the spin-up and spin-down of Test Case 3e, while the gains from Test Case 3c 
+should be used in a disturbance rejection controller during the steady state spin.   
+ 
+
+A.5.4  Spin-up  
+ 
+Input trajectories are necessary to dictate the spin-up and spin-down processes.  While 
+several approaches have been explored for Test Case 2e, no trajectory has been calculated 
+for Test Case 3e.  Three initial approaches to performing spin-up case 2e were explored 
+by specifying a magnet current profile and determining the necessary reaction wheel 
+profiles to perform spin-up.   
+ 
+The first approach was to turn on the magnets to the current necessary to hold the 
+vehicles in place during steady state spin.  A reaction wheel profile was then determined 
+to rotate the vehicles to align for steady state.  The current necessary for this maneuver 
+was calculated by solving the following force equation for the magnetic moment µ = µA 
+= µB: 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+15 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+F
+EM
+
+,
+
+rad
+
+−=
+3
+π
+4
+
+µµµ
+B
+A
+0
+r
+)2(
+4
+
+=
+
+θ
+rm
+2
+D
+
+ 
+
+ 
+
+Equation A.5-13 
+
+ 
+where µµµµ0 = 4πe-7, r is the 1 meter distance between vehicles, m is the mass of each 
+vehicle at 20 kg, and θθθθD  is the rotation rate of the array, set to 1 rpm. The value for µµµµ was 
+then plugged into the equation:  
+
+niA=µ
+
+ 
+
+ 
+
+ 
+
+Equation A.5-14  
+
+ 
+where n, the number of wraps in the coil, is 100 and A is the area of the coil, using 0.83 
+meters for the diameter.  The steady state current necessary using these values was found 
+to be 44.7 amps. 
+ 
+To find the torque profile, the following equations of motion were used: 
+
+=
+Fθmr
+
+EM,TAN
+
+−
+
+mrθ
+2
+
+
+=
+
+rm
+
+
+=
+
+F
+
+EM,RAD
+
++
+
+rθm
+2
+
+
+−=
+
+3
+π
+4
+3
+π
+4
+
+µµµ
+BA
+0
+r
+4
+µµµ
+A
+0
+r
+4
+
+(
+
+sin
+
+θ
+
+cos
+
+θ
+
+A
+
+B
+
++
+
+sin
+
+θ
+
+cos
+
+)θ
+B
+
+A
+
+−
+
+mrθ
+2
+
+
+ 
+
+Equation A.5-15 
+
+B
+
+(
+
+2
+
+cos
+
+θ
+
+cos
+
+θ
+
+B
+
+A
+
+−
+
+sin
+
+θ
+
+B
+
+sin
+
+θ
++
+rm)θ
+2
+A
+
+    Equation A.5-16 
+
+ 
+
+They were discretized to the form: 
+
+ 
+
+Equation A.5-17 
+
+Equation A.5-18 
+
+=
+
+(
+
++
+
+−
+
+θ
+
+A
+
+0,
+
+θ
+
+A
+
+0,
+
+θ
+
+A
+
+0,
+
+θ
+
+B
+
+0,
+
+θ
+
+B
+
+0,
+
+θ
+
+B
+
+0,
+
+−
+
+)
+
+(
+
+2
+
+r
+
+0
+
+θ
+
+0
+
+sin
+
+sin
+
+sin
+
+cos
+
+cos
+
+cos
+
+cos
+
+−=
+
+rθ
+2
+
+0
+r
+0
+
+31
+πn
+4
+
+µµµ
+BA
+0
+5
+r
+0
+µµµ
+31
+BA
+0
+πn
+4
+4
+r
+0
+The initial conditions used to find the torque profile were: 
+θA,0 = θA = 0, from keeping the coordinate system fixed on vehicle A, 
+•
+•
+θB,0 = 90o, starting the magnet for vehicle B perpendicular to the magnet of 
+vehicle A, 
+r0 = r = 1m, keeping the radius between vehicles constant, 
+0θ  = θ0 
+=
+ 0 
+r  =  r  = 0. 
+
+θ
+0
+
+sin
+
++
+
+2
+
+r
+0
+
+ 
+
+θ
+
+B
+
+0,
+
+θ
+
+A
+
+0,
+
+)
+
+•
+•
+•
+ 
+The final conditions were: 
+θB,final = 0o 
+•
+2π
+•
+θ =
+rad
+
+final
+60
+
+s
+
+/
+
+ 
+
+ 
+The following process is then iterated to find the torque profile: 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+16 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+Space Systems Product Development – Spring 2003 
+
+   
+
+θθθ
++
+=
+dt0
+DD
+D
+D
+1
+0
+1, θD=
+mr
+FRAD
+2
+1
+1
+ −
+FRAD
+
+1,
+
+k
+
+1
+(
+θθ
+−
+B
+B
+1,
+dt
+
+cos
+
+−
+1
+
+0,
+
+  
+
+r
+)2(
+
+4
+
+)
+
+ 
+
+ 
+
+ 
+
+
+
+
+
+
+   
+
+ 
+
+=D
+θ
+B
+1,
+(
+sin
+
+4
+
+k
+1
+r
+)2(
+
+ 
+
+ 
+
+ 
+
+ 
+)1,
+
+ 
+
+Equation A.5-19 
+
+Equation A.5-20 
+
+Equation A.5-21 
+
+Equation A.5-22 
+
+Equation A.5-23 
+
+EMFFORCE OPS MANUAL 
+ 
+
+Bθ
+
+1,
+
+=
+
+F
+TAN
+
+1,
+
+=
+
+θ
+B
+
+1,
+
+cos
+
+θ
+A
+
++
+
+sin
+
+θθ
+cos
+A
+B
+
+=θDD
+
+FTAN 1,
+mr
+
+ 
+
+ 
+
+ 
+
+ 
+
+Equation A.5-24 
+
+k
+
+−=
+
+where 
+
+µµµ
+3 0
+A
+B
+π
+4
+The torques on the electromagnets are calculated from the following equations: 
+
+, a constant for this method. 
+
+τ
+EM
+
+,
+
+zA
+
+=
+
+τ
+EM
+
+,
+
+zB
+
+=
+
+3
+
+k
+r
+)2(
+k
+r
+)2(
+
+θ
+(cos(
+A
+
+)
+
+θ
+sin(
+B
+
++
+2)
+
+θ
+sin(
+A
+
+)
+
+θ
+cos(
+B
+
+))
+
+  Equation A.5-25 
+
+2(
+
+θ
+cos(
+A
+
+)
+
+θ
+sin(
+B
+
+)
+
++
+
+θ
+sin(
+A
+
+)
+
+θ
+cos(
+B
+
+))
+
+3
+
+  Equation A.5-26 
+
+ 
+
+The torques on the reaction wheels are calculated from the following equations: 
+
+τ
+RW
+τ
+RW
+
+,
+
+A
+
+,
+
+B
+
+−=
+
+(
+
+mr
+
+2
+
+−=
+
+(
+
+mr
+
+2
+
++
+
++
+
+I
+
+I
+
+   
+
+τθ
++
+)
+
+EM
+xA
+,
+τθθ
++
++
+I
+)
+
+
+B
+EM
+
+ 
+
+,
+
+xB
+
+ 
+
+ 
+
+Equation A.5-27 
+
+Equation A.5-28 
+
+ 
+
+The profiles are shown in Figure A.5-C and Figure A.5-D: 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+17 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Figure A.5-C: EM and Angular Profiles for Constant EM Spin-up 
+
+ 
+
+ 
+
+Figure A.5-D: Torque Profiles for Constant EM Spin-up 
+
+ 
+As shown in the graphs, this spin-up approach takes 25 seconds.  The spike towards the 
+end of the torque profile for reaction wheel B is due to a numerical error from a 
+differentiation and does not reflect an actual physical occurrence.  To test that this is true, 
+the time step was changed and examined.  The spike remained the same number of time 
+steps from the end, indicating there was a numerical problem, not a physical problem.   
+ 
+To slow down spin-up, a second approach was explored.  A ramp input was chosen for 
+the electromagnet.  The code written allows variable lengths for the ramp.  For this case, 
+a ramp time of 70 seconds was chosen to bring the electromagnet currents from 0 amps to 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+18 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+the steady state value 44.7 amps.  This whole approach takes 85 seconds to complete, as 
+shown in Figure A.5-E and Figure A.5-F. 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Figure A.5-E: EM and Angular Profiles for Ramped EM Spin-up 
+
+ 
+
+ 
+
+Figure A.5-F: Torque Profiles for Constant EM Spin-up 
+
+ 
+Once again, a numerical error caused the spike in reaction wheel B.  The final approach 
+explores a quicker spin-up profile by ramping the current in the electromagnets to twice 
+the amount needed for steady state spin, and then ramping back down to the steady state 
+current.  The code for this case also allows variable ramp times.  In the following graphs 
+(Figure A.5-G and Figure A.5-H), the electromagnetic current is ramped up to twice the 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+19 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+steady state value in one second, held at that value for another 8 seconds, and then 
+ramped down to the steady state value in another second.  
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+Figure A.5-G: EM and Angular Profiles for Double Ramped Approach 
+
+ 
+
+ 
+Figure A.5-H: Torque Profiles for the Double Ramped Approach 
+
+ 
+All three options present feasible electromagnet and reaction wheel profiles (with the 
+exception of the numerical errors).  Depending on the time constraints of spin-up and 
+torque limits, one of these spin-up profiles could be chosen.  However, examining the 
+profiles for the angle of spacecraft B shows that the vehicle would quickly rotate towards 
+a 90-degree turn and need to abruptly stop.  This would require a lot of effort from the 
+torque wheels to prevent overshoot in the turns.  For this reason, another approach to 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+20 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+spin-up was explored using a pre-determined angular profile for vehicle B to determine 
+the required electromagnet and reaction wheel profiles.  In this approach, a profile for the 
+angle of vehicle B (Figure A.5-I) is modeled as a section of a cosine wave, so the angle 
+slowly approaches its end value.  Differentiating this, an initial and final acceleration are 
+specified, despite the fact that the initial and final angular velocities are zero. 
+ 
+
+Figure A.5-I: Profiles for Spacecraft B 
+
+ 
+
+ 
+The initial acceleration will be created when the electromagnets are turned on.  The final 
+acceleration can be counteracted with the reaction wheels.  It seems more feasible to 
+counteract this acceleration with the reaction wheels than to counteract the increasing 
+rotational velocity of the spacecraft from the first approach due to the fact that the 
+velocity is approaching zero in the second case.  Electromagnet and reaction wheel 
+profiles have not been determined due to an error in the code.  However, the approach to 
+calculate them is described in the following equations. 
+ 
+The same initial conditions will be used for this approach.  The angle of spacecraft B is 
+specified by the following equation: 
+
+θ
+B
+
+t
+)(
+
+=
+
+π
+
+
+cos
+
+4
+
+
+ππ
+
++
+
+t
+ 
+
+t
+4
+
+
+f
+
+ 
+
+Equation A.5-29 
+
+ 
+FRad1 is calculated using equations A.5-19 and A.5-20.   
+ 
+Then, the magnetic moments can be calculated. 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+21 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+µµ
+A
+B
+1,
+
+1,
+
+−=
+
+k
+
+1
+
+2(
+
+θ
+cos(
+A
+
+)
+
+F
+Rad
+θ
+cos(
+)
+B
+
+1,
+
+1,
++
+
+θ
+sin(
+B
+
+1,
+
+)
+
+θ
+sin(
+A
+
+))
+
+  Equation A.5-30 
+
+ 
+
+µ
+3
+0
+π
+)2(4
+r
+
+4
+
+. 
+
+where 
+
+k
+
+1
+
+=
+
+ 
+Then use 
+
+F
+Tan
+
+1,
+
+=
+
+k
+1
+
+µµ
+A
+B
+1,
+
+1,
+
+θ
+(sin(
+B
+
+1 =θDD
+
+θ
+cos(
+)
+A
+1,
+FTan 1,
+mr
+
+   
+
++
+
+)
+
+θ
+sin(
+A
+
+)
+
+θ
+cos(
+B
+
+)
+
+1,
+
+ Equation A.5-31 
+
+ 
+
+ 
+
+Equation A.5-32 
+
+ 
+along with Equations A.5-25 through A.5-28 to determine the reaction wheel profiles.  
+The electromagnet current profiles can be calculated using Equations A.5-14 and A.5-30. 
+
+A.6  Interfacing 
+The  main  interfacing  of  the  control  team  is  with  avionics,  due  to  the  fact  that  the 
+controller  will  be  located  on  the  avionics  computer.    Preliminary  discussions  regarding 
+the  size  and  amount  of  the  computations  done  by  the  controller  helped  decide  what 
+processor the avionics team chose. 
+ 
+Interfacing  with  metrology  is  necessary  to  determine  the  accuracy  of  the  metrology 
+sensing.    Also,  the  interfacing  determines  which  inputs  the  control  team  needs  from 
+metrology,  and  which  inputs  the  metrology  team  is  capable  of  providing.    This  also 
+includes the communications team, who decides how this information is transmitted.  The 
+final decision for this interfacing includes a Primary Vehicle Array (PVA) that consists of 
+the data  from  the metrology  sensors,  and  a MSA, which  consists of  the  state  information 
+to  be  inputted  into  the  controller.    Each  vehicle  will  send  its  PVA  to  the  other  vehicles.  
+The three PVAs can then be compiled by each vehicle into an MSA, which will be sent to 
+the controller. 
+
+A.7  Coding Controllers in C 
+The next step in creating a controller was to code it into C.  An advantage to using an 
+LQR controller was the fact that all we needed to do was multiply the states by the gains, 
+a simple matrix multiplication, to generate control output values. 
+ 
+For Test Case 1 our states are angle and angular rate.  For the one vehicle case, however, 
+we could only sense angular rate.  Therefore to solve for the angle we integrated our 
+angular rate over time.  This was easily handled in the code.  For Test Case 1b, we also 
+had to add in a desired state and have this state change over time so that the vehicle 
+would perform a preprogrammed maneuver.  Since the controller is a Linear Quadratic 
+Regulator it is constantly trying to keep a state at its nominal value.  To make the vehicle 
+move then one must “trick” the vehicle into thinking it is not at its nominal value and 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+22 
+
+Dept of Aeronautics and Astronautics 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+
+EMFFORCE OPS MANUAL 
+ 
+wait for the vehicle to correct to the new nominal value.  To accomplish this we simply 
+subtracted the desired state from the input we received.  For example, say the nominal 
+angle value was zero.  If you wanted to move the vehicle 30 degrees you would subtract 
+30 degrees from the input.  This makes the vehicle think it’s at -30 degrees thus the 
+controller works to bring it back to the nominal. 
+ 
+The code for Test Case 2 is pretty straightforward.  It runs off the same basic framework 
+stated above.  It reads the variables in to a state array, multiplies this array by the gains 
+matrix, and writes the results into an output commands array.  Trajectory following is 
+handled just like in Test Case 1b, where the vehicle is tricked into thinking that it is not at 
+the nominal state. 
+
+A.8  Controller Concerns and Mitigations 
+The control team has several concerns that have arisen during the design process.  These 
+include near field effects, the time constant of the electromagnets, and coding of the 
+controllers. 
+ 
+The first concern arises because the system models were made using equations that are 
+valid for the far field approximation of the electromagnet effects.  The far field 
+assumption is determined by the size of the electromagnets and their separation distances.  
+If the electromagnets move closer into the near field, the model becomes less accurate. 
+ 
+The time constant of the electromagnet determines how quickly the current in the 
+electromagnet and therefore the field produced by the electromagnet can be changed.  
+The time constant required by the control team to successfully control the electromagnet 
+is determined by the rotation rate of the system.  If the time constant of the electromagnet 
+proves to be slower than what is needed to control effectively, the rotation rate of the 
+system must be slowed.  The electromagnetic field must be able to be changed faster than 
+the controller requires a change to perform maneuvers. 
+
+A.9  Optimal Gains 
+
+A.9.1  Test Case 1 
+ 
+
+ 
+
+R
+
+xx
+
+−
+10 5
+0
+=
+
+0
+1
+
+Figure A.9-A: Test case 1a weightings 
+
+
+          
+
+
+
+R
+uu
+
+     
+
+=
+
+1
+4
+
+ 
+
+Table A.9-1: Gains for Test Case 1a, I = 0.9 kg*m2 
+θ 
+θ  
+ 
+RWτ  
+0.0063 
+2.003 
+
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+23 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Table A.9-2: Gains for Test Case 1a, I = 1 kg*m2 
+θ 
+θ  
+ 
+RWτ  
+0.0063 
+2.003 
+
+ 
+
+4
+
+ 
+
+xx
+
+=
+
+R
+
+R
+uu
+
+
+          
+     
+
+
+
+0
+1
+1
+=
+
+−
+0
+10
+4
+
+Figure A.9-B: Test Case 1b Weightings 
+ 
+Table A.9-3: Gains for Test Case 1b, I = 0.9 kg*m2 
+θ 
+θ  
+ 
+RWτ  
+2.000 
+1.898 
+
+Table A.9-4: Gains for Test Case 1b, I = 1 kg*m2 
+θ 
+θ  
+ 
+RWτ  
+2.000 
+2.001 
+
+ 
+
+ 
+
+A.9.2  Test Case 2 
+ 
+
+Table A.9-5: Constants used to calculate gains for Test Case 2 
+
+µµµµB,1 
+
+µµµµB,2 
+
+1767.1 A*m2 
+
+176.71 A*m2 
+
+mA 
+
+15 kg 
+
+IA= IB 
+
+1 kg*m2 
+
+r 
+
+2 meters 
+
+0
+
+
+
+0
+
+
+
+
+0
+
+
+001
+
+          
+010
+
+
+100
+
+Figure A.9-C: Test Case 2a weightings 
+
+25.0
+0
+0
+
+R
+uu
+
+     
+
+
+
+
+
+
+
+=
+
+0
+25.0
+0
+
+0
+0
+125
+
+
+
+
+
+
+
+.0
+
+ 
+ 
+
+=
+
+R
+
+xx
+
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+24 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+Ax  
+-0.0063 
+
+Ay  
+0.0004 
+
+Table A.9-6: Gains for Test Case 2a 
+Aθ  
+AyD
+AxD  
+ 
+1.9237 
+-23.9293 
+-0.0000 
+
+AθD  
+-0.0000
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+1Aµ  
+2Aµ  
+RW ,τ  
+A
+
+0.0004 
+
+0.0063 
+
+-0.0000 
+
+1.9237 
+
+33.7807 
+
+-0.0003
+
+0.0000 
+
+0.0000 
+
+0.0089 
+
+0.0001 
+
+0.0060 
+
+2.8316 
+
+ 
+
+=
+
+R
+
+xx
+
+
+
+
+
+
+
+
+0
+
+R
+uu
+
+
+
+
+
+
+
+
+     
+          
+
+0
+1
+0
+10
+0
+10
+0
+0
+0
+Figure A.9-D: Test Case 2b weightings 
+ 
+
+25.0
+0
+0
+
+
+
+
+
+
+
+=
+
+0
+25.0
+0
+
+0
+
+
+0
+
+125.0
+
+
+
+ 
+
+Ay  
+Ax  
+-1.9956  0.1330 
+
+Table A.9-7: Gains for Test Case 2b 
+Aθ  
+AxD  
+AyD
+ 
+34.1238 
+-424.0485 
+-0.0000 
+
+AθD  
+-0.0000 
+
+0.1330  1.9956 
+
+-0.0002 
+
+34.1239 
+
+599.6666
+
+-0.0002 
+
+0.0000  0.0004 
+
+2.8284 
+
+0.0023 
+
+0.1063 
+
+2.3784 
+
+ 
+1Aµ  
+2Aµ  
+RW ,τ  
+A
+
+ 
+
+=
+
+R
+
+xx
+
+0
+
+0
+
+
+
+
+
+
+
+
+
+
+0
+0
+00
+1
+10
+00
+010
+0
+0
+0
+10
+Figure A.9-E: Test Case 2c weightings 
+
+
+
+
+     
+          
+
+
+
+
+
+
+0
+25.0
+0
+0
+
+25.0
+0
+0
+0
+
+
+
+
+
+
+
+
+R
+uu
+
+=
+
+0
+0
+125.0
+0
+
+0
+
+
+0
+
+0
+
+
+125.0
+
+
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Massachusetts Institute of Technology 
+
+25 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Table A.9-8: Gains for Test Case 2c 
+Bθ  
+AyD
+AxD  
+ 
+-0.0000 
+-23.9293
+1.9237 
+
+AθD  
+-0.0000 
+
+BθD  
+-0.0000 
+
+ 
+1Aµ  
+
+Aθ  
+-0.0000 
+
+EMFFORCE OPS MANUAL 
+ 
+
+Ay  
+0.0004 
+
+Ax  
+-
+0.0063 
+0.0004  0.0063 
+
+-0.0000 
+
+-0.0000 
+
+1.9237 
+
+33.7807 
+
+-0.0003 
+
+-0.0001 
+
+0.0000  0.0000 
+
+0.0089 
+
+-0.0000 
+
+0.0001 
+
+0.0060 
+
+2.8316 
+
+-0.0000 
+
+0.0000 
+
+-0.0000 
+
+0.0089 
+
+-0.0003 
+
+0.0030 
+
+-0.0000 
+
+2.8316 
+
+2Aµ  
+RW ,τ
+RW ,τ
+
+B
+
+A
+
+=
+
+R
+
+xx
+
+
+
+
+
+
+
+
+
+
+0
+0
+01
+10
+0
+0
+100
+0
+10
+00
+0
+
+0
+
+
+
+
+     
+          
+
+
+
+
+
+
+ 
+
+=
+
+R
+uu
+
+0
+Figure A.9-F: Test Case 2d weightings 
+
+25.0
+0
+0
+0
+
+
+
+
+
+
+
+
+0
+25.0
+0
+0
+
+0
+0
+125.0
+0
+
+0
+
+
+0
+
+0
+
+
+125.0
+
+
+ 
+
+-
+0.0000 
+
+ 
+
+Ax  
+
+Ay  
+
+Table A.9-9: Gains for Test Case 2d 
+Bθ  
+AxD  
+AyD
+
+ 
+
+Aθ  
+
+AθD  
+
+BθD  
+
+-1.9956  0.1330 
+
+-0.0000 
+
+-0.0000 
+
+-424.0485 
+
+34.1238 
+
+-0.0000 
+
+-0.0000 
+
+0.1330  1.9956 
+
+-0.0002 
+
+-0.0001 
+
+34.1238 
+
+599.6666
+
+-0.0002 
+
+-0.0001 
+
+0.0000  0.0004 
+
+2.8284 
+
+-0.0000 
+
+0.0023 
+
+0.1063 
+
+2.3784 
+
+-0.0000 
+
+-0.0000  0.0002 
+
+-0.0000 
+
+2.8284 
+
+0.0536 
+
+-0.0000 
+
+2.3784 
+
+-0.0045 
+ 
+ 
+ 
+
+ 
+1Aµ  
+2Aµ  
+RW ,τ  
+A
+RW ,τ  
+B
+
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+26 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+A.9.3  Test Case 3 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+ 
+Table A.9-10: Constants used to calculate gains for Test Case 2 
+
+µµµµB,1 
+
+µµµµB,2 
+
+mA= mB= mB 
+
+IA= IB= IC 
+
+1767.1 A*m2 
+
+176.71 A*m2 
+
+15 kg 
+
+1 kg*m2 
+
+rAB=rBC 
+
+2 meters 
+
+ 
+
+0
+0
+000
+01
+10
+0
+000
+100
+000
+00
+0010
+00
+010
+0
+00
+0
+100
+Figure A.9-G: Test Case 3a weightings 
+
+
+
+
+
+
+     
+          
+
+
+
+
+
+
+
+0
+25.0
+0
+0
+0
+0
+
+25.0
+0
+0
+0
+0
+0
+
+
+
+
+
+
+
+
+
+
+
+
+0
+0
+25.0
+0
+0
+0
+
+=
+
+R
+uu
+
+0
+0
+0
+25.0
+0
+0
+
+0
+0
+0
+0
+125.0
+0
+
+0
+
+
+0
+
+0
+
+
+0
+
+
+0
+
+125.0
+
+
+
+ 
+
+0
+
+0
+
+
+
+
+
+
+
+
+
+
+
+
+
+=
+
+R
+
+xx
+
+ 
+
+Ax  
+-
+0.0063 
+
+Bx  
+0 
+
+Ay  
+0.0004 
+
+Table A.9-11: Gains for Test Case 3a 
+Bθ  
+Aθ  
+0 
+0 
+
+AxD  
+-23.9293
+
+By  
+0 
+
+BxD  
+0 
+
+AyD
+
+ 
+
+1.9237
+
+ByD
+
+ 
+
+0 
+
+0.0004 
+0 
+0 
+0 
+0 
+
+0 
+-0.0063 
+0.0004 
+0 
+0 
+
+0.0063 
+0 
+0 
+0 
+0 
+
+0 
+0.0004 
+0.0063 
+0 
+0 
+
+0 
+0 
+0 
+0.0089
+0 
+
+0 
+0 
+0 
+0 
+0.0089
+ 
+
+1.9237
+0 
+0 
+0.0001
+0 
+
+0 
+-23.9293
+1.9237
+0 
+0.0001
+
+33.7807 
+0 
+0 
+0.006 
+0 
+
+0 
+1.9237 
+33.7807 
+0 
+0.006 
+
+AθD  
+0 
+-
+0.0003
+0 
+0 
+2.8318
+0 
+
+BθD  
+0 
+
+0 
+0 
+-0.0003
+0 
+2.8318
+
+ 
+1Aµ  
+2Aµ  
+1Bµ  
+2Bµ  
+RW ,τ  
+A
+RW ,τ  
+B
+
+=
+
+R
+
+xx
+
+000
+0
+01
+
+
+0
+000
+10
+
+100
+000
+
+
+0010
+00
+
+
+00
+0
+010
+
+0
+00
+100
+
+
+0
+
+
+0
+
+
+
+
+
+
+     
+          
+
+
+
+
+
+
+
+0
+25.0
+0
+0
+0
+0
+
+0
+0
+25.0
+0
+0
+0
+
+0
+0
+0
+25.0
+0
+0
+
+0
+0
+0
+0
+125.0
+0
+
+0
+
+
+0
+
+0
+
+
+0
+
+
+0
+
+125.0
+
+
+
+ 
+
+=
+
+R
+uu
+
+25.0
+0
+0
+0
+0
+0
+
+
+
+
+
+
+
+
+
+
+
+
+0
+Figure A.9-H: Test Case 3b weightings 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+27 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+ 
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+Table A.9-12: Gains for Test Case 3b 
+Aθ  
+Bθ  
+AxD  
+BxD  
+AyD
+-
+0 
+0 
+424.049
+0 
+-
+0.0002 
+
+34.1238
+
+0 
+
+ 
+
+34.1238
+
+599.6666
+
+0 
+-
+424.049
+
+0 
+
+ByD
+
+ 
+
+0 
+
+0 
+
+AθD  
+0 
+-
+0.0002 
+
+BθD  
+0 
+
+0 
+
+0 
+
+0 
+
+0.133 
+
+0 
+-
+0.0002
+0  1.9956 
+0 
+2.8284 
+0.0004  0 
+0 
+2.8284
+0  0.0004 
+0 
+
+0 
+
+34.1238
+
+0 
+0.0023
+0 
+
+34.1238
+0 
+0.0023
+
+0 
+0.1063 
+0 
+
+599.6667
+0 
+0.1063 
+
+ 
+
+0 
+
+0 
+-
+0.0002
+0 
+2.4426 
+0 
+2.4426
+0 
+
+Ax  
+-
+1.9956 
+
+Bx  
+0 
+
+Ay  
+0.133 
+
+By  
+0 
+
+1.9956  0 
+
+0 
+-
+1.9956 
+
+0.133 
+0 
+0 
+
+0.133 
+
+0 
+
+0 
+0 
+0 
+
+ 
+
+ 
+1Aµ  
+2Aµ  
+1Bµ  
+2Bµ  
+RW ,τ
+A
+RW ,τ
+
+B
+
+=
+
+R
+
+xx
+
+0
+
+0
+0000001
+0000010
+0000100
+00010000
+0010000
+0100000
+1000000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
+
+
+
+
+
+
+
+
+     
+
+R
+uu
+
+=
+
+25.0
+0
+0
+0
+0
+0
+0
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+25.0
+0
+0
+0
+0
+0
+
+0
+0
+25.0
+0
+0
+0
+0
+
+0
+0
+0
+25.0
+0
+0
+0
+
+0
+0
+0
+0
+125.0
+0
+0
+
+0
+0
+0
+0
+0
+125
+0
+
+.0
+
+0
+0
+0
+0
+0
+0
+125.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+Figure A.9-I: Test Case 3c weightings 
+
+ 
+
+Ax  
+
+-0.0063 
+0.0004 
+
+Bx  
+0 
+0 
+-
+0.0063 
+0.0004 
+0 
+0 
+0 
+
+0 
+0 
+0 
+0 
+0 
+
+Ay  
+0.0004 
+0.0063 
+
+By  
+0 
+0 
+
+Aθ
+
+ 
+
+0 
+0 
+
+0 
+0 
+0 
+0 
+0 
+
+0.0004
+0.0063
+0 
+0 
+0 
+
+ 
+
+ 
+
+ 
+
+ByD
+
+0 
+0 
+
+0 
+0 
+
+Table A.9-13: Gains for Test Case 3c 
+Cθ  
+Bθ
+AxD  
+AyD
+BxD  
+-
+0 
+23.9293
+0 
+1.9237
+-
+23.9293
+0 
+1.9237
+0 
+33.7807
+0 
+1.9237
+0 
+0.0001
+0 
+0.006 
+0 
+-0.0003 -0.0003 0.003  0.003 
+0.006 
+0 
+0.0001
+0 
+
+0 
+0 
+0 
+0 
+0.0089
+
+0 
+0 
+0 
+0 
+0.0089 
+0 
+0.0089
+0 
+0 
+0 
+
+1.9237
+33.7807
+
+0 
+0 
+
+AθD
+
+ 
+
+BθD
+
+ 
+
+CθD  
+
+ 
+
+0 
+0 
+-0.0003  -0.0001
+
+0 
+0 
+
+0 
+0 
+2.8318 
+0 
+0 
+
+0 
+0 
+-0.0001 -0.0003
+0 
+0 
+2.8318
+0 
+2.8318
+0 
+
+1Aµ  
+2Aµ  
+1Bµ  
+2Bµ  
+RW ,τ
+A
+RW ,τ
+B
+CRW ,τ
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+28 
+
+Dept of Aeronautics and Astronautics 
+
+EMFFORCE OPS MANUAL 
+ 
+
+=
+
+R
+
+xx
+
+001
+
+
+010
+
+100
+
+
+000
+
+
+000
+
+000
+
+
+000
+
+
+
+
+0
+0
+0
+1
+0
+0
+0
+0
+
+000
+000
+000
+000
+001
+010
+100
+
+
+
+
+
+
+
+          
+
+
+
+
+
+
+
+
+0
+
+0
+
+ 
+
+     
+
+R
+uu
+
+=
+
+ 
+
+Space Systems Product Development – Spring 2003 
+
+25.0
+0
+0
+0
+0
+0
+0
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+25.0
+0
+0
+0
+0
+0
+
+0
+0
+25.0
+0
+0
+0
+0
+
+0
+0
+0
+25.0
+0
+0
+0
+
+0
+0
+0
+0
+125.0
+0
+0
+
+0
+0
+0
+0
+0
+125
+0
+
+.0
+
+0
+0
+0
+0
+0
+0
+125
+
+
+
+
+
+
+
+
+
+
+
+
+
+.0
+
+ 
+Figure A.9-J: Test Case 3d weightings 
+ 
+Table A.9-14: Gains for Test Case 3d 
+Cθ  
+Bθ
+Aθ
+BxD  
+AxD  
+-424.049
+0 
+0 
+0 
+0 
+
+ 
+
+ 
+
+AyD
+ 
+34.1238
+
+Ax  
+-1.9956 
+
+Bx  
+0 
+
+Ay  
+0.133 
+
+By  
+0 
+
+0.133 
+
+0 
+
+1.9956 
+
+0 
+
+-0.0002  0.0001
+
+34.1238
+
+0 
+
+599.6666
+
+ 
+
+ByD
+0 
+
+0 
+
+ 
+
+AθD
+0 
+
+ 
+
+BθD
+0 
+
+-0.0002  -0.0001
+
+0 
+
+0 
+
+0 
+
+0 
+
+CθD  
+0 
+
+0 
+
+0 
+
+0 
+
+0 
+
+ 
+1Aµ  
+2Aµ  
+1Bµ  
+2Bµ  
+RW ,τ
+A
+RW ,τ
+B
+CRW ,τ
+
+0 
+
+0 
+
+0 
+
+0 
+
+0 
+
+0 
+
+0 
+
+0 
+
+0.0002 0.0002 
+
+0 
+
+0.0004 
+
+0 
+
+0 
+
+-1.9956 
+
+0.133 
+
+0 
+
+0 
+
+0.133 
+
+1.9956 
+
+0 
+
+0 
+
+0 
+
+0.0001 -0.0002
+
+0 
+
+0 
+
+-424.049
+
+34.1238
+
+0 
+
+0 
+
+34.1238
+
+599.667
+
+0 
+
+0 
+
+0 
+
+-0.0001
+
+0.0002 
+
+0.0004 
+
+0 
+
+2.8284 
+
+0 
+
+0.0023 
+
+0 
+
+0.1063 
+
+0 
+
+2.4426 
+
+0 
+
+2.8284
+
+-0.0045 -0.0045
+
+0.0536 
+
+0.0536 
+
+2.4426 
+
+0 
+
+2.8284 
+
+0 
+
+0.0023 
+
+0 
+
+0.1063 
+
+0 
+
+2.4426 
+
+0 
+
+0 
+
+Table A.9-15: Constants used to calculate gains for spin-up 
+A θθ =0,
+0,Bθ  
+Ω
+dcoil 
+iss, EM 
+m 
+n 
+A
+90o 
+0 
+
+1 rpm 
+
+ 
+
+100 
+wraps 
+
+0.83 
+m 
+
+44.7 
+Amps 
+
+20 
+kg 
+
+B ,θ  
+final
+0o 
+
+I 
+
+1 
+kg*m2 
+
+ 
+Spin-up 
+ 
+
+R 
+
+ =  
+r
+r
+
+
+0 
+
+1 
+meter 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+Massachusetts Institute of Technology 
+
+29 
+
+Dept of Aeronautics and Astronautics 
+
+ 
+

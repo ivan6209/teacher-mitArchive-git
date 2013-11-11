@@ -1,0 +1,425 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+October  27,  2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  14 
+
+1 
+
+Introduction 
+
+For  this  lecture  we’ll  look  at  using  interior  point  algorithms  for  solving  linear  programs,  and  more 
+generally  convex programs  .  Developing originally  in 1984 by Narendra Karmarkar,  there have been 
+many variants (with some of the keywords  ’path  following’,  ’primal-dual’,  ’potential reduction’, etc.) 
+on  interior  point  algorithms,  especially  through  the  late  80s  and  early  90s.  In  the  late  90s,  people 
+began  to  realize  that  interior point algorithms could also be used  to  solve  semideﬁnite programs  (or, 
+even  more  generally,  convex  programs).  As  much  as  possible,  we  will  discuss  linear  programming, 
+semideﬁnite  programming,  and  even  a  larger  class  called  conic  programming  in  a  uniﬁed  way. 
+
+2  Linear  Programming 
+
+We  will  start  with  linear  programming.  Remember  that  in  linear  programming,  we  have: 
+Primal:  Given  A ∈ Rm×n ,  c ∈ Rn  and  b ∈ Rm ,  ﬁnd  x ∈ Rn : 
+
+Its  dual  linear  program  is: 
+Dual:  Find  y ∈ Rm : 
+
+Min 
+s.t. 
+
+c T x 
+Ax = b, x ≥ 0. 
+
+Max 
+s.t. 
+
+bT y 
+AT y ≤ c. 
+
+We  can  introduce  non-negative  slack  variables  and  rewrite  this  as: 
+Dual:  Find  y ∈ Rm ,  s ∈ Rn : 
+
+Max 
+s.t. 
+
+bT y 
+AT y + s = c, s ≥ 0. 
+
+We  know  that,  for  a  feasible  solution,  x  in  the  primal,  and  a  feasible  solution  (y , s)  in  the  dual, 
+we  know  by  complementary  slackness  that  they  will  both  be  optimal  (for  the  primal  and  the  dual 
+resp.)  iﬀ  xT s  =  0.  Since  this  is  the  component-wise  product  of  two  non-negative  vectors,  we  can 
+equivalently  say: 
+
+xj sj  = 0 
+
+∀j. 
+
+2.1  Using  the  Interior  Point  Algorithm 
+The  interior  point  algorithm  will  iteratively maintain  a  strictly  feasible  solution  in  the  primal,  such 
+that  for  all  values  of  j ,  xj  >  0.  Similarly  in  the  dual,  it  will  maintain  a  y  and  an  s  such  that 
+for  all  values  of  j ,  sj  >  0.  Because  of  this  strict  inequality,  we  can  never  reach  our  optimality 
+
+14-1 
+
+condition  stated  above;  however,  we’ll  get  very  close,  and  once  we  do,  we  can  show  that  a  jump 
+from  this  non-optimal  solution  (for  either  the  primal  or  the  dual)  to  a  vertex  of  improved  cost  (of 
+the  corresponding  program)  will  provide  an  optimal  solution  to  the  (primal  or  dual)  program. 
+In  some  linear  programs,  it  may  not  be  possible  to  start  with  a  strictly  positive  solution.  For 
+example,  for  any  feasible  solution  to  the  program,  it  may  be  that  xj  =  0,  so  we  may  be  unable  to 
+ﬁnd  a  strictly  feasible  solution with which  to  start  the  algorithm.  This  can  be  dealt with  easily,  but 
+we will not discuss  this.  We’ll  assume  that  the primal  and dual both have  strictly  feasible  solutions. 
+
+3  Semideﬁnite  Programming 
+
+As  introduced  in  the  previous  lecture,  in  semideﬁnite  programming,  our  variables  are  the  entries  of 
+a  symmetric postitive  semideﬁnite matrix X .  Let S n  denote  the  set of all  real,  symmetric and n × n 
+� � 
+matrices.  For  two  such matrices  A  and  B ,  we  deﬁne  an  inner  product 
+• 
+Aij Bij  = T race(AT B ) = T race(AB ).
+A B = 
+j 
+i
+
+Semideﬁnite  programming  (as  a minimization  problem)  is 
+C • X 
+Ai  • X  = bi 
+X  � 0. 
+Remember  that  for  a  symmetric matrix M , M  � 0 means  that M  is  positive  semideﬁnite, meaning 
+that  all  of  its  (real)  eigenvalues  λ ≥ 0,  or  equivalently,  ∀x, xT M x ≥ 0. 
+
+Min	
+s.t. 
+
+i = 1...m 
+
+3.1  Dual  for  SDP 
+When  working  with  linear  programs,  we  know  the  existence  of  a  dual  linear  program  with  a  strong 
+property:  Any  feasible  dual  solution  provides  a  lower  bound  on  the  optimum  primal  value  and,  if 
+either  program  is  feasible,  the  optimum  primal  and  optimum  dual  values  are  equal.  Does  a  similar 
+dual  for  a  semideﬁnite  progrm  exist?  The  answer  if  yes,  although  we  will  need  some  additional 
+condition.  We  claim  that  the  dual  takes  the  following  form. 
+Dual:  Find  yi  ∈ Rn ,  and  S  ∈ S n : 
+� 
+bT y 
+Maxy∈Rm 
+yiAi  + S  = C 
+s.t.	
+i 
+S  � 0. 
+
+14-2 
+
+= 
+
+C • X  = 
+
+3.1.1  Weak  Duality 
+For  weak  duality,  consider  any  feasible  solution  x  in  the  primal,  and  any  feasible  solution  (y , S )  in 
+� 
+� 
+� 
+the  dual.  We  have: 
+yiAi  + S  • X 
+i � 
+yi (Ai  • X ) + S • X 
+i � 
+yi bi  + S • X 
+= 
+i 
+=  bT y + S • X 
+≥  bT y , 
+the  last  inequality  following  from  Lemma  1  below.  This  is  true  for  any  primal  and  dual  feasible 
+solutions,  and  therefore  we  have  z ≥ w,  where: 
+z  =  min{C X  : X  feasible  for  primal},
+• 
+w  =  max{bT y  : (y , S )  feasible  for  dual}. 
+Lemma  1  For  any  A, B  � 0,  we  have  A B ≥ 0.
+• 
+Proof  of  Lemma  1:  Any  positive  semideﬁnite  matrix  A  admits  a  Cholesvky  decomposition: 
+A = V T V  for  some  n × n  matrix  V .  Thus, 
+A • B = T race(AB ) = T race(V T V B ) = T race(V BV T ), 
+the  last  inequality  following  from  the  fact  that,  for  (not  necessarily  symmetric)  square  matrices  C 
+and  D ,  we  have  T race(CD) =  T race(DC ).  But  V BV T  is  positive  deﬁnite  (since  xT V BV T x  ≥  0 
+� 
+for  all  x),  and  thus  its  trace  is  nonnegative,  proving  the  result. 
+A  similar  lemma  was  used  when  we  were  talking  about  linear  programming,  namely  that  if 
+a, b ∈ Rn  with  a, b ≥ 0  then  aT b ≥ 0. 
+
+3.1.2  Strong  Duality 
+In  general,  it’s  not  true  that  z = w.  Several  things  can  go  wrong. 
+In  deﬁning  z ,  we  wrote:  z  =  min C  • X .  However,  that  min  is  not  really  a  min,  but  rather 
+an  inﬁmum.  It  might  happen  that  the  inﬁmum  value  can  be  approached  arbitrarily  closely  but  no 
+solution may  attain  that  value  precisely.  Similarly  in  the  dual,  the  supremum may  not  be  attained. 
+In  addition,  in  semideﬁnite  programming,  it  is  possible  that  the  primal  may  have  a  ﬁnite  value, 
+but  that  the  dual  may  be  infeasible.  In  linear  programming,  this  was  not  the  case.  If  the  primal 
+had  a  ﬁnite  feasible  value  and  was  bounded,  the  dual  was  also  ﬁnite  and  with  the  same  value.  In 
+semideﬁnite  programming,  the  primal  can  be  ﬁnite,  while  the  dual may  be  infeasible  or  vice  versa. 
+In  addition,  both  the  primal  and  dual  could  be  ﬁnite,  but  they  could  be  of  diﬀering  values. 
+That  all  said,  in  the  typical  case,  you do have  strong duality  (z = w),  but  only necessarily under 
+certain  conditions. 
+
+3.1.3 
+Introducing  a  Regularity  Condition 
+Assume  that  the  primal  and  dual  have  a  strictly  feasible  solution.  This means  that  for  the  primal: 
+∃X 
+s.t.	 Ai  • X  = bi 
+X  � 0. 
+
+i = (1...m). 
+
+14-3 
+
+’A � 0’ denotes that A  is a positive-deﬁnite matrix, meaning that ∀a = 0
+, aT X a > 0, or equivalently 
+that  all  its  eigenvalues  λi  satisfy  λi  > 0. 
+� 
+Likewise,  in  the  dual,  there  exists  y  and  S  such  that: 
+i yiAi  + S  = C 
+S  � 0. 
+If we assume this  ’regularity condition’ that we’ve deﬁned above,  then the primal value z  is ﬁnite 
+and attainable  (i.e.  it  is not an  inﬁmum,  but  actually a minimum),  and  the dual value w  is  attained 
+and  furthermore  z = w.  This  is  given  without  proof. 
+
+4  Conic  Programming 
+
+Conic Programming is a generalization of both Linear Programming and Semideﬁnite Programming. 
+First,  we  need  the  deﬁnition  of  a  cone: 
+Deﬁnition  1  A  cone  is  a  subset  C  of  Rn  that  has  the  property  that  for  any  v ∈ C  and  λ ∈ R+ ,  λv 
+is  also  in  C . 
+Conic Programming  is constrained optimization over K , a closed  convex  cone, with a given  inner 
+product  �x, y�.  We  can,  for  example,  take K  = Rn  and  �x, y� = xT y  for  any x, y ∈ Rn ;  this will  lead 
+to  linear  programming.  Conic  programming,  like  LP  and  SDP,  has  both  a  primal  and  a  dual  form; 
+the  primal  is: 
+Primal:  Given  A ∈ Rm×n , b ∈ Rm ,  and  c ∈ Rn : 
+�c, x� 
+min	
+s.t.	
+Ax = b 
+x ∈ K. 
+More  generally,  we  could  view  K  as  a  cone  in  any  space,  and  then  A  is  a  linear  operator  from 
+K  to Rm .  To  form  the  dual  of  a  conic  program, we  ﬁrst  need  to  ﬁnd  the  polar  cone, K ∗ ,  of K .  The 
+polar cone  is deﬁned  to be  the  set of all s  such  that  for all x  in K ,  �s, x� ≥ 0.  For  instance,  the polar 
+cone  of  Rn  is  Rn  itself  (indeed  if  sj  < 0  then  we  have  s /∈ K ∗  since  �ej , s� < 0;  conversely,  if  s ≥ 0
++ 
+then  �x, s� ≥ 0).  In  the  case  that  K  = K ∗ ,  we  say  that  K  is  self-polar.  Similarly,  the  polar  cone  of 
++
+P SD,  the  set  of  positive  semideﬁnite  matrices,  is  also  itself. 
+We also deﬁne the adjoint  (operator) A∗  of A to be such that,  for all x and y ,  �A∗ y , x� = �y , Ax�. 
+For  example,  if  the  inner  product  is  a  standard  dot  product  and  A  is  the  matrix  corresponding  to 
+a  linear  transformation  from  Rn  to  Rm ,  then  A∗  =  AT .  To  write  the  conic  dual,  we  introduce  a 
+variable  y ∈ Rm  and  s ∈ Rn  and  optimize: 
+Dual: 
+
+max 
+s.t.
+
+�b, y� 
+A∗ y + s = c 
+s ∈ K ∗ . 
+
+4.0.4	 Weak  Duality 
+We can prove weak duality – that the value of the primal is at least the value of the dual – as follows. 
+Let  x  be  any  primal  feasible  solution  and  (y , s)  be  any  dual  feasible  solution.  Then 
+�c, x� = �A∗ y + s, x� = �A∗ y , x� + �s, x� = �y , Ax� + �s, x� = �b, y� + �s, x� ≥ �b, y�, 
+where  we  have  used  the  deﬁnition  of  K ∗  to  show  that  �s, x� ≥  0.  This  means  that  z ,  the  inﬁmum 
+value  of  the  primal,  is  at  least  the  supremum  value  w  of  the  dual. 
+
+14-4 
+
+�
+4.0.5  Strong  Duality 
+In  the  general  case,  we  don’t  know  that  the  two  values  will  be  equal.  But  we  have  the  following 
+statement  (analogous  to  the  regularity  condition  for  SDP):  if  there  exists  an  x  in  the  interior  of K , 
+such  that  Ax  =  b,  and  a  s  in  the  interior  of  K ∗ ,  with  A∗ y + s  =  c,  then  the  primal  and  the  dual 
+both  obtain  their  optimal  values,  and  those  values  are  equal. 
+
+4.1  Semideﬁnite  Programming  as  a  Special  Case  of  Conic  Programming 
+LP  is  a  special  case  of  conic  programming,  if  we  let  K  = Rn  and  take  the  inner  product  to  be  the 
++ 
+standard  dot  product  �a, b� = aT b.  We  can  also make  any  SDP  into  a  conic  program;  ﬁrst,  we  need 
+a  way  of  transforming  semideﬁnite  matrices  into  vectors.  Since  we  are  optimizing  over  symmetric 
+matrices,  we  introduce  a  map  svec(M )  that  only  takes  the  lower  triangle  of  the  matrix  (including 
+√
+the  diagonal).  To  be  able  to  use  the  standard  dot  product  with  these  vectors,  svec  multiplies  all  of 
+the  oﬀ-diagonal matrices  by 
+2.  So  svec maps  X  to 
+√
+√
+√
+2x(n−1)n ). 
+2x13 , . . . , 
+2x12
+(x11 , x22 , . . . , xnn , 
+� 
+�  √
+� 
+n
+• 
+xii yii  + 
+xij yij  = T r(AB ) = A  B . 
+1≤i,j≤n 
+1≤i<j≤n 
+i=1 
+
+�svec(X ), svec(Y )� = 
+
+As  a  result: 
+
+√
+2xij 
+
+2yij  = 
+
+This means that using the basic dot product as the inner product is compatible with the inner product 
+used  in  SDP.  So  we  can  formulate  an  SDP  as  a  conic  program  by  letting  K  =  {svec(X ) : X  �  0}, 
+which  is  a  closed  convex  cone.  To  show  convexity,  we  need  to  show  that  if  A  and  B  are matrices  in 
+� 
+� 
+� 
+� 
+P SD,  then  λA + (1 − λ)B  is  also  in  P SD  for  0 ≤ λ ≤ 1.  Indeed,  for  any  vector  v ,  we  have 
+v T (λA + (1 − λ)B )v = λ v TAv  + (1 − λ)  v TB v  ≥ 0. 
+Then,  we  can  let  the  matrix  A  be  a  matrix  that  is  the  composition  of  the  corresponding  Ai  of 
+the  semideﬁnite  program,  so  that 
+
+A svec(X ) = (Ai  • X )i=1,...,m . 
+� 
+� 
+Now  that  the  semideﬁnite  program  is  cast  into  a  conic  program,  we  could write  the  conic  dual,  and 
+one could verify that what we get is precisely the dual of the semideﬁnite program we deﬁned earlier. 
+Instead  of  mapping  the  space  of  symmetric  matrices  (say  p × p)  into  Rn  (with  n =  p+1  )  using 
+svec(·),  one  could  simply  deﬁne  K  =  {X  ∈  S p  :  X  �  0}  and  �X, Y �  =  X  • Y .  Now  our  linear 
+2 
+operator  A  : S n  Rm  then maps X  into  (Ai  • X )i=1,
+→ 
+→ 
+,m .  Its  adjoint  A∗  : Rm 
+� 
+S n  is  deﬁned  by: 
+··· 
+m
+yiAi  • X, 
+i=1 
+
+�A∗ (y), X � := �y , A(X )� = 
+�
+m
+i=1 yiAi .  The  dual  SDP  now  arises  as  the  dual  conic  program. 
+4.2  Barrier  Functions 
+To  solve  the  conic  program,  we  will  require  a  barrier  function  F .  This  is  a  function  from  int(K ), 
+the  interior  of K ,  to  R  such  that 
+1.  F  is  strictly  convex, 
+2.  F (xi ) → ∞  as  xi  → x ∈ ∂K ,  where  ∂K  is  the  boundary  of K . 
+
+implying  that  A∗  maps  y  to 
+
+14-5 
+
+We  will  use  the  barrier  function  to  “punish”  candidate  solutions  that  are  close  to  the  boundary 
+of  K ,  keeping  the  current  point  inside  K .  “Good”  barrier  functions,  that  result  in  a  fast  overall 
+� 
+algorithm,  have  more  properties  that  will  be  described  in  a  later  lecture.  For  K  =  R
+n ,  a  good 
++
+barrier  function  is 
+F (x) = − 
+log(xi ). 
+i 
+As  any  one  of  the  coordinates  approaches  0,  the  log  approaches  −∞,  so  the  total  function  goes  to 
+∞.  One  can  also  check  that  this  function  is  strictly  convex. 
+For K  = svec(P SDp ) or more simply K  = P SDp  (the set of symmetric p× p positive semideﬁnite 
+matrices),  the  interior  of  K  is  the  set  of  positive  deﬁnite  matrices,  which  all  have  strictly  positive 
+determinants.  (This  is  because  the  determinant  is  equal  to  the  product  of  the  eigenvalues,  which 
+are  all  strictly  positive  for  a  positive  deﬁnite  matrix.)  So  we  can  use  the  following  barrier  function: 
+F (X ) = − log(det(X )). 
+As X  approaches  the  boundary  of K ,  the  determinant  goes  to  zero,  and F  goes  to  inﬁnity.  One  can 
+also  check  that  this  function  is  strictly  convex  (its Hessian,  the matrix  of  second  derivatives,  can  be 
+shown  to  be  positive  deﬁnite). 
+
+4.3  A  Primal-Dual  Interior-Point  Method 
+Once  we  have  a  barrier  function,  we  will  set  the  ob jective  function  of  the  primal  to  �c, x� + µF (x), 
+where  µ  is  a  parameter  that  we  will  adjust  through  the  course  of  the  algorithm.  Assuming  that  we 
+start  with  an  initial  candidate  that  belongs  to  int(K ),  we  can  ignore  the  constraint  that  x  ∈  K , 
+since  that  will  be  enforced  through  the  barrier  function,  since  there  will  be  an  inﬁnite  penalty  for 
+leaving K .  Our  primal  barrier  problem  BP (µ)  will  be: 
+min{�c, x� + µF (x) : Ax = b}. 
+Analogously,  for  the  dual,  we  change  the  ob jective  function  to  �b, y� − µF ∗ (s),  where  F ∗  is  a 
+barrier  function  for  the  dual;  we  can  also  eliminate  the  constraint  that  s  ∈  K ∗ .  Our  dual  barrier 
+problem,  BD(µ),  is: 
+max{�b, y� − µF ∗ (s) : A∗ y + s = c}. 
+The  basic method  of  the  algorithm  is  to  have  a  current  value  of µ,  and  keep  track  of  the  optimal 
+solutions  in  the primal BP (µ) and dual BD(µ).  As  long as µ  is not  zero,  there  is a unique optimum 
+solution  for  both,  since  the  ob jective  function  is  the  sum  of  a  linear  function  and  a  strictly-convex 
+function,  which  results  in  a  strictly-convex  function.  We  will  steadily  decrease  µ,  and  keep  track  of 
+the optimal  solutions as  they change;  the paths  the optimum  solutions  trace out  is  called  the central 
+path  (or  central  trajectory ).  We  will  show  that  the  (primal  and  dual)  central  paths  will  converge  to 
+an  optimum  value  of  the  primal  and  dual  original  programs. 
+In the special case of linear programming, once we are suﬃciently close, we can round the current 
+solution to the nearest vertex to obtain an optimum solution.  For semideﬁnite programming, though, 
+we  do  not  have  such  an  algorithm  to  convert  a  solution  for  small  enough  µ  to  an  optimum  solution. 
+Let’s  characterize  the  optimum  solution  to  BP (µ)  and  BD(µ).  We  derive  now  the  so-called 
+KKT  optimality  conditions.  If  there  were  no  constraints  in  the  conic  program,  then  the  minimum 
+would  be  found  when  the  gradient  of  the  ob jective  function  is  zero.  If  there  are  aﬃne  constraints 
+like  Ax  =  b,  however,  the  minimum  will  occur  when  the  gradient  is  normal  to  the  aﬃne  space  of 
+feasible  solutions.  Otherwise,  we  could  move  along  the  pro jection  of  the  gradient  on  the  feasible 
+� 
+space,  and  improve  our  ob jective  function. 
+For simplicity,  let’s ﬁrst  look at the case when K  = K ∗  = R
+n , and the barrier  function  is F (x) = 
+log(xi ).  The  ob jective  function  of  the  primal  is  �c, x� − µF (x),  and  the  partial  derivatives  are 
+− 
++
+i 
+(�c, x� − µF (x)) = cj  −
+µ
+∂
+xj 
+∂xj 
+
+14-6 
+
+so  the  gradient  is  c − µx−1 ,  where  x−1  denotes  the  vector  {1/xi }.  But  since  this  gradient  is  normal 
+to  the  constraint Ax,  the  gradient must  be  of  the  form AT y  for  some  y .  So  if we  let  s = µx−1 ,  then 
+we  know  c − s  is  of  the  form  AT y ,  or  equivalently, 
+
+AT y + s  =  c 
+s  =  µx−1 . 
+
+The  last  constraint  is  equivalent  to 
+
+xj sj  = µ 
+
+(1) 
+
+for  all  j . 
+Now,  looking  at  the  dual:  the  gradient  with  respect  to  y  is  b,  which must  be  of  the  form  Ax  for 
+some  x.  The  gradient  with  respect  to  s  is  µs−1 ,  which must  equal  the  same  x.  This  means  that 
+
+Ax  =  b 
+s  =  µx−1 , 
+
+and  the  last  equality  is  again  equivalent  to  (1). 
+So  if  we  denote  by  x(µ)  the  optimum  solution  to  the  primal  BP (µ)  and  by  (y(µ), s(µ))  the 
+optimum  solution  to  the  dual  BD(µ),  one  observes  that  each  of  them  is  a  certiﬁcate  of  optimality 
+for  the  other  and  furthermore: 
+
+xj (µ)sj (µ) = µ. 
+This  means  that  the  duality  gap  in  the  original  primal/dual  pair  of  linear  programs  is  xT s  =  nµ 
+and  therefore  the  duality  gap  goes  to  0  as  µ  goes  to  0.  Thus  the  central  path  (x(µ), y(µ), s(µ))  will 
+converge  to  optimum  solutions  to  both  the  primal  and  dual  linear  programs. 
+
+14-7 
+
+

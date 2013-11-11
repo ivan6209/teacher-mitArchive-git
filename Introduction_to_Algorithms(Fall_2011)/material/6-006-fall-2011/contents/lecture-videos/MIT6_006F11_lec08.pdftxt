@@ -1,0 +1,249 @@
+Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Lecture 8: Hashing I
+
+Lecture Overview
+• Dictionaries and Python
+• Motivation
+• Prehashing
+• Hashing
+• Chaining
+• Simple uniform hashing
+• “Good” hash functions
+
+Dictionary Problem
+
+Abstract Data Type (ADT) — maintain a set of items, each with a key, sub ject to
+• insert(item): add item to set
+• delete(item): remove item from set
+• search(key): return item with key if it exists
+
+We assume items have distinct keys (or that inserting new one clobbers old).
+Balanced BSTs solve in O(lg n) time per op. (in addition to inexact searches like next-
+largest).
+Goal: O(1) time per operation.
+
+Python Dictionaries:
+Items are (key, value) pairs e.g. d = {‘algorithms’: 5, ‘cool’: 42}
+d.items() → [(‘algorithms’, 5),(‘cool’,5)]
+→ 42
+d[‘cool’]
+→ KeyError
+d[42]
+‘cool’ in d → True
+→ False
+42 in d
+
+Python set is really dict where items are keys (no values)
+
+1
+
+Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Motivation
+
+Dictionaries are perhaps the most popular data structure in CS
+• built into most modern programming languages (Python, Perl, Ruby, JavaScript,
+Java, C++, C#, . . . )
+• e.g. best docdist code: word counts & inner product
+• implement databases: (DB HASH in Berkeley DB)
+– English word → deﬁnition (literal dict.)
+– English words: for spelling correction
+– word → all webpages containing that word
+– username → account ob ject
+• compilers & interpreters: names → variables
+• network routers: IP address → wire
+• network server: port number → socket/app.
+• virtual memory: virtual address → physical
+
+Less obvious, using hashing techniques:
+• substring search (grep, Google) [L9]
+• string commonalities (DNA) [PS4]
+• ﬁle or directory synchronization (rsync)
+• cryptography: ﬁle transfer & identiﬁcation [L10]
+
+How do we solve the dictionary problem?
+
+Simple Approach: Direct Access Table
+
+This means items would need to be stored in an array, indexed by key (random access)
+
+2
+
+Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Figure 1: Direct-access table
+
+Problems:
+
+1. keys must be nonnegative integers (or using two arrays, integers)
+2. large key range =⇒ large space — e.g. one key of 2256 is bad news.
+
+2 Solutions:
+
+Solution to 1 : “prehash” keys to integers.
+• In theory, possible because keys are ﬁnite =⇒ set of keys is countable
+• In Python: hash(ob ject) (actually hash is misnomer should be “prehash”) where
+ob ject is a number, string, tuple, etc. or ob ject implementing hash (default = id
+= memory address)
+• In theory, x = y ⇔ hash(x) = hash(y)
+• Python applies some heuristics for practicality: for example, hash(‘\0B ’) = 64 =
+hash(‘\0\0C ’)
+• Ob ject’s key should not change while in table (else cannot ﬁnd it anymore)
+• No mutable ob jects like lists
+
+Solution to 2 : hashing (verb from French ‘hache’ = hatchet, & Old High German ‘happ ja’
+= scythe)
+• Reduce universe U of all keys (say, integers) down to reasonable size m for table
+• idea: m ≈ n = # keys stored in dictionary
+• hash function h: U → {0, 1, . . . , m − 1}
+
+3
+
+012keykeykeyitemitemitem...Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Figure 2: Mapping keys to a table
+
+• two keys ki , kj ∈ K collide if h(ki ) = h(kj )
+
+How do we deal with collisions?
+
+We will see two ways
+
+1. Chaining: TODAY
+
+2. Open addressing: L10
+
+Chaining
+
+Linked list of colliding elements in each slot of table
+
+Figure 3: Chaining in a Hash Table
+
+• Search must go through whole list T[h(key)]
+• Worst case: all n keys hash to same slot =⇒ Θ(n) per operation
+
+4
+
+01m-1k23kk1Th(k1)  = 1..............Ukkkkk12341....Ukkkkk1234k...4k.k2k3h(k1)  =h(k2)  =h(k4) Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Simple Uniform Hashing:
+
+An assumption (cheating): Each key is equally likely to be hashed to any slot of table,
+independent of where other keys are hashed.
+
+let n = # keys stored in table
+
+m = # slots in table
+
+load factor α = n/m = expected # keys per slot = expected length of a chain
+
+Performance
+
+This implies that expected running time for search is Θ(1 + α) — the 1 comes from applying
+the hash function and random access to the slot whereas the α comes from searching the
+list. This is equal to O(1) if α = O(1), i.e., m = Ω(n).
+
+Hash Functions
+
+We cover three methods to achieve the above performance:
+
+Division Method:
+
+h(k) = k mod m
+
+This is practical when m is prime but not too close to power of 2 or 10 (then just depending
+on low bits/digits).
+
+But it is inconvenient to ﬁnd a prime number, and division is slow.
+
+Multiplication Method:
+h(k) = [(a · k) mod 2w ] (cid:29) (w − r)
+where a is random, k is w bits, and m = 2r .
+This is practical when a is odd & 2w−1 < a < 2w & a not too close to 2w−1 or 2w .
+
+Multiplication and bit extraction are faster than division.
+
+5
+
+Lecture 8
+
+Hashing I
+
+6.006 Fall 2011
+
+Figure 4: Multiplication Method
+
+Universal Hashing
+
+[6.046; CLRS 11.3.3]
+
+1
+m
+
+This lemma not proved here
+This implies that:
+
+For example: h(k) = [(ak + b) mod p] mod m where a and b are random ∈ {0, 1, . . . p − 1},
+and p is a large prime (> |U |).
+This implies that for worst case keys k1 = k2 , (and for a, b choice of h):
+P ra,b{event Xk1 k2 } = P ra,b{h(k1 ) = h(k2 )} =
+(cid:88)
+(cid:88)k2
+Ea,b [# collisions with k1 ] = E [
+Xk1 k2 ]
+(cid:88) (cid:124)P r{Xk(cid:123)(cid:122)1 k2 = 1}
+E [Xk1 k2 ]
+(cid:125)
+k2
+k2
+1
+m
+n
+= α
+m
+
+=
+
+=
+
+=
+
+This is just as good as above!
+
+6
+
+wkaxr}kkk111(cid:54)
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

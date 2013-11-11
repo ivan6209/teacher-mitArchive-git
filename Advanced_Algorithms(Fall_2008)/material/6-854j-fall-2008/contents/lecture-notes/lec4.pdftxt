@@ -1,0 +1,334 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms	
+
+September  15,  2008 
+
+Goldberg-Tarjan Min-Cost Circulation Algorithm 
+Lecturer:  Michel  X.  Goemans 
+
+1 
+
+Introduction 
+
+In this lecture we shall study Klein’s cycle cancelling algorithm for ﬁnding the circulation of minimum 
+cost  in  greater  detail.  We  will  pay  particular  attention  to  the  choice  of  cycle  to  cancel  and  we  will 
+rigorously prove  two bounds  on  the  number  of  iterations  required,  the  ﬁrst  of which  depends  on  the 
+magnitude  of  the  cost  and  is  valid  only  for  integer-valued  costs,  and  the  second  of  which  is  strongly 
+polynomial  and  works  even  for  irrational  costs. 
+Recall  from  last  time  that  for  a  given  circulation  f ,  the  following  are  equivalent: 
+
+i. 	 f  is  of  minimum  cost 
+
+ii.  There  is  no  negative  cost  cycle  in  the  residual  graph Gf 
+
+iii.  There  exist  potentials  p : V  � R  such  that  the  reduced  costs 
+
+cp (v , w) = c(v , w) + p(v) − p(w) � 0 
+
+for  all  (v , w) ≥ Ef ,  where  Ef  = {e  :  uf (e) > 0}. 
+
+2  Klein’s  cycle  cancelling  algorithm 
+
+Algorithm  1 Kleins-Cycle-Cancel(Gf ) 
+Let  f  be  any  circulation  (e.g.,  f  =  0) 
+while  there  exists  a  negative  cost  cycle  � ≥ Gf  do 
+Push  �(f ) =  min  uf (v , w)  along  � 
+(v,w)�� 
+end  while 
+
+It  is  important  to  note  that  the  Ford-Fulkerson  algorithm  for  the  maximum  ﬂow  problem  is  a 
+special  case  of  Klein’s  cycle  cancelling  algorithm,  by  deﬁning  zero  costs  for  all  edges  in  the  original 
+graph  and  by  adding  an  extra  edge  from  the  sink  to  the  source with  cost −1. 
+
+2.1  Choice  of  cycle  � 
+
+As  in  the  Ford-Fulkerson  algorithm,  the  question  is  which  negative-cost  cycle  to  choose. 
+
+1.  (Weintraub  1972).	 One  idea  is  to  try  choosing  the  maximum  improvement  cycle,  where 
+the  diﬀerence  in  cost  is  as  large  as  possible.  One  can  show  that  the  number  of  iterations  is 
+polynomial  for  rational  costs,  but  ﬁnding  such  a  cycle  is  NP-hard.  For  irrational  costs,  one 
+can  show  that  this  algorithm  may  never  terminate  (Queyranne  1980)  even  for  the  maximum 
+ﬂow  problem  (the  fattest  augmenting  path  algorithm  of  Edmonds  and  Karp),  although  the 
+solution  converges  to  a minimum  cost  ﬂow. 
+
+lect-1 
+
+2.  (Goldberg-Tarjan  1986).  Alternatively,  we  can  choose  the  cycle  of  minimum  mean  cost, 
+deﬁned  as  follows: 
+
+c(�) 
+|�| 
+
+µ(f ) = 
+
+min 
+directed  cycles  � ≥ Gf 
+ 
+where  c(�) = 
+(v,w)��  c(v , w)  and  |�|  is  the  number  of  edges  in  the  cycle. 
+�
+Notice  that  there  exists  a  negative  cost  cycle  in  Gf  if  and  only  if  µ(f )  is  negative.
+
+To see that we can indeed ﬁnd the minimum mean-cost cycle eﬃciently, suppose we replace the
+
+costs  c  with  c�  such  that  c� (v , w) =  c(v , w) + �  for  each  edge  (v , w).  Then  µ� (f ) = µ(f ) + �,
+
+so if  � = −µ(f )  then  we  would  have  µ� (f ) = 0.  In  particular,
+
+
+µ(f ) = − inf {�  :  there  is  no  negative  cost  cycle  in  Gf  with  respect  to  costs  c + �}. 
+
+For any �, we can decide if there is a negative cost cycle by using the Bellman-Ford algorithm. 
+Now,  perform  binary  search  to  ﬁnd  the  smallest �  for which  no  such  cycle  exists.  In  the  next 
+problem  set  we  will  show  a  result  by  Karp,  which  ﬁnds  the  cycle  of  minimum  mean  cost  in 
+O(nm)  time  by  using  a  variant  of  Bellman-Ford. 
+
+2.2  Bounding  the  number  of  iterations 
+
+We  will  give  two  bounds  on  the  number  of  iterations  for  the  algorithm.  The  ﬁrst  depends  on  the 
+magnitude  of  the  cost  and  is  valid  only  for  integer-valued  costs;  it  is  polynomial  but  not  strongly 
+polynomial.  The  second  bound  is  strongly  polynomial  and  works  even  for  irrational  costs. 
+We  ﬁrst  need  a  measure  of  ‘closeness’  to  the  optimal  circulation.  The  following  deﬁnition  gives 
+such  a measure,  and  will  be  key  in  quantifying  the  progress  of  the  algorithm. 
+
+Deﬁnition  1  (Relaxed  optimality)  A  circulation  f  is  said  to  be  �-optimal  if  there  exists  a  po­
+tential  p : V  � R  such  that  cp (v , w) � −�  for  al l  edges  (v , w) ≥ Ef . 
+
+Note  that  an  0-optimal  circulation  is  of  minimum  cost. 
+
+Deﬁnition  2  For  a  circulation  f ,  let 
+
+�(f ) = min{� : f  is  �-optimal}. 
+
+One  important  thing  about  this  that  we  will  prove  soon  is  that  when  we  push  some  ﬂow  in  a 
+circulation f  along some cycle � and obtain a new circulation f � , we get that �(f � ) � �(f ).  This means 
+that  �  is  monotonically  non-increasing  in  general.  First,  we  need  the  following  strong  relationship 
+between  �(f )  and  µ(f ),  and  this  really  justiﬁes  the  choice  of  cycle  of Goldberg  and  Tarjan. 
+
+Theorem  1  For  al l  circulations  f ,  �(f ) = −µ(f ). 
+
+Proof:  We  ﬁrst  show  that  µ(f )  � −�(f ).  From  the  deﬁnition  of  �(f )  there  exists  a  potential 
+p  :  V  �  R  such  that  cp (v , w)  � −�(f )  for  all  (v , w)  ≥  Ef .  For  any  cycle  �  ≤  Ef  the  cost  c(�)  is 
+equal  to  the  reduced  cost  cp (�)  since  the  potentials  cancel.  Therefore  c(�) = cp (�) � −|�|�(f )  and 
+c(�)
+|�|  � −�(f )  for  all  cycles  �.  Hence  µ(f ) � −�(f ). 
+so	
+Next,  we  show  that  µ(f )  � −�(f ).  For  this,  we  start  with  the  deﬁnition  of  µ(f ).  For  every 
+c(�)
+|�|  �  µ(f ).  Let  c� (v , w) =  c(v , w) − µ(f )  for  all  (v , w)  ≥  Ef .  Then, 
+cycle  �  ≥  Ef  it  holds  that 
+c  (�) 
+�
+c(�)
+− µ(f )  �  0  for  any  cycle  �.  Now  deﬁne  p(v)  as  the  cost  of  the  shortest  path  from  an 
+= 
+|�| 
+|�| 
+added source s to v with respect to c�  in Gf  (see Fig. 1);  the reason we add a vertex s is to make sure 
+that  every vertex can be  reached  (by  the  direct path).  Note  that  the  shortest paths  are well-deﬁned 
+since  there  are  no  negative  cost  cycles  with  respect  to  c � .  By  the  optimality  property  of  shortest 
+
+lect-2 
+
+c’(v,w)
+
+w 
+
+s 
+
+0 
+
+0 
+
+v 
+
+0 
+
+Figure  1:  p(v)  is  the  length  of  the  shortest  path  from  s  to  v . 
+
+paths,  p(w) � p(v) + c� (v , w) = p(v) + c(v , w) − µ(f ).  Therefore  cp (v , w) � µ(f )  for  all  (v , w) ≥ Ef 
+which  implies  that  f  is  −µ(f )-optimal  and  thus  �(f ) � −µ(f ). 
+By  combining  µ(f ) � −�(f )  and  �(f ) � −µ(f )  we  conclude  �(f ) = −µ(f )  as  required. 
+
+� 
+
+The  nature  of  the  algorithm  is  to  push  ﬂow  along negative  cost  cycles.  We  would  like  to  know  if 
+this  actually  gets  us  closer  to  optimality.  This  is  shown  in  the  following  remark. 
+
+Remark  1  (Progress)  Let  f  be  a  circulation.  If  we  push  ﬂow  along  the minimum mean  cost  cycle 
+�  in  Gf  and  obtain  circulation  f �  then  �(f ) � �(f �). 
+
+cp (�) 
+c(�)
+|�|  =  |�|  = µ(f ).  Now,  �(f ) = −µ(f )  implies  that  there exists a potential 
+Proof:  By deﬁnition 
+p  such  that  cp (v , w)  �  µ(f )  for  all  (v , w)  ≥  Ef .  Furthermore  for  all  (v , w)  ≥  �  the  reduced  cost 
+cp (v , w) = µ(f ) = −�(f ).  If  ﬂow  is  pushed  along  �  some  arcs may  be  saturated  and  disappear  from 
+the residual graph.  On the other hand, new edges may be created with a reduced cost of +�(f ).  More 
+formally,  Ef �  ≤ Ef  → {(w, v) : (v , w)  ≥  �}.  So  for  all  (v , w)  ≥  Ef �  it  holds  that  cp (v , w)  � −�(f ). 
+Thus  we  have  that  �(f � ) � �(f ). 
+� 
+
+2.3  Analysis  for  Integer-valued  Costs 
+
+We now prove a polynomial bound on the number of iterations for an integer cost function c : E � Z. 
+At  the  start,  for  any  circulation,  the  following  holds  for  all  (v , w) ≥ E : 
+
+Now  we  can  continue  with  the  rest  of  the  analysis. 
+
+�(f ) � C  =  max  |c(v , w)|. 
+(v,w)�E 
+
+1  then  f  is  optimal. 
+Lemma  2  If  costs  are  integer  valued  and  �(f ) <  n 
+1 .  For  any cycle � ≥ Gf  we have c(�) = cp (�) > − n 
+1 |�| � −1. 
+Proof:  Consider −�(f ) = µ(f ) > − n 
+Since  the  cost  is  an  integer,  c(�)  �  0.  By  the  optimality  condition,  if  there  is  no  negative  cycle  in 
+the  graph,  the  circulation  is  optimal. 
+� 
+
+Lemma  3  Let  f  be  a  circulation  and  let  f �  be  the  circulation  after  m  iterations  of  the  algorithm. 
+1 )�(f ). 
+Then  �(f � ) � (1 −  n 
+
+Proof:  Let  p  be  the  potential  such  that  cp (v , w)  � −�(f )  for  all  (v , w)  ≥  Ef  and  let  �i  and  fi 
+be  the  cycle  that  is  cancelled  and  the  circulation  obtained  at  the  ith  iteration,  respectively.  Let 
+A  be  the  set  of  edges  in  Efi  such  that  cp (v , w)  <  0  (we  should  emphasize  that  this  is  for  the  p 
+corresponding  to  the  circulation  f  we  started  from).  We  now  show  that  as  long  as  � i  ≤  A,  then 
+|A|  strictly  decreases.  This  is  because  cancelling  a  cycle  removes  at  least  one  arc  with  a  negative 
+reduced  cost  from  A  and  any  new  arc  added  to  Efi  must  have  a  positive  reduced  cost.  Hence  after 
+
+lect-3 
+
+k � m iterations we will ﬁnd an edge (v , w) ≥ �k+1  such that cp (v , w) � 0.  So by Theorem 1, −�(fk ) 
+is  equal  to  the  mean  cost  of  �k+1  and  thus 
+
+c(�k+1 ) 
+�(fk ) = −µ(fk ) = − 
+|�k+1 |
+
+cp(�k+1 )
+=  − 
+|�k+1 | 
+0 + (−�(f ))(|�k+1 | − 1)
+� − 
+|�k+1 | 
+ 
+�
+1 − 
+
+ 
+�(f ). 
+
+1 
+�
+n 
+
+� 
+
+Corollary  4  If  the  costs  are  integer,  then  the  number  of  iterations  is  at  most  mn log(nC ). 
+
+Proof:  We  have  that 
+
+� 
+
+�n log(nC ) 
+1 
+�
+�(fend ) �  1 − 
+n 
+and  thus  the  resulting  circulation  is  optimal. 
+� 
+The  time  per  iteration  will  be  shown  to  be  O(nm)  (see  problem  set),  hence  the  total  running 
+time  of  the  algorithm  is  O(m2 n2  log(nC )). 
+
+�(f  = 0) < e− log(nC ) |C | =
+
+1 
+nC
+
+1 
+, 
+n 
+
+|C | =
+
+2.4  Strongly  Polynomial  Analysis 
+
+In  this  section  we  will  remove  the  dependence  on  the  costs.  We  will  obtain  a  strongly  polynomial 
+bound  for  the  algorithm  for  solving  the  minimum  cost  circulation  problem.  In  fact  we  will  show 
+that  this  bound  will  hold  even  for  irrational  capacities.  The  ﬁrst  strongly  polynomial-time  analysis 
+is  due  to  Tardos;  the  one  here  is  due  to  Goldberg-Tarjan.  This  result  was  very  signiﬁcant,  since  it 
+was  the  most  general  subclass  of  Linear  Programming  (LP)  for  which  a  strongly  polynomial-time 
+algorithm  was  shown  to  exist.  It  remains  a  big  open  problem  whether  a  strongly  polynomial-time 
+algorithm  exists  for  general  LP. 
+
+Deﬁnition  3  An  edge  e  is  �-ﬁxed  if  for  al l  �-optimal  circulations  f  we  have  that  f (e) maintains  the 
+same  value. 
+
+Note  that  (v , w)  is  �-ﬁxed  if  and  only  if  (w, v)  is  �-ﬁxed,  by  skew-symmetry  of  edge-costs. 
+
+Theorem  5  Let  f  be  a  circulation  and  p  be  a  potential  such  that  f  is  �(f )-optimal  with  respect  to 
+p.  Then  if  |cp (v , w)| � 2n�  for  some  edge  (v , w) ≥ E ,  the  edge  (v , w)  is  �-ﬁxed. 
+
+Proof:  Suppose  (v , w)  is  not  �(f )-ﬁxed.  There  exists  an  f �  that  is  �(f )-optimal  and  f � (v , w) =∪
+f (v , w);  without  loss  of  generality  assume  f � (v , w) < f (v , w).  Let  E<  = {(x, y) : f � (x, y) < f (x, y)}. 
+We  can  see  that  E<  ≤ Ef �  by  deﬁnition  of Ef � .  Furthermore,  from ﬂow  conservation, we  know  that 
+there  exists  a  cycle  �  ≥  Ef �  containing  the  edge  (v , w).  Indeed,  by  ﬂow  decomposition,  we  know 
+that  the  circulation f − f �  can be  decomposed  into  (positive net) ﬂows  along cycles  of Ef � ,  and  thus 
+one  of  these  cycles must  contain  (v , w) 
+Now  we  have  the  following, 
+
+c(�) = cp (�) � −2n�(f ) + (n − 1)�(f ) < −n�(f ). 
+
+Consequently,  c(�) 
+|�| 
+contradiction. 
+
+< −�  and  so  µ(f � ) < −�.  As  a  result,  f �  is  not  �(f )-optimal  and  thus  we  have  a 
+� 
+
+lect-4 
+
+Lemma  6  After  O(mn log n)  iterations,  another  edge  becomes  ﬁxed. 
+
+Proof:  Let f  be a circulation and f �  be another circulation after application of mn log(2n) iterations 
+of  the  Goldberg-Tarjan  algorithm.  Also  suppose  that  �  is  the  ﬁrst  cycle  cancelled  and  p, p �  are  the 
+1 )n log(2n) �(f ) < 
+potentials for f , f �  respectively.  From the previous lemma, we have that �(f � ) � (1− n 
+1 
+e− log(2n)  =  2
+n �(f ).  Now  from  the  deﬁnition  of  µ  we  get  the  following, 
+
+cp� (�) 
+|�| 
+
+=
+
+c(�) 
+|�| 
+
+= µ(f ) = −�(f ) < −2n�(f �) 
+
+This means  that  there  exists  an  edge  (v , w) ≥ �  such  that  cp� (v , w) < −2n�(f �) which means  that  it 
+was  not  �(f )-ﬁxed.  Thus  (v , w)  becomes  �(f � )-ﬁxed  and  the  claim  is  proven. 
+� 
+Notice  that  if  e  is  ﬁxed,  it  will  remain  ﬁxed  as  we  iterate  the  algorithm.  An  immediate  con­
+sequence  of  the  above  lemma  then  is  a  bound  on  the  number  of  iterations  in  the  Goldberg-Tarjan 
+algorithm. 
+
+Corollary  7  The  number  of  iterations  of  the Goldberg-Tarjan  algorithm,  even  with  irrational  costs, 
+is  O(m2 n log n). 
+
+lect-5 
+
+

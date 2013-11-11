@@ -1,0 +1,713 @@
+Introduction to Algorithms: 6.006
+Massachusetts Institute of Technology
+Professors Erik Demaine and Srini Devadas
+
+September 29, 2011
+Problem Set 3
+
+Problem Set 3
+Both theory and programming questions are due Thursday, October 6 at 11:59PM. Please
+download the .zip archive for this problem set, and refer to the README.txt ﬁle for instructions
+on preparing your solutions.
+We will provide the solutions to the problem set 10 hours after the problem set is due, which
+you will use to ﬁnd any errors in the proof that you submitted. You will need to submit a critique of
+your solutions by Friday, October 7th, 11:59PM. Your grade will be based on both your solutions
+and your critique of the solutions.
+
+Problem 3-1.
+[45 points] Range Queries
+Microware is preparing to launch a new database product, NoSQL Server, aimed at the real-time
+analytics market. Web application analytics record information (e.g., the times when users visit
+the site, or how much does it take the server to produce a HTTP response), and can display the
+information using a Pretty GraphTM 1 , so that CTOs can claim that they’re using data to back their
+decisions.
+NoSQL Server databases will support a special kind of index, called a range index, to speed up the
+operations needed to build a Pretty GraphTM out of data. Microware has interviewed you during
+the fall Career Fair, and immediately hired you as a consultant and asked you to help the NoSQL
+Server team design the range index.
+The range index must support fast (sub-linear) insertions, to keep up with Web application trafﬁc.
+The ﬁrst step in the Pretty GraphTM algorithm is ﬁnding the minimum and maximum values to be
+plotted, to set up the graph’s horizontal axis. So the range index must also be able to compute the
+minimum and maximum over all keys quickly (in sub-linear time).
+
+(a) [1 point] Given the constraints above, what data structure covered in 6.006 lectures
+should be used for the range index? Microware engineers need to implement range
+indexes, so choose the simplest data struture that meets the requirements.
+1. Min-Heap
+2. Max-Heap
+3. Binary Search Tree (BST)
+4. AVL Trees
+5. B-Trees
+
+Solution: AVL trees are the only data structure that supports sub-linear insertions, as
+well as sub-linear minimum and maximum queries.
+
+1U.S. patent pending, no. 9,999,999
+
+1Problem Set 3
+
+(b) [1 point] How much time will it take to insert a key in the range index?
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+√
+4. O(log2 N )
+5. O(
+N )
+
+Solution: Inserting a node in an AVL tree takes O(log N ) time. See the lecture notes
+on AVL trees.
+(c) [1 point] How much time will it take to ﬁnd the minimum key in the range index?
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+√
+4. O(log2 N )
+5. O(
+N )
+
+Solution: Finding the minimum key in an AVL tree takes O(log N ) time. See the
+lecture notes on AVL trees.
+(d) [1 point] How much time will it take to ﬁnd the maximum key in the range index?
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+√
+4. O(log2 N )
+5. O(
+N )
+
+Solution: Finding the maximum key in an AVL tree takes O(log N ) time. See the
+lecture notes on AVL trees.
+
+The main work of the Pretty GraphTM algorithm is drawing the bars in the graph. A bar shows how
+many data points there are between two values. For example, in order to produce the visitor graph
+that is the hallmark of Google Analytics, the range index would record each time that someone uses
+the site, and a bar would count the visiting times between the beginning and the ending of a day.
+Therefore, the range index needs to support a fast (sub-linear time) COUN T(l, h) query that returns
+the number of keys in the index that are between l and h (formally, keys k such that l ≤ k ≤ h).
+Your instinct (or 6.006 TA) tells you that COUNT(l, h) can be easily implemented on top of a
+simpler query, RANK(x), which returns the number of keys in the index that are smaller or equal
+to x (informally, if the keys were listed in ascending order, x’s rank would indicate its position in
+the sorted array).
+
+(e) [1 point] Assuming l < h, and both l and h exist in the index, COUNT(l, h) is
+
+2Problem Set 3
+
+1. RANK(l) − RANK(h) − 1
+2. RANK(l) − RANK(h)
+3. RANK(l) − RANK(h) + 1
+4. RANK(h) − RANK(l) − 1
+5. RANK(h) − RANK(l)
+6. RANK(h) − RANK(l) + 1
+7. RANK(h) + RANK(l) − 1
+8. RANK(h) + RANK(l)
+9. RANK(h) + RANK(l) + 1
+Solution: RANK(h) − RANK(l) + 1. We want to count all the keys x such that
+l ≤ x ≤ h, which is equivalent to all the keys x ≤ h minus all the keys x < l.
+RANK(h) counts all keys x s.t. x ≤ h. RANK(l) counts all keys s.t. x ≤ l, and will
+include l. So we want RANK(h) − (RANK(l) − 1) = RANK(h) − RANK(l) + 1
+(f) [1 point] Assuming l < h, and h exists in the index, but l does not exist in the index,
+COUNT(l, h) is
+1. RANK(l) − RANK(h) − 1
+2. RANK(l) − RANK(h)
+3. RANK(l) − RANK(h) + 1
+4. RANK(h) − RANK(l) − 1
+5. RANK(h) − RANK(l)
+6. RANK(h) − RANK(l) + 1
+7. RANK(h) + RANK(l) − 1
+8. RANK(h) + RANK(l)
+9. RANK(h) + RANK(l) + 1
+Solution: RANK(h)− RANK(l). We want to count all the keys x such that l ≤ x ≤ h,
+which is equivalent to all the keys x ≤ h minus all the keys x < l. RANK(h) counts
+all keys x s.t. x ≤ h. RANK(l) counts all keys s.t. x ≤ l, which is equivalent to all the
+keys x < l since l is not in the index. So RANK(h) − RANK(l) is the right answer.
+(g) [1 point] Assuming l < h, and l exists in the index, but h does not exist in the index,
+COUNT(l, h) is
+1. RANK(l) − RANK(h) − 1
+2. RANK(l) − RANK(h)
+3. RANK(l) − RANK(h) + 1
+4. RANK(h) − RANK(l) − 1
+5. RANK(h) − RANK(l)
+6. RANK(h) − RANK(l) + 1
+
+3Problem Set 3
+
+7. RANK(h) + RANK(l) − 1
+8. RANK(h) + RANK(l)
+9. RANK(h) + RANK(l) + 1
+Solution: RANK(h) − RANK(l) + 1. We want to count all the keys x such that
+l ≤ x ≤ h, which is equivalent to all the keys x ≤ h minus all the keys x < l.
+RANK(h) counts all keys x s.t. x ≤ h. RANK(l) counts all keys s.t. x ≤ l, and will
+include l. So we want RANK(h) − (RANK(l) − 1) = RANK(h) − RANK(l) + 1
+(h) [1 point] Assuming l < h, and neither l nor h exist in the index, COUNT(l, h) is
+1. RANK(l) − RANK(h) − 1
+2. RANK(l) − RANK(h)
+3. RANK(l) − RANK(h) + 1
+4. RANK(h) − RANK(l) − 1
+5. RANK(h) − RANK(l)
+6. RANK(h) − RANK(l) + 1
+7. RANK(h) + RANK(l) − 1
+8. RANK(h) + RANK(l)
+9. RANK(h) + RANK(l) + 1
+Solution: RANK(h)− RANK(l). We want to count all the keys x such that l ≤ x ≤ h,
+which is equivalent to all the keys x ≤ h minus all the keys x < l. RANK(h) counts
+all keys x s.t. x ≤ h. RANK(l) counts all keys s.t. x ≤ l, which is equivalent to all the
+keys x < l since l is not in the index. So RANK(h) − RANK(l) is the right answer.
+
+Now that you know how to reduce a COUN T() query to a constant number of RANK() queries, you
+want to ﬁgure out how to implement RANK() in sub-linear time. None of the tree data structures
+that you studied in 6.006 supports optimized RANK() out of the box, but you just remembered that
+tree data structures can respond to some queries faster if the nodes are cleverly augmented with
+some information.
+
+(i) [1 point] In order to respond to RANK() queries in sub-linear time, each node node
+in the tree will be augmented with an extra ﬁeld, node .γ . Keep in mind that for a
+good augmentation, the extra information for a node should be computed in O(1)
+time, based on other properties of the node, and on the extra information stored in the
+node’s subtree. The meaning of node .γ is
+1. the minimum key in the subtree rooted at node
+2. the maximum key in the subtree rooted at node
+3. the height of the subtree rooted at node
+4. the number of nodes in the subtree rooted at node
+5. the rank of node
+
+4Problem Set 3
+
+6. the sum of keys in the subtree roted at node
+
+Solution: The number of nodes in the subtree rooted at node (also known as subtree
+size).
+γ cannot be the node’s rank, because that cannot be computed solely based on infor-
+mation in the node’s subtree. Augmentations that report key information (minimum,
+maximum, sum) don’t reveal any information about a node’s rank. A tree’s height is
+only roughly related to the number of nodes in the tree.
+(j) [1 point] How many extra bits of storage per node does the augmentation above
+require?
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+4. O(log2 N )
+√
+5. O(
+N )
+6. O(N )
+
+Solution: The number of nodes in a subtree is at most N , so the γ ﬁeld in each node
+needs to be O(log N )-bits wide to be able to store numbers between 0 and N .
+
+The following questions refer to the tree below.
+
+N1
+
+N2
+
+N8
+
+N3
+
+N6
+
+N9
+
+N10
+
+N4
+
+N5
+
+N7
+
+(k) [1 point] N4 .γ is
+1. 0
+2. 1
+3. 2
+4. the key at N4
+
+Solution: 1. A leaf ’s subtree has exactly one node.
+
+5Problem Set 3
+
+(l) [1 point] N3 .γ is
+1. 1
+2. 2
+3. 3
+4. the key at N4
+5. the key at N5
+6. the sum of keys at N3 . . . N5
+
+Solution: 3
+(m) [1 point] N2 .γ is
+1. 2
+2. 3
+3. 4
+4. 6
+5. the key at N4
+6. the key at N7
+7. the sum of keys at N3 . . . N5
+
+Solution: 6
+(n) [1 point] N1 .γ is
+1. 3
+2. 6
+3. 7
+4. 10
+5. the key at N4
+6. the key at N10
+7. the sum of keys at N1 . . . N10
+
+Solution: 10. The questions should show the pattern for computing node .γ , which
+is
+
+node .γ = 1 + γ (left ) + γ (right )
+N I L .γ = 0
+
+(o) [6 points] Which of the following functions need to be modiﬁed to update γ ? If a
+function does not apply to the tree for the range index, it doesn’t need to be modiﬁed.
+(True / False)
+1. IN SERT
+
+6Problem Set 3
+
+2. D EL ET E
+3. ROTATE - LE FT
+4. ROTATE -R IGH T
+5. R EBA LANC E
+6. H EA P I FY
+
+Solution: ROTATE - LE FT, ROTATE -R IGH T, and R EBA LANC E
+γ needs to be updated in the same situations where a node’s height is updated. The
+AVL methods that call U PDAT E -H E IGH T are ROTATE - LE FT, ROTAT E -R IGH T, and R E -
+BA LANCE. IN SERT and D EL ET E rely on the rotation methods to update the height.
+(p) [1 point] What is the running time of a COUN T() implementation based on RANK()?
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+4. O(log2 N )
+√
+5. O(
+N )
+
+Solution: O(log N ), which can be achieved by the algorithm below.
+
+RANK(tree , k )
+1
+r = 0
+2 node = tree . root
+3 while node = N I L
+if k < node . key
+4
+5
+node = node . left
+6
+7
+8
+9
+10
+11
+12
+13
+14 return r
+
+r = r + 1
+if node . key = = k
+return r
+node = node . right
+
+if node . left = N I L
+r = r + 1 + node . left . γ
+
+else
+
+else
+
+The structure is very similar to that of F IND – in the worst case, RANK visits all the
+nodes on a path from the root to a leaf, and does a constant amount of computation at
+each node on the path.
+
+After the analytics data is plotted using Pretty GraphTM , the CEO can hover the mouse cursor over
+one of the bars, and the graph will show a tooltip with the information represented by that bar. To
+
+7(cid:54)
+(cid:54)
+Problem Set 3
+
+support this operation, the range index needs to support a L I ST(l, h) operation that returns all the
+keys between l and h as quickly as possible.
+L I S T(l, h) cannot be sub-linear in the worst case, because L I ST(−∞, +∞) must return all the keys
+in the index, which takes Ω(n) time. However, if L I S T only has to return a few elements, we would
+like it to run in sub-linear time. We formalize this by stating that L I ST’s running time should be
+T (N ) + Θ(L), where L is the length of the list of keys output by L I ST, and T (N ) is sub-linear.
+Inspiration (or your 6.006 TA) strikes again, and you ﬁnd yourself with the following pseudocode
+for L I ST.
+
+L I S T(tree , l , h )
+1
+lca = LCA(tree , l , h )
+2
+result = []
+3 NOD E -L I ST(lca, l , h , result )
+return result
+4
+
+NOD E -L I ST(node , l , h , result )
+if node = = N I L
+1
+return
+2
+if l ≤ node . key and node . key ≤ h
+3
+4
+ADD -K EY(result , node . key )
+if node . key ≥ l
+5
+NODE -L I S T(node . left , l , h , result )
+6
+if node . key ≤ h
+7
+NODE -L I S T(node . right , l , h , result )
+8
+
+LCA(tree , l , h )
+1 node = tree . root
+2 until node = = N I L or (l ≤ node . key and h ≥ node . key )
+if l < node . key
+3
+4
+node = node . left
+5
+6
+7
+
+node = node . right
+return node
+
+else
+
+(q) [1 point] LCA most likely means
+1. last common ancestor
+2. lowest common ancestor
+3. low cost airline
+4. life cycle assessment
+
+8Problem Set 3
+
+5. logic cell array
+
+Solution: Visiting the Wikipedia page for LCA shows that “lowest common ances-
+tor” is the only computer science-related interpretation of LCA.
+(r) [1 point] The running time of LCA(l, h) for the trees used by the range index is
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+√
+4. O(log2 N )
+5. O(
+N )
+
+Solution: O(log N ), the height of the tree.
+(s) [1 point] Assuming that ADD -K EY runs in O(1) time, and that L I ST returns a list of
+L keys, the running time of the NODE -L I ST call at line 3 of L I S T is
+1. O(1)
+2. O(log(log N ))
+3. O(log N )
+√
+4. O(log2 N )
+5. O(
+N )
+6. O(1) + O(L)
+7. O(log(log N )) + O(L)
+8. O(log N ) + O(L)
+√
+9. O(log2 N ) + O(L)
+10. O(
+N ) + O(L)
+
+Solution: O(log N ) + O(L).
+The NOD E -L I ST call at line 3 performs a pre-order traversal starting at the least com-
+mon ancestor of the nodes containing keys l and h. If the keys l and/or h are not in
+the BST, we use the positions of imaginary nodes that would be created by inserting l
+and/or h using the BST insertion algorithm (no re-balancing).
+The traversal ignores some sub-trees. Line 5 prunes the left sub-tree of any node
+whose key is ≤ l because, by the BST invariant, the keys of all the nodes in the sub-
+tree will be smaller than node . key , which is ≤ l. In a symmetric fashion, line prunes
+sub-trees where all the nodes’ keys are guaranteed to be greater than h.
+NODE -L I ST spends O(1) time for each node it visits, so the total running time is
+O(V ), where V is the number of visited nodes. We split up V = L + X , where L
+is the number of nodes returned from L I ST, and X is the number of nodes that are
+visited, but not output (extra nodes, or overhead). We argue that X = O(h), where
+h is the height of the BST. Because the BST is an AVL, we use h = O(log N ) to
+conclude that the total running time of the NOD E -L I ST call in L I ST is O(log(N ) + L).
+
+9We’ll sketch a proof that the extra nodes in the left sub-tree of the LCA node are all
+on the path from the LCA to the l node. A symmetric proof covers the right sub-tree
+of the LCA node. The proof refers to the tree below.
+
+Problem Set 3
+
+LCA
+
+...
+
+xL
+
+x
+
+...
+
+l
+
+y
+
+yR
+
+...
+
+h
+
+Every node on the path from the LCA node to the l node falls under one of the follow-
+ing two cases.
+• The node l belongs to the node’s right sub-tree. Let x be the node’s key, and xL be
+the node’s left sub-tree. Since the l node is in the x node’s left sub-tree, it follows
+that l > x (by theBST invariant), so the xL sub-tree will be pruned by line 5 in
+NOD E -L I ST. So NOD E -L I ST will never “stray” to the left of the path from the
+LCA node to the l node.
+• The node l belongs to the node’s left sub-tree. Let y be the node’s key, and
+yR be the node’s right sub-tree. Since the l node is in the x node’s right sub-
+tree, it follows that l < y (by the BST’s invariant). Every node in yR will have
+a key greater than y (BST invariant), so all the keys in yR are greater than l.
+Furthermore, because yR is in LCA’s left sub-tree, all the keys in yR are smaller
+than the key in LCA, which is ≤ h. It follows that all the nodes in yR belong to
+the (l, h] interval, and their keys will be returned from NOD E -L I ST. So, whenever
+NOD E -L I ST “strays” to the right of the path from the LCA node to the l node, it
+will output all the nodes it encounters.
+The two cases above show that all the extra nodes (visited but not added to the result) in
+the LCA node’s left sub-tree are on the path from LCA to l, which means X = O(h).
+A symmetric proof can be used to show that all the extra nodes in the LCA node’s
+right sub-tree are on the path from LCA to h.
+(t) [1 point] Assuming that ADD -K EY runs in O(1) time, and that L I ST returns a list of
+L keys, the running time of L I ST is
+1. O(1)
+2. O(log(log N ))
+
+10Problem Set 3
+
+3. O(log N )
+4. O(log2 N )
+√
+5. O(
+N )
+6. O(1) + O(L)
+7. O(log(log N )) + O(L)
+8. O(log N ) + O(L)
+9. O(log2 N ) + O(L)
+√
+10. O(
+N ) + O(L)
+
+Solution: O(log N ) + O(L). According to the previous questions, LCA takes
+O(log N ) time, and the NOD E -L I ST call takes O(log N ) + O(L) time.
+(u) [20 points] Prove that LCA is correct.
+Solution: We will argue that LCA(l, h) returns the least-common ancestor, deﬁned
+as the root of the smallest sub-tree that contains both l and h. If the keys l and/or h are
+not in the BST, we augment the tree with the imaginary nodes that would be created
+by inserting l and/or h using the BST insertion algorithm (no re-balancing).
+Based on the deﬁnition above, we will prove that LCA is correct in two stages: ﬁrst
+we prove that LCA maintains the invariant that l and h belong to the sub-tree rooted
+at node , then we prove that LCA returns the root of the smallest sub-tree that contains
+both l and h.
+LCA maintains the invariant that l and h belong to the sub-tree rooted at node .
+node starts out at the tree’s root, so the invariant starts out to be true at line 2. The
+loop continues as long as both l and h are smaller than node ’s key, or l and h are both
+bigger than node ’s key. If l and h are smaller, then the condition on line 3 will be true,
+so both l and h are in node ’s left sub-tree, by the BST invariant, so line 4 preserves
+the invariant. Similarly, if l and h are larger, they’re both in node ’s right sub-tree, so
+line 6 preserves the invariant.
+LCA returns the root of the smallest sub-tree that contains both l and h. Proof by
+contradiction:
+Let r be the key of the node returned by LCA, and c be the key of the node that is the
+correct answer. By the invariant above, l and h are in the sub-tree rooted at the r node,
+so the c node is in the sub-tree rooted at r .
+If c is in the r node’s left sub-tree, it follows that c < r . Since l and h are in the
+sub-tree rooted at the c node, they are in r’s left sub-tree, so l < r and h < r by the
+BST invariant. But in that case, the condition on line 2 will be true when idnode is the
+r node, so the r node should not be returned from LCA. Contradiction.
+The case where c is in the r node’s right sub-tree is symmetrical, as both l and h will
+be in r’s sub-tree and l > r , h > r .
+
+11Problem Set 3
+
+[55 points] Digital Circuit Layout
+Problem 3-2.
+Your AMDtel internship is off to a great start! The optimized circuit simulator cemented your
+reputation as an algorithms whiz. Your manager capitalized on your success, and promised to
+deliver the Bullﬁeld chip a few months ahead of schedule. Thanks to your simulator optimizations,
+the engineers have ﬁnished the logic-level design, and are currently working on laying out the
+gates on the chip. Unfortunately, the software that veriﬁes the layout is taking too long to run
+on the preliminary Bullﬁeld layouts, and this is making the engineers slow and unhappy. Your
+manager is conﬁdent in your abilities to speed it up, and promised that you’ll “do your magic”
+again, in “one week, two weeks tops”.
+A chip consists of logic gates, whose input and output terminals are connected by wires (very
+thin conductive traces on the silicon substrate). AMDtel’s high-yield manufacturing process only
+allows for horizontal or vertical wires. Wires must not cross each other, so that the circuit will
+function according to its speciﬁcation. This constraint is checked by the software tool that you
+will optimize. The topologies required by complex circuits are accomplished by having dozens of
+layers of wires that do not touch each other, and the tool works on one layer at a time.
+
+(a) [1 point] Run the code under the python proﬁler with the command below, and iden-
+tify the method that takes up most of the CPU time. If two methods have similar CPU
+usage times, ignore the simpler one.
+python -m cProfile -s time circuit2.py < tests/10grid s.in
+Warning: the command above can take 15-60 minutes to complete, and bring the
+CPU usage to 100% on one of your cores. Plan accordingly. If you have installed
+PyPy successfully, you can replace python with pypy in the command above for a
+roughly 2x speed improvement.
+What is the name of the method with the highest CPU usage?
+Solution: The ﬁrst line in the proﬁler output identiﬁes intersects as the method
+with the largest CPU usage.
+(b) [1 point] How many times is the method called?
+Solution: The ﬁrst line in the proﬁler output indicates that intersects is called
+187590314 times.
+
+The method that has the performance bottleneck is called from the CrossVerifier class. Upon
+reading the class, it seems that the original author was planning to implement a sweep-line algo-
+rithm, but couldn’t ﬁgure out the details, and bailed and implemented an inefﬁcient method at the
+last minute. Fortunately, most of the infrastructure for a fast sweep-line algorithm is still in place.
+Furthermore, you notice that the source code contains a trace of the working sweep-line algorithm,
+in the good trace.jsonp ﬁle.
+Sweep-line algorithms are popular in computational geometry. Conceptually, such an algorithm
+sweeps a vertical line left to right over the plane containing the input data, and performs operations
+when the line “hits” point of interest in the input. This is implemented by generating an array
+
+12Problem Set 3
+
+containing all the points of interest, and then sorting them according to their position along the
+horizontal axis (x coordinate).
+Read the source for CrossVerifier to get a feel for how the sweep-line infrastructure is sup-
+posed to work, and look at the good trace in the visualizer that we have provided for you. To see
+the good trace, copy good trace.jsonp to trace.jsonp
+cp good trace.jsonp trace.jsonp
+On Windows, use the following command instead.
+copy good trace.jsonp trace.jsonp
+Then use Google Chrome to open visualizer/bin/visualizer.html
+The questions below refer to the fast sweep-line algorithm shown in good trace.jsonp, not
+to the slow algorithm hacked together in circuit2.py.
+
+(c) [5 points] The x coordinates of points of interest in the input are (True / False)
+1. the x coordinates of the left endpoints of horizontal wires
+2. the x coordinates of the right endpoints of horizontal wires
+3. the x coordinates of midpoints of horizontal wires
+4. the x coordinates where horizontal wires cross vertical wires
+5. the x coordinates of vertical wires
+
+Solution: The x coordinates of both endpoints of horizontal wires, and of vertical
+wires. The algoritm doesn’t handle wire midpoints specially. Crossing points cannot
+possibly be points of interest, because they are the algorithm’s output, not input.
+(d) [1 point] When the sweep line hits the x coordinate of the left endpoint of a horizontal
+wire
+1. the wire is added to the range index
+2. the wire is removed from the range index
+3. a range index query is performed
+4. nothing happens
+
+Solution: The wire is added to the range index when the sweep line hits the x coor-
+dinate of the left endpoint.
+(e) [1 point] When the sweep line hits the x coordinate of the right endpoint of a hori-
+zontal wire
+1. the wire is added to the range index
+2. the wire is removed from the range index
+3. a range index query is performed
+4. nothing happens
+
+13Problem Set 3
+
+Solution: The wire is removed from the range index when the sweep line hits the X
+coordinate of the right endpoint.
+(f) [1 point] When the sweep line hits the x coordinate of the midpoint of a horizontal
+wire
+1. the wire is added to the range index
+2. the wire is removed from the range index
+3. a range index query is performed
+4. nothing happens
+
+Solution: Nothing happens.
+(g) [1 point] When the sweep line hits the x coordinate of a vertical wire
+1. the wire is added to the range index
+2. the wire is removed from the range index
+3. a range index query is performed
+4. nothing happens
+
+Solution: A range index is performed.
+(h) [1 point] What is a good invariant for the sweep-line algorithm?
+1. the range index holds all the horizontal wires to the left of the sweep line
+2. the range index holds all the horizontal wires “stabbed” by the sweep line
+3. the range index holds all the horizontal wires to the right of the sweep line
+4. the range index holds all the wires to the left of the sweep line
+5. the range index holds all the wires to the right of the sweep line
+
+Solution: The invariant for the sweep-line algorithm is that the range index holds all
+the horizontal wires “stabbed” by the sweep line.
+(i) [1 point] When a wire is added to the range index, what is its corresponding key?
+1. the x coordinate of the wire’s midpoint
+2. the y coordinate of the wire’s midpoint
+3. the segment’s length
+4. the x coordinate of the point of interest that will remove the wire from the index
+
+Solution: The only correct answer is “the Y coordinate of the wire’s midpoint”.
+Only horizontal wires are added to the range index, and all their points have the same
+Y coordinate.
+
+Modify CrossVerifier in circuit2.py to implement the sweep-line algorithm discussed
+above. If you maintain the current code structure, you’ll be able to use our visualizer to debug your
+implementation. To use our visualizer, ﬁrst produce a trace.
+
+14Problem Set 3
+
+TRACE=jsonp python circuit2.py < tests/5logo.in > trace.jsonp
+On Windows, run the following command instead.
+circuit2 jsonp.bat < tests/5logo.in > trace.jsonp
+Then use Google Chrome to open visualizer/bin/visualizer.html
+
+(j) [1 point] Run your modiﬁed code under the python proﬁler again, using the same test
+case as before, and identify the method that takes up the most CPU time.
+What is the name of the method with the highest CPU usage? If two methods have
+similar CPU usage times, ignore the simpler one.
+Solution: The ﬁrst line in the proﬁler output identiﬁes count as the method with
+the highest CPU usage.
+(k) [1 point] How many times is the method called?
+Solution: The ﬁrst line in the proﬁler output indicates that count is called 20000
+times.
+(l) [40 points] Modify circuit2.py to implement a data structure that has better
+asymptotic running time for the operation above. Keep in mind that the tool has two
+usage scenarios:
+• Every time an engineer submits a change to one of the Bullhorn wire layers,
+the tool must analyze the layer and report the number of wire crossings. In this
+late stage of the project, the version control system will automatically reject the
+engineer’s change if it causes the number of wire crossings to go up over the
+previous version.
+• Engineers working on the wiring want to see the pairs of wires that intersect, so
+they know where to focus ther efforts. To activate this detailed output, run the
+tool using the following command.
+TRACE=list python circuit2.py < tests/6list logo.in
+On Windows, run the following command instead.
+circuit2 list.bat < tests/6list logo.in
+When your code passes all tests, and runs reasonably fast (the tests should complete
+in less than 60 seconds on any reasonably recent computer), upload your modiﬁed
+circuit.py to the course submission site.
+Solution: The solution archive on the course Web site contains the staff ’s solution
+and secret test cases.
+
+15MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

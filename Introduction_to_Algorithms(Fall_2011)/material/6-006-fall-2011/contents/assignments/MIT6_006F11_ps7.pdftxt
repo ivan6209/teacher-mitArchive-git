@@ -1,0 +1,553 @@
+Introduction to Algorithms: 6.006
+Massachusetts Institute of Technology
+Professors Erik Demaine and Srini Devadas
+
+November 22, 2011
+Problem Set 7
+
+Problem Set 7
+Both theory and programming questions are due on Tuesday, December 6 at 11:59PM.
+Please download the .zip archive for this problem set. Instructions for submitting your answers
+will be posted to the course website by Tuesday, November 29.
+We will provide the solutions to the problem set 10 hours after the problem set is due. You will
+have to read the solutions, and write a brief grading explanation to help your grader understand
+your write-up. You will need to submit the grading guide by Thursday, December 8, 11:59PM.
+Your grade will be based on both your solutions and the grading explanation.
+
+[30 points] Seam Carving
+Problem 7-1.
+In a recent paper, “Seam Carving for Content-Aware Image Resizing”, Shai Avidan and Ariel
+Shamir describe a novel method of resizing images. You are welcome to read the paper, but we
+recommend starting with the YouTube video:
+http://www.youtube.com/watch?v=vIFCV2spKtg
+Both are linked from the Problem Sets page on the class website. After you’ve watched the video,
+the terminology in the rest of this problem will make sense.
+If you were paying attention around time 1:50 of the video, then you can probably guess what
+you’re going to have to do. You are given an image, and your task is to calculate the best vertical
+seam to remove. A vertical seam is a connected path of pixels, one pixel in each row. We call two
+pixels connected if they are vertically or diagonally adjacent. The best vertical seam is the one that
+minimizes the total “energy” of pixels in the seam.
+The video didn’t spend much time on dynamic programming, so here’s the algorithm:
+
+Subproblems: For each pixel (i, j ), what is the lower-energy seam that starts at the top row of the
+image, but ends at (i, j )?
+Relation: Let dp[i,j] be the solution to subproblem (i, j ). Then
+dp[i,j] = min(dp[i,j-1],dp[i-1,j-1],dp[i+1,j-1]) + energy(i,j)
+Analysis: Solving each subproblem takes O(1) time: there are three smaller subproblems to look
+up, and one call to energy(), which all take O(1) time. There is one subproblem for each
+pixel, so the running time is Θ(A), where A is the number of pixels, i.e., the area of the
+image.
+
+Download ps7_code.zip and unpack it. To solve this problem set, you will need the Python
+Imaging Library (PIL), which you should have installed for Problem Set 4. If you wish to view
+your results, you will additionally need the Tkinter library.
+
+1Problem Set 7
+
+In resizeable_image.py, write a function best_seam(self) that returns a list of coordi-
+nates corresponding to the cheapest vertical seam to remove, e.g., [(5, 0), (5, 1), (4, 2), (5, 3), (6, 4)].
+You should implement the dynamic program described above in a bottom-up manner.
+The class ResizeableImage inherits from ImageMatrix. You should use the following
+components of ImageMatrix in your dynamic program:
+• self.energy(i,j) returns the energy of a pixel. This takes O(1) time, but the constant
+factor is sizeable. If you call it more than once, you might want to cache the results.
+• self.width and self.height are the width and height of the image, respectively.
+Test your code using test_resizable_image.py, and submit ResizeableImage.py to
+the class website. You can also view your code in action by running gui.py. Included with the
+problem set are two differently sized versions of the same sunset image. If you remove enough
+seams from the sunset image, it should center the sun.
+Also, please try out your own pictures (most ﬁle formats should work), and send us any interesting
+before/after shots.
+
+2Problem Set 7
+
+[70 points] HG Fargo
+Problem 7-2.
+You have been given an internship at the extremely proﬁtable and secretive bank HG Fargo. Your
+immediate supervisor tells you that higher-ups in the bank are very interested in learning from the
+past. In particular, they want to know how much money they could have made if they had invested
+optimally.
+Your supervisor gives you the following data on the prices1 of select stocks in 1991 and in 2011:
+
+Company
+Dale, Inc.
+JCN Corp.
+Macroware, Inc.
+Pear, Inc.
+
+Price in 1991 Price in 2011
+$39
+$12
+$13
+$10
+$18
+$47
+$45
+$15
+
+As a ﬁrst step, you decide to examine what the optimal decision is for a couple of small examples:
+
+(a) [5 points]
+If you had $20 available to purchase stocks in 1991, how much of each
+stock should you have bought to maximize proﬁts when you sell everything in 2011?
+Note that you do not need to invest all of your money — if it is more proﬁtable to keep
+some as cash, you do not need to invest it.
+(b) [5 points]
+If you had $30 available to purchase stocks in 1991, how much of each
+stock should you have bought?
+(c) [5 points] If you had $120 available to purchase stocks in 1991, how much of each
+stock should you have bought?
+
+Your supervisor asks you to write an algorithm for computing the best way to purchase stocks,
+given the initial money total , the number count of companies with stock available, an array start
+containing the prices of each stock in 1991, and an array end containing the prices of each stock
+in 2011. All prices are assumed to be positive integers.
+There is a strong relationship between this problem and the knapsack problem. The knapsack
+problem takes four inputs: the number of different items items , the item sizes size (all of which
+are integers), the item values value (which may not be integers), and the size capacity of the
+knapsack. The goal is to pick a subset of the items that ﬁts inside the knapsack and maximizes the
+total value.
+
+(d) [1 point] Which input to the knapsack problem corresponds to the input total in the
+stock purchasing problem?
+1. items
+2. size
+
+4. capacity
+
+3. value
+
+1Note that for the purposes of this problem, you should ignore some of the intricacies of the real stock market. The
+only income you can make is from purchasing stocks in 1991, then selling those same stocks at market value in 2011.
+
+3(e) [1 point] Which input to the knapsack problem corresponds to the input count in the
+stock purchasing problem?
+2. size
+1. items
+
+4. capacity
+
+3. value
+
+Problem Set 7
+
+(f) [1 point] Which input to the knapsack problem corresponds to the input start in the
+stock purchasing problem?
+1. items
+2. size
+
+4. capacity
+
+3. value
+
+(g) [1 point] Which input to the knapsack problem corresponds to the input end in the
+stock purchasing problem?
+1. items
+2. size
+
+4. capacity
+
+3. value
+
+(h) [6 points] Unfortunately, the algorithm for the knapsack problem cannot be directly
+applied to the stock purchasing problem. For each of the following potential reasons,
+state whether it’s a valid reason not to use the knapsack algorithm. (In other words, if
+the difference mentioned were the only difference between the problems, would you
+still be able to use the knapsack algorithm to solve the stock purchasing problem?)
+1. In the stock purchasing problem, there is a time delay between the selection and
+the reward.
+2. All of the numbers in the stock purchasing problem are integers. The value array
+in the knapsack problem is not.
+3. In the stock purchasing problem, the money left over from your purchases is kept
+as cash, which contributes to your ultimate proﬁt. The knapsack problem has no
+equivalent concept.
+4. In the knapsack problem, there are some variables representing sizes of objects.
+There are no such variables in the stock purchasing problem.
+5. In the stock purchasing problem, you can buy more than one share in each stock.
+6. In the stock purchasing problem, you sell all the items at the end. In the knapsack
+problem, you don’t do anything with the items.
+
+Despite these differences, you decide that the knapsack algorithm is a good starting point for the
+problem you are trying to solve. So you dig up some pseudocode for the knapsack problem, relabel
+the variables to suit the stock purchasing problem, and then start modifying things. After a long
+night of work, you end up with a couple of feasible solutions. Unfortunately, there is a bit of a
+hard-drive error the next morning, and the ﬁles are all mixed up. You have recovered six different
+functions, from various states in your development process. The ﬁrst function is the following:
+
+S TOCK(total , count , start , end )
+purchase = S TOCK -TABL E(total , count , start , end )
+1
+return S TOCK -R E SU LT(total , count , start , end , purchase )
+2
+
+4Problem Set 7
+
+This is the function that you ran to get your results. The S TOCK -TABL E function generates the
+table of subproblem solutions. The S TOCK -R E SU LT function uses that to ﬁgure out which stocks
+to purchase, and in what quantities. Unfortunately, you have two copies of the S TOCK -TABL E
+function and three copies of the S TOCK -R E SU LT function. You know that there’s a way to take
+one of each function to get the pseudocode for the original knapsack problem (with the names
+changed). You also know that there’s a way to take one of each function to get the pseudocode for
+the stock purchases problem. You just don’t know which functions do what.
+Analyze each of the other ﬁve procedures, and select the correct running time. Recall that total
+and count are positive integers, as are each of the values start [stock ] and end [stock ]. To make
+the code simpler, the arrays start , end , and result are assumed to be indexed starting at 1, while
+the tables proﬁt and purchase are assumed to be indexed starting at (0, 0). You may assume that
+entries in a table can be accessed and modiﬁed in Θ(1) time.
+
+(i) [1 point] What is the worst-case asymptotic running time of S TOCK -TAB LE -A (from
+Figure 1) in terms of count and total ?
+1. Θ(count )
+2. Θ(count 2 )
+3. Θ(count 3 )
+4. Θ(total )
+5. Θ(total 2 )
+6. Θ(total 3
+)
+
+7. Θ(count + total )
+8. Θ(count 2 + total )
+9. Θ(count + total 2 )
+· total )
+10. Θ(count
+· total )
+11. Θ(count
+2
+12. Θ(count · total 2 )
+
+(j) [1 point] What is the worst-case asymptotic running time of S TOCK -TABL E -B (from
+Figure 2) in terms of count and total ?
+1. Θ(count )
+2. Θ(count 2 )
+3. Θ(count 3 )
+4. Θ(total )
+5.
+2
+Θ(total )
+6. Θ(total 3
+)
+
+7. Θ(count + total )
+8. Θ(count 2 + total )
+9. Θ(count + total 2 )
+· total )
+10. Θ(count
+· total )
+11. Θ(count 2
+12. Θ(count · total 2 )
+
+(k) [1 point] What is the worst-case asymptotic running time of S TOCK -R E SU LT-A (from
+Figure 3) in terms of count and total ?
+1. Θ(count )
+2. Θ(count 2 )
+3. Θ(count 3 )
+4. Θ(total )
+5. Θ(total 2 )
+6. Θ(total 3
+)
+
+7. Θ(count + total )
+8. Θ(count 2 + total )
+9. Θ(count + total 2 )
+10. Θ(count · total )
+· total )
+11. Θ(count 2
+12. Θ(count · total 2 )
+
+5Problem Set 7
+
+S TOCK -TAB LE -A(total , count , start , end )
+1 create a table proﬁt
+2 create a table purchase
+for cash = 0 to total
+3
+proﬁt [cash , 0] = cash
+4
+purchase [cash , 0] = FA L S E
+5
+for stock = 1 to count
+6
+proﬁt [cash , stock ] = proﬁt [cash , stock − 1]
+7
+purchase [cash , stock ] = FA L S E
+8
+if start [stock ] ≤ cash
+9
+leftover = cash − start [stock ]
+10
+11
+current = end [stock ] + proﬁt [leftover , stock ]
+if proﬁt [cash , stock ] < current
+12
+13
+proﬁt [cash , stock ] = current
+14
+purchase [cash , stock ] = TRU E
+15 return purchase
+
+Figure 1: The pseudocode for S TOCK -TABL E -A.
+
+S TOCK -TABL E -B(total , count , start , end )
+1 create a table proﬁt
+2 create a table purchase
+3 for cash = 0 to total
+proﬁt [cash , 0] = 0
+4
+purchase [cash , 0] = FA L S E
+5
+for stock = 1 to count
+6
+proﬁt [cash , stock ] = proﬁt [cash , stock − 1]
+7
+purchase [cash , stock ] = FA L S E
+8
+if start [stock ] ≤ cash
+9
+leftover = cash − start [stock ]
+10
+current = end [stock ] + proﬁt [leftover , stock − 1]
+11
+if proﬁt [cash , stock ] < current
+12
+13
+proﬁt [cash , stock ] = current
+14
+purchase [cash , stock ] = TRU E
+15 return purchase
+
+Figure 2: The pseudocode for S TOCK -TAB LE -B.
+
+6Problem Set 7
+
+S TOCK -R E SU LT-A(total , count , start , end , purchase )
+1 create a table result
+for stock = 1 to count
+2
+3
+result [stock ] = 0
+4
+5
+cash = total
+6
+stock = count
+7 while stock > 0
+8
+quantity = purchase [cash , stock ]
+9
+result [stock ] = quantity
+cash = cash − quantity · start [stock ]
+10
+stock = stock − 1
+11
+12
+13 return result
+
+Figure 3: The pseudocode for S TOCK -R E SU LT-A.
+
+S TOCK -R E SU LT-B(total , count , start , end , purchase )
+1 create a table result
+for stock = 1 to count
+2
+3
+result [stock ] = FA L S E
+4
+5
+cash = total
+6
+stock = count
+7 while stock > 0
+if purchase [cash , stock ]
+8
+9
+result [stock ] = TRUE
+cash = cash − start [stock ]
+10
+stock = stock − 1
+11
+12
+13 return result
+
+Figure 4: The pseudocode for S TOCK -R E SU LT-B.
+
+7Problem Set 7
+
+S TOCK -R E SU LT-C(total , count , start , end , purchase )
+1 create a table result
+for stock = 1 to count
+2
+3
+result [stock ] = 0
+4
+5
+cash = total
+6
+stock = count
+7 while stock > 0
+if purchase [cash , stock ]
+8
+9
+result [stock ] = result [stock ] + 1
+cash = cash − start [stock ]
+10
+11
+stock = stock − 1
+12
+13
+14 return result
+
+else
+
+Figure 5: The pseudocode for S TOCK -R E SU LT-C.
+
+(l) [1 point] What is the worst-case asymptotic running time of S TOCK -R E SU LT-B (from
+Figure 4) in terms of count and total ?
+1. Θ(count )
+2. Θ(count 2 )
+3. Θ(count 3 )
+4. Θ(total )
+5. Θ(total 2
+6. Θ(total 3
+
+7. Θ(count + total )
+8. Θ(count 2 + total )
+9. Θ(count + total 2 )
+· total )
+10. Θ(count
+· total )
+11. Θ(count 2
+12. Θ(count · total 2 )
+
+)
+)
+
+(m) [1 point] What is the worst-case asymptotic running time of S TOCK -R E SU LT-C (from
+Figure 5) in terms of count and total ?
+1. Θ(count )
+2. Θ(count 2 )
+3. Θ(count 3 )
+4. Θ(total )
+5. Θ(total )
+2
+6. Θ(total 3
+)
+
+7. Θ(count + total )
+8. Θ(count 2 + total )
+9. Θ(count + total 2 )
+· total )
+10. Θ(count
+· total )
+11. Θ(count
+2
+12. Θ(count · total 2 )
+
+(n) [2 points] The recurrence relation computed by the S TOCK -TABL E -A function is:
+
+8Problem Set 7
+
+1. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s − 1]}
+2. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s − 1] + end [s ]}
+3. proﬁt [c , s ] = max{proﬁt [c
+− q · start [s ], s − 1] + q · end [s ]}
+q
+4. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s ]}
+5. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s ] + end [s ]}
+6. proﬁt [c , s ] = max{proﬁt [c − q · start [s ], s ] + q
+· end [s ]}
+q
+(o) [2 points] The recurrence relation computed by the S TOCK -TAB LE -B function is:
+1. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s − 1]}
+2. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s − 1] + end [s ]}
+{proﬁt [c − q · start [s ], s − 1] + q · end [s ]}
+3. proﬁt [c , s ] = max
+q
+4. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s ]}
+5. proﬁt [c , s ] = max{proﬁt [c , s − 1], proﬁt [c − start [s ], s ] + end [s ]}
+· end [s ]}
+6. proﬁt [c , s ] = max{proﬁt [c − q · start [s ], s ] + q
+q
+
+With this information, you should be able to ﬁgure out whether S TOCK -TAB LE -A or S TOCK -TABL E -B
+is useful for the knapsack problem, and similarly for the stock purchasing problem. From there,
+you can ﬁgure out which of S TOCK -R E SU LT-A, S TOCK -R E SU LT-B, and S TOCK -R E SU LT-C is
+best for piecing together the optimal distribution of stocks and/or items.
+
+(p) [3 points] Which two methods, when combined, let you compute the answer to the
+knapsack problem?
+1. S TOCK -TABL E -A and S TOCK -R E SU LT-A
+2. S TOCK -TABL E -A and S TOCK -R E SU LT-B
+3. S TOCK -TABL E -A and S TOCK -R E SU LT-C
+4. S TOCK -TABL E -B and S TOCK -R E SU LT-A
+5. S TOCK -TABL E -B and S TOCK -R E SU LT-B
+6. S TOCK -TABL E -B and S TOCK -R E SU LT-C
+(q) [3 points] Which two methods, when combined, let you compute the answer to the
+stock purchases problem?
+1. S TOCK -TABL E -A and S TOCK -R E SU LT-A
+2. S TOCK -TABL E -A and S TOCK -R E SU LT-B
+3. S TOCK -TABL E -A and S TOCK -R E SU LT-C
+4. S TOCK -TABL E -B and S TOCK -R E SU LT-A
+5. S TOCK -TABL E -B and S TOCK -R E SU LT-B
+6. S TOCK -TABL E -B and S TOCK -R E SU LT-C
+
+9Problem Set 7
+
+With all that sorted out, you submit the code to your supervisor and pat yourself on the back for
+a job well done. Unfortunately, your supervisor comes back a few days later with a complaint
+from the higher-ups. They’ve been playing with your program, and were very upset to discover
+that when they ask what to do with $1,000,000,000 in the year 1991, it tells them to buy tens
+of millions of shares in Dale, Inc. According to them, there weren’t that many shares of Dale
+available to purchase. They want a new feature: the ability to pass in limits on the number of
+stocks purchaseable.
+You choose to begin, as always, with a small example:
+
+Company
+Dale, Inc.
+JCN Corp.
+Macroware, Inc.
+Pear, Inc.
+
+Price in 1991 Price in 2011 Limit
+$39
+$12
+3
+∞
+$10
+$13
+2
+$47
+$18
+$15
+$45
+1
+
+(r) [5 points]
+If you had $30 available to purchase stocks in 1991, how much of each
+stock should you have bought, given the limits imposed above?
+(
+s) [5 points] If you had $120 available to purchase stocks in 1991, how much of each
+stock should you have bought, given the limits imposed above?
+(
+t) [20 points] Give pseudocode for an algorithm S TOCKL IM I T ED that computes the
+maximum proﬁt achievable given a starting amount total , a number count of compa-
+nies with stock available, an array of initial prices start , an array of ﬁnal prices end ,
+and an array of quantities limit . The value stored at limit [stock ] will be equal to ∞
+in cases where there is no known limit on the number of stocks. The algorithm need
+only output the resulting quantity of money, not the purchases necessary to get that
+quantity.
+Remember to analyze the runtime of your pseudocode, and provide a brief justiﬁcation
+for its correctness. It is sufﬁcient to give the recurrence relation that your algorithm
+implements, and talk about why the recurrence relation solves the problem at hand.
+
+10MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall 2011
+ 
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

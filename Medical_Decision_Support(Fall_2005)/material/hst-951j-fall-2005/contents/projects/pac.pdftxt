@@ -1,0 +1,721 @@
+ Harvard-MIT Division of Health Sciences and Technology
+HST.951J: Medical Decision Support, Fall 2005
+Instructors: Professor Lucila Ohno-Machado and Professor Staal Vinterbo
+
+Computerized Pulmonary Artery Catheter Waveform 
+Interpretation 
+ 
+Jaime Chang 
+HST.951 
+December 14, 2005 
+ 
+ 
+Abstract 
+ 
+The pulmonary artery catheter (PAC) has been used for decades in the diagnosis and 
+treatment  of  critically  ill  patients,  but  knowledge  of  PAC  waveform  interpretation 
+remains  inadequate  among  physicians  and  nurses.    Inspired  by  the  relative  success 
+of  EKG 
+feasibility  of 
+investigates  the 
+interpretation  programs,  this  study 
+computerized  PAC  waveform  interpretation.    Clinician-provided  contextual  data, 
+accompanying EKG  data,  and manually  pre-processed waveform  data were  provided 
+as  input,  and  the  ability  of  classifiers  to  recognize  dangerous  situations,  system 
+problems,  waveform  locations,  and  underlying  patient  physiology  was  evaluated.  
+The  dataset  consisted  of  66  waveforms  classified  by  experts,  and  the  classifiers 
+tested were simple logistic regression, 1-nearest neighbor, decision tree, naïve Bayes, 
+and neural network.  Under 4-fold cross-validation, 1-nearest neighbor had the most 
+success  at  classifying  accurately,  but  the  neural  network  had  a  high  area  under  the 
+receiver-operator  curve  more  consistently  across  the  four  classification  tasks.    All 
+classifiers  were  good  at  identifying  location.    The  results  of  this  feasibility  study  are 
+encouraging  and  suggest  that  computerized  PAC  waveform  interpretation  may  be 
+useful to clinicians. 
+ 
+ 
+Introduction 
+ 
+Introduced into the intensive care unit (ICU) over thirty years ago, the PAC is used in 
+the  diagnosis  of  cardiopulmonary  disturbances  and  for  assessing  and  monitoring 
+hemodynamic  variables  in  the  critically  ill.    Data  derived  from  pulmonary  artery 
+catheterization alter therapeutic decisions in about half of all insertions.1 2  More than 
+45  million  catheters  have  been  used  since  1970.3    Use  of  the  PAC  is  considered 
+routine  in  most  critical  care  areas,  and  estimated  sales  of  these  catheters  are 
+between 1 and 2 million annually in the United States.4 
+ 
+Recently,  however,  the  presumed  beneficial  effect  of  care  directed  by  the  PAC  has 
+been called  into question by both  retrospective  reviews and prospective,  randomized 
+trials.    Connors  et  al.  found  that  PAC  use  was  associated  with  increased  mortality 
+and  increased  utilization  of  resources,  and  subgroup  analyses  did  not  reveal  any 
+patient  group  or  investigation  site  for  which  PAC  use  was  associated  with  improved 
+outcomes.5  In the “Canadian” study, Sandham et al. compared PAC-directed therapy 
+with  standard  care without  the  use  of  the  PAC  and  found  no  benefit  to  PAC-directed 
+therapy.6    In  the  “French”  study,  Richard  et  al.  randomly  assigned  patients  with 
+acute  respiratory  distress  syndrome  (ARDS)  or  sepsis  to  management  guided  by 
+either the PAC or the central venous catheter (CVC) and found no benefit for the PAC 
+group.7 
+ 
+One  possible  reason  why  the  PAC  has  not  yet  been  shown  to  be  beneficial  is  that 
+knowledge  of  how  to  interpret  PAC  data  is  inadequate  among  physicians  and  critical 
+
+ 
+
+- 1 -
+
+care nurses.    Iberti et al. administered a 31-question multiple-choice examination  to 
+496  physicians  practicing  in  13 medical  facilities  in  the  United  States  and  Canada  to 
+assess their knowledge and understanding of the use of the PAC and interpretation of 
+data  derived  from  it.8    The  mean  test  score  was  67%  correct.    Gnaegi  et  al., 
+evaluating 535 French, Swiss, and Belgian physicians  in 86  ICUs using  the same 31-
+question  examination,  discovered  similar  results.9    Of  note,  approximately  50%  of 
+the respondents did not correctly identify pulmonary artery occlusion pressure (PAOP) 
+from a clear tracing.  Of the 1095 members of the Society of Critical Care Medicine in 
+the  United  States  who  responded  to  a  survey  assessing  attitudes  towards  and 
+knowledge  of  PAC  use,  one-third  of  the  respondents  did  not  correctly  identify  PAOP 
+on a clear  tracing.10   The evaluation of 168 critical care nurses  in southern California 
+by  Burns  et  al.  revealed  that  39%  of  the  respondents  were  unable  to  identify  PAOP 
+from a tracing.4 
+ 
+This  paper  investigates  the  feasibility  of  accurate  computerized  PAC  waveform 
+interpretation. 
+  Computer-assisted 
+interpretation  of  the  superficially  similar 
+electrocardiogram  (EKG)  has  a  long  history11  and  is  at  least  as  good  as  EKG 
+interpretation  by  a  trained  research  physician.12    However,  the  use  of  computers  in 
+interpreting PAC waveforms  is still a  research topic.   deBoisblanc et al.,  for  instance, 
+recently  published  an  article  on  estimating  pulmonary  artery  occlusion  pressure 
+(PAOP)  in  nineteen  closed-chest  dogs  by  an  artificial  neural  network,  using 
+pulmonary  artery  pressure,  its  first  time  derivative,  and  beat  duration  as  neural 
+inputs.13 
+ 
+PAC waveforms are more difficult to interpret than EKGs because PAC waveforms are 
+context-dependent. 
+  Although  clinical 
+information  can  be 
+informative,  EKG 
+waveforms  can  generally  be  interpreted  in  isolation.    On  the  other  hand,  PAC 
+waveforms  are  difficult  to  interpret  meaningfully  without  at  least  some  basic 
+information on the state of the catheter system and the state of the patient (Table 1). 
+ 
+Table 1 – Contextual Information Essential in Analysis of PAC Waveforms 
+ 
+Contextual 
+Information 
+Catheter Port 
+
+Example of Influence on PAC Waveform Interpretation 
+
+Accompanying 
+EKG 
+
+A normal waveform from the proximal port is central venous 
+pressure (CVP).  A normal waveform from the distal port is 
+pulmonary artery pressure (PA) or pulmonary artery occlusion 
+pressure (PAOP). 
+Balloon Status  When properly inflated, the balloon changes the distal port 
+waveform from PA to PAOP. 
+An accompanying EKG gives the rhythm status and location of P 
+waves, QRS complexes, and T waves in relationship to the PAC 
+waveform.  These pieces of information are essential in 
+differentiating a and v waves on the PAC trace and in the 
+diagnosis of cannon a waves. 
+Spontaneous inspiration decreases intrathoracic pressure and the 
+measured PAC pressure.  Positive pressure ventilation increases 
+intrathoracic pressure and the measured PAC pressure. 
+Different settings, such as pressure support and intermittent 
+mandatory ventilations (IMV), modify the interpretation in vastly 
+different ways.  If positive-end expiratory pressure (PEEP) is high 
+enough, PAC pressure measurements have to be adjusted 
+accordingly. 
+
+Respiratory 
+Status 
+
+Ventilator 
+Settings 
+
+ 
+
+- 2 -
+
+Sedation 
+
+Transducer 
+Level 
+
+An awake or lightly sedated patient can take spontaneous 
+negative-pressure inspiratory breaths.  A deeply sedated patient 
+can only take ventilator-driven positive-pressure inspiratory 
+breaths. 
+The transducer should be at the level of the vascular structure of 
+interest.  If the transducer is too high or too low, the measured 
+pressure in the vascular structure would be proportionally too low 
+or too high, respectively. 
+
+ 
+The  PAC  waveform  itself  contains  a  lot  of  information  that  can  be  processed  into 
+various  elements.    Some  simple  elements  can  easily  be  obtained  manually  from 
+printouts of PAC waveforms and their accompanying EKGs (Table 2). 
+ 
+ 
+Table 2 – Manually Obtainable PAC Waveform Elements 
+ 
+Waveform 
+Element 
+Highest Peak (HP) 
+
+Description 
+
+Lowest Trough (LT) 
+
+HP-LT Difference 
+HP-LT Midpoint 
+Peak Location 
+
+Peak Variation 
+
+Trough Variation 
+
+For each interval between R waves on the accompanying 
+EKG, the peak on the PAC waveform is the highest pressure 
+in that interval.  The highest peak (HP) is the maximum peak 
+across all analyzed intervals. 
+The lowest trough (LT) is the minimum trough across all 
+analyzed intervals. 
+This is the difference between HP and LT. 
+This is the midpoint between HP and LT. 
+This is the location of the peak in relation to R and T waves 
+on the accompanying EKG. 
+This is the difference between the maximum peak and the 
+minimum peak across all analyzed intervals. 
+This is the difference between the maximum trough and the 
+minimum trough across all analyzed intervals. 
+
+ 
+Interpretation  of  PAC  waveforms  consists  of  identifying  the  waveform,  recognizing 
+problems and artifacts, and measuring pressures of  interest.   Measuring pressures  is 
+only  meaningful  after  identifying  the  waveform  and  confirming  that  no  artifacts  or 
+other problems exist, so the first task is classification (Table 3). 
+ 
+ 
+Table 3 – Useful Classification of PAC Waveforms 
+ 
+Classification 
+Task 
+Dangerous vs. 
+Safe 
+Problem vs. 
+Non-problem 
+
+A PAC waveform indicating a dangerous situation requires 
+immediate attention. 
+A PAC waveform that indicates a problem means that there is 
+either a dangerous situation or a problem with the catheter 
+system that is causing an artifact in the waveform. 
+Identifying the location of the source of the waveform is essential 
+for measuring pressure. 
+Identifying unusual features give clues to the underlying 
+physiology of the patient or the state of the catheter system. 
+
+Description 
+
+Location 
+
+Dominant 
+Feature(s) 
+ 
+
+ 
+
+- 3 -
+
+ 
+Methods 
+ 
+The data consists of 66 PAC waveforms with accompanying EKGs and other essential 
+contextual  information  (as  described  in  Table  1).    They  were  classified  by  a 
+consensus of a critical care attending physician and a critical care nursing supervisor 
+along  the  four  axes  of  danger,  problem,  location,  and  dominant  feature(s)  (as 
+described  in  Table  2).    The  waveform  elements  described  on  Table  2  were  obtained 
+manually  for  each  waveform.    The  compiled  data,  in  Microsoft  Excel  format,  is 
+available  upon  request.    An  overview  of  the  kinds  of  waveforms  in  the  dataset  is 
+given in Table 4. 
+ 
+ 
+Table 4 – Overview of PAC Waveform Dataset 
+ 
+
+(cid:137)  Danger: 5 dangerous, 61 safe 
+(cid:137)  Problem: 14 problems, 52 non-problems 
+(cid:137)  Location: 
+(cid:132)  18 central venous pressure (CVP) 
+(cid:132)  3 right ventricle (RV) 
+(cid:132)  21 pulmonary artery (PA) 
+(cid:132)  22 pulmonary artery occlusion pressure (PAOP) 
+(cid:132)  2 Overwedge 
+(cid:137)  Dominant Feature(s): 
+(cid:132)  15 normal 
+(cid:132)  9 arrhythmias 
+(cid:132)  13 large waves 
+(cid:132)  14 respiratory variation 
+(cid:132)  11 frequency response artifacts 
+(cid:132)  1 improperly leveled transducer 
+(cid:132)  1 unspecified system artifact 
+(cid:132)  2 overwedge 
+
+ 
+The  machine  learning  software  used  for  classification  is  the  Java  data  mining 
+program  Weka,  version  3.4.6.14    Attribute  selection  was  done  using  Ranker,  which 
+evaluates  the  worth  of  an  attribute  by  measuring  the  information  gain  with  respect 
+to  the  class  and  then  ranks  the  attributes  accordingly.    The  entire  dataset was  used 
+for ranking.  The attributes with that were uninformative were discarded (Table 5). 
+
+ 
+
+- 4 -
+
+Table 5 – Attribute Rankings 
+ 
+Danger 
+
+Problem 
+
+0.15 peak_high 
+0.12 pressure_diff 
+0.12 trough_low 
+0.12 midpoint 
+0.03 port 
+0.03 peak_location 
+0.02 heart_rate 
+0.01 ventilation 
+0.01 sedation 
+0.00 balloon 
+0     peak_var 
+0     trough_var 
+
+0.42 pressure_diff 
+0.42 peak_high 
+0.35 midpoint 
+0.11 peak_var 
+0.10 port 
+0.10 peak_location 
+0.05 balloon 
+0.05 heart_rate 
+0.04 ventilation 
+0.02 sedation 
+0     trough_var 
+0     trough_low 
+
+Location 
+
+0.90 midpoint 
+0.87 balloon 
+0.85 peak_high 
+0.74 port 
+0.58 pressure_diff 
+0.57 trough_low 
+0.47 peak_location 
+0.03 ventilation 
+0.02 heart_rate 
+0.01 sedation 
+0     trough_var 
+0     peak_var 
+ 
+
+Predominant 
+Feature 
+0.69 trough_var 
+0.65 peak_var 
+0.65 peak_location 
+0.62 peak_high 
+0.61 midpoint 
+0.57 heart_rate 
+0.49 ventilation 
+0.33 sedation 
+0.23 balloon 
+0.08 port 
+0     pressure_diff 
+0     trough_low 
+
+ 
+The Weka  classifiers  that  were  investigated  include  ZeroR  (classifying  everything  as 
+the  most  common  class  regardless  of  attributes),  Simple  Logistic,  IB1  (1-nearest 
+neighbor),  J48  (decision  tree),  logistic  regression,  naïve  Bayes,  and  Multilayer 
+Perceptron (neural network). 
+ 
+Because  of  the  small  dataset,  with  some  classes  having  very  few  numbers,  1- 
+nearest  neighbor  was  used  instead  of  K-nearest  neighbors  (with  K  greater  than  1).  
+The  decision  tree  was  built  with  minimum  leaf  node  of  1.    The  neural  network  was 
+built with 5 hidden  layers, which  is half of the total number of  informative attributes.  
+(All other parameters were the defaults for these classifiers in Weka 3.4.6.) 
+ 
+Cross-validation  was  used  to  evaluate  the  success  of  each  classifier.    Because  the 
+dataset  is  small,  increasing  the  number  of  folds  would  increase  the  size  of  the 
+training sets.  However, using too many folds would leave the test sets too small.  To 
+balance  increasing  the  size  of  the  training  sets  and  keeping  the  size  of  the  test  sets 
+acceptable,  four  folds were used,  so  that  training  sets each  contained 49 waveforms 
+and test sets each contained 17 waveforms. 
+ 
+ 
+Experiments 
+ 
+Tables  6-9  display  the  results  from  running  the  various  classifiers  for  each  type  of 
+classification.    The  kappa  coefficient  measures  pair-wise  agreement  after  correcting 
+for  expected  chance  agreement.15    When  there  is  no  agreement  other  than  that 
+which  would  be  expected  by  chance,  kappa  is  zero. When  there  is  total  agreement, 
+kappa is one.  AUC is the area under the receiver-operator curve (ROC). 
+
+ 
+
+- 5 -
+
+Table 6 – Dangerous vs. Safe 
+ 
+Classifier 
+
+Right %  Wrong % 
+
+92.4 
+ZeroR 
+92.4 
+Simplistic Logistic 
+96.9 
+IB1 
+92.4 
+J48 
+Naïve Bayes 
+89.4 
+Multilayer Perceptron  95.5 
+ 
+ 
+Table 7 – Problem vs. Non-problem 
+ 
+Classifier 
+
+7.6 
+7.6 
+3.1 
+7.6 
+10.6 
+4.5 
+
+Right %  Wrong % 
+
+Kappa 
+
+AUC 
+
+21.2 
+10.6 
+9.1 
+13.6 
+10.6 
+10.6 
+
+78.8 
+ZeroR 
+89.4 
+Simplistic Logistic 
+90.9 
+IB1 
+86.4 
+J48 
+Naïve Bayes 
+89.4 
+Multilayer Perceptron  89.4 
+ 
+ 
+Table 8 – Location: CVP vs. RV vs. PA vs. PAOP vs. Overwedge 
+ 
+Classifier 
+
+0 
+0.67 
+0.71 
+0.58 
+0.69 
+0.67 
+
+Right %  Wrong %  Kappa 
+
+0.46 
+0.96 
+0.84 
+0.83 
+0.97 
+0.90 
+
+AUC 
+(PAOP)
+
+68.2 
+7.6 
+6.1 
+6.1 
+19.7 
+10.6 
+
+-0.02 
+0.89 
+0.91 
+0.91 
+0.72 
+0.85 
+
+0.46 
+0.99 
+0.98 
+0.98 
+0.94 
+0.99 
+
+31.8 
+ZeroR 
+92.4 
+Simplistic Logistic 
+93.9 
+IB1 
+93.9 
+J48 
+Naïve Bayes 
+80.3 
+Multilayer Perceptron  89.4 
+ 
+ 
+Table 9 – Predominant Feature 
+ 
+Classifier 
+
+Right %  Wrong %  Kappa 
+
+AUC 
+(Normal)
+
+ZeroR 
+Simplistic Logistic 
+IB1 
+J48 
+Naïve Bayes 
+Multilayer 
+Perceptron 
+ 
+
+22.7 
+54.5 
+45.5 
+53.0 
+42.4 
+51.5 
+
+77.3 
+45.5 
+54.5 
+47.0 
+57.6 
+48.5 
+
+0 
+0.48 
+0.39 
+0.46 
+0.36 
+0.44 
+
+0.47 
+0.85 
+0.74 
+0.80 
+0.84 
+0.84 
+
+ 
+
+- 6 -
+
+Kappa 
+
+AUC 
+
+0 
+0 
+0.73 
+0.58 
+0.31 
+0.55 
+
+0.42 
+0.58 
+0.80 
+0.87 
+0.89 
+0.92 
+
+Significance  
+vs. ZeroR 
+(5% level) 
+ 
+ 
+Yes 
+ 
+ 
+ 
+
+Significance 
+vs. ZeroR 
+(5% level) 
+ 
+Yes 
+Yes 
+ 
+Yes 
+Yes 
+
+Significance  
+vs. ZeroR 
+(5% level) 
+ 
+Yes 
+Yes 
+Yes 
+Yes 
+Yes 
+
+Significance  
+vs. ZeroR 
+(5% level) 
+ 
+Yes 
+Yes 
+Yes 
+Yes 
+Yes 
+
+ 
+Results 
+ 
+1-nearest  neighbor  (IB1)  was  significantly  more  accurate  (at  the  5%  level)  than 
+ZeroR  for  all  types  of  classifications,  while  multilayer  perceptron  provided 
+consistently good ROC results.  All classifiers were good at identifying location. 
+ 
+ 
+Discussion 
+ 
+This was a study on  the  feasibility of computerized  interpretation of PAC waveforms, 
+and  the  results  are  encouraging.    However,  it  is  important  to  note  that  this  study 
+only  demonstrates  one  part  of  the  total  task  of  waveform  interpretation.    The  first 
+part consists of data acquisition and is a challenge in itself. 
+ 
+Three  types  of  data  need  to  be  acquired  in  order  to  perform  the waveform  analysis.  
+The first type consists of contextual information that should be easily provided by the 
+clinician:  the  source  port,  the  balloon  status,  the  patient’s  respiratory  status  and 
+level of sedation, and ventilator settings (as applicable).  There  is no reason why the 
+clinician would not have this information. 
+ 
+When  the  context  is  fairly  stable,  it  need  not  be  re-entered  for  every  interpretation.  
+For example, when not actively being used,  the pulmonary artery catheter  tip (distal 
+port)  is  left  in  the  pulmonary  artery  with  the  balloon  down.    The  proximal  port  is  in 
+the right atrium (or central vein).  If the patient’s respiratory status, level of sedation, 
+and  ventilator  settings  are  also  stable,  then  the  PAC  waveform  interpreter  can  use 
+these  stable  context  attributes  to  monitor  proximal  and  distal  port  waveforms  and 
+set off an alarm if it detects any dangerous situations. 
+ 
+The second type of necessary data is an interpretation of the accompanying EKG, but 
+good EKG interpreters already exist. 
+ 
+The third type of necessary data  is the result of pre-processing of the PAC waveform 
+itself  into higher  level  elements.    In  this  study, we pre-processed  the waveform  into 
+elements  that  could  be  easily  and  unambiguously  obtained  manually.    We  did  this 
+because developing a more sophisticated waveform processor was beyond  the scope 
+of this project. 
+ 
+However,  more  complex  elements  of  the  PAC  waveform  could  serve  as  better 
+attributes.    For  example,  we  could  calculate  such  things  as  the  mean  pressure,  the 
+means  of  the  peaks  and  the  troughs  from  heartbeat  to  heartbeat,  the  standard 
+deviations  of  the  mean/peak/trough,  the  first  time  derivative,  the  second  time 
+derivative, and the Fourier transform.  We could also standardize the dimensions of a 
+PAC waveform segment between heartbeats and try to match its shape to the shapes 
+of  classified  segments.    This  latter  task  of  pattern  matching  would  be  analogous  to 
+handwriting recognition. 
+ 
+In any case, any automated waveform pre-processor would be useful, even if it were 
+restricted  to  the  primitive  elements  defined  in  this  study.    Manual  waveform  pre-
+processing was  the most  time-consuming  part  of  the  data  acquisition  for  this  study.  
+Automated  waveform  pre-processing  of  a  large  number  of  different  types  of 
+waveforms  and  patient  situations,  along  with  the  corresponding  context  and  expert 
+
+ 
+
+- 7 -
+
+classification would  result  in a  larger  training set  that would  improve  the accuracy of 
+computerized PAC waveform interpretation. 
+ 
+As  studies  have  shown,  physicians  and  nurses  have  difficulty  recognizing  a  PAOP 
+waveform  even  on  a  clear  tracing.4  8  9    Computer  assistance  need  not  be  perfect  to 
+still be useful in improving PAC waveform interpretation. 
+ 
+Finally,  waveform  recognition  is  only  the  beginning  of  PAC  waveform  interpretation.  
+The  rest consists of pressure measurement, and  it  is non-trivial  to  teach a computer 
+from  which  portion  of  a  waveform  to  measure  the  desired  pressure,  even  when  the 
+computer recognizes what the waveform is. 
+ 
+ 
+References 
+ 
+1.  Mimoz  O,  Rauss  A,  Rekik  N,  Brun-Buisson  C,  Lemaire  F,  Brochard  L.  Pulmonary 
+artery  catheterization  in  critically  ill  patients:  a  prospective  analysis  of 
+outcome  changes associated with catheter-prompted  changes  in  therapy. Crit 
+Care Med 1994;22(4):573-579. 
+2.  Steingrub  JS,  Celoria  G,  Vickers-Lahti  M,  Teres  D,  Bria  W.  Therapeutic  impact  of 
+pulmonary  artery  catheterization 
+in  a  medical/surgical 
+ICU.  Chest 
+1991;99(6):1451-1455. 
+3. Squara P, Bennett D, Perret C. Pulmonary Artery Catheter* : Does the Problem Lie 
+in the Users? Chest 2002;121(6):2009-2015. 
+4. Burns D, Burns D, Shively M. Critical  care nurses'  knowledge  of pulmonary  artery 
+catheters. Am J Crit Care 1996;5(1):49-54. 
+5. Connors AF, Jr., Speroff T, Dawson NV, Thomas C, Harrell FE, Jr., Wagner D, et al. 
+The effectiveness of right heart catheterization in the initial care of critically ill 
+patients. SUPPORT Investigators. JAMA 1996;276(11):889-897. 
+6.  Sandham  J,  Hull  R,  Brant  R.  A  Randomized,  Controlled  Trial  of  the  Use  of 
+Pulmonary-Artery Catheters in High-Risk Surgical Patients, 2003. 
+7.  Richard  C,  Warszawski  J,  Anguel  N,  Deye  N,  Combes  A,  Barnoud  D,  et  al.  Early 
+Use  of  the  Pulmonary  Artery  Catheter  and  Outcomes  in  Patients  With  Shock 
+and  Acute  Respiratory  Distress  Syndrome:  A  Randomized  Controlled  Trial. 
+JAMA 2003;290(20):2713-2720. 
+8.  Iberti  TJ,  Fischer  EP,  Leibowitz  AB,  Panacek  EA,  Silverstein  JH,  Albertson  TE.  A 
+multicenter  study  of  physicians'  knowledge  of  the  pulmonary  artery  catheter. 
+Pulmonary Artery Catheter Study Group. JAMA 1990;264(22):2928-2932. 
+9.  Gnaegi  A,  Feihl  F,  Perret  C.  Intensive  care  physicians'  insufficient  knowledge  of 
+right-heart  catheterization  at  the  bedside:  Time  to  act?  Crit  Care  Med 
+1997;25(2):213-220. 
+10.  Trottier  SJ,  Taylor  RW.  Physicians'  attitudes  toward  and  knowledge  of  the 
+pulmonary  artery  catheter:  Society  of  Critical  Care  Medicine  membership 
+survey. New Horiz 1997;5(3):201-206. 
+11.  Macfarlane  PW.  A  brief  history  of  computer-assisted  electrocardiography. 
+Methods Inf Med 1990;29(4):272-281. 
+12.  de  Bruyne  MC,  Kors  JA,  Hoes  AW,  Kruijssen  DA,  Deckers  JW,  Grosfeld  M,  et  al. 
+Diagnostic  interpretation  of  electrocardiograms  in  population-based  research: 
+computer  program  research  physicians,  or  cardiologists?  J  Clin  Epidemiol. 
+1997 Aug;50(8):947-52. 1997;50(8):947-952. 
+13. deBoisblanc BP, Pellett A, Johnson R, Champagne M, McClarty E, Dhillon G, et al. 
+Estimation  of  pulmonary  artery  occlusion  pressure  by  an  artificial  neural 
+network. Crit Care Med 2003;31(1):261-266. 
+
+ 
+
+- 8 -
+
+14. Weka [program]. 3.4.6 version. 
+15.  Jean  C.  Assessing  agreement  on  classification  tasks:  the  kappa  statistic:  MIT 
+Press, 1996. 
+
+ 
+ 
+
+ 
+
+- 9 -
+
+

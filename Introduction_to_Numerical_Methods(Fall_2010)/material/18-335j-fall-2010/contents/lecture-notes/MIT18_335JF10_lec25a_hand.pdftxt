@@ -1,0 +1,371 @@
+Adjoint  methods   and  sensitivity  analysis  for 
+recurrence  relations 
+
+Steven G. Johnson 
+
+October  22,  2007 
+
+1  Introduction 
+In  this  note,   we  derive  an  adjoint  method  for  sensitivity   analysis  of  the  solution  of 
+recurrence  relations.  In  particular,  we  suppose  that  we  have  a  K -component vector  x 
+that is  determined by  iterating a  recurrence  relation 
+xn  = f (xn−1 , p, n) � f n 
+for  some  function  f  depending  on   the  previous  x,1 a vector  p of  P  parameters,  and   the 
+step  index  n.  The  initial  condition  is  
+
+x0  = b(p) 
+
+for  some given  function  b of  the  parameters.  Furthermore,  we  have  some  function  g of 
+x: 
+�  (
+)
+nx p
+, 
+g
+, n
+g
+and  we  wish  to  compute  the  gradient  dgN  of  gN ,  for  some  N ,  with   respect   to   the 
+dp 
+parameters  p.  
+
+n 
+
+dgN 
+dp
+
+2  The explicit gradient 
+N  �
+��� 
+�
+� 
+The  gradient  of  gN  can  be  written   explicitly   as:  
+f N  + f N  f N −1  + f N −1  f N −2  + · · · 
+= g  + g 
+N
+, 
+x 
+x 
+p
+p
+p
+x
+p
+where  subscripts  denote  partial  derivatives,  and   should   be  thought  of  as  row  vectors, 
+N  is a  1 × K matrix,  and   f N
+is a  K × P 
+vs.  column vectors  x and  p.   So,  for example,  g
+p
+x
+= g(xn , p) = 
+N 
+matrix.  Equation  (1)  is  derived  simply  by   applying   the  chain  rule  to   g
+· · ·
+g(f (xn−1 , p), p) = g(f (f (xn−2 , p), p), p) = 
+.
+1Note  that  if  xn  depends  on  xn−�  for  �  = 1, . . . , L,  the  recurrence  can  still  be  cast  in  terms  of  xn−1 
+alone by expanding  x  into  a  vector  of  length  KL,  in  much  the  same  way  that  an  Lth-order  ODE  can  be 
+converted  into  L 1st-order  ODEs. 
+
+(1)
+
+1 
+
+The  natural way to evaluate eq. (1) might   seem to be  starting at the  innermost  paren­
+theses and working  outwards, but   this is   inefﬁcient.  Each   parenthesized expression is  
+a  K  × P  matrix  that  must   be  multiplied   by   f n , a  K  × K  matrix,  requiring  O(K 2P ) 
+x
+time  for  each  multiplication  assuming  dense  matrices.  There  are  O(N ) such  multipli­
+cations,  so evaluating  the  whole expression in   this fashion  requires  O(N K 2P )  time. 
+However, for  dense  matrices, the evaluation of  gN  itself  requires  O(N K 2 ) time,  which  
+means  that  the  gradient  (calculated   this   way)  is   as  expensive  as  O(P )  evaluations  of 
+Ng . 
+Similarly,  evaluating  gradients   by   ﬁnite-difference  approximations  or  similar  nu­
+merical  tricks  requires  O(P ) evaluations   of  the  function  being   differentiated   (e.g.  center-
+difference  approximations  require  two  function  evaluations   per  dimension).  So,  direct 
+evaluation  of  the  gradient  by  the  above  technique,  while  it   may  be  more  accurate  than 
+numerical  approximations,   is  not   substantially   more  efﬁcient.  This   is   a  problem  if  P  is  
+large. 
+
+3  The gradient by adjoints 
+Instead  of  computing  the  gradient  explicitly   (by   “forward”  differentiation),  adjoint 
+methods  typically  allow  one  to  compute  gradients  with   the  same  cost  as  evaluating 
+the  function  roughly  twice,   regardless   of  the  number  P  of  parameters  [1,  2,  3,  4].  A 
+very  general  technique  for  constructing  adjoint   methods  involves  something  similar  to  
+Lagrange  multipliers,  where  one  adds  zero  to   gN  in   a  way  cleverly  chosen  to   make 
+computing  the  gradient  easier,  and in a  previous  note I derived  the  adjoint   gradient   for 
+recurrence  relations  by  this  technique,  analogous   to   work   by   Cao  and   Petzold   on   ad­
+joint  methods  for  differential-algebraic  equations   [2].  However,  Gil  Strang  has   pointed  
+out to me that in many cases adjoint   methods can be derived much more simply just by  
+parenthesizing  the  gradient  equation  in   a  different   way  [4],  and   this   turns   out  to   be  the 
+case  for  the  recurrence  problem  above. 
+The key fact is  that, in the  gradient   equation (1), we  are evaluating   lots of expres-
+N (f N f N −1 
+(f N [f N −1 f N −2
+), gN
+]), and   so   on. Parenthesized  this way, these 
+sions   like  g
+x
+x
+x
+p
+x
+x
+p
+expressions  require O(K 2P ) operations   each,  because  they involve matrix-matrix  mul­
+tiplications.  However,  we  can  parenthesize  them  a  different   way,  so   that  they involve 
+only vector-matrix  multiplications, in   order to   reduce the  complexity to   O(K 2 + K P ), 
+which  is  obviously  a  huge  improvement   for  large  K  and   P .  In  particular,  parenthesize 
+N f N )f N −1 
+f N )f N −1 ]f N −2
+them  as  (g
+,  [(gN 
+,  and   so   on,  involving   repeated   multipli-
+x
+p
+x
+x
+p
+x
+x
+N ) by   a  matrix f n 
+cation  of  a  row  vector  on  the  left  (starting  with   g
+on   the  right.  This  
+x
+x
+repeated  multiplication  deﬁnes   an  adjoint recurrence relation  for  a  K -component  col­
+umn vector  λn ,  recurring  backwards   from  n = N  to   n = 0:  
+λn−1  = (f n 
+)T 
+λn , 
+x
+�T 
+�
+where  T  is  the  transpose,  with  “initial”  condition 
+N=  g 
+x 
+
+λN 
+
+.
+
+2 
+
+In  terms  of  this  adjoint  vector  (so-called   because  of  the  transposes   in   the  expressions 
+above),  the  gradient  becomes: 
+� 
+�T 
+�
+N
+(λn )T  f n 
++ 
+p
+n=1 
+
+dgN 
+dp 
+
+= gp
+N
+
+(2)
+
++
+
+λ0
+
+bp . 
+
+N 
+Consider  the  computational  cost  to   evaluate  the  gradient   in   this   way.  Evaluating  g
+and  the  xn  costs  O(N K 2 )  time,  assuming  dense  matrices,  and   evaluating   λn  also 
+takes  O(N K 2 ) time.   Finally evaluating  equation (2) takes  O(N K P ) time in   the worst 
+f
+case, dominated by the time to evaluate the summation assuming  n 
+is   a  dense  matrix. 
+p
+(
++
+)
+(
+)
+P . 
+So, the total is 
+and
+for large 
+, much better than 
+2
+2
+N K P 
+K
+O N K
+O N K P
+f
+In practice, the situation is likely to be even better than this, because often  n 
+will  
+p
+x 
+p
+be a sparse matrix: each component of  will appear only for certain components of 
+(
+)
+and or for certain steps 
+cost will be greatly reduced, e.g. 
+. In this case the 
+O N K P 
+n
+)
+) or similar. Then the cost of the gradient will be dominated by  
+(
+(
+to  O N K
+or 
+O K P 
+(
+)
+the two 
+recurrences—i.e., as is characteristic of adjoint methods, the cost of 
+2
+O N K
+ﬁnding the gradient will be comparable to the cost of ﬁnding the function value twice. 
+Note that there is, however, at least one drawback of the adjoint method (2) in  
+comparison to the direct method (1): the adjoint method may require more storage. For 
+(
+)
+x
+the direct method, 
+storage is required for the current  
+(which can be discarded  
+n
+O K
+once  xn+1  is  computed)  and  O(P K ) storage  is   required  for  the  K × P  matrix  being  
+accumulated, to be  multiplied by  gN  at  the  end,  for  O(P K ) storage  total.  In  the  adjoint  
+x
+method,  all  of  the  xn must   be  stored,  because  they are  used  in   the  backwards   recurrence 
+for  λn  once  xN  is  reached,  requiring  O(N K ) storage.  [The  λn  vectors,  on   the  other 
+hand,   can  be  discarded  once  λn−1  is   computed,  assuming  the  summation   in   eq.  (2)  is  
+(
+) 
+f
+computed on the ﬂy. Only 
+storage is needed for this summation, assuming  n
+O K
+p 
+can  be  computed  on  the  ﬂy  (or  is   sparse).]  Whether  the  O(P K ) storage  for  the  direct 
+method  is  better  or  worse  than  the  O(N K )  storage  for  the  adjoint   method   obviously 
+depends  on  how  P  compares  to  N . 
+
+4  A simple example 
+� 
+� 
+Finally,  let  us  consider  a  simple  example  of  a  K  = 2 linear  recurrence:  
+
+with  an  initial  condition 
+
+and  some  2 × 2 matrix  A,   e.g. 
+
+xn  = Axn−1  +
+�
+
+0 
+� 
+pn 
+
+1 
+0 
+
+x0  = b = 
+� 
+sin θ 
+cos θ 
+A =  − sin θ  cos θ 
+
+� 
+
+3 
+
+for  θ  = 0.1.   Here,   P  =  N :  there   are   N  parameters  pn ,  one  per  step  n,  acting   as 
+“source”  terms  in  the  recurrence  (which   otherwise   has  oscillating   solutions  since   A is 
+unitary).   Let  us  also  pick  a  simple   function   g  to  differentiate,  e.g. 
+
+g(x) = (x2 )2 . 
+
+The  adjoint  recurrence  for  λn  is  then: 
+λn−1  = (f n 
+x )T  λn  = AT λn , 
+� 
+� 
+�T 
+�	
+λN  =  g 
+N 
+.
+x
+
+with  “initial”  condition: 
+
+= 
+
+0
+2x2 
+N 
+
+Notice  that  this  case  is  rather   simple:  since   our  recurrence   is  linear,  the  adjoint  recur­
+rence  does  not  depend  on  xn  except  in  the  initial  condition. 
+The  gradient   is  also  greatly  simpliﬁed  because  f n  is  sparse:  it  is  a  2 × N  matrix 
+p
+of  zeros,  except  for  the  n-th  column   which   is  (0, 1)T .  That  means  that  the  gradient  (2) 
+becomes: 
+
+dgN 
+dpk 
+requiring  O(N ) work  to  ﬁnd  the  whole   gradient. 
+As a quick test, I implemented this example in GNU Octave (a  Matlab clone) and 
+checked  it  against   the  numerical  center-difference   gradient;  it  only   takes  a  few  minutes 
+to  implement and is worthwhile to try if you are not clear on how this works. For extra 
+credit,  try  modifying  the  recurrence,  e.g.  to  make  f  nonlinear in  x and/or  p. 
+
+= λk 
+2 ,
+
+References 
+[1]  R.  M.   Errico,  “What   is  an   adjoint  model?,”  Bulletin  Am.  Meteorological  Soc., 
+vol.  78,   pp.   2577–2591,   1997. 
+
+[2]  Y.	 Cao,   S.   Li,   L.   Petzold,  and  R.  Serban,  “Adjoint  sensitivity  analysis  for 
+differential-algebraic  equations:  The  adjoint  DAE  system  and  its  numerical  so­
+lution,”  SIAM J. Sci. Comput.,  vol.  24,  no.  3,  pp.  1076–1089,  2003. 
+
+[3]  S.   G. 
+
+Johnson, 
+
+“Notes 
+
+on  
+
+adjoint  methods 
+
+for 
+
+18.336.” 
+
+October 2007.
+
+[4]  G.   Strang,  Computational  Science  and  Engineering. 
+Cambridge  Press,  2007.  
+
+Well
+esley,  MA:  Wellesley­
+
+4 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods 
+Fall 2010
+ 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

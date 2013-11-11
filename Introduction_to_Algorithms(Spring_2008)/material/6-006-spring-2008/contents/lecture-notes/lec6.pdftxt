@@ -1,0 +1,241 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Spring 2008
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+Lecture  6	
+
+Hashing  II:  Table  Doubling,  Karp-Rabin 
+
+6.006  Spring  2008
+
+
+Lecture  6:  Hashing  II:  Table  Doubling, 
+Karp-Rabin 
+
+Lecture  Overview 
+•	 Table  Resizing
+
+• 
+Amortization
+
+•	 String Matching  and  Karp-Rabin 
+•	 Rolling  Hash 
+
+Readings 
+
+CLRS  Chapter  17  and  32.2. 
+
+Recall: 
+
+Hashing  with  Chaining: 
+
+Figure  1:  Chaining  in  a Hash  Table 
+
+Multiplication  Method: 
+
+[(a k) mod  2w ] � (w − r)
+· 
+h(k)  = 
+table  size  = 2r 
+where m  = 
+w  =  number  of  bits  in machine  words 
+a  =  odd  integer  between  2w−1  and  2w 
+
+1 
+
+1....Ukkkkk1234k...4k.k2k3all possiblekeysn  keys in set DSCost : Θ (1+α)htablem  slots collisionsexpected sizeα  = n/m}Lecture  6 
+
+Hashing  II:  Table  Doubling,  Karp-Rabin 
+
+6.006  Spring  2008
+
+
+Figure  2:  Multiplication Method 
+
+How  Large  should  Table  be? 
+•  want m = θ(n)  at  all  times 
+•  don’t  know  how  large  n  will  get  at  creation 
+•
+⇒ 
+⇒ 
+slow; m  too  big  =  wasteful 
+m  too  small  = 
+
+Idea: 
+
+Start  small  (constant)  and  grow  (or  shrink)  as  necessary. 
+
+Rehashing: 
+
+To  grow  or  shrink  table  hash  function  must  change  (m, r) 
+⇒ 
+=  must  rebuild  hash  table  from  scratch 
+for  item  in  old  table:
+
+insert  into  new  table
+
+⇒ 
+=  Θ(n + m)  time  = Θ(n)  if m = Θ(n)
+
+
+2
+
+
+wkax}r}w-rkeepignoreignore≡+product as sumlots of mixingLecture  6	
+
+Hashing  II:  Table  Doubling,  Karp-Rabin 
+
+6.006  Spring  2008
+
+
+How  fast  to  grow? 
+
+When  n  reaches m,  say 
+• 
+
+m + = 1? 
+⇒ 
+= 
+rebuild  every  step 
+⇒	
+· · · 
+=  n  inserts  cost  Θ(1 + 2 +  + n) = Θ(n2 )
+•	 m ∗ = 2?  m = Θ(n)  still  (r+ = 1) 
+
+⇒ 
+= 
+rebuild  at  insertion  2i
+
+⇒	
+· · · 
+= 
+n  inserts cost Θ(1 + 2 + 4 + 8 +  + n)  where  n  is  really  the  next  power  of  2 
+= Θ(n) 
+•	 a  few  inserts  cost  linear  time,  but  Θ(1)  “on  average”. 
+
+Amortized  Analysis 
+This  is a common technique  in data structures - like paying rent:  $ 1500/month ≈ $ 50/day 
+•	 operation  has  amortized  cost  T (n)  if  k  operations  cost  ≤ k · T (n) 
+•	 “T (n)  amortized”  roughly  means  T (n)  “on  average”,  but  averaged  over  all  ops. 
+•	 e.g.  inserting  into  a  hash  table  takes  O(1)  amortized  time. 
+
+Back  to  Hashing: 
+
+Maintain m = Θ(n)  so  also  support  search  in O(1)  expected  time  assuming  simple  uniform 
+hashing 
+
+Delete: 
+
+Also  O(1)  expected  time 
+•	 space  can  get  big  with  respect  to  n  e.g.  n×  insert,  n×  delete 
+⇒
+•	
+solution:  when  n  decreases  to  m/4,  shrink  to  half  the  size  =  O(1)  amortized  cost 
+for  both  insert  and  delete  - analysis  is  harder;  (see  CLRS  17.4). 
+
+String  Matching 
+
+Given  two  strings s and  t, does s occur as a  substring of  t?  (and  if  so, where and how many 
+times?) 
+E.g.  s =  ‘6.006’  and  t =  your  entire  INBOX  (‘grep’  on  UNIX) 
+
+3 
+
+Lecture  6	
+
+Hashing  II:  Table  Doubling,  Karp-Rabin 
+
+6.006  Spring  2008
+
+
+Figure  3:  Illustration  of  Simple Algorithm  for  the  String Matching  Problem 
+
+Simple  Algorithm: 
+
+Any  (s == t[i : i + len(s)]  for  i  in  range(len(t)-len(s))) 
+- O(| s |)  time  for  each  substring  comparison 
+= ⇒  O(| s  | ·(| t  | − | s  |))  time 
+= O(| s  | · | t |) 
+potentially  quadratic 
+
+Karp-Rabin  Algorithm: 
+•	 Compare  h(s) == h(t[i : i + len(s)]) 
+•	 If  hash  values match,  likely  so  do  strings 
+–  can  check  s == t[i : i + len(s)]  to  be  sure  ∼  cost  O(| s  |) 
+–	 if  yes,  found match —  done 
+–	 if  no,  happened  with  probability  <  1
+
+|s|
+
+⇒ 
+= 
+expected  cost  is  O(1)  per  i. 
+
+• 
+need  suitable  hash  function. 
+•	 expected  time  =  O(| s  | + | t  | ·cost(h)). 
+–	 naively  h(x)  costs  | x  | 
+–	 we’ll  achieve  O(1)! 
+–	 idea:  t[i : i + len(s)] ≈ t[i + 1 : i + 1 + len(s)]. 
+
+Rolling  Hash  ADT 
+
+Maintain  string  sub ject  to 
+•	 h():  reasonable  hash  function  on  string 
+•	 h.append(c):  add  letter  c  to  end  of  string 
+•	 h.skip(c):  remove  front  letter  from  string,  assuming  it  is  c 
+
+4 
+
+tssLecture  6	
+
+Hashing  II:  Table  Doubling,  Karp-Rabin 
+
+6.006  Spring  2008
+
+
+Karp-Rabin  Application: 
+
+for  c  in  s:  hs.append(c)
+
+for  c  in  t[:len(s)]:ht.append(c)
+
+if  hs()  ==  ht():  ...
+
+This  ﬁrst  block  of  code  is  O(| s  |) 
+
+for  i  in  range(len(s),  len(t)):
+
+ht.skip(t[i-len(s)])
+
+ht.append(t[i])
+
+if  hs()  ==  ht():  ...
+
+The  second  block  of  code  is  O(| t  |) 
+
+Data  Structure: 
+
+Treat  string as a multidigit number u  in base a where a denotes  the alphabet  size.  E.g.  256 
+•	 h() = u  mod  p  for  prime  p ≈| s  |  or  | t |  (division method) 
+•	 h  stores  u  mod  p  and  | u |,  not  u
+
+⇒ 
+= 
+smaller  and  faster  to  work  with  (u  mod  p  ﬁts  in  one machine  word)
+
+•	 h.append(c):  (u · a +  ord  (c))  mod  p =  [(u  mod  p) · a +  ord  (c)]  mod  p 
+•	 h.skip(c):  [u −  ord  (c) · (a|u|−1  mod  p)] mod  p
+
+=  [(u  mod  p) −  ord  (c) (a|u−1|  mod  p)] mod  p
+
+· 
+
+5
+
+
+

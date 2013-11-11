@@ -1,0 +1,321 @@
+Lecture 21 
+Sparse Matrix Algorithms 
+
+MIT 18.335J / 6.337J 
+
+Introduction to Numerical Methods 
+
+Per-Olof Persson 
+
+November 28, 2006 
+
+Sparse vs. Dense Matrices 
+
+•	 A sparse matrix  is a matrix with enough zeros that it is 
+wor th taking advantage of them [Wilkinson] 
+
+•	 A  structured  matrix  has  enough  structure  that  it  is 
+wor thwhile to use it (e.g.  Toeplitz) 
+
+a b
+c
+d 
+c 
+b a b 
+b a b 
+c
+b a 
+c
+d
+e
+d
+c
+b 
+
+e 
+d 
+c 
+b 
+a 
+
+•  A dense matrix  is neither sparse nor structured 
+
+1 
+
+2 
+
+MATLAB Sparse Matrices: Design Principles 
+
+Data Structures for Matrices 
+
+•  Most operations should give the same results for sparse and full matrices 
+
+Full: 
+
+•  Sparse matrices are never created automatically, but once created they 
+propagate 
+
+•  Performance is impor tant –  but usability, simplicity, completeness, and 
+robustness are more impor tant 
+
+•  Storage: Array of real (or complex) numbers 
+
+•  Memory: nrows*ncols 
+
+0 
+31 
+0 
+59 
+41  26 
+
+53 
+0 
+0 
+
+double *A
+
+
+•  Storage for a sparse matrix should be O(nonzeros) 
+
+Sparse:	
+
+double *Pr 
+
+31  41  59  26  53 
+
+•  Time for a sparse operation should be close to O(ﬂops) 
+
+•  Compressed column storage 
+
+•  Memory: About 
+1.5*nnz+.5*ncols 
+
+
+int *Ir
+
+
+1 
+
+3 
+
+2 
+
+3 
+
+1 
+
+int *Jc
+
+
+1 
+
+3 
+
+5 
+
+6 
+
+3 
+
+4 
+
+Compressed Column Format - Observations 
+
+Graphs and Sparsity: Cholesky Factorization 
+
+•  Element look-up: O(log #elements in column) time 
+
+•  Inser tion of new nonzero very expensive 
+
+•  Sparse vector = Column vector (not Row vector) 
+
+5 
+
+Fill: New nonzeros in factor 
+
+Symmetric Gaussian 
+
+Elimination: 
+
+for j  = 1 to N 
+Add edges between j � s 
+higher-numbered neighbors 
+
+1 
+
+8 
+
+9 
+
+3 
+
+4 
+
+5 
+
+7 
+
+6 
+
+10 
+
+2 
+
+G(A) 
+
+1 
+
+8 
+
+9 
+
+3 
+
+4 
+
+5 
+
+7 
+
+6 
+
+10 
+
+2 
+
+G+ (A) 
+
+6 
+
+Permutations of the 2-D Model Problem 
+
+Nested Dissection Ordering 
+
+•  2-D Model Problem: Poisson’s Equation on n × n ﬁnite  difference grid 
+
+•  Total number of unknowns n2  = N 
+
+•  Theoretical results for the ﬁll-in: 
+–  With natural permutation: O(N 3/2 ) ﬁll 
+–  With any permutation: �(N log N ) ﬁll 
+–  With a nested dissection permutation: O(N log N ) ﬁll 
+
+•  A separator  in a graph G is a set S of ver tices whose removal leaves at 
+least two connected components 
+
+•  A nested dissection ordering for an N -ver tex graph G numbers its 
+ver tices from 1 to N  as follows: 
+
+–  Find a separator S , whose removal leaves connected components 
+T1 , T2 , . . . , Tk 
+–  Number the ver tices of S  from N − |S | + 1 to N 
+–  Recursively, number the ver tices of each component: T1  from 1 to 
+|T1 |, T2  from |T1 | + 1 to |T1 | + |T2 |, etc 
+
+– 
+
+If a component is small enough, number it arbitrarily 
+
+•  It all boils down to ﬁnding  good separators! 
+
+7 
+
+8 
+
+Heuristic Fill-Reducing Matrix Permutations 
+
+Heuristic Fill-Reducing Matrix Permutations 
+
+•  Banded orderings (Reverse Cuthill-McKee, Sloan, etc): 
+
+•  Nested dissection: 
+
+–  Try to keep all nonzeros close to the diagonal 
+
+–  Find a separator, number it last, proceed recursively 
+
+–  Theory, practice: Often wins for “long,  thin”  problems 
+
+•  Minimum degree: 
+
+–  Eliminate row/col with fewest nonzeros, add ﬁll,  repeat 
+
+–  Hard to implement efﬁciently  –  current champion is “Appro ximate 
+Minimum Degree”  [Amestoy, Davis, Duff] 
+
+–  Theory: Can be suboptimal even on 2-D model problem 
+
+–  Practice: Often wins for medium-sized problems 
+
+–  Theory: Approximately optimal separators =� approximately optimal 
+ﬁll  and ﬂop  count 
+
+–  Practice: Often wins for very large problems 
+
+•  The best modern general-purpose orderings are ND/MD hybrids 
+
+9 
+
+10 
+
+Fill-Reducing Permutations in Matlab 
+
+Complexity of Direct Methods 
+
+•  Reverse Cuthill-McKee: 
+–  p=symrcm(A); 
+
+•  Time and space to solve any problem on any well-shaped ﬁnite  element 
+mesh with N  nodes: 
+
+–  Symmetric permutation: A(p,p) often has smaller bandwidth than A 
+
+•  Symmetric approximate minimum degree: 
+–  p=symamd(A); 
+
+–  Symmetric permutation: chol(A(p,p)) sparser than chol(A) 
+
+•  Nonsymmetric approximate minimum degree: 
+–  p=colamd(A); 
+
+–  Column permutation: lu(A(:,p)) sparser than lu(A) 
+
+•  Symmetric nested dissection: 
+
+–  Not built into MATLAB, several versions in the MESHPART toolbox 
+
+Space (ﬁll): 
+
+Time (ﬂops): 
+
+1-D 
+
+O(N ) 
+O(N ) 
+
+2-D 
+
+O(N log N ) 
+O(N 3/2 ) 
+
+3-D 
+
+O(N 4/3 ) 
+O(N 2 ) 
+
+11 
+
+12 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods
+Fal   l 2010
+
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+
+
+

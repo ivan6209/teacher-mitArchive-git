@@ -1,0 +1,735 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Concurrency
+
+Rob Miller
+Fall 2008
+
+Concurrency
+Multiple computations running at the same time
+(cid:190) Concurrency is everywhere,  whether we like it or not
+
+Memory
+
+Network
+
+Multiple computers in a network
+
+Multiple processors in a computer
+(or multiple cores in a single chip)
+
+(cid:190) Concurrency is useful, too
+y
+,
+• Splitting up a computation into concurrent pieces is often faster
+• Many apps must handle multiple simultaneous users (e.g. web sites)
+• Even single-user applications are better with concurrency (e.g. Eclipse 
+compiling your Java code in the background while you’re editing it)
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Models for Concurrent Programming
+Shared Memory
+(cid:190) Analogy: two processors in a computer, sharing the same physical memory
+
+A
+
+B
+
+Concurrent modules A and B 
+ 
+ 
+interact by reading & writing shared 
+ 
+ 
+ 
+ 
+state in memory
+
+Shared memory
+
+Message Passing
+(cid:190) Analogy: two computers in a network  communicating by network 
+(cid:190) Analogy: two computers in a network, communicating by network 
+connections
+
+A
+
+B
+
+A  and B interact by sending
+messages to each other through
+a communication channel
+
+Shared Memory Example
+Four customers using cash machines simultaneously
+(cid:190) Shared memory model – each cash machine reads and writes the account 
+balance directly
+
+Cash
+machines
+
+A
+
+B
+
+C
+
+D
+
+deposit $100
+to account 1
+
+withdraw $100
+from account 2
+
+deposit $100
+to account 1
+
+get balance
+of account 1
+
+Bank
+
+$50
+
+$200
+
+$50
+
+Shared memory
+
+account 1
+
+account 2
+
+account 3
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+11/16/2008
+
+1
+
+$50
++ $100
+$150
+
+Race Condition
+Suppose A and C run at the same time
+A
+C
+$50
+get balance
+get balance
++ $100
+add deposit
+add deposit
+write back total
+$150
+write back total
+(cid:190) Neither answer is right!
+This is an example of a race condition
+(cid:190) A race condition means that the correctness of the program depends on 
+the relative timing of events in concurrent computations
+• “A is in a race with C”
+A
+get balance
+add deposit
+(cid:190) Some interleavings of events may be OK, e.g.:
+write back total
+but other interleavings produce wrong answers
+but other interleavings produce wrong answers
+get balance
+Correctness of a concurrent 
+add deposit
+program should not depend on 
+write back total
+accidents of timing
+(cid:190) Race conditions are nasty bugs -- may be rarely observed, hard to 
+reproduce, hard to debug, but may have very serious effects
+© Robert Miller 2008
+
+C
+
+$50
++ $100
+$150
+$150
++ $100
+$250
+
+Deadlocks
+Suppose A and B are making simultaneous transfers
+(cid:190) A transfer between accounts needs to lock both accounts, so that money 
+can’t disappear from the system
+(cid:190) A and B each acquire the lock on the “from” account
+(cid:190) A and B each acquire the lock on the  from  account
+(cid:190) Now each must wait for the other to give up the lock on the “to” account
+(cid:190) Stalemate! A and B are frozen,
+and the accounts are locked up.
+“Deadly embrace”
+(cid:190) Deadlock occurs when concurrent 
+modules are stuck waiting for each 
+other to do something
+(cid:190) A deadlock may involve more than
+two modules (e.g., a cycle of 
+transfers among N accounts)
+(cid:190) You can have deadlock without 
+using locks – example later
+
+transfer $100
+from account 1
+to account 2
+
+transfer $200
+from account 2
+to account 1
+
+A
+
+B
+
+account 1
+
+account 2
+
+© Robert Miller 2008
+
+A
+
+B
+
+Shared 
+memory
+
+11/16/2008
+
+Synchronization
+A and C need to synchronize with each other
+(cid:190) Locks are a common synchronization mechanism
+(cid:190) Holding a lock means “I’m changing this; don’t touch it right now”
+(cid:190) Suppose C acquires the lock first; then A must wait to read and write the 
+(cid:190) Suppose C acquires the lock first; then A must wait to read and write the 
+balance until C finishes and releases the lock
+(cid:190) Ensures that A and C are synchronized, but B can run independently on a 
+different account (with a different lock)
+
+Cash
+machines
+
+A
+
+waiting for lock
+
+B
+
+C
+
+D
+
+Bank
+
+lock holder
+
+$50
+C
+
+account 1
+
+$200
+B
+© Robert Miller 2008
+account 2
+
+$50
+(free)
+
+account 3
+
+waiting for lock
+
+Shared memory
+
+Lock Granularity
+Preventing the deadlock
+(cid:190) One solution is to change the locking granularity – e.g. use one lock on 
+the entire bank, instead of a lock on each account
+
+$50
+
+$200
+
+$50
+
+$50
+
+$200
+
+$50
+
+one lock per account
+
+one lock for the whole bank
+
+Choosing lock granularity is hard
+g
+g
+y
+(cid:190) If locking is too coarse, then you lose concurrency (e.g. only one cash 
+machine can run at a time)
+(cid:190) If locking is too fine, then you get race conditions and/or deadlocks
+(cid:190) Easy to get this wrong
+
+© Robert Miller 2008
+
+2
+
+Message Passing Example
+Modules interact by sending messages to each other
+(cid:190) Incoming requests are placed in a queue to be handled one at a time
+(cid:190) Sender doesn’t stop working while waiting for an answer to its request; it 
+handles more requests from its own queue
+handles more requests from its own queue
+(cid:190) Reply eventually comes back as another message
+
+A
+
+B
+
+C
+
+D
+
+withdraw $100
+from account 2
+
+deposit $100
+to account 1
+
+get balance
+of account 1
+
+deposit $100
+to account 1
+get bal
+g
+dep $100
+dep $100
+
+queue for 
+Account 1
+
+Account 1
+bal: $50
+
+Accounts are
+now modules,
+not just memory locations
+
+© Robert Miller 2008
+
+wdrw $100
+
+Account 2
+bal: $200
+
+Account 3
+bal: $50
+
+Concurrency Is Hard to Test
+Poor coverage
+(cid:190) Recall our notions of coverage
+• all states, all transitions, or all paths through a state machine
+(cid:190) Given two concurrent state machines (with N states and M states)  the 
+(cid:190) Given two concurrent state machines (with N states and M states), the 
+combined system has N x M states (and many more transitions and paths)
+(cid:190) As concurrency increases, the state space explodes, and achieving sufficient 
+coverage becomes infeasible
+Poor reproducibility
+(cid:190) Transitions are nondeterministic, depending on relative timing of events 
+that are strongly influenced by the environment
+• Delays can be caused by other running programs, other network traffic , 
+operating system scheduling decisions, variations in processor clock 
+speed, etc .
+(cid:190) Test driver can’t possibly control all these factors
+(cid:190) So even if state coverage were feasible,  the test driver can’t reliably 
+reproduce particular paths through the combined state machine 
+© Robert Miller 2008
+
+11/16/2008
+
+Message Passing Has the Same Risks
+Message passing doesn’t eliminate race conditions
+(cid:190) Suppose the account state machine supports get-balance and withdraw 
+operations (with corresponding messages)
+(cid:190) Can Alice and Bob always stay out of the OVERDRAWN state?
+(cid:190) Can Alice and Bob always stay out of the OVERDRAWN state?
+withdraw
+
+withdraw
+
+Alice
+get-balance
+if balance > $75, 
+withdraw $75
+
+Bob
+get-balance
+if balance > $50,
+withdraw $50
+
+OK
+
+OVERDRAWN
+
+Account
+b l  $100
+bal: $100
+
+get-
+balance
+balance
+
+(cid:190) Lesson: need to carefully choose the atomic (indivisible) operations of the 
+state machine – withdraw-if-sufficient-funds would be better
+Message-passing can have deadlocks too
+(cid:190) Particularly when using finite queues that can fill up
+© Robert Miller 2008
+
+Use Message Passing in 6.005
+We’ll focus on message passing, not shared memory
+(cid:190) Locking strategy for shared-memory paradigm is hard to get right
+(cid:190) Message-passing paradigm often aligns directly with the real-world 
+workflow of a problem
+workflow of a problem
+(cid:190) But message passing is less suited to some problems, e.g.  a big shared data 
+structure
+
+© Robert Miller 2008
+
+3
+
+Threads
+(cid:190) A thread is a locus of control (i.e. program counter + stack, representing 
+a position in a running program)
+• Simulates a fresh processor running the same program in a different 
+place
+(cid:190) A process always has at least one thread (the main thread)
+(cid:190) Threads can share any memory in the process, as long as they can get a 
+reference to it
+(cid:190) Threads must set up message passing explicitly (e.g. by creating queues)
+
+Time Slicing
+How can I have many concurrent threads with only one 
+or two processors in my computer?
+(cid:190) When there are more threads than processors, concurrency is simulated 
+by time slicing (processor switches between threads)
+by time slicing (processor switches between threads)
+(cid:190) Time slicing happens unpredictably and nondeterministically
+
+T1
+
+T2
+
+T3
+
+Process
+
+Shared 
+memory
+
+T1
+
+T2
+
+© Robert Miller 2007
+
+T1
+
+T2
+
+T2
+
+T3
+
+T1
+
+a thread may
+be paused and
+resumed at 
+any time
+
+© Robert Miller 2007
+
+Threads in Java
+A thread is represented by java.lang.Thread object
+(cid:190) To define a thread, either override Thread or implement Runnable
+T1 extends Thread      R1 implements Runnable
+Thread lifecycle
+Thread lifecycle
+(cid:190) Starting arguments can be given to the constructor
+new T1(arg1, ...)      new Thread(new R1(arg1, ...))
+(cid:190) Thread is spawned by calling its start() method 
+(cid:190) New thread starts its life by calling its own run() method
+(cid:190) Thread dies when run() returns or throws an uncaught exception
+
+Message Passing with Threads
+Use a synchronized queue for message-passing between 
+threads
+(cid:190) interface java.util.concurrent.BlockingQueue is such a queue
+t
+put
+
+take
+
+put
+
+put
+
+T1
+
+put
+
+T2
+
+EMPTY
+
+SOME
+
+FULL
+
+put
+
+T3
+
+take
+
+take
+
+take
+
+no take transition in EMPTY state, so a 
+thread that tries to take from an empty
+thread that tries to take from an empty 
+queue must block (wait) until it can
+
+(cid:190) ArrayBlockingQueue is a fixed-size queue that uses an array representation
+(cid:190) LinkedBlockingQueue is a growable queue (no FULL state) using a linked-
+list representation
+
+© Robert Miller 2007
+
+© Robert Miller 2007
+
+11/16/2008
+
+4
+
+Case Study: Photo Organizer
+What happens when the UI displays a large album?
+
+Concurrency in GUIs
+Mouse and keyboard events are accumulated in an 
+event queue
+(cid:190) Event loop reads an input event from the queue and dispatches it to 
+listeners on the view hierarchy
+listeners on the view hierarchy
+(cid:190) In Java, the event loop runs on a special event-handling thread, started 
+automatically when a user interface object is created
+Swing event-handling thread
+
+view hierarchy
+
+Mouse
+
+Keyboard
+Keyboard
+
+event queue
+event queue
+
+Event loop
+
+main thread
+
+Main
+
+© Robert Miller 2008
+
+© Robert Miller 2007
+
+Java Swing Is Not Threadsafe
+The view hierarchy is a big meatball of shared state
+(cid:190) And there’s no lock protecting it at all
+(cid:190) It’s OK to access user interface objects from the event-handling thread 
+(i.e., in response to input events)
+(i.e., in response to input events)
+(cid:190) But the Swing specification forbids touching – reading or writing – any 
+Component objects from a different thread
+• See “Threads and Swing”, 
+http://java.sun.com/products/jfc/tsc/articles/threads/threads1.html
+• The truth is that Swing’s implementation does have one big lock 
+(Component.getTreeLock()) but only some Swing methods use it (e.g. 
+layout)
+layout)
+
+© Robert Miller 2007
+
+Message Passing Via the Event Queue
+The event queue is also a message-passing queue
+(cid:190) To access or update Swing objects from a different thread, you can put a 
+message (represented as a Runnable object) on the event queue
+SwingUtilities.invokeLater(new Runnable() { 
+SwingUtilities.invokeLater(new Runnable() { 
+public void run() { content.add(thumbnail); ...} });
+(cid:190) The event loop handles one of these pseudo-events by calling run()
+Swing thread
+
+Mouse
+
+event queue
+
+Event loop
+
+Keyboard
+Keyboard
+
+main thread
+
+main()
+
+display thread
+
+DisplayThread
+© Robert Miller 2007
+
+11/16/2008
+
+5
+
+Thread Safety
+BlockingQueue is itself a shared state machine
+(cid:190) But it’s OK to use from multiple threads because it has an internal lock
+that prevents race conditions within the state machine itself
+• So state transitions are guaranteed to be atomic
+So state transitions are guaranteed to be atomic
+• This is done by the Java synchronized keyword
+BlockingQueue interface
+put
+
+Swing thread
+
+put
+
+put
+
+put
+
+BlockingQueue
+
+EMPTY
+
+SOME
+
+FULL
+
+take
+take
+
+DisplayThread
+
+take
+
+take
+
+take
+
+(cid:190) BlockingQueue is therefore thread-safe (able to be called by multiple 
+threads safely without threat to its invariants)
+(cid:190) HashSet is not thread-safe; neither is the Swing view hierarchy
+© Robert Miller 2007
+
+More Thread-Safe Classes
+Objects that never change state are usually* thread-safe
+
+INIT
+
+a, b, c, ...
+
+all possible actions
+p
+on the object
+
+(cid:190) Immutable objects never change state 
+• e.g., java.lang.String is immutable, so threads can share strings as much 
+as they like without fear of race conditions, and without any need for 
+locks or queues
+
+* Caveat: some apparently immutable objects may have hidden state: e.g. 
+memoizing (caching) method return values.
+
+Other Thread-Safe Classes
+Lists, Sets, and Maps can be made thread-safe by a 
+wrapper function
+(cid:190) t = Collections.synchronizedSet(s) returns a thread-safe version of set s, 
+with a lock that prevents more than one thread from entering it at a time, 
+with a lock that prevents more than one thread from entering it at a time, 
+forcing the others to block until the lock is free
+(cid:190) So we could imagine synchronizing all our sets:
+thumbnails = Collections.synchronizedSet(new HashSet<Thumbnail> ());
+This doesn’t fix all race conditions!
+(cid:190) Doesn’t help preserve invariants involving more than one data structure
+thumbnails.add(t);
+content.add(t);
+
+these operations need to be atomic together  to avoid
+these operations need to be atomic together, to avoid
+breaking the rep invariant of PreviewPane
+(that all thumbnails are children of content)
+
+© Robert Miller 2007
+
+Summary
+Concurrency
+(cid:190) Multiple computations running simultaneously
+Shared-memory & message-passing paradigms
+(cid:190) Sh
+(cid:190) Shared memory needs a synchronization mechanism, like locks
+d 
+ 
+d    
+h
+i
+i
+ 
+h i
+ lik  l
+k
+(cid:190) Message passing synchronizes on communication channels, like queues
+Pitfalls
+(cid:190) Race when correctness of result depends on relative timing of events
+(cid:190) Deadlock when concurrent modules get stuck waiting for each other
+Design advice
+(cid:190) Share only immutable objects between threads
+(cid:190) Use blocking queues and SwingUtilities.invokeLater()
+
+© Robert Miller 2007
+
+© Robert Miller 2008
+
+11/16/2008
+
+6
+
+

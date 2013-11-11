@@ -1,0 +1,372 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+October 15, 2008
+
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  11 
+
+In  this  lecture,  we  will  start  continuing  from  where  we  left  in  the  last  lecture  on  linear 
+programming.  We  then  argue  that  LP  ∈  N P  ∩ co  − N P .  In  the  end  of  this  lecture,  we 
+introduce  the  ﬁrst  polynomial  algorithm  to  solve  LP ,  known  as  the  El lipsoid Algorithm. 
+
+1 
+
+LP  continuation 
+
+Last  time,  we  had  proved  that,  given  a  polyhedral  set  P  =  {x  :  Ax  =  b,   x  ≥  0},  a  point 
+x  is  a  vertex  of  P  if  and  only  if  A{j :  xj >0}  has  linearly  independent  columns.  Now  assume 
+that  rank(A) =  m,  where  m  is  the  number  of  rows.  We  had  then  deﬁned  the  notion  of  a 
+basic feasible  solution (bfs)  corresponding  to  a basis  B ,  see  last  lecture  for  details. 
+
+Theorem 1  Consider  the  polyhedral  set  P  =  {x  :  Ax  =  b,   x  ≥ 0}  where  rank(A) =  m. A 
+point  x  is  a  vertex  of  P  if  and  only  if  it  is  a  basic  feasible  solution. 
+
+Proof: 
+If  x  is  a  vertex  of  P ,  then  we  know  that  A{j  :xj >0}  has  linearly  independent 
+columns.  Let  J  ==  {j  :  xj  >  0}.  Thus  rank(AJ ) =  |J |.  Since  rank(A) =  m,  we  can  add 
+columns  to  J  to get  a set  B  with  |B |  =  m  and  rank(AB ) =  m, i.e.  AB  is  invertible.  We 
+must have that: 
+
+A−1 
+xB  =  B  b 
+xN  = 0. 
+
+Therefore,  x  is  a  basic  feasible  solution. 
+Conversely,  assume  x  is  a  basic  feasible  solution,  that  is, 
+
+xB  =  A−1 bB 
+xN  = 0. 
+
+By  deﬁnition,  J  =  {j  :  xj  >  0} ⊆ B  and  the fact that  rank(AB ) =  |B |  implies that  AJ  has 
+� 
+linearly  independent  columns.  Thus,  x  is  a  vertex  of  P . 
+
+Theorem 2  Let  P  =  {x  :  Ax  =  b,  x  ≥ 0}.  Assume  min{cT x  :  x  ∈ P }  is  ﬁnite.  Then,  for 
+any  x  ∈ P ,  there  exists  a  vertex  x ′  ∈ P  such that  cT x ′  ≤ cT x 
+
+6= 0  such  that  x ± y  is in P. 
+If  x  is  a  vertex,  we  are  done.  Otherwise,  there  exists  y 
+Proof: 
+Note  that,  as  Ay  = 0 (because  A(x  + y) =  b  =  Ax),  for  any α  ∈ R,  A(x  + αy) =  b.   Observe 
+that, 
+ 
+x
+�
+for  α  ≤  −
+j
+, if  yj  <  0 
+y
+j 
+always, if  yj  ≥ 0 
+
+(x  +  αy)j  ≥ 0 
+
+11-1 
+
+We  may  assume  that  cT y  ≤  0  (otherwise  choose  −y).  Moreover,  if  cT y  =  0,  we  can 
+assume  that  there  exists  j  such  that  yj  <  0. 
+Assume,  by  contradiction,  that  for  all  j ,  yj  ≥ 0.  Then,  cT y <  0.  But  this  implies  that 
+
+c T (x  +  αy) → −∞  as  α  → ∞ 
+
+Then  min{cT x  :  x  ∈ P }  is  not  ﬁnite.  Contradiction! 
+Therefore,  there  exists  j  such  that  yj  <  0.  Choose 
+
+xj 
+α  =  min 
+j :  yj <0  −yj 
+
+. 
+
+(1) 
+
+This implies that  x  + αy  is in  P ,  and  cT (x  + αy) ≤ cT x.  Moreover,  one  more  component  of 
+′ 
+x  is 0.  We  can  apply  the same procedure to  x  =  x + αy ,  and  eventually  we  are going  to get 
+to  a  vertex.  (Formally,  we  could apply  induction  on  the  number  of  nonzero  entries  of  x). 
+� 
+
+2 
+
+Size  of  LP 
+
+In  order  to  be  able  to  discuss  the  complexity  for  solving  a  linear  program,  we  need  ﬁrst  to 
+discuss the size of  the input.  We assume that  every integer data is given in binary  encoding, 
+thus for  n  ∈ Z,  we  need 
+
+size(n) = 1 + ⌈log2 (|n| + 1)⌉ 
+
+bits, for  v  ∈ Zp ,  we  need 
+
+bits,  and  for  A  ∈ Znxm ,  we  need 
+
+size(v) =
+
+p 
+ 
+�
+(vi ) 
+i=1 
+
+n m 
+ 
+ 
+�
+�
+(ai,j ). 
+i=1  j=1 
+bits.  As  a  result,  to  represent  all  the  data  of  a  linear  program,  we  need  a  size  equal  to 
+
+size(A) = 
+
+size(LP ) =  size(b) + size(c) + size(A). 
+
+The  above  size is  not  very  convenient  when proving  the complexity  of  a linear program­
+ming  algorithm.  Instead,  we  will  be  considering  another  size,  deﬁned  by 
+
+L  =  m  +  n  +  log2 (detmax ) + log2 (bmax ) + log2 (cmax ), 
+
+where detmax  =  max | det(A ′  )|  over  all  submatrices  A ′  of  A,  bmax  =  maxi |bi |  and  cmax  = 
+maxj  |cj |. 
+In the following  two lemmas, we show that  L  is polynomially  comparable with  size(LP ), 
+which implies that  an  algorithm has  a  running  time polynomially  bounded in terms  of  L  if, 
+and  only  if,  it  is  polynomial  in  size(LP ). 
+
+11-2 
+
+Lemma 3  If  A ′  ∈ Zn×n  then  |det(A ′  )| ≤ 2size(A ′ )−n2 
+
+− 1. 
+
+Proof:  Recall  that  for  A ′  = [a1 , a2 , ..., ak ],  | det(A ′  )|  can  be  visualized  as  the  volume  of 
+the  parallelipiped  spanned  by  the  column  vectors.  Hence, 
+
+1 + |det(A ′  )| ≤ 1 + 
+
+ 
+n
+�
+kai k ≤ 
+i=1 
+
+n 
+ 
+�
+(1 + kai k) ≤ 
+i=1 
+
+n 
+ 
+2size(ai )−n  = 2size(A ′ )−n2 
+�
+. 
+i=1 
+
+� 
+
+Lemma 4  L  ≤ size(LP)  ≤ mnL. 
+
+Proof:  Using  the  fact  that  size(n)  ≤  2 + log2 (n) for  n  ≥  1,  we  have  that  the  second 
+inequality holds because: 
+
+size(A) ≤ mn max (size(aij )) ≤ mn(2 + log2 (detmax )), 
+i,j 
+
+size(b) ≤ m(2 + log2 (bmax )), 
+
+and 
+
+size(c) ≤ n(2 + log2 (cmax )). 
+Adding  these  together  gives  the  desired  inequality  for  m  ≥  2,  n  ≥  2.  The  ﬁrst  ≤  holds 
+because,  by  the  previous  lemma,  the  determinant  of  any  minor  of  A  is  bounded  by  the  size 
+of A. Hence, 
+
+Also, 
+
+and 
+
+Finally,
+
+
+detmax  ≤ 2size(A) . 
+
+m  + log bmax  ≤ size(b), 
+
+n  + log cmax  ≤ size(c). 
+
+2L  = 2m 2ndetmax cmax bmax  ≤ 2size(LP)
+
+
+. 
+
+� 
+From  the  deﬁnition  of  L,  the  following  remark  follows;  this  is  what  we  will  need  mostly 
+when  analyzing  running  times  or  sizes. 
+
+Remark 1  detmax  ∗ bmax  ∗ cmax  ∗ 2m+n  = 2L . 
+
+3 
+
+Complexity  of  LP 
+
+Here  is  the  decision  problem  corresponding  to  linear  programming. 
+
+Given  A  ∈ Zm×n  ,  b  ∈ Zm  ,  c  ∈ Zn ,  and  λ,  determine  whether 
+
+min{c T x  :  Ax  =  b, x  ≥ 0} ≤ λ. 
+
+(2) 
+
+11-3 
+
+To  show  that LP is in NP,  we  need  to be  able  to provide  a  concise (i.e.  polynomially 
+bounded  in  the  size  of  the  input)  certiﬁcate  for  yes  instances.  A  feasible  point  of  cost  less 
+or  equal  to  λ  will  clearly  be  a  certiﬁcate,  but  will  it  be  concise? 
+
+Claim 5  LP  ∈ N P 
+
+We  now  show that if  we take  not just any  feasible  solution, but  a basic feasible  solution, 
+then  its  size  will  be  polynomially  bounded  in  the  size  of  the  input. 
+
+Theorem 6  Let  x  be  a  vertex (or basic feasible  solution)  of  Ax  =  b, x  ≥ 0.  Then  xi  =  p
+i . 
+q 
+for  i=1,...,n  where  pi , q  ∈ N  and  pi  <  2L  and  q <  2L . 
+
+Proof: 
+Since  x  is  a  vertex,  then  x  is  a  basic  feasible  solution  with  basis  B  such  that 
+xB  =  A−1b  and  xN  = 0 (notice that  AB  is  square).  By  Cramer’s  rule: 
+B 
+
+A−1 
+xB  =  B  b  = 
+
+1 
+det(AB ) 
+
+cof (AB )b, 
+
+where  cof (A)  is  a  matrix  whose  entries  are  all  determinants  of  submatrices  of  A.  Letting 
+q  = det(AB ),  we  get  that q  ≤ detmax  <  2L  and  pi  ≤ m detmax  bmax  <  2L . 
+� 
+Now,  to  prove  Claim  5,  for  yes  instances,  the  certiﬁcate  will  be  a  vertex  of  {x  :  Ax  = 
+b, x  ≥ 0}  such  that  cT x  ≤ λ. 
+However, to be precise, we also have to deal  with  the case in which  the LP is unbounded, 
+since  in  that  case,  there  might  not  be  any  such  vertex.  But  in  that  case,  we  can  give  a 
+certiﬁcate  of  unboundedness  by  (i)  exhibiting  a  vertex  of  {x  :  Ax  =  b, x  ≥  0}  (showing 
+it  is  not  empty,  and  it  is  concise  by  the  above  theorem)  and  (ii)  showing  that  the  dual 
+feasible  region  {y  :  AT y  ≤  c}  is  empty  by  using  Farkas’  lemma  and  exhibiting  a  vertex  of 
+Ax  =  b, x  ≥ 0, cT x  =  −1  which  is  also  concise  by  the  above  theorem. 
+Alternatively,  one  can  show  a  concise  feasible  solution  to 
+
+min{c T x  :  Ax  =  b, x  ≥ 0, c T x  ≤ λ − 1}. 
+
+(3) 
+
+Claim 7  LP  ∈ co  − N P . 
+
+Indeed,  for  the  complement  instances  of  LP,  we  can  use  strong  duality  and  exhibit  a 
+basic  feasible  solution  of  AT y  ≤  c  s.t.  bT y > λ  (or  show  that  {x  ≥  0 :  Ax  =  b}  is  empty 
+using  Farkas’  lemma).  In  the  case  when  {x  :  Ax  =  b, x  ≥  0}  is  feasible,  the  correctness 
+follows  from  strong  duality  saying  that 
+
+min{c T x  :  Ax  =  b, x  ≥ 0} = max{bT y  :  AT y  ≤ c}. 
+
+Thus,  LP  ∈ N P  ∩ co − N P  which  makes it likely  to be in P. And indeed, LP  was  shown 
+to  be  polynomially  solvable  through  the  ellipsoid  algorithm. 
+
+11-4
+
+
+a 1 
+
+P 
+
+a 0 
+
+E 0 
+
+E 1 
+
+Figure  1:  One  iteration  of  the  ellipsoid  algorithm. 
+
+4 
+
+The  Ellipsoid  Algorithm 
+
+The  Ellipsoid  algorithm  was  proposed  by  the  Russian  mathematician  Shor  in  1977  for 
+general  convex  optimization  problems,  and  applied  to  linear  programming  by  Khachyan  in 
+1979.  The  problem  being  considered  by  the  ellipsoid  algorithm  is: 
+
+Given  a  bounded,  convex,  non-empty  and  full-dimensional  set  P  ∈  Rn  ﬁnd 
+x  ∈ P . 
+
+We  will  see  that  we  can  reduce  linear  programming  to  an  instance  of  this  problem. 
+The  ellipsoid  algorithm  works   as  follows.  We  start  with  a  big  ellipsoid  E  that is guar­
+anteed  to  contain  P .  We  then  check  if  the  center  of  the  ellipsoid  is  in  P .  If  it  is,  we  are 
+done,  we  found  a  point  in  P . Otherwise, we  ﬁnd  an hyperplane passing  through  the center 
+of  the  ellipsoid,  so  that  P  is  contained  in  one  of  the  half  spaces  deﬁned  by  it.  One  iteration 
+of  the  ellipsoid  algorithm is illustrated in Figure 1.  The ellipsoid  algorithm is the following. 
+
+•  Let  E0  be  an  ellipsoid  containing  P 
+
+•  while  center  ak  of  Ek  is  not  in  P  do: 
+
+T ak } ⊇ P 
+k x  ≤ ck
+k x  ≤ cT
+k ak  be  such  that  {x  :  cT
+–  Let  cT
+T x  ≤ ck
+T ak } 
+–  Let  Ek+1  be  the  minimum  volume  ellipsoid  containing  Ek  ∩ {x  :  ck
+–  k  ← k  + 1 
+
+The ellipsoid algorithm has the important property that the ellipsoids constructed  shrink 
+by,  at  least,  a  constant  (depending  on  the  dimension)  factor  in  volume  as  the  algorithm 
+proceeds;  this  is  stated  precisely  in  the  next  lemma.  As  P  is  full  dimensional,  we  will 
+eventually  ﬁnd  a  point  in  P . 
+
+Lemma 8  V ol(Ek+1 ) 
+V ol(Ek ) 
+
+1
+< e −  2n
++2 .
+
+11-5
+
+
+Note  that  the  ratio  is  independent  of  k. 
+Before  we  can  state  the  algorithm  more  precisely,  we  need  to  deﬁne  ellipsoids. 
+
+Deﬁnition 1  Given  a  center  a,  and  a  positive  deﬁnite  matrix  A,  the  el lipsoid  E (a, A)  is 
+deﬁned  as  {x  ∈ Rn  : (x  − a)T A−1 (x  − a) ≤ 1}. 
+
+One  important  fact  about  a  positive  deﬁnite  matrix  A  is  that  there  exists  B  such that 
+A  =  B T B ,  and  hence  A−1  =  B−1 (B−1 )T .  Ellipsoids  are in fact just  aﬃne transformations 
+:  x  →  y  = 
+of  unit  balls.  To  see  this,  consider  the  (bijective)  aﬃne  transformation  T 
+(B −1 )T (x  − a).  It  maps  E (a, A) → {y  :  yT y  ≤ 1} =  E (0, I ),  the  unit  ball. 
+V ol(Ek+1 )
+is independent of  k .  Indeed, 
+This gives  a  motivation for the fact that the ratio  V ol(Ek ) 
+as  linear  transformations  preserve  ratio  of  volumes,  we  can  reduce  to  the  case  when  Ek  is 
+the  unit  ball.  In  this  case,  by  symmetry  of  the  ball,  the  volume  ratio  will  be  independent 
+of k. 
+
+11-6
+
+
+

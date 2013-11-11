@@ -1,0 +1,1724 @@
+L7: Memory Basics and Timing 
+L7: Memory Basics and Timing 
+
+Acknowledgements: 
+Materials in this lecture are courtesy of the following sources and are used with permission.
+Nathan Ickes
+Rex Min
+Yun Wu
+J. Rabaey, A. Chandrakasan, B. Nikolic. Digital Integrated Circuits: A Design Perspective.
+Prentice Hall/Pearson, 2003.
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+1
+
+Memory Classification & Metrics
+Memory Classification & Metrics
+
+Read-Write Memory
+
+Random
+Access
+
+Non-Random
+Access
+
+SRAM 
+
+DRAM
+
+FIFO
+LIFO
+
+Non-Volatile
+Read-Write
+Memory
+
+EPROM
+E2PROM
+
+FLASH
+
+Read-Only 
+Memory (ROM)
+
+Mask-Programmed
+
+Key Design Metrics:
+1. Memory Density (number of bits/μm2) and Size
+2. Access Time (time to read or write) and Throughput 
+3. Power Dissipation
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+2
+
+Memory Array Architecture
+Memory Array Architecture
+
+2L-K
+
+Bit Line
+
+AK
+AK+1
+
+AL-1
+
+R
+o
+w
+ 
+D
+e
+c
+o
+d
+e
+
+Storage Cell
+
+Word Line
+
+M.2K
+
+2L-K row 
+by
+Mx2K column 
+cell array
+
+Sense Amps/Driver
+
+Amplify swing to
+rail-to-rail amplitude
+
+A0
+AK-1
+
+Column Decode
+
+Input-Output
+(M bits)
+
+Selects appropriate word
+(i.e., multiplexor)
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+3
+
+Latch and Register Based Memory
+Latch and Register Based Memory
+
+Positive Latch Negative Latch
+
+D
+
+0
+
+1
+
+Q
+
+D
+
+1
+
+0
+
+Q
+
+Register Memory
+
+Negative latch
+Q
+D
+
+QM
+
+Positive latch
+Q
+Q
+D
+
+G
+
+G
+
+D
+
+Clk
+
+CLK
+CLK
+(cid:131) Works fine for small memory blocks (e.g., small register files)
+(cid:131) Inefficient in area for large memories – density is the key 
+metric in large memory circuits
+
+How do we minimize cell size?
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+4
+
+Static RAM (SRAM) Cell (The 6 --T Cell)
+T Cell)
+Static RAM (SRAM) Cell (The 6
+
+WL
+
+VDD
+
+M2
+
+Q
+
+M5
+
+M4
+Q
+
+M6
+
+BL
+
+WL
+
+Q
+
+BL
+
+WL
+
+Q
+
+M1
+
+M3
+
+BL
+
+BL
+
+Write: set BL and BL to 0 and VDD
+or VDD and 0 and then enable WL (i.e., 
+set to VDD)
+Read: Charge BL and BL to VDD
+and then enable WL (i.e., set to VDD). 
+Sense a small change in BL or BL
+(cid:131) State held by cross-coupled inverters (M1-M4)
+(cid:131) Static Memory - retains state as long as power supply turned on
+(cid:131) Feedback must be overdriven to write into the memory
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+5
+
+Interacting with a Memory Device
+Interacting with a Memory Device
+
+Address 
+Pins
+
+R
+o
+w
+ 
+D
+e
+c
+o
+d
+e
+r
+
+Memory Matrix
+
+…
+
+…
+Sense Amps/Drivers
+Column Decoder
+
+(cid:132) Address pins drive row and 
+column decoders
+(cid:132) Data pins are bidirectional and 
+shared by reads and writes
+
+Write
+Logic
+
+Write enable
+Chip Enable
+
+Tri-state Driver
+enable
+
+Data 
+Pins
+
+Read
+Logic
+
+Write enable
+Output Enable
+
+in
+
+out
+
+If enable=0
+out = Z
+
+If enable =1
+out = in
+
+(cid:132) Output Enable gates the chip’s 
+tristate driver
+(cid:132) Write Enable sets the memory’s 
+read/write mode
+(cid:132) Chip Enable/Chip Select acts as 
+a “master switch”
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+6
+
+MCM6264C 8k x 8 Static RAM
+MCM6264C 8k x 8 Static RAM
+
+On the outside:
+
+13
+
+Address
+
+Chip Enables E1
+E2
+
+Write Enable W
+
+Output  Enable G
+
+On the inside:
+
+MCM6264C
+
+8
+
+Data
+DQ[7:0]
+
+A2
+A3
+A4
+A5
+A7
+A8
+A9
+A11
+
+r
+e
+d
+o
+c
+e
+D
+ 
+w
+o
+R
+
+…
+
+Memory matrix
+256 rows
+32 Column
+
+…
+Sense Amps/Drivers
+Column Decoder
+
+0
+2
+0
+1
+6
+A
+1
+1
+A
+A
+A
+A
+
+DQ[7:0]
+
+E1
+E2
+
+W
+G
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+(cid:132) Same (bidirectional) data bus 
+used for reading and writing
+(cid:132) Chip Enables (E1 and E2)
+(cid:134) E1 must be low and E2 must be 
+high to enable the chip
+(cid:132) Write Enable (W)
+(cid:134) When low (and chip is enabled), 
+the values on the data bus are 
+written to the location selected by 
+the address bus
+(cid:132) Output Enable (G)
+(cid:134) When low (and chip is enabled 
+with W=0), the data bus is driven 
+with the value of the selected 
+memory location 
+
+(Image 
+by MIT 
+OCW.)
+
+7
+
+Reading an Asynchronous SRAM
+Reading an Asynchronous SRAM
+
+Address
+
+E1
+
+G
+
+(Tristate)
+
+Data
+
+Address Valid
+Access time (from address valid)
+
+Access time (from enable low)
+
+Bus enable time
+Data Valid
+
+Bus tristate time
+
+E2 assumed high (enabled), W =1 (read mode)
+
+(cid:132) Read cycle begins when all enable signals (E1, E2, G) are 
+active 
+(cid:132) Data is valid after read access time
+(cid:134) Access time is indicated by full part number: MCM6264CP-12 (cid:198)12ns
+(cid:132) Data bus is tristated shortly after G or E1 goes high
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+8
+
+Address Controlled Reads
+Address Controlled Reads
+
+Address
+
+Address 1
+
+Address 2
+Address 3
+Access time (from address valid)
+Contamination time
+
+E1
+
+G
+
+Data
+
+Bus enable time
+Data 1
+
+Bus tristate time
+Data 3
+Data 2
+
+E2 assumed high (enabled), W =1 (read mode)
+
+(cid:132) Can perform multiple reads without disabling chip
+(cid:132) Data bus follows address bus, after some delay 
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+9
+
+Writing to Asynchronous SRAM
+Writing to Asynchronous SRAM
+
+Address
+
+E1
+
+W
+
+Data
+
+Address Valid
+Address setup time
+
+Address hold time
+
+Write pulse width
+
+Data setup time
+
+Data hold time
+
+Data Valid
+
+E2 and G are held high
+
+(cid:132) Data latched when W or E1 goes high (or E2 goes low)
+(cid:134) Data must be stable at this time
+(cid:134) Address must be stable before W goes low
+(cid:132) Write waveforms are more important than read waveforms
+(cid:134) Glitches to address can cause writes to random addresses!
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+10
+
+Sample Memory Interface Logic
+Sample Memory Interface Logic
+
+Write cycle
+
+Read cycle
+
+Address for write
+
+Address for read
+
+Data for write
+
+Data read
+
+Clock/E1
+G
+W
+Address
+Data
+
+(cid:132) Drive data bus only 
+when clock is low
+(cid:134) Ensures address are 
+stable for writes
+(cid:134) Prevents bus 
+contention
+(cid:134) Minimum clock period 
+is twice memory 
+access time
+
+Clock
+Control
+(write, read, reset)
+
+Write data
+Read data
+Address
+
+Write occurs here, 
+when E1 goes high
+
+FPGA
+ext_chip_enable
+ext_write_enable
+ext_output_enable
+int_data
+QD
+
+FSM
+
+DQ
+
+QD
+
+ext_data
+
+ext_address
+
+Data can be 
+latched here
+
+VCC
+
+E2
+E1
+W
+G
+
+SRAM
+
+Data[7:0]
+
+Address[12:0]
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+11
+
+MultiMulti --Cycle Read/Write 
+Cycle Read/Write 
+(less aggressive, recommended timing)
+(less aggressive, recommended timing)
+clk
+VDD
+E2
+E1
+W
+G
+
+SRAM
+
+FSM
+
+Control
+(write, read, reset)
+
+W_b
+
+G_b
+
+data_sample
+write_data
+read_data
+
+address
+
+address_load
+
+data_oen
+
+int_data
+QD
+
+DQ
+
+QD
+
+ext_data
+
+ext_address
+
+Data[7:0]
+
+Address[12:0]
+
+(Courtesy of Yun Wu. Used with permission.)
+
+write completes 
+
+read, address is stable
+
+address/data stable
+
+Data latched into FPGA
+
+write states 1-3
+
+read states 1-3
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+12
+
+Simulation from Previous Slide
+Simulation from Previous Slide
+
+(Courtesy of Yun Wu. Used with permission.)
+
+write completes 
+
+read, address is stable
+
+address/data stable
+
+Data latched into FPGA
+
+write states 1-3
+
+read states 1-3
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+13
+
+for Simple Multi --Cycle Access
+Verilog for Simple Multi
+Cycle Access
+Verilog
+
+module memtest (clk, reset, G_b, W_b, address, 
+ext_address, write_data, read_data, ext_data, read, 
+write, state, data_oen, address_load, data_sample);
+input clk, reset, read, write;
+output G_b, W_b;
+output [12:0] ext_address;
+reg [12:0] ext_address;
+input [12:0] address;
+input [7:0] write_data;
+output [7:0] read_data;
+reg [7:0] read_data;
+inout [7:0] ext_data;
+reg [7:0] int_data;
+output [2:0] state;
+reg [2:0] state, next; 
+output data_oen, address_load, data_sample;
+reg G_b, W_b, G_b_int, W_b_int, address_load, 
+data_oen, data_oen_int, data_sample;
+
+wire [7:0] ext_data;
+parameter IDLE = 0;
+parameter write1 = 1;
+parameter write2 = 2;
+parameter write3 = 3;
+parameter read1 = 4;
+parameter read2 = 5;
+parameter read3 = 6;
+
+1/4
+
+assign ext_data = data_oen ? int_data : 8'hz;
+
+// Sequential always block for state assignment
+
+always @ (posedge clk)
+begin
+if (!reset)   state <= IDLE;
+else state <= next;
+
+G_b <= G_b_int;
+W_b <= W_b_int;
+data_oen <= data_oen_int;
+if (address_load) ext_address <= address;
+if (data_sample) read_data <= ext_data;
+if (address_load) int_data <= write_data;
+end
+
+// note that address_load and data_sample are not
+// registered signals
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+2/4
+
+14
+
+for Simple Multi --Cycle Access
+Verilog for Simple Multi
+Cycle Access
+Verilog
+
+Setup the 
+Default values
+
+// Combinational always block for next-state 
+// computation
+always @ (state or read or write) begin
+W_b_int = 1; 
+G_b_int = 1; 
+address_load = 0;  
+data_oen_int = 0; 
+data_sample = 0;
+case (state)
+IDLE:      if (write) begin
+next = write1;
+address_load = 1;
+data_oen_int = 1;
+end
+else if (read) begin
+next = read1;
+address_load = 1;
+G_b_int = 0;
+end
+else next = IDLE;
+write1:   begin
+next = write2;
+W_b_int = 0;
+data_oen_int =1;
+end
+
+3/4
+
+write2:   begin
+next = write3;
+data_oen_int =1;
+end
+write3:   begin
+next = IDLE;
+data_oen_int = 0;
+end
+read1:   begin
+next = read2;
+G_b_int = 0;
+data_sample = 1;
+end
+read2:   begin
+next = read3;
+end
+read3:   begin
+next = IDLE;
+end
+default: next = IDLE;
+endcase
+end
+endmodule
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+4/4
+
+15
+
+Testing Memories
+Testing Memories
+
+(cid:132) Common device problems
+(cid:134) Bad locations: rare for individual locations to be bad
+(cid:134) Slow (out-of-spec) timing(s): access incorrect data or violates setup/hold
+(cid:134) Catastrophic device failure: e.g., ESD
+(cid:134) Missing wire-bonds/devices (!): possible with automated assembly
+(cid:134) Transient Failures: Alpha particles, power supply glitch
+(cid:132) Common board problems
+(cid:134) Stuck-at-Faults: a pin shorted to VDD or GND
+(cid:134) Open Circuit Fault: connections unintentionally left out
+(cid:134) Open or shorted address wires: causes data to be written to incorrect 
+locations
+(cid:134) Open or shorted control wires: generally renders memory completely 
+inoperable
+(cid:132) Approach
+(cid:134) Device problems generally affect the entire chip, almost any test will 
+detect them
+(cid:134) Writing (and reading back) many different data patterns can detect data 
+bus problems
+(cid:134) Writing unique data to every location and then reading it back can detect 
+address bus problems
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+16
+
+An Approach
+An Approach
+
+(cid:132) An idea that almost works
+1. Write 0 to location 0
+2. Read location 0, compare value read with 0
+3. Write 1 to location 1
+4. Read location 1, compare value read with 1
+5. …
+(cid:132) What is the problem?
+(cid:134) Suppose the memory was missing (or output enable was 
+disconnected)
+
+Address
+
+0
+
+1
+
+2
+
+3
+
+Data
+
+0
+
+0
+
+1
+
+1
+
+2
+
+2
+
+2
+
+2
+
+Control
+
+Write
+
+Read
+
+Write
+
+Read
+
+Write
+
+Read
+
+Write
+
+Read
+
+Data bus is undriven but wire capacitance briefly 
+maintains the bus state: memory appears to be ok!
+L7: 6.111 Spring 2006
+Introductory Digital Systems Laboratory
+
+17
+
+A Simple Memory Tester
+A Simple Memory Tester
+
+(cid:132) Write to all locations, then read back all 
+locations
+(cid:134) Separates read/write to the same location 
+with reads/writes of different data to 
+different locations
+(cid:134) (both data and address busses are changed 
+between read and write to same location)
+To normal 
+memory interface
+
+• Write 0 to address 0
+• Write 1 to address 1
+• …
+• Write (n mod 256) to address n
+• Read address 0, compare with 0
+• Read address 1, compare with 1
+• …
+• Read address n, compare with (n mod 256)
+
+Comparator
+
+Counter
+
+• write 8-LSB’s of 
+address <counter> 
+to location specified 
+by address 
+<counter>
+• Increment counter 
+<counter> = last address?
+
+• Reset counter
+
+• Read address 
+<counter>
+
+Matched?
+• Compare data 
+read with 8-LSB’s 
+of <counter>
+• Increment counter
+
+Enable 
+memory 
+test
+
+SRAM
+
+• Report success
+
+<counter> = last address?
+
+• Report failure
+
+l
+o
+s
+a
+s
+t
+r
+a
+t
+e
+n
+D
+r
+o
+d
+C
+d
+A
+
+Does not 
+match?
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+18
+
+Synchronous SRAM Memories
+Synchronous SRAM Memories
+
+(cid:132) Clocking provides input synchronization and encourages more 
+reliable operation at high speeds
+
+Address 
+Pins
+
+R
+o
+Memory
+w
+ 
+matrix…
+D
+e
+c
+o
+d
+e
+r
+
+…
+Sense Amps/Drivers
+Column Decoder
+
+Write
+Logic
+
+Read
+Logic
+
+Write Enable
+Chip Enable
+
+Data 
+Pins
+
+Output Enable
+
+long “flow-through”
+combinational path creates 
+high CLK-Q delay 
+
+difference between read and 
+write timings creates wasted 
+cycles (“wait states”)
+R2
+R1
+
+W3
+
+R4
+
+W5
+
+A1
+
+A2
+
+Q1
+
+A3
+
+D3
+
+Q2
+
+A4
+
+A5
+
+D5
+
+Q4
+
+CE
+WE
+CLK
+Address
+Data
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+19
+
+ZBT Eliminates the Wait State
+ZBT Eliminates the Wait State
+
+(cid:132) The wait state occurs because:
+(cid:134) On a read, data is available after the clock edge
+(cid:134) On a write, data is set up before the clock edge
+(cid:132) ZBT (“zero bus turnaround”) memories change the rules for writes
+(cid:134) On a write, data is set up after the clock edge 
+(so that it is read on the following edge)
+(cid:134) Result: no wait states, higher memory throughput
+
+R1
+
+R2
+
+W3
+
+R4
+
+W5
+
+CE
+WE
+CLK
+Address
+
+Data
+
+A1
+
+A2
+
+Q1
+
+A3
+
+Q2
+
+A4
+
+D3
+
+A5
+
+Q4
+
+D5
+
+Write to A3
+requested
+
+Data D3
+loaded
+
+Write to A5
+requested
+
+Data D5
+loaded
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+20
+
+Pipelining Allows Faster CLK
+Pipelining Allows Faster CLK
+
+(cid:132) Pipeline the memory by registering its output
+(cid:134) Good: Greatly reduces CLK-Q delay, allows higher clock (more throughput)
+(cid:134) Bad: Introduces an extra cycle before data is available (more latency)
+ZBT
+Write
+Logic
+
+Write Enable
+Chip Enable
+
+R
+o
+Memory
+w
+ 
+matrix…
+D
+e
+c
+o
+d
+e
+r
+
+…
+Sense Amps/Drivers
+Column Decoder
+
+Data 
+Pins
+
+Read
+Logic
+
+Output Enable
+
+As an example, see 
+As an example, see 
+the CY7C147X ZBT 
+the CY7C147X ZBT 
+Synchronous SRAM
+Synchronous SRAM
+
+Address 
+Pins
+
+CE
+WE
+CLK
+Address
+Data
+
+pipelining register
+pipelining register
+
+R1
+
+R2
+
+W3
+
+R4
+
+W5
+
+A1
+
+A2
+
+one-cycle
+latency...
+
+A3
+Q1
+
+A4
+Q2
+
+A5
+D3
+(ZBT write to A3)
+
+Q4
+
+D5
+(ZBT write to A5)
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+21
+
+EPROM Cell –– The Floating Gate Transistor
+The Floating Gate Transistor
+EPROM Cell 
+
+20 V
+
+10 V 5 V 20 V
+
+0 V
+
+5 V
+
+S
+
+D
+
+S
+
+5 V
+
+2.5 V
+
+[Rabaey03]
+
+5 V
+
+D
+
+0 V
+
+D
+
+S
+
+Avalanche injection
+
+Removing programming 
+voltage leaves charge trapped
+
+Programming results in
+higher V T .
+
+Image removed due to 
+copyright restrictions.
+
+EPROM Cell
+
+This is a non-volatile memory (retains state when supply turned off)
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+22
+
+Interacting with Flash and (E)EPROM
+Interacting with Flash and (E)EPROM
+
+(cid:132) Reading from flash or (E)EPROM is the same as reading from SRAM
+(cid:132) Vpp: input for programming voltage (12V)
+(cid:134) EPROM: Vpp is supplied by programming machine
+(cid:134) Modern flash/EEPROM devices generate 12V using an on-chip charge pump
+(cid:132) EPROM lacks a write enable
+(cid:134) Not in-system programmable (must use a special programming machine)
+(cid:132) For flash and EEPROM, write sequence is controlled by an internal FSM
+(cid:134) Writes to device are used to send signals to the FSM
+(cid:134) Although the same signals are used, one can’t write to flash/EEPROM in the same 
+manner as SRAM
+
+Flash/EEPROM block diagram
+
+Address
+
+Chip Enable
+
+Output Enable
+
+Write  Enable
+
+Vcc (5V)
+
+Charge 
+pump
+
+Programming 
+voltage (12V)
+
+FSM
+
+Data
+
+EPROM omits 
+FSM, charge 
+pump, and write 
+enable
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+23
+
+Dynamic RAM (DRAM) Cell
+Dynamic RAM (DRAM) Cell
+
+WL
+
+BL
+
+M1
+
+CS
+
+WL
+
+X
+
+GND
+
+Write "1"
+
+R ead  "1"
+
+DRAM uses 
+Special 
+Capacitor 
+Structures 
+
+CBL
+
+VDD /2
+
+BL
+
+VDD
+
+sens ing
+
+VDD/2
+[Rabaey03]
+To Write: set Bit Line (BL) to 0 or VDD
+& enable Word Line (WL) (i.e., set to VDD )
+To Read: set Bit Line (BL) to VDD /2
+& enable Word Line (i.e., set it to VDD )
+Image by Wikipedia user Cyferz.
+(cid:131) DRAM relies on charge stored in a capacitor to hold state
+(cid:131) Found in all high density memories (one bit/transistor)
+(cid:131) Must be “refreshed” or state will be lost – high overhead
+L7: 6.111 Spring 2006
+Introductory Digital Systems Laboratory
+
+24
+
+Asynchronous DRAM Operation
+Asynchronous DRAM Operation
+
+Address
+
+Row
+
+Col
+
+RAS
+
+CAS
+
+Data
+
+WE
+
+(Tristate)
+
+Q (data from RAM)
+
+set high/low  before 
+asserting CAS
+
+RAS-before-CAS 
+for a read or write
+(Row and column addresses taken on 
+falling edges of RAS and CAS)
+
+CAS-before-RAS 
+for a refresh
+
+(cid:132) Clever manipulation of RAS and CAS after reads/writes provide 
+more efficient modes: early-write, read-write, hidden-refresh, etc.
+(See datasheets for details)
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+25
+
+Addressing with Memory Maps
+Addressing with Memory Maps
+
+(cid:132) ‘138 is a 3-to-8 decoder
+(cid:134) Maps 16-bit address space to 8, 
+13-bit segments
+(cid:134) Upper 3-bits of address 
+determine which chip is enabled
+(cid:132) SRAM-like interface is often 
+used for peripherals
+Output Enable
+(cid:134) Referred to as “memory 
+Write Enable
+mapped” peripherals
+
+Address[15:0]
+
+Bus Enable
+
+Data[7:0]
+
+C
+B
+A
+
+~G2B
+~G2A
+G1
+
+15
+14
+13
+
++5V
+
+8
+3
+1
+‘
+
+Y7
+Y6
+Y5
+Y4
+Y3
+Y2
+Y1
+Y0
+
+Memory Map
+0xFFFF
+EPROM
+0xE000
+0xDFFF
+SRAM 2
+0xC000
+0xBFFF
+SRAM 1
+0xA000
+0x9FFF
+
+0x2000
+0x1FFF
+
+0x0000
+
+ADC
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+SRAM 1
+
+SRAM 2
+
+EPROM
+
+]
+0
+:
+2
+1
+]
+[
+0
+s
+:
+s
+7
+e
+[
+a
+r
+d
+t
+a
+d
+D
+A
+
+1
+W
+G
+E
+~
+~
+~
+
+]
+0
+:
+2
+1
+]
+[
+0
+s
+:
+s
+7
+e
+[
+r
+a
+d
+t
+a
+d
+D
+A
+
+]
+0
+:
+2
+1
+]
+[
+0
+s
+:
+s
+7
+e
+[
+r
+a
+d
+t
+a
+d
+D
+A
+
+G
+~
+
+1
+E
+~
+
+1
+W
+G
+E
+~
+~
+~
+
+]
+0
+:
+2
+1
+[
+
+]
+0
+:
+2
+1
+[
+
+]
+0
+:
+2
+[
+
+]
+0
+:
+2
+1
+[
+
+ADC
+
+G
+W
+1
+E
+~
+~
+~
+
+]
+]
+0
+0
+:
+:
+2
+7
+[
+[
+a
+s
+s
+t
+a
+e
+D
+r
+d
+d
+A
+
+Analog 
+Input
+
+26
+
+Key Messages on Memory Devices
+Key Messages on Memory Devices
+
+(cid:132) SRAM vs. DRAM
+(cid:134) SRAM holds state as long as power supply is turned on. DRAM 
+must be “refreshed” – results in more complicated control
+(cid:134) DRAM has much higher density, but requires special capacitor 
+technology. 
+(cid:134) FPGA usually implemented in a standard digital process 
+technology and uses SRAM technology 
+(cid:132) Non-Volatile Memory
+(cid:134) Fast Read, but very slow write (EPROM must be removed from 
+the system for programming!)
+(cid:134) Holds state even if the power supply is turned off
+(cid:132) Memory Internals
+(cid:134) Has quite a bit of analog circuits internally  -- pay particular 
+attention to noise and PCB board integration
+(cid:132) Device details
+(cid:134) Don’t worry about them, wait until 6.012 or 6.374
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+27
+
+You Should Understand Why……
+You Should Understand Why
+
+(cid:132) control signals such as Write Enable should be 
+registered
+(cid:132) a multi-cycle read/write is safer from a timing 
+perspective than the single cycle read/write approach
+(cid:132) it is a bad idea to enable two tri-states driving the bus at 
+the same time
+(cid:132) an SRAM does not need to be “refreshed” while a DRAM 
+does
+(cid:132) an EPROM/EEPROM/FLASH cell can hold its state even 
+if the power supply is turned off
+(cid:132) a synchronous memory can result in higher throughput
+
+L7: 6.111 Spring 2006
+
+Introductory Digital Systems Laboratory
+
+28
+
+

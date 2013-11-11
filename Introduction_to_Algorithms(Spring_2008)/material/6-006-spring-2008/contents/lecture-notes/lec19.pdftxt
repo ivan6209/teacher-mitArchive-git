@@ -1,0 +1,251 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Spring 2008
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+Lecture  19	
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Spring  2008
+
+
+Lecture  19:  Dynamic  Programming  I:
+
+Memoization,  Fibonacci,  Crazy  Eights,  Guessing
+
+Lecture  Overview 
+•	 Fibonacci Warmup 
+•	 Memoization  and  subproblems
+
+• 
+Shortest  Paths
+
+•	 Crazy  Eights 
+•	 Guessing  Viewpoint 
+
+Readings 
+
+CLRS  15 
+
+Dynamic  Programming  (DP) 
+
+Big  idea:  :hard  yet  simple 
+•	 Powerful  algorithmic  design  technique 
+•	 Large  class  of  seemingly  exponential  problems  have  a  polynomial  solution  (“only”) 
+via  DP 
+•	 Particularly  for  optimization  problems  (min / max)  (e.g.,  shortest  paths) 
+*  DP  ≈  “controlled  brute  force” 
+*  DP  ≈  recursion  +  re-use 
+
+Fibonacci  Numbers 
+
+Naive  Algorithm 
+
+follow  recursive  deﬁnition 
+
+F1  = F2  = 1;  Fn  = Fn−1  + Fn−2 
+
+ﬁb(n): 
+if  n ≤ 2:  return  1 
+else  return  ﬁb(n − 1) + ﬁb(n − 2) 
+= ⇒  T (n) = T (n − 1) + T (n − 2) + O(1) ≈ φn 
+≥ 2T (n − 2) + O(1) ≥ 2n/2 
+EXPONENTIAL  - BAD! 
+
+1 
+
+Lecture  19	
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Spring  2008
+
+
+Figure  1:  Naive  Fibonacci Algorithm
+
+ 
+
+Simple  Idea 
+
+memoize 
+
+memo  =  { } 
+ﬁb(n): 
+
+if  n  in memo:  return memo[n] 
+else:  if  n ≤ 2 : f  = 1 
+�� 
+� 
+� 
+else:  f  =  ﬁb(n − 1) + ﬁb(n − 2) 
+free 
+
+memo[n] = f 
+return  f 
+T (n) = T (n − 1) + O(1) = O(n) 
+[Side Note :  There  is also an O(lg n)- time algorithm  for Fibonacci,  via diﬀerent  techniques] 
+
+*  DP  ≈  recursion  +  memoization 
+•  remember  (memoize)  previously  solved  “subproblems”  that  make  up  problem 
+· · · 
+–  in  Fibonacci,  subproblems  are  F0 , F1 , 
+•  if  subproblem  already  solved,  re-use  solution 
+⇒	
+· 
+*  =	
+time  =  �  of  subproblems  time/subproblem
+•	
+–  in  ﬁb:  �  of  subproblems  is O(n)  and  time/subproblem  is O(1)  - giving  us  a  total 
+time  of  O(n). 
+
+, Fn
+
+2 
+
+FnFn-1Fn-2Fn-2Fn-3Fn-3Fn-4Lecture  19	
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Spring  2008
+
+
+Shortest  Paths
+
+• 
+
+���
+
+Recursive  formulation: 
+δ(s, t) = min{w(s, v) + δ(v , t)
+ (s, v) � E }
+
+does  this  work  with  memoization? 
+⇒ 
+no,  cycles  = 
+inﬁnite  loops  (see  Figure  2). 
+
+• 
+
+Figure  2:  Shortest  Paths 
+
+•	 in  some  sense  necessary  for  neg-weight  cycles 
+•	 works  for  directed  acyclic  graphs  in  O(V  + E ) 
+(recursion  eﬀectively  DFS/topological  sort) 
+•	 trick  for  shortest  paths:  removing  cyclic  dependency. 
+���
+
+–  δk (s, t) =  shortest  path  using  ≤ k  edges 
+= min{δk−1 (s, t)} ∪ {w(s, v) + δk−1 (v , t)  (s, v) � E }
+
+. . . except  δk (t, t) = φ,  δφ (s, t) = ∞  if  s =�
+t 
+–  δ(s, t) = δn−1 (s, t)  assuming  no  negative  cycles 
+�
+�� 
+
+� 
+� 
+�
+�� 
+
+⇒
+
+·
+
+= 
+=
+
+subproblems
+time/subproblem
+time
+s,t,k�··· 
+�
+···
+for
+really O(n2 )  O(n) really  degV
+3 ) 
+O(n
+· 
+deg(V )) = O(V E )
+=  O(V 
+V 
+
+*  Subproblem  dependency  should  be  acyclic. 
+
+3
+
+
+tsLecture  19	
+
+Dynamic  Programming  I  of  IV 
+
+6.006  Spring  2008
+
+
+Crazy  Eights  Puzzle 
+•	 given  a  sequence  of  cards  c[φ], c[1], · · ·  , c[n − 1]
+
+e.g.,  7♥, 6♥, 7♦, 3♦, 8♣, J ♠
+
+•	 ﬁnd  longest  left-to-right  “trick”  (subsequence) 
+
+· · · 
+· · ·	
+c[i1 ], c[i2 ],
+c[ik ]
+(i1  < i2  <
+ik )
+where  c[ij ] & c[ij+1 ]  “match”  for  all  j
+
+have  some  suit  or  rank  or  one  has  rank  8
+
+
+• 
+
+recursive  formulation: 
+
+trick(i)  =  length  of  best  trick  starting  at  c[i] 
+= 1 + max(trick(j ) for j in  range(i + 1, n)  if  match  (c[i], c[j ])) 
+best  = max(trick(i) for i in  range(n)) 
+•	 memoize:  trick(i)  depends  only  on  trick(> i) 
+�� 
+� 
+� 
+·  � 
+�� 
+� 
+⇒ 
+time  = � subproblems  time/subproblem
+= 
+O(n) 
+O(n) 
+= O(n2 ) 
+(to  ﬁnd  actual  trick,  trace  through max’s) 
+
+“Guessing”  Viewpoint 
+•	 what  is  the  ﬁrst  card  in  best  trick?  guess!
+
+i.e.,  try  all  possibilities  &  take  best  result
+
+- only  O(n)  choices
+
+•	 what  is  next  card  in  best  trick  from  i?  guess! 
+
+–	 if  you  pretend  you  knew,  solution  becomes  easy  (using  other  subproblems) 
+–	 actually  pay  factor  of  O(n)  to  try  all 
+�� 
+� 
+� 
+*  use  only  small  � choices/guesses  per  subproblem 
+poly(n)∼O(1) 
+
+•	
+
+4
+
+
+

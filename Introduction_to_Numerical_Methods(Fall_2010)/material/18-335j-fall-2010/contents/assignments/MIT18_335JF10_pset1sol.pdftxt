@@ -1,0 +1,280 @@
+18.335  Problem  Set  1  Solutions 
+Problem  1:  Gaussian  elimination 
+The inner loop of LU, the loop over rows, subtracts from each row a diﬀerent multiple of the pivot 
+row. But this is exactly a rank-1 update U  → U − xyT , where x  is the column-vector of multipliers 
+and yT  is the pivot row. More explicitly, we can rewrite Gaussian elimination without row swaps 
+(pivoting) as: 
+
+U  = A 
+for  k = 1  to  m − 1 
+x = uk+1:m,k /ukk 
+Uk+1:m,k:m  = Uk+1:m,k:m  − xuk,k:m 
+Note that I have used Matlab notation n  :  n�  to denote ranges (from n  to n� ) of rows or columns. 
+In particular, note that we only have to do a rank-1 update of a submatrix of U , and that uk,k:m 
+is a row vector of the k-th row of U  from column k  to column m. 
+
+Problem  2:  Asymptotic  notation 
+(a) Θ  means both O  and Ω.  Let’s do one at a time.  By the deﬁnition of O , f (n)  ≤  C1F (n) 
+for n > N1  and g(n)  ≤  C2G(n)  for n > N2  (no absolute values since the functions were 
+given to be nonnegative), for some constants C1,2  and N1,2 . If we let C  = max(C1 , C2 )  and 
+N  =  max(N1 , N2 ), then f (n) + g(n)  ≤  C1F (n) + C2G(n)  ≤  C [F (n) + G(n)]  for n > N , 
+hence f + g  is O(F  + G). Similarly for Ω, replacing ≤  with ≥  and max  with min, so f + g  is 
+Ω(F  + G). Hence f  + g  is Θ(F  + G). 
+(b) f (n)  ∈  O [g(n)]  ⇔ |f (n)| ≤  C |g(n)|  for some C >  0  and n > N  ⇔ |g(n)| ≥  C −1 |f (n)|  for 
+C −1  > 0  and n > N  ⇔ g(n) ∈ Ω[g(n)]. Q.E.D. 
+F (n)|  for n > N .  If h(n)  ∈  O [f (n) +  c F (n)]  then for 
+(c) f (n)  ∈  O [F (n)] 
+⇔
+|
+|  ≤
+|
+f (n)
+C � |C
+n)|  ≤
+n) +  c F (n)| ≤  C � |f (n)| + C � |c| |F (n)|  for some C �  >  0. 
+|h(
+n > N �  we have 
+f (
+For n > max(N � , N ), |h(n)| ≤  (C �C + C � |c|) |F (n)|  where C �C + C � |c| >  0, and thus h(n) ∈
+O [F (n)]. However, the same inference is not true if we replace O with Θ; as a simple example, 
+2  with c  =  −1:  in this case n3 
+− n
+∈  O(n − n
+consider f (n) =  n3  and F (n) =  n3
+2 ), but 
+3
+f (n) + c F (n) = n2  and Θ(n2 )  is not a subset of Θ(n − n2 ) = Θ(n
+3 ). 
+3
+(d) If the running time is O(n2 ), that means that the time is ≤  n2  multiplied by a constant, 
+asymptotically. If it is “ O(n2 )  or worse”, that would mean that the time is bounded above by 
+any function ≥  n2 , which is true of every  function! Usually, when you hear things like this, 
+what people really mean is “ Θ(n2 )  or worse,” or equivalently “ Ω(n2 )”. 
+
+Problem  3:  Caches  and  matrix  multiplications 
+(a) See ﬁgure 1. For discussion of the results, see part (d). 
+
+(b) The only temporal locality in a matrix-vector multiply y = Ax  is that the vector x  is re-used 
+to multiply against each row of A; nothing in A  is re-used, as each element of A  is needed 
+exactly once.  Thus, there will always be m2  misses to read in A.  Furthermore, x  is read 
+in m  times, but asymptotically (for large m > Z ) x  will not ﬁt in cache and hence (in the 
+straightforward row-column algorithm) every read of x will incur m cache misses (by the time 
+you get back to the ﬁrst element of x, it has left the cache), for m2  misses in total.  Or, 
+technically, with an ideal cache it would store Z − 1  of the elements in cache and read in the 
+remaining elements one by one, for m + (m − 1)(m − Z + 1) misses, but for large m only the m2 
+
+1 
+
+Figure 1:  Matrix-multiply benchmarks in Matlab 7.6.0.324 (R2008a) on a 2.66GHz Intel Core 2 
+duo. I attempted to use only one CPU by setting maxNumCompThreads(1), but top  showed that it 
+was still using 2 CPUs for some reason. 
+
+leading term matters. Thus, there are 2m2  misses asymptotically, independent of Z .  (Note 
+that, like our analyses in cache, I’m not including cache-line eﬀects. If you include cache lines 
+of length L  then you get 2m2 /L misses if A  is row-ma jor, or m2 + m2/L  if A  is column-ma jor 
+since it is being read in the “wrong” order.) 
+
+(c) Since x  is re-used, we should read x  in blocks of size αZ  for some fraction α to be determined. 
+Then, for each block, we will multiply it by the corresponding block of αZ  columns of A 
+before moving on to the next block of x. 
+
+let y = A:,1:αZ x1:αZ  (ﬁrst block)
+
+let y = y + A:,(αZ+1):2αZ x(αZ+1):2αZ  (next block)
+
+et  cetera,  for m/(αZ )  blocks
+
+
+Now, what should α  be? Since we can’t get any re-use for A, then we should read A  only one 
+element at a time and then discard it; this means we only need to reserve one cache entry 
+for A. Unfortunately, we have now introduced a new set of reads: y  has to be read in each 
+time in order to add it to the next block. In the above algorithm, once m > Z  we can’t really 
+get cache reuse, like in part (b), and incur (  m  − 1)m  ≈  m2/αZ  misses.  So, in that case 
+αZ 
+we might as well reserve only one cache entry for reading in y  (i.e. reading it one entry at a 
+time and then discarding form the cache).  So αZ  =  Z − 2. By construction, x  is read into 
+cache only once, for m  cache misses (asymptotically negligible compared to m2 ). Thus, the 
+total number of cache misses is m2  + m2/(Z − 2) ≈ m2 (1 + 1/Z ) ≈ m2 . For large Z , this is 
+√
+a savings of about a factor of 2 over the naive algorithm—nothing to sneeze at, but nothing 
+like the factor of 
+Z  we can save for a matrix-matrix multiply! 
+
+You might wonder whether we can gain some additional savings by blocking y  as well. That 
+
+2 
+
+01002003004005006007008009001000012345678910matrix size mgflops (2m2 / time in ns)ordinary matrix multiply A*Bby−column matrix multiplicationis, by doing the above algorithm in blocks of ≈ Z/2  in y  and blocks of ≈ Z/2  in x. However, 
+in this case we would have to read in x multiple times, and the number of cache misses would 
+end up being m2 (1 + 2/Z ), slightly worse (essentially because we are only using half the cache 
+for x). There are other ways to re-arrange the algorithm as well, but none of them do better 
+than m2 (1 + 1/Z )  as far as I can tell.  In any case, for large m  and Z  we are dominated by 
+the m2  misses to read in A, and there’s nothing that can be done about this. 
+
+(d) Yes. In the by-column matrix multiplication, we can see a huge drop in performance once the 
+√
+matrix size goes out of the L2 cache, whereas there is no such drop for the ordinary matrix 
+multiplication because the 1/
+Z  factor makes the cache-miss cost negligible. 
+
+It ultimately achieves roughly the peak ﬂop rate, as in class; note that if you have multi­
+ple CPUs, it may be impossible to prevent Matlab from using at least 2 processors.  Even 
+calling maxNumCompThreads(1)  as documented in the Matlab manual, it still used two pro­
+cessors for me in Matlab 7.6! Grrr.  Hence, I got a peak ﬂop rate of almost 10 gﬂops on the 
+2.6GHz Intel Core 2 (two processors, ~5 gﬂops peak for each using SSE2 instructions). 
+
+Note that, for small matrix sizes, the performance is a lot lower in both cases, but espe­
+cially in the by-column multiply.  This is simply the overhead of the Matlab interpreter, 
+which is much larger for the by-column case because that has a Matlab loop (versus a single 
+Matlab call for the ordinary matrix-multiply). In both cases, the interpreter overhead (which 
+is O(m)  in the by-column case) becomes negligible for large m, however. 
+
+(I’m not sure what the temporary drop  in the ordinary matrix-multiply case  is around 
+m = 100.) 
+
+Problem  4:  Caches  and  backsubstitution 
+(a) For each column we get a cache miss for each entry rij  of the matrix R, an there are roughly 
+m2/2 of these. For large enough m, where m2  > Z , these are no-longer in-cache and incur new 
+misses on each column. Hence there are roughly m2n/2, or Θ(m2n)  misses. (No asymptotic 
+beneﬁt from the cache.) 
+
+(b) We can solve this problem in a cache-oblivious or cache-aware fashion.  I ﬁnd the cache-
+oblivious algorithm to be more beautiful, so let’s do that.  We’ll divide R, X , and B  into 
+� 
+� �
+�
+� � 
+2  ×  2  blocks for suﬃciently large m:1 
+m 
+m
+R11  R12 
+X11  X12 
+B11  B12 
+= 
+, 
+0  R22 
+X21  X22 
+B21  B22 
+where R11  and R22  are upper-triangular. Now we solve this, analogous to backsubstitution, 
+from bottom to top. First, for k = 1, 2, we solve 
+
+R22X2k  = B2k 
+
+recursively for X2k . Then, for k = 1, 2  we solve 
+R11X1k  = B1k  − R12X2k 
+√
+recursively for X1k .  We use a cache-optimal algorithm (from class) for the dense matrix 
+� � 
+� �
+� � 
+� �
+� � 
+� �
+2  ×  2 
+multiplies R12X2k , which requires f (m) ∈ Θ(m3 /
+multiply. The 
+Z )  misses for each m 
+m
+�  �  �  � 
+2  × 
+2  × 
+2  × 
+1 If  m  is  not  even,  then  we  round  as  needed:  R11  is
+m 
+m 
+m 
+,  R21  is
+,  R12  is
+,  and 
+m
+m
+m
+2 
+2 
+2 
+2  ×  2 
+m 
+;  similarly  for  X  and  B . 
+R22 is
+m
+
+3 
+
+number Q(m)  of cache misses then satisﬁes the recurrence: 
+
+Q(m) = 4Q(m/2) + 2f (m) + 4m 2 , 
+
+where the 4Q(m/2) is for the four recursive backsubsitutions and the 4m2  is for the two matrix 
+subtractions B1k  − R12X2k . This recurrence terminates when the problem ﬁts in cache, i.e. 
+when 2m2 + m2/2 ≤ Z , at which point only ∼ 3m2 /2 misses are required. (Since we are only 
+interested in the asymptotic Θ  results, these little factors of 3 and 4 don’t matter much, and 
+I’ll be dropping them soon.) Noting that f (m/2) ≈ f (m)/8  , we can solve this recurrence as 
+in class by just plugging it in a few times and seeing the pattern: 
+8 + 4m � 
+Q(m)  ≈  4[4Q(m/4) + 2f (m)/� 
+2/4] + 2f (m) + 4m 2 
+� 
+� 
+1 
+= 42Q(m/4) + 2f (m)  1 +  + 4m 2  [1 + 1] 
+2 
+1
+1 
+≈  43Q(m/8) + 2f (m)  1 + 
+22  + 4m 2  [1 + 1 + 1] 
+� 
+1  � 
+2
+≈ 
+· · · 
+1
+≈  4kΘ[(m/2k )2 ] + 2f (m)  1 + 
+2k−1  + 4m 2  [k ] 
+2
+√
+� 
+� 
+≈ 
+Z ) + Θ(m 2 )k
+Θ(m 2 ) + Θ(m 3/
++  1  ≤ 2 and k  is the number of times we have to divide the problem to 
+· · · 
+where  1 +  1  +
+2k−1
+ﬁt in cache, i.e. 3(m/2k )2 /2 ≈ Z  so k  is Θ[log(m2/Z )]. Hence, for large m where the m3 term 
+2
+dominates over the m2  and m2  log m  terms, we obtain 
+√
+Q(m; Z ) ∈ Θ(m 3 /
+Z ) 
+
++ · · · +
+
++
+
+and hence we can, indeed, achieve the same asymptotic cache complexity as for matrix mul­
+tiplication. 
+
+√
+We could also get the same cache complexity in a cache-aware fashion by blocking the problem 
+into m/b blocks of size b × b, where b  is some size in Θ(
+Z ) chosen so that pairwise operations 
+on the individual blocks ﬁt in cache. Again, one would work on rows of blocks from bottom to 
+top, and the algorithm would look much like the ordinary backsubstitution algorithm except 
+that the numbers bij  etcetera are replaced by blocks. This is a perfectly acceptable answer, 
+too. 
+
+4 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+18.335J / 6.337J Introduction to Numerical Methods
+
+ 
+Fal l 2010 
+ 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

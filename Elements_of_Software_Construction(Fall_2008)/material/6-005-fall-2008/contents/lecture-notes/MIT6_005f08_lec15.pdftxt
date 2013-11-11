@@ -1,0 +1,588 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Today’s Topics 
+Functionals 
+¾ Objects representing executable code 
+ h
+Higher-order functions 
+l
+¾ Functiions that accept ff unctions as arguments or return them as results 
+h
+¾ F
+i 
+Domain-specific languages 
+¾ PCAP: primitives, combination, abstraction pattern 
+
+Little Languages 
+
+Rob Miller 
+Fall 2008 
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+Representing Code with Data 
+Consider a datatype representing language syntax 
+¾ Formula is the language of propositional logic formulas 
+¾ a Formula value represents program code in a data structure; i.e.
+
+new And(new 
+new And(new Var( Var(“xx”)  new Var(“y”))
+
+), new Var(  y  ))
+
+has the same semantic meaning as the Java code
+
+x && y
+
+¾ but a Formula value is a first-class object
+
+•  first-class: a value that can be passed, returned, stored, manipulated 
+•  the Java expression “x && y” is not first-class 
+
+Representing Code as Data 
+Recall the visitor pattern 
+¾ A visitor represents a function over a datatype 
+•  e.g. new SizeVisitor() represents size : List → int 
+
+public class SizeVisitor<E> implements ListVisitor<E,Integer> { 
+public Integer visit(Empty<E> l) { return 0; } 
+public Integer visit(Cons<E> l) { return 1 + l.rest().accept(this); } 
+
+} 
+
+A visitor represents code as a first
+A visitor represents code as a first-class object, too
+class object, too
+
+¾ A visitor is an object that can be passed around, returned, and stored 
+
+¾ But it’s also a function that can be invoked
+
+
+Today’s lecture will see more examples of code as data 
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+1 
+
+Today’s Problem: Music 
+Interesting music tends to have a lot of repetition 
+¾ Let’s look at rounds, canons, fugues 
+¾ A familiar simple round is “Row Row Row Your Boat”: one voice starts, 
+other voices enter after a delay
+other voices enter after a delay 
+Row row row your boat, gently down the stream, merrily merrily ... 
+Row row row your boat, gently down the stream... 
+¾ Bach was a master of this kind of music 
+•  Recommended reading: Godel Escher Bach, by Douglas Hofstadter 
+Recall our MIDI piano from early lectures 
+¾ A song could be represented by Java code doing a sequence of calls on a 
+state machine: 
+machine.play(E);  machine.play(D);  machine.play(C); ... 
+¾ We want to capture the code that operates this kind of machine as first-
+class data objects that we can manipulate, transform, and repeat easily 
+
+Music Data Type 
+Let’s start by representing simple tunes 
+Music = Note(duration:double,  pitch:Pitch, instr :Instrument) 
++ Rest(duration:double) 
++ Concat((m1:Music , m2:Music)) 
+¾ duration is measured in beats 
+¾ Pitch represents note frequency (e.g. C , D, E, F, G; essentially the keys on 
+the piano keyboard) 
+¾ Instrument represents the instruments available on a MIDI synthesizer 
+Design questions 
+¾ is this a tree or a list?  what would it look like defined the other way?
+
+¾ what is the “empty” Music object?
+
+•  it’s usually good for a data type to be able to represent nothing 
+•  avoid null
+
+¾ what are the rep invariants for Note, Rest, Concat?
+
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+A Few of Music’s Operations 
+notes : String x Instrument → Music
+
+requires string is in a subset of abc music notation
+
+e.g. notes(“E D C D | E E E2 |”,  PIANO) 
+
+1 beat note 
+
+2-beat note 
+
+abc notation 
+can also encode 
+sharps & flats, 
+higher/lower octaves 
+
+duration : Music → double
+
+returns total duration of music in beats 
+
+e.g. duration(Concat(m1, m2)) = duration(m1) + duration(m2) 
+
+transpose : Music x int → Music
+
+returns music with all notes shifted up or down in pitch by the given 
+
+number of semitones (i.e., steps on a piano keyboard)
+
+
+play : Music → void
+
+effects plays the music
+
+
+© Robert Miller 2008 
+
+all these operations also 
+have precondition that 
+parameters are non-null 
+
+Implementation Choices 
+Creators can be constructors or factory methods 
+¾ Java constructors are limited: interfaces can’t have them, and constructor 
+can’t choose which runtime type to return 
+•  new C() must always be an object of type C ,
+new C() must always be an object of type C , 
+•	 so we can’t have a constructor Music(String, Instrument), whether 
+Music is an interface or an abstract class 
+Observers & producers can be methods or visitors 
+¾ Methods break up function into many files; visitor is all in one place 
+¾ Adding a method requires changing source of classes (not always possible) 
+¾ Visitor keeps dependencies out of data type itself (e.g. MIDI dependence) 
+¾ Method has direct access to private rep; visitor needs to use observers 
+Producers can also be new subclasses of the datatype 
+¾ e.g. Music = ...  + Transpose(m:Music , semitones:int)
+
+¾ Defers the actual evaluation of the function
+
+¾ Enables more sharing between values
+
+© Robert Miller 2008 
+¾ Adding a new subclass requires changing all visitors 
+
+2 
+
+Duality Between Interpreter and Visitor 
+Operation using interpreter pattern 
+¾ Adding new operation is hard (must add a method to every existing class) 
+¾ Adding new class is easy (changes only one place: the new class) 
+Operation using visitor pattern
+Operation using visitor pattern 
+¾ Adding new operation is easy (changes only one place: the new visitor)
+
+¾ Adding new class is hard (must add a method to every existing visitor)
+
+
+Multiple Voices 
+For a round, the parts need to be sung simultaneously 
+Music = Note(duration:double,  pitch:Pitch, instr :Instrument) 
++ Rest(duration:double) 
++ Concat((m1:Music , m2:Music)) 
++ Together(m1:Music, m2:Music) 
+¾ Here’s where our decision to make Concat() tree-like becomes very useful 
+•	 Suppose we instead had:
+
+Concat = List<Note + Rest>
+
+Together = List<Concat>
+
+•  What kinds of music would we be unable to express? 
+Composite pattern 
+¾ The composite pattern means that groups of objects (composites) can be  
+
+treated the same way as single objects (pr imitives)
+
+¾ T = C1(... ,T) +...+ Cn(... ,T) + P1(... ) +...+ Pm(... )
+
+
+Music and Formula are 
+composite data types. 
+
+© Robert Miller 2008 
+
+composites 
+
+© Robert Miller 2008 
+primitives 
+
+Simple Rounds 
+We need one more operation: 
+delay : Music x double → Music
+
+delay(m, dur) = concat(rest(dur), m)
+
+And now we can express Row Row Row Your Boat
+And now we can express Row Row Row Your Boat 
+rrryb = notes(“C C C3/4 D/4 E | E3/4 D/4 E3/4 F/4 G2 | ...”, PIANO) 
+together(rrryb, delay(rrryb, 4)) 
+•  Two voices playing together, with the second voice delayed by 4 beats
+
+¾ This pattern is found in all rounds, not just Row Row Row Your Boat
+
+¾ Abstract out the common pattern
+
+round : Music x double x int → Music 
+round : Music x double x int → Music 
+m if n == 1 
+round(m, dur, n) = 
+together(m, round(delay(m, dur), dur, n-1)) 
+  if n > 1 
+¾ The ability to capture a general pattern like round() is one of the 
+advantages of music as a first-class object rather than merely a sequence of 
+play() calls 
+
+© Robert Miller 2008 
+
+Distinguishing Voices 
+We want each voice in the round to be distinguishable 
+¾ e.g. an octave higher, or lower, or using a different instrument 
+¾ So these operations over Music also need to be first-class objects that 
+can be passed to round()
+can be passed to round()
+
+¾ Fortunately operations implemented as visitors already are objects
+
+canon() applies a visitor to the repeated melody 
+canon : Music x double x Visitor<Music> x int → Music 
+e.g. canon(rrryb, 4, new TransposeVisitor(OCTAVE), 4)
+
+produces 4 voices, each one octave higher than the last
+
+canon() is a higher
+canon() is a higher-order function
+-
+order function 
+¾ A higher-order function takes a function as an argument or returns a  
+
+function as its result
+
+
+© Robert Miller 2008 
+
+3 
+
+Functional Objects 
+Not all operations are visitors 
+¾ Let’s generalize the idea of a music transformer function
+
+interface UnaryFunction<T,U> {
+
+U apply(T t);
+
+U apply(T t); 
+
+} 
+¾ An instance of UnaryFunction is a functional object, representing some 
+function f :T → U 
+this anonymous class is 
+¾ For example: 
+essentially a lambda expression 
+producing a functional object 
+new UnaryFunction<Music ,Music>() { 
+public Music apply(Music m) { return delay(m, 4); } 
+
+} 
+¾ In general,  we might want a delayer() method that produces a delay 
+transformer with an arbitrary delay (not just 4 beats): 
+delayer : int → UnaryFunction<Music ,Music> 
+Music → Music 
+let’s write it this way, the abstract type 
+note that delayer is a higher-
+that UnaryFunction represents 
+order function too 
+© Robert Miller 2008 
+
+Repeating 
+A line of music can also be repeated by the same voice 
+repeat : Music x (Music → Music) x int → Music 
+e.g. repeat(rrryb, octaveHigher, 2) = concat(rryb, octaveHigher(rryb)) 
+
+¾ Note the similarity to counterpoint():
+
+counterpoint:  m together f(m) together ...  together fn-1(m)
+
+repetition:  m concat f(m) concat ...  concat fn-1(m)
+
+
+¾ And in other domains as well:
+
+sum: x + f(x) + ...  + fn-1(m)
+
+( )  
+(
+)
+
+product: x · f(x) · ... · fn-1(m) 
+
+
+¾ There’s a general pattern here, too; let’s capture it 
+
+© Robert Miller 2008 
+
+Counterpoint 
+A canon is a special case of a more general pattern 
+¾ Counterpoint is n voices singing related music , not necessarily delayed 
+counterpoint : Music x (Music → Music) x int → Music 
+¾¾ Expressed as counterpoint  a canon applies two functions to the music:
+Expressed as counterpoint, a canon applies two functions to the music: 
+delay and transform 
+canon(m, delay, f, n) = counterpoint(m, f ○ delayer(delay), n) 
+Another general pattern 
+function composition ○  : (U → V) x (T → U) → (T → V) 
+
+public static <T,U,V> UnaryFunction<T,V> compose(final UnaryFunction<U,V> g,
+p 
+y 
+p 
+( 
+y 
+g 
+final UnaryFunction<T,U> f) { 
+
+return new UnaryFunction<T,V>() { 
+public V apply(T t) {  return g.apply(f.apply(t));  } 
+
+}; 
+
+} 
+
+© Robert Miller 2008 
+
+Binary Functionals 
+We need first-class representation for binary operations 
+like together, concat, plus, times 
+interface BinaryFunction<T,U,V> {
+
+V apply(T t  U u);
+
+V apply(T t, U u);
+
+
+}
+
+¾ An instance of BinaryFunction represents some f :T x U → V 
+
+together : Music x Music → Music
+
+concat: Music x Music → Music
+
+Now we can capture the pattern 
+series :T x (T x T → T) x (T → T) x int → T
+series :T x (T x T → T) x (T → T) x int → T 
+
+initial value 
+
+binary op 
+
+f 
+
+n 
+
+counterpoint(m, f, n) = series(m, together, f, n) 
+repeat(m, f, n) = series(m, concat, f, n) 
+© Robert Miller 2008 
+
+4 
+
+Repeating Forever 
+Music that repeats forever is useful for canons 
+forever : Music → Music
+
+play(forever(m))  plays m repeatedly, forever
+
+duration(forever(m)) = +∞ 
+))  +∞
+
+d 
+ti 
+(f 
+(
+
+double actually has a value for this: 
+Double.POSITIVE_INFINITY 
+
+Music = Note(duration:double,  pitch:Pitch, instr :Instrument) 
++ Rest(duration:double) 
++ Concat(m1:Music , m2:Music) 
++ Together(m1:Music , m2:Music) 
++ Forever(m:Music) 
+
+why can’t we implement forever() using 
+repeat(), or any of the existin
+g Music 
+p 
+(), 
+y 
+g 
+subtypes? 
+
+Accompaniment 
+
+accompany: Music x Music → Music
+
+repeats second piece until its length matches the first piece
+
+
+melody line
+
+
+bass line or drum line,
+
+repeated to match melody’s length
+
+
+accompany(m, b) =  
+t
+)m)/duration(b)))   if duration((
+ogether(m, reppeat(b,,  identity,,  duration((
+g
+(
+,
+(
+ 
+y
+( )))
+
+together(m, forever(b))   if duration(m) infinite
+
+ 
+
+)m) finite 
+
+¾ Here’s the Row Row Row Your Boat round, forever :
+
+canon (forever(rrryb), 4, octaveHigher, 4)
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+Pachelbel’s Canon 
+(well, the first part of it, anyway...) 
+
+pachelbelBass = notes(“D,2  A,,2 | B,,2  ^F,,  | ...  |“,  CELLO) 
+
+pachelbelMelody = notes(“^F’2  E’2 | D’2  ^C’2   | ...  | ... | ... | ... | ... |“, VIOLIN) 
+
+pachelbelCanon = canon(forever(pachelbelMelody), 
+
+16,
+
+identity,
+
+3)
+
+
+pachelbel = concat(pachelbelBass, accompany(pachelbelCanon, 
+
+pachelbelBass))
+
+
+Little Languages 
+We’ve built a new language embedded in Java 
+¾ Music data type and its operations constitute a language for describing
+
+music generation
+
+¾ Instead of just solving one problem (like playing Row Row Row Your Boat), 
+¾ Instead of just solving one problem (like playing Row Row Row Your Boat), 
+build a language or toolbox that can solve a range of related problems (e.g. 
+Pachelbel’s canon) 
+¾ This approach gives you more flexibility if your original problem turns out 
+to be the wrong one to solve (which is not uncommon in practice!) 
+¾ Capture common patterns as reusable abstractions 
+Formula was an embedded language too 
+¾ Formula combined with SAT solver is a powerful tool that solves a wide
+
+¾
+range of problems
+
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+5 
+
+Embedded Languages 
+Useful languages have three critical elements 
+Formula language  Music language 
+Java 
+3, false  Var, Bool 
+notes, rest 
+
+Primitives 
+
+Means of 
+Combination 
+
++, *,
+==, &&,
+||, ... 
+
+and, or, not  together,
+concat, 
+transpose,
+delay, … 
+
+Means of 
+Abstraction 
+
+variables, 
+methods, 
+classes 
+
+Java mechanisms 
+
+functional objects + 
+Java mechanisms 
+
+¾ 6.01 calls this PCAP (the primitive-combination-abstraction pattern) 
+
+Summary 
+Composite pattern 
+¾ Composite data types allow a group of objects to be treated the same as a 
+single object 
+Functionals
+Functionals 
+¾ UnaryFunction and BinaryFunction represent functions as Java objects
+
+¾ So do Runnable and Visitor, in fact
+
+Higher-order functions 
+¾ Operations that take or return functional objects 
+Building languages to solve problems 
+¾¾ A lA language has greater flfl exibility thhan a mere program, bbecause ii t can sollve 
+ibili
+h 
+large classes of related problems instead of a single problem 
+¾ Interpreter pattern, visitor pattern, and higher-order functions are useful 
+for implementing powerful languages 
+¾ But in fact any well-designed abstract data type is like a new language 
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+6 
+
+

@@ -1,0 +1,579 @@
+Massachusetts Institute of Technology 
+
+Department of Mechanical Engineering  
+
+
+2.003J/1.053J Dynamics & Control I 
+
+Fall 2007 
+Homework 6 Solution 
+
+Problem 6.1 :  Dynamics of mass-spring-damper system 
+x 
+
+x 
+
+kx  t( )
+bx ( )
+ 
+t
+
+m 
+
+F t( ) 
+
+= 
+
+m 
+
+ma  t( )
+
+From the above diagram, 
+bx  t( ) = ma  t( )
+F t( ) − kx  t( ) − 
+
+dx  t( ) 
+d  x  t( ) 
+2 
+F t( ) − kx  t( ) − 
+= m 
+b 
+dt 
+dt 
+2
+dx  t( ) + kx  t( ) = F  t( ) , 
+2  ( ) 
+d x  t 
++ b 
+→  m 
+dt 
+dt 2 
+
+(1) 
+
+(2) 
+
+x  t(  )i 
+
+= x0  & 
+
+dx  t( ) 
+dt 
+
+t
+
+t 
+= 
+i 
+
+= v0 
+
+Problem 6.2 :  Solver for mass-spring-damper system with Euler method 
+First,  2nd  order  differential  equation  is  split  into  two  1st  order  differential  equations  as  did  in 
+Homework #3. 
+
+dx 
+dt 
+
+x1  = x  &  x2  = x = 
+dx1 
+dt 
+dx2 
+dt
+
+x
+2 
+1  ( F0  sinωt − bx − kx ) = 
+ 
+m 
+
+ 
+x
+= = 
+
+x 
+= = 
+
+1  ( F0  sinωt − bx2  − kx1 )
+m 
+
+(3)
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+(4)
+
+With Eq.(3), we also obtain the discrete version of above differential equations. 
+(
+) 
+1 (
+) 
+(
+) 
+2  (
+) 
+x n,1  ← x  n t  &  x n, 2  ←
+x  n t 
+Δ 
+Δ
+
+( 
+)
+(
+)
+(
+)
+
+x n + 1,1  = x n,1  + x n, 2  × Δ t 
+(
+( 
+) 
+)
+x n + 1, 2  = x n, 2  + a × Δ t
+
+1  ( F0  sin (ω× ( n t ) ) − b  x n (  , 2 ) 
+) )
+
+× ( 
+whe e  a = 
+− k  x n ,1 
+r
+Δ
+× 
+m 
+The  solver  of  mass-spring-damper  system  with  Euler  method  is  implemented  as  below. 
+Explanation of each command line is included in the following codes. 
+function O=MSDSE(m,b,k,F0,w,x0,v0) 
+% 
+% Solver for Mass-Sprring-Damper System with Euler Method 
+% ----- Input argument -----
+% m: mass for particle 
+% b: damping coefficient 
+% k: spring constant 
+% F0: amplitude of external force 
+% w: angular freuency of external force 
+% x0: initial condition for the position x(0) 
+% v0: initial condition for the velocity v(0) 
+% ----- Output argument -----
+% t: time series with given time step from ti to tf. 
+% x: state variable matrix for corresponding time t matrix 
+
+% Define time step in Euler method 
+dt=0.1; 
+% Make time series with given time step 
+t=[0:dt:50]'; 
+% Initialize output matrix 
+% the 1st column: the position of the particle 
+% the 2nd column: the veleocity of the particle 
+x=zeros(length(t),2); 
+% the 1st row has initial conditions 
+x(1,:)=[x0 v0]; 
+% Start the simulation with Euler method 
+for i=1:length(t)-1 
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+% Apply Euler method
+
+% x(n+1)=x(n)*v(n)*dt
+
+    x(i+1,1,1)=x(i,1)+x(i,2)*dt; 
+% v(n+1)=v(n)*a(n)*dt
+
+%where a(n)=1/m*(F0sin(wt)-bv(n)-kx(n))*dt
+
+    x(i+1,2)=x(i,2)+(1/m)*(F0*sin(w*t(i))-b*x(i,2)-k*x(i,1))*dt; 
+end 
+% Extract only particle position trajectory 
+O=[t,x(:,1)]; 
+end 
+
+Problem 6.3 :  Solver for mass-spring-damper system with Runge-Kutta method 
+Unlike Euler method, you don’t need to solve differential equation itself in MATLAB. (You can also 
+make  your  own  code  for Runge-Kutta  algorithm  for  yourself.) However,  the  subfunction  should 
+be  needed  to  implement  Runge-Kutta  algorithm.  (Single m-file  can  have  several  functions.  The 
+first  one  is  the  primary  function,  and  others  are  subfunction.)  Subfunction  includes  several  1st 
+order  differential  equations  by  splitting  higher  order  differential  equation.  In  our  case,  two  1st 
+order  equations  are  used  as  described  in  problem  6.2.  With  this  subfunction,  the  solver  (either 
+‘ode23’  or  ‘ode45’)  solves  differential  equations  actually.  The  handler  of  function  which 
+has  dynamic  equation  description,  time  span  which  the  solver  calculates  between,  and  initial 
+condition  at  the  simulation  starting  time  are  at  least  specified  as  the  input  arguments  when  the 
+solver  runs.  More  detailed  syntax  description  of  either  ‘ode23’  or  ‘ode45’  is  shown  in 
+MATLAB  help.  The  solver  of  mass-spring-damper  system  with  Runge-Kutta  method  is 
+implemented as below. Explanation of each command line is included in the following codes. 
+function O=MSDSRK(m,b,k,F0,w,x0,v0) 
+% 
+% Solver for Mass-Sprring-Damper System with Runge-Kutta Method 
+% ----- Input argument -----
+% m: mass for particle 
+% b: damping coefficient 
+% k: spring constant 
+% F0: amplitude of external force 
+% w: angular freuency of external force 
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+% x0: initial condition for the position x(0) 
+
+% v0: initial condition for the velocity v(0) 
+
+% ----- Output argument ----
+-
+% t: time series with given time step from ti to tf. 
+
+% x: state variable matrix for corresponding time t matrix
+
+
+% define time steps for solver and display
+
+dt=0.1;
+
+% set both initial time step size and maximum step size 
+
+% for Runge-Kutta solver
+
+options=odeset('InitialStep',dt,'MaxStep',dt);
+
+% set time span to be generated from Runge-Kutta solver
+
+% from 0 sec to 50 sec with 0.1 sec time step 
+
+td=[0:dt:50];
+
+% Solve differential equation with Runge-Kutta solver 
+
+[t,x]=ode45(@(t,X)MSD(t,X,m,b,k,F0,w),td,[x0;v0],options);
+
+% Extract only particle position trajectory
+
+O=[t x(:,1)];
+
+end 
+
+
+function dX=MSD(t,X,m,b,k,F0,w)
+
+%
+
+% With two 1st order diffeential equations,
+
+% obtain the derivative of each variables
+
+% (position and velocity of the particle)
+
+%
+
+% t: current time
+
+% X: matrix for state variables
+
+% 
+The first column : the particle position 
+
+% 
+The second column : the particle velocity
+
+% m,b,k,F0,w: parameters for the system
+
+%
+
+
+% Apply two 1st order differential equations
+
+% dx(n+1)/dt<-v(n)
+
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+dX(1,1)=X(2,1); 
+% dv(n+1)/dt<-1/m*(F0sin(wt)-bv(n)-kx(n)) 
+dX(2,1)=(1/m)*(F0*sin(w*t)-b*X(2,1)-k*X(1,1)); 
+end 
+
+Problem 6.4 :	 Trajectory  of  mss-spring-damper  system  with  different  parameters  and 
+initial conditions 
+i)  Following code is used to generate below plot. 
+>> Oe=MSDSE(1,0.5,1,1,3,0,0);  
+
+>> Or=MSDSRK(1,0.5,1,1,3,0,0); 
+
+>>  plot(Oe(:,1),Oe(:,2),'r',Or(:,1),Or(:,2),'b--','LineWidth',2);  axis  
+
+tight; grid on; 
+
+>> xlabel('\bfTime (sec)'); ylabel('\bfParticle Position (m)');  
+
+'m=1kg,
+
+Mass-Spring-Damper 
+System 
+Simulation'; 
+>> 
+title({'\bf 
+b=0.5Nsec/m, k=1N/m, F_0=1m, \omega=3rad/sec, x_0=0m, & v_0=0m/sec'})  
+
+>> legend('\bfEuler','\bfRunge-Kutta','Location','NorthEast')  
+
+
+It’s  the  response  of  the  sinusoidal  excitation  for  the  particle when  it  is  stationary,  and  no 
+spring is compressed or stretched. Comparing two results from Euler method and Runge-
+Kutta method, they produce similar simulation results. The plot is shown as below: 
+ Ma ss-Spring-Dampe r System  Simula tion
+m=1kg,  b=0.5Nse c/m ,  k=1N/m ,  F0=1m ,  ω =3rad/se c,  x 0=0m ,  &  v0=0m /se c  
+0.4 
+
+Eule r 
+Runge -Kutta 
+
+)
+m
+(
+ 
+n
+o
+i
+t
+i
+s
+o
+P
+ 
+e
+l
+c
+i
+t
+r
+a
+P
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+
+-0.1 
+
+-0.2 
+
+0 
+
+5 
+
+10
+
+15
+
+20
+
+25
+Time  (se c) 
+
+30
+
+35
+
+40
+
+45
+
+50 
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+ii)  Following code is use to generate below plot. 
+>> Oe=MSDSE(1,0.5,1,0,0,1,0); 
+
+>> Or=MSDSRK(1,0.5,1,0,0,1,0);  
+
+>>  plot(Oe(:,1),Oe(:,2),'r',Or(:,1),Or(:,2),'b--','LineWidth',2);  axis 
+
+tight; grid on; 
+
+>> xlabel('\bfTime (sec)'); ylabel('\bfParticle Position (m)');  
+
+Mass-Spring-Damper 
+System 
+Simulation'; 
+'m=1kg, 
+>> 
+title({'\bf 
+b=0.5Nsec/m, k=1N/m, F_0=0m, \omega=0rad/sec, x_0=1m, & v_0=0m/sec'}) 
+
+>> legend('\bfEuler','\bfRunge-Kutta','Location','NorthEast')  
+
+
+It’s  the  response  with  no  external  force  and  no  damping  when  the  spring  is  initially 
+stretched.  Comparing  two  results  from  Euler  method  and  Runge-Kutta  method,  Runge-
+Kutta method is more accurate than Euler method, based on the analytical solution of this 
+system. The plot is shown as below: 
+ Ma ss-Spring-Dampe r System  Simula tion
+m=1kg,  b=0.5Nse c/m ,  k=1N/m ,  F0=0m ,  ω =0rad/se c,  x 0=1m ,  &  v0=0m /se c  
+1 
+
+Eule r 
+Runge -Kutta 
+
+0.5 
+
+0 
+
+)
+m
+(
+ 
+n
+o
+i
+t
+i
+s
+o
+P
+ 
+e
+l
+c
+i
+t
+r
+a
+P
+
+-0.5 
+0 
+
+5 
+
+10 
+
+15 
+
+20 
+25 
+Time  (se c) 
+
+30 
+
+35 
+
+40 
+
+45 
+
+50 
+
+iii)  Following code is use to generate below plot. 
+>> Oe=MSDSE(1,0,1,1,1,0,0); 
+
+>> Or=MSDSRK(1,0,1,1,1,0,0);  
+
+>>  plot(Oe(:,1),Oe(:,2),'r',Or(:,1),Or(:,2),'b--','LineWidth',2);  axis  
+
+tight; grid on; 
+
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+
+
+>> xlabel('\bfTime (sec)'); ylabel('\bfParticle Position (m)'); 
+'m=1kg, 
+Simulation'; 
+System 
+Mass-Spring-Damper 
+>> 
+title({'\bf 
+b=0Nsec/m, k=1N/m, F_0=1m, \omega=1rad/sec, x_0=0m, & v_0=0m/sec'}) 
+>> legend('\bfEuler','\bfRunge-Kutta','Location','NorthWest') 
+
+It’s the response of external force with the system resonance frequency when the spring is 
+initially  stretched.  Resonance  happens  very  quickly,  which  means  the  particle  position 
+oscillates from  −∞   to  +∞ . However, numerical simulation has limitation to express the 
+infinity.  Therefore,  as  time  goes  on,  oscillations  for  both  methods  become  larger,  but 
+Euler  method  one  has  smaller  oscillation,  compared  with  Runge-Kutta  one.  So,  Euler 
+method is not powerful near the singularity. The plot is shown as below: 
+ Ma ss-Spring-Dampe r System  Simula tion
+
+m=1kg,  b=0Nse c/m ,  k=1N/m ,  F0=1m ,  ω =1rad/se c,  x 0=0m ,  &  v0=0m /se c
+
+
+Eule r 
+Runge -Kutta 
+
+80 
+
+60 
+
+40 
+
+20 
+
+0 
+
+-20 
+
+-40 
+
+-60 
+
+-80 
+
+)
+m
+(
+ 
+n
+o
+i
+t
+i
+s
+o
+P
+ 
+e
+l
+c
+i
+t
+r
+a
+P
+
+0 
+
+5 
+
+10
+
+15
+
+20
+
+25
+Time  (se c) 
+
+30
+
+35
+
+40
+
+45
+
+50 
+
+Cite as: Peter So, course materials for 2.003J / 1.053J Dynamics and Control I, Fall 2007. MIT OpenCourseWare 
+(http://ocw.mit.edu), Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+

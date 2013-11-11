@@ -1,0 +1,425 @@
+Recitation 18
+
+6.006 Introduction to Algorithms
+Numerics
+√
+Spring 2011 Final, Problem 3c. Compute
+3 6006 using two iterations of Newton’s method, i.e.,
+ﬁll out the following table. Your entry for x1 should be fully simpliﬁed. Your entry for x2 can be
+left unsimpliﬁed.
+
+November 16, 2011
+
+xi
+1
+
+i
+0
+1
+
+2
+
+Solution: The function we use is f (x) = x3 − 6006. As a result, we may write our formula for
+(cid:19)
+(cid:18)
+xi+1 as follows:
+
+−
+xi − 2
+6006
+6006
+1
+3x2
+3
+x
+i
+i
+When we plug in x0 = 1, we get x1 = 2 + 1 · 6006 = 2002 + 2
+3 . We do not need to simplify the
+3
+3
+formula for x2 , so we can simply substitute in the value for x1 in the above equation.
+
+x3
+x = x − i
+i+1
+i
+
+·
+1 6006
+x2
+3
+i
+
+· xi
+
++
+
+−
+
+= xi
+
+·
+
+=
+
+2
+3
+
+Spring 2010 Final, Problem 2i. Suppose you want to estimate the value of 1000/7. Show that
+if the starting value is x0 = 109 in Newton’s method for division, then you will never get to a value
+that is accurate to 6 decimal places.
+
+Solution: Newton’s method says that the error term  is squared with every iteration. The value
+x0 = 109 has an error term  > 1000, so the guesses produced will diverge, instead of converging
+to the desired result.
+
+Spring 2007 Final, Problem 7c. True or False? Newton’s Method for computing
+squares the number of correct digits at each iteration. Explain your answer.
+
+√
+2 essentially
+
+Solution: False. Newton’s method squares the error term with every iteration; the number of
+correct digits will double with each iteration as long as the initial error term is low.
+
+16.006 Introduction to Algorithms
+Recitation 18
+BFS, DFS, and Topological Sort
+Spring 2010 Final, Problem 3. Given an undirected, connected graph G = (V , E ), a bridge
+in the graph is an edge whose removal would break the graph into two pieces. (In other words, a
+bridge is an edge e ∈ E such that G = (V , E ) is connected but G(cid:48) = (V , E − {e}) is disconnected.)
+
+November 16, 2011
+
+(a) Show that every bridge must appear in every BFS tree of the graph.
+
+(b) Show that for any edge e, you can test whether e is a bridge or not in O(E ) time.
+(c) Combine parts (a) and (b) to design an algorithm that ﬁnds all bridges in G in O(V · E ) time.
+
+Solution:
+
+(a) In a connected graph, BFS starting from any node s will reach all nodes. Therefore, for any
+pair of nodes (u, v) in the graph, there is a path in the BFS tree from s to u and a path in
+the BFS tree from s to v . As a consequence, the BFS tree connects any pair of nodes (u, v).
+So if we remove all the edges except for the ones in the BFS tree, then the graph will still be
+connected. As a result, all of the bridges must be in the BFS tree.
+(b) Remove e = {u, v} from G and perform BFS from u. This will take time O(E ) in total to
+build each of the level sets. We can then check whether the graph is connected by iterating
+through the vertices in V . As soon as we discover a single vertex that is not connected, we can
+halt and return a value. As a result, we will never examine more than one vertex that is not
+contained in the level set, so this check will not adversely affect the runtime.
+
+(c) Perform BFS to generate a BFS tree. Then we know that any bridge must be contained in the
+BFS tree. There are |V | − 1 edges in the BFS tree, so we can perform O(V ) checks, each of
+which takes time O(E ), to ﬁgure out which of those edges are the bridges.
+
+26.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Fall 2008 Final, Problem 5. Consider two vertices, s and t, in some directed acyclic graph
+G = (V , E ). Give an efﬁcient algorithm to determine whether the number of paths in G from s to
+t is odd or even. Analyze its running time in terms of |V | and |E |.
+
+Solution: To solve this problem, we will actually solve a more general problem: computing the
+total number of paths from s to t. To do so, we will examine the vertices in topological order. If a
+vertex can be reached using k distinct paths, then each of its successors can be reached by taking
+one of those k paths and then following the last edge from the vertex to its successor. We can use
+this technique to generate path counts in the following way:
+
+COUN T-DAG -PATH S(G = (V , E ), s, t)
+(cid:104)v1 , . . . , vn (cid:105) = TO PO LOG ICAL -SORT(V )
+1
+2 initialize dictionary count
+for i = 1 to n
+3
+4
+count[vi ] = 0
+5
+count[s] = 1
+for i = 1 to n
+6
+for each u ∈ adj [vi ]
+7
+8
+count[u] = count[u] + count[vi ]
+return count[t]
+9
+
+36.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Spring 2010 Quiz 2, Problem 6. You are at an airport in a foreign city and would like to choose
+a hotel that has the maximum number of shortest paths from the airport (so that you reduce the risk
+of getting lost). Suppose you are given a city map with unit distance between each pair of directly
+connected locations. Design an O(V + E )-time algorithm that ﬁnds the number of shortest paths
+between the airport (the source vertex s) and the hotel (the target vertex t).
+
+Solution: To make this work, we perform a modiﬁed version of BFS, somewhat inspired by the
+results of the previous problem. Any shortest path to a node on the ith level of BFS must be a
+length i path, and so each edge in the path must cross between different levels of the BFS. Hence,
+if there are k paths into a node v , then any nodes adjacent to v in the next level of BFS will be
+reachable by k paths passing through v . We may write an algorithm to compute these path counts
+as follows:
+
+COUN T-SHORT E S T-PATH S(G = (V , E ), s, t)
+1 initialize dictionary count
+for each v ∈ V
+2
+3
+count[v ] = 0
+4 initialize dictionary level
+5
+level[s] = 0
+6 initialize set f rontier = {s}
+7 while f rontier is not empty
+initialize set next = ∅
+8
+for each u ∈ f rontier
+9
+for each v ∈ adj [u]
+10
+if v is not in level
+11
+12
+level[v ] = level[u] + 1
+next = next ∪ {v}
+13
+if level[v ] is equal to level[u] + 1
+14
+15
+count[v ] = count[v ] + count[u]
+16
+f rontier = next
+17 return count[t]
+
+46.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Fall 2007 Quiz 2, Problem 3. Another way of performing topological sorting on a directed
+acyclic graph G = (V , E ) is to repeatedly ﬁnd a vertex of in-degree 0 (no incoming edges), output
+it, and remove it and all of its outgoing edges from the graph. Explain how to implement this idea
+so that it runs in time O(V + E ). What happens to this algorithm if G has cycles?
+
+Solution: To make sure that we can make this algorithm run in O(V + E ) time, we need a way
+to efﬁciently ﬁgure out which vertices have no more incoming edges. To that end, we store a
+dictionary incoming giving the count of incoming edges for each node and a set zero containing
+all of the nodes with incoming [v ] = 0. We update incoming [v ] every time we process a node u
+with an edge (u, v), and as soon as incoming [v ] becomes 0, we add it to the set zero.
+
+TO PO LOG ICAL -SORT(G = (V , E ))
+1 initialize dictionary incoming
+for all vertices u ∈ V
+2
+3
+incoming [u] = 0
+for all vertices u ∈ V
+4
+for all vertices v ∈ adj [u]
+5
+6
+incoming [v ] = incoming [v ] + 1
+7 initialize set zero = ∅
+for all vertices u ∈ V
+8
+if incoming [u] is equal to 0
+9
+zero = zero ∪ {u}
+10
+11 initialize list result = []
+12 while zero is not empty
+newZ ero = ∅
+13
+for u in zero
+14
+L I ST-A P P END(result, u)
+15
+for all vertices v ∈ adj [u]
+16
+incoming [v ] = incoming [v ] − 1
+17
+if incoming [v ] is equal to 0
+18
+newZ ero = newZ ero ∪ {v}
+19
+20
+zero = newZ ero
+21 return result
+
+When this algorithm has cycles, at some point in the algorithm there will still be nodes with
+incoming [v ] > 0, but there will be no nodes with incoming [v ] = 0, so the algorithm will stop
+processing and return the topological ordering on the vertices that it has found.
+
+56.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Spring 2011 Quiz 2, Problem 4. Suppose that you want to get from vertex s to vertex t in an
+unweighed graph G = (V , E ), but you would like to stop by vertex u if it is possible to do so
+without increasing the length of your path by more than a factor of α.
+Describe an efﬁcient algorithm that would determine an optimal s-t path given your preference
+for stopping at u along the way if doing so is not prohibitively costly. (It should either return the
+shortest path from s to t, or the shortest path from s to t containing u, depending on the situation.)
+If it helps, imagine that there are burgers at u.
+
+Solution: Use BFS to ﬁnd three shortest paths in the undirected graph: the path from s to t, the
+path from s to u, and the path from u to t. Then compare α · d[s, t] to d[s, u] + d[u, t] to ﬁgure out
+whether it’s worth it to take a detour through u.
+
+6Recitation 18
+
+6.006 Introduction to Algorithms
+Shortest Paths
+Spring 2011 Final, Problem 6. Consider a connected weighted directed graph G = (V , E , w).
+Deﬁne the fatness of a path P to be the maximum weight of any edge in P . Give an efﬁcient
+algorithm that, given such a graph and two vertices u, v ∈ V , ﬁnds the minimum possible fatness
+of a path from u to v in G.
+
+November 16, 2011
+
+Solution: To solve this problem, it is sufﬁcient to update the standard R ELAX method so that
+instead of summing edge weights, we take the maximum of the two edge weights. Then we can
+use Dijkstra’s to compute shortest paths.
+
+Fall 2009 Quiz 2, Problem 5. Consider a road network modelled as a weighted undirected graph
+G with positive edge weights where edges represent roads connecting cities in G. However, some
+roads are known to be very rough, and while traversing from city s to t we never want to take a
+route that takes more than a single rough road. Assume a boolean attribute r [e] for each edge r
+which indicates if e is rough or not. Give an efﬁcient algorithm to compute the shortest distance
+between two cities s and t that doesn’t traverse more than a single rough road. (Hint: Transform
+G and use a standard shortest-path algorithm as a black-box.)
+Solution: For each vertex v ∈ G, construct a pair of vertices vsmooth and vrough . For each smooth
+edge e = (u, v), add a directed edge from usmooth to vsmooth and a directed edge from urough to
+vrough . For each rough edge e = (u, v), add a directed edge from usmooth to vrough . Then generate all
+shortest paths rooted at ssmooth , and pick the shorter of d[ssmooth , tsmooth ] and d[ssmooth , trough ].
+
+76.006 Introduction to Algorithms
+Recitation 18
+November 16, 2011
+Fall 2008 Final, Problem 4. Consider a directed graph G where each edge (u, v) ∈ E has both
+a weight w(u, v) (not necessarily positive) as well as a color color(u, v) ∈ {red, blue}.
+The weight of a path p = v1 → v2 → . . . → vk is equal to the sum of the weights of the edges,
+plus 5 for each pair of adjacent edges that are not the same color. That is, when traversing a path,
+it costs an additional 5 units to switch from one edge to another of a different color.
+Give an efﬁcient algorithm to ﬁnd a lowest-cost path between two vertices s and t, and analyze
+its running time. (You may assume that there exists such a path.) For full credit, your algorithm
+should have a running time of O(V E ), but partial credit will be awarded for slower solutions.
+
+Solution 1: For bookkeeping reasons, we ﬁrst do a BFS from s to ﬁgure out which nodes and
+edges are actually reachable. Then we remove all nodes and edges that aren’t reachable. This
+ensures that V = O(E ), and any O(V 2 ) term will be dominated be an O(V E ) term.
+Next, we create a new graph G(cid:48) and add nodes and edges in the following way. For each node
+u in V , add two nodes ured and ublue to G(cid:48) , and add two directed edges of weight 5: one from ured to
+ublue , the other from ublue to ured . For each red edge (u, v), add an edge from ured to vred . For each
+blue edge (u, v), add an edge from ublue to vblue . Once G(cid:48) has been constructed, run Bellman-Ford
+twice to calculate the four distances d[sred , tred ], d[sred , tblue ], d[sblue , tred ], and d[sblue , tblue ].
+Say that we are given a path in G. We can transform that path to a path in G(cid:48) by using each of
+the corresponding edges in G, and then using the cost 5 edges whenever we have a red edge in the
+path adjacent to a blue edge. As a result, when we take a path in G and translate it to a path in G(cid:48) ,
+the resulting cost will be exactly the cost we are trying to minimize. Hence, this transformation
+will return the correct results.
+
+Just as in the ﬁrst solution, we construct a graph G(cid:48) and add nodes and edges as
+Solution 2:
+follows. For each node u ∈ V , add two nodes ured and ublue to G(cid:48) . Any path going into ured will
+be a path ending in a red edge, and any path going into ublue will be a path ending in a blue edge.
+For each edge (u, v) ∈ E , we add two edges that lead to the same destination: if (u, v) is red, then
+both edges point to vred , and if (u, v) is blue, then both edges point to vblue . The two edges emanage
+from ured and ublue . If an edge goes from red to red or blue to blue, then we keep the same edge
+weight as in the graph G. If instead the edge crosses from one color to the other, then we add 5 to
+the original edge weight. This ensures that whenever we have a path that ends in, say, a blue edge
+(and therefore ends at a node in the blue graph), we always incur the extra cost of 5 when crossing
+to the red graph.
+
+86.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Fall 2010 Quiz 2, Problem 4. When an airline is compiling ﬂight plans to all destinations from
+an airport it serves, the ﬂight plans are plotted through the air over other airports in case the plane
+needs to make an emergency landing. In other words, ﬂights can be taken only along pre-deﬁned
+edges between airports. Two airports are adjacent if there is an edge between them. The airline
+also likes to ensure that all the airports along a ﬂight plan will be no more than three edges away
+from an airport that the airline regularly serves.
+Given a graph with V vertices representing all the airports, the subset W of V which are served
+by the airline, the distance w(u, v) for each pair of adjacent airports u, v , and a base airport s, give
+an algorithm which ﬁnds the shortest distance from s to all other airports, with the airports along
+the path never more than 3 edges from an airport in W .
+
+Solution: We want a shortest path, with the additional restriction that no node in the shortest path
+can be more than 3 edges away from W . To accomplish this, we ﬁrst ﬁnd all of the nodes that are
+at most 3 edges away from some airport in W . An easy way to do this is to perform BFS with the
+“start node” initialized to the set of all nodes in W . Once we perform this O(V + E ) step, we can
+remove all other nodes in the graph, and then just run one of the standard shortest-path algorithms.
+
+Spring 2009 Quiz 2, Problem 3. Beverly owns a vacation home in Hawaii and wishes to rent
+the place out for n days beginning on May 1st (on the n + 1st day, she plans to take a vacation
+there herself). She has obtained m bids, each of which has a starting day si and ending day ei
+(between 1 and n), and the amount $i that the bidder is willing to pay. Beverly can only rent the
+house to a single bidder on any given day. (That is, she may not accept two bids bi and bj such that
+the intervals (si , ei ) and (sj , ej ) overlap.)
+Beverly decides to model this problem as a directed graph with weighted edges so that she
+can use a standard graph algorithm (or a minor variation of a standard algorithm) to ﬁnd the bids
+to accept which maximizes her revenue. Describe such a model, and give the asymptotic cost of
+ﬁnding the set of bids that maximizes the revenues. Assume that the bids are given as list of tuples,
+not necessarily sorted in any particular order. Try to ﬁnd an algorithm that is as efﬁcient as possible.
+
+Solution: Construct a graph with one node for each of the n days, with one extra node for the
+n + 1st day. A bid $i on interval (si , ei ) corresponds to an edge from node si to node ei + 1 of
+weight $i . In this way, we ensure that if Beverly chooses a particular bidder i to occupy her home,
+then it is ﬁrst available one day after the bidder i has moved out. We also add edges of weight 0
+from one day to the next, to account for the days when the most proﬁtable thing to do is wait for
+the next bidder’s vacation to start.
+Given this graph, our goal will be to ﬁnd the longest (most proﬁtable) path from Day 1 to Day
+n + 1. To do this efﬁciently, we can take advantage of the fact that the graph generated in this
+manner is directed and acyclic, and it is therefore possible to negate all edge lengths and compute
+shortest paths in O(V + E ) time. The number of vertices in the graph we construct is n + 1, where
+n is the number of days. We construct one edge for each bid and one edge for each adjacent pair
+of days. Hence, the total number of edges is m + n. As a result, the algorithm will take time
+O(n + 1 + m + n) = O(m + n) in total.
+
+96.006 Introduction to Algorithms
+
+Recitation 18
+
+November 16, 2011
+
+Fall 2009 Final, Problem 7. Given four vertices u, v , s, and t in a directed weighted graph
+G = (V , E ) with non-negative edge weights, present an algorithm to ﬁnd out if there exists a
+vertex vc ∈ V which is part of some shortest path from u to v and also a part of some shortest path
+from s to t. The algorithm should run in O(E + V log V ) time. Partial credit will be given to less
+efﬁcient algorithms provided your complexity analysis is accurate.
+
+Solution:
+If there is a shortest path from u to v containing vc , then we know that d[u, vc ] +
+d[vc , v ] = d[u, v ]. So to ﬁnd such a vc , we run Dijkstra’s rooted at u and s, and then we reverse all
+edges and run Dijkstra’s rooted at v and t. The result will be four tables: all shortest paths from u,
+all shortest paths from s, all shortest paths to v , and all shortest paths to t. Each of these will be in a
+dictionary with O(1) lookup. So to ﬁnd vc , we loop through all vertices and perform O(1) lookups
+and O(1) mathematical operations to discover whether the current vertex is at the intersection of
+some pair of shortest paths between u and v and between s and t.
+
+10MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Fall 2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

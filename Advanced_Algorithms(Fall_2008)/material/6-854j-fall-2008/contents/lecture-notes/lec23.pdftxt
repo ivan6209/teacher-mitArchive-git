@@ -1,0 +1,362 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+Lecture  23 
+
+Lecturer:  Michel  X.  Goemans 
+
+December  3,  2008 
+
+1  Voronoi  Diagrams 
+
+1.1 
+
+Introduction 
+
+Suppose we  are  given  a  set P  of  points  in  the Euclidean  plane,  and we  are  interested 
+in  the  problem  of,  given  a  point  x,  ﬁnd  the  closest  point  of  P  to  x.  One  approach 
+to  this  problem  is  to  divide  the  plane  into  regions  associated  with  each  pi  ∈  P  for 
+which  x  is  closest  to  pi .  Finding  these  regions  in  two  dimensions  is  the  problem  of 
+constructing  the  Voronoi  Diagram.  One  application  of  this  structure  is  to  compute 
+the mimumum spanning tree of a complete graph of n vertices  in the Euclidean plane 
+in  time  O(n log n). 
+
+1.2  Deﬁnitions 
+
+We  will  focus  on  the  two-dimensional  case.  We  are  given  a  set 
+P  = {p1 , p2 , . . . , pn} ⊆ R2 
+and we want  to partition  the plane  into  regions which correspond  to points which are 
+closest  to  a  speciﬁc  point. 
+
+Figure  1:  Voronoi  Diagram  (solid  lines)  for  four  points  p1 , p2 , p3 , p4 . 
+
+23-1 
+
+Deﬁnition  1  (Voronoi  Cell)  Given  a  set  of  points  in  R2 ,  P  =  {p1 , p2 , . . . , pn} ⊆ 
+R2 ,  a  Voronoi  Cel l  V (pi )  is  deﬁned  by: 
+V (pi ) = {x  : d(pi , x) < d(pj , x)  ∀j  =�
+Another  way  to  deﬁne  a  Voronoi  Cell  is  by  deﬁning  h(pi , pj )  to  be  the  halfplane 
+� 
+containing  pi  deﬁned  by  the  bisector  of  pi  and  pj .  A  cell  is  then  deﬁned  as: 
+h(pi , pj ). 
+j=i 
+
+V (pi ) = 
+
+i}. 
+
+This  impies  that  every  cell  is  convex  and  is  a  (convex) polygonal  region with  at most 
+n − 1  sides. 
+
+Deﬁnition  2  (Voronoi  Diagram)  A  Voronoi  Diagram  is  a  col lection  of  Voronoi 
+cel ls  that  covers  R2 . 
+
+1.3  Motivation 
+
+Why is a Voronoi Diagram useful?  If the points represent ﬁrestations, the Voronoi cells 
+represent  the  partition  of  the  plane  into  regiosn  which  are  closer  to  each  ﬁrestation. 
+More  generally,  given  a  point  in  a  plane,  it  is  useful  to  know  the  point  from  a  set  of 
+points  that  is  closest  to  it.  Of  course,  this also  requires a data  structure  to be able  to 
+answer the point  location problem of, given x, ﬁnding the Voronoi cell that contains it. 
+We  will  only  learn  how  to  construct  the  Voronoi  diagram,  not  how  to  build  a  query 
+datastructure  for  it.  . 
+Having  such  a  diagram  is  useful  for  many  problems.  For  example,  a  Voronoi 
+diagram  allows  computation  of  the  Euclidian  minimum  spanning  tree  on  a  set  of 
+points  in  O(n log n)  time,  see  the  problem  set. 
+
+1.4  Properties 
+
+The  Voronoi  cells  are  all  disjoint  and  their  closures  cover  the  entire  plane.  The 
+Voronoi  diagram  will  consist  of  edges  (possibly  semi-inﬁnite,  extending  to  inﬁnity) 
+and  vertices  where  3  or  more  of  these  edges  meet;  these  vertices  will  be  equidistant 
+to  3  or  more  points  of  P .  One  can  characterize  the  vertices  and  the  edges  in  the 
+following  way: 
+1.  A  point  q ∈ R2  is  a  vertex  of  a  Voronoi  Diagram  ⇐⇒  there  exists 
+Lemma  1 
+an  empty  circle  (i.e.  its  interior  is  empty)  centered  at  q  having  at  least  3  points 
+of  P  on  its  boundary. 
+2.  Part  of  the  bisector  between  pi  and  pj  is  an  edge  of  the  Voronoi  diagram  ⇐⇒ 
+there  exists  an  empty  circle  centered  at  a  point  q  having  precisely  pi  and  pj  (and 
+no  other  point)  on  its  boundary. 
+
+23-2 
+
+�
+We  look now at how  ’complex’ a Voronoi diagram can be.  We know that each cell 
+is  delimited  by  at  most  n − 1  sides  (edges),  but  in  the  lemma  below,  we  show  that 
+collectively  all  cells  do  not  have  too many  edges  and  vertices. 
+
+Lemma  2  For  a  Voronoi  diagram  with  n  points,  the  fol lowing  relations  hold: 
+•  The  number  of  vertices  of  a  Voronoi  diagram  is  nv  ≤ 2n − 5. 
+•  The  number  of  edges  in  any  Voronoi  diagram  is  ne  ≤ 3n − 6. 
+
+Figure  2:  To  prove  Lemmma  2  we  add  a  point  q∞  to  the  Voronoi  Diagram  (solid 
+lines),  and  connect  all  of  the  inﬁnite  edges  to  this  point  (shown  in  dotted  lines). 
+
+Proof:  We  can  view  the  Voronoi  diagram  as  a  planar  graph,  G,  with  some  edges 
+extending  out  to  inﬁnity.  We  add  a  point  at  inﬁnity  q∞  representing  ‘inﬁnity’  and 
+connect  edges  that  extend  to  inﬁnity  to  this  point  as  shown  in  Figure  2.  Note  that 
+the  resulting  graph G�  is  still  planar. 
+The number of vertices  in G�  is nv + 1;  the number of edges  is ne , and  the number 
+of  faces  is  n.  By  Euler’s  formula,  we  have 
+nv  + 1 − ne  + n = 2. 
+Since we know that vertices will have at  least 3 edges  incident to them, we obtain, 
+� 
+by  summing  the  degrees  over  all  vertices,  that: 
+d(v) = 2ne  ≥ 3(nv  + 1). 
+vertices  v 
+
+23-3
+
+
+Combining  this  with  Euler’s  formula,  we  get: 
+2(nv  + 1) + 2n ≥ 4 + 3(nv  + 1) 
+or  2n − 5 ≥ nv .  Using  this  in  Euler’s  formula,  we  now  get 
+ne  = nv  − 1 + n ≤ 3n − 6. 
+
+� 
+
+2  Computation  of  Voronoi  Diagrams 
+
+2.1 
+
+Introduction 
+
+There are  two primary algorithms we want  to  introduce.  Both of  these will be  shown 
+to  compute  the  Voronoi  diagram  in  time  O(n log n).  First,  we  can  reduce  the  com­
+putation  of  the Voronoi  diagram  to  that  of  a  convex  hull  in R3 ,  which  is  computable 
+in  time O(n log n);  this  is  our ﬁrst  algorithm.  Secondly, we will  review  the  sweep  line 
+algorithm  of  Fortune  [1]. 
+
+2.2  Convex  Hull 
+
+Figure  3:  Pro jection  of  a  point  onto  a  paraboloid  in  R3 .  To  use  the  convex  hull  to 
+compute the Voronoi diagram, this pro jection is done for all points in the set of points 
+for  which  we  want  to  compute  the  Voronoi  diagram. 
+Suppose we have a set P  ⊆ R2  and we want to compute the corresponding Voronoi 
+diagram.  Let us consider the set P �  = {(xi , yi , xi 
+2 ) : (xi , yi ) ∈ P }.  This pro jection 
+2 + yi 
+onto  a  parabola  is  shown  in  Figure  3. 
+
+23-4
+
+
+Consider  the  set  of  planes  tangent  to  each  point  in  P � .  The  intersection  of  the 
+upper  half  spaces  of  these  planes  gives  a  polyhedral  set  Q  whose  pro jection  back 
+to  R2  gives  the  Voronoi  diagram  in  the  following  sense:  the  pro jection  of  the  facets 
+(resp. edges, vertices) of Q gives the Vornoi cells (resp. edges, vertices) of the Voronoi 
+diagram.  This  computation  can  be  done  in  O(n log n)  time  since  this  calculation  is 
+the  geometric  dual  of  the  convex  hull  computation. 
+If,  instead,  we  were  to  compute  the  convex  hull  of  P �  (rather  than  the  halfs­
+paces  tangent  to  the  paraboloid  at  P � )  and  pro ject  it  back  to  R2 ,  we  would  obtain 
+a  straight-line  drawing  on  P  (dual  to  the  Voronoi  diagram)  known  as  the  Delaunay 
+Triangulation,  see  problem  set. 
+
+2.3  Sweep  Line  Algorithm 
+
+The  idea  of  a  sweep  line  algorithm  is  to  advance  a  line  (in  2D)  or  a  plane  (in  3D) 
+down  through  space,  processing  events  as  they  occur.  We  will  construct  the  Voronoi 
+diagram  as  we  sweep  the  line  from  top  to  bottom,  and  at  any  instance  we  will  only 
+have  needed  to  consider  points  at  or  above  the  sweep  line. 
+We cannot construct the entire diagram above the sweep line, but we can construct 
+pieces  of  it.  If  we  look  at  a  single  point  above  the  line,  pi ,  for  some  points,  they  will 
+assuredly  be  closer  to  it  than  to  any  points  below  the  sweep  line.  This  forms  a 
+parabola  C (pi )  deﬁned  by  the  points  equidistant  from  the  point  and  the  sweep  line. 
+We  can  ﬁnd  the  parabola  associated  with  each  of  the  points.  For  any  point  that  is 
+above  some  parabola,  we  can  correctly  assign  it  to  its  Voronoi  Cell. 
+
+Figure  4:  A  set  of  parabolae  C (pi )  associated  with  four  points  pi .  Parabolae  are 
+denoted  with  thin  lines,  the  beach  line  with  a  thick  line,  and  the  associated  sweep 
+line  with  a  thick  dashed  line. 
+
+Deﬁnition  3  (Beach  line)  We  deﬁne  a  Beach  Line  as  the  lower  envelope  of  al l 
+parabolae  C (pi )  for  al l  points  above  the  sweep  line.  A  beach  line  is  shown  in  Figure 
+4. 
+
+23-5 
+
+Deﬁnition  4  (Breakpoint)  A  breakpoint  q  is  a  point  on  the  beach  line  that  belongs 
+to  at  least  two  parabolae. 
+
+Figure  5:  Sample  beach  line  illustrating  multiple  break  points  originating  from  the 
+same  parabola 
+
+The beach  line  is a  series of  segments of parabolae.  A breakpoint  q  corresponding 
+to  the  parabolas  C (pi )  ad  C (pq )  must  be  equidistant  from  both  pi  and  pj  since  we 
+know that d(q , pi ) = d(q , sweep) = d(q , pj ).  Furthermore, no other point of P  is closer 
+to  q .  Thus,  by  Lemma  1,  q  is  part  of  an  edge  of  the  Voronoi  diagram,  and  is  part  of 
+the  bisector  between  pi , pj .  An  example  is  shown  in  Figure  6. 
+We will  keep  track  of which  pi  the  breakpoints  are  associated with  in  order.  Note 
+a  beach  line  could  have  several  segments  from  the  same  parabola,  as  illustrated  in 
+Figure  5. 
+
+2.3.1  Events 
+
+As  we  sweep  the  line,  we  are  not  going  to  keep  track  of  the  precise  location  of  the 
+beach  line  (as  it  constantly  changes)  but  we  will  just  keep  track  of  the  points  pi 
+corresponding  to  the  parabola  segments  of  the  beach  line  from  left  to  right.  Several 
+events  can  happen  that modify  this  sequence  of  points  pi . 
+
+1.  A  ‘Site  Event’  occurs  when  the  sweep  line  goes  through  a  new  point  pl .  This 
+results  in  additition  of  an  arbitrarily  narrow  parabola  around  pl  to  the  beach 
+line.  A  sample  site  event  is  shown  in  Figure  7.  If  pl  intersects  the  parabola 
+associated  with  pj ,  we  could  write  the  change  in  the  sequence  of  points  as: 
+pi  pj  pk  → pi  pj  pl  pj  pk 
+
+Note we insert exactly one segment per site event, so there are n in total.  Notice 
+that each such addition increases the number of segments by 2, as shown above. 
+
+23-6
+
+
+Figure  6:  Illustration  of  points  q  on  an  edge  of  a  Voronoi  diagram  as  constructed  by 
+a moving  sweep  line. 
+
+We’ll  see  that  this  is  the  only way  of  creating  a  new  segment  in  the  beach  line, 
+so  this  implies  that  the  total  number  of  segments  in  the  beach  line  is  at  most 
+2n − 1  (1  segment  for  the  ﬁrst  site  event,  and  2  more  for  each  subsequent  site 
+event). 
+
+2.  A ‘Circle Event’ occurs when lowering the beach line causes a segment to disap­
+pear  from  the  beach  line.  This  boundary  case  is  illustrated  in  Figure  8,  which 
+can  be  compared  to  Figure  6  to  show  the  eﬀfect  of  a moving  sweep  line. 
+When  a  segment  disappears,  we  have  discovered  a  new  vertex  in  the  Voronoi 
+diagram.  Indeed,  when  a  circle  event  occurs,  we  must  have  the  three  closest 
+points  equidistant  to  the  vertex,  and  thus  we  have  a  vertex  by  Lemma  1. 
+The  center  of  the  circle  is  determined  by  p1 ,  p2  and  p3  (corresponding  to  3 
+consecutive  segments  on  the  beach  line),  and  the  circle  event will  happen when 
+the  sweep  line  is  tangent  to  the  circle  (below  it).  When  a  circle  event  happens, 
+the  beach  line  is modiﬁed  in  the  following  way: 
+p1  p2  p3  → p1  p3 
+
+. 
+
+Claim  3  The  only way  for  the  beach  line  to  change  is  through  a  site  event  or  a  circle 
+event.  In  other  words,  these  are  the  only  ways  to  create  and  remove  segments. 
+
+We  will  not  formally  prove  this  –  this  is  intuitive. 
+
+23-7 
+
+Figure  7:  Site  event.  Parabolae  shown  with  thin  lines  and  the  beach  line  shown  as  a 
+thick  line. 
+
+2.3.2  Data  Structures 
+
+In  order  to  construct  a  diagram,  we  will  describe  three  data  structures: 
+
+1.  Event  queue: 
+Construct  a  priority  queue  containing  events.  The  key  of  an  event  is  its  y -
+coordinate.  For  a  site  event  the  y -coordinate  is  the  y -coordinate  of  the  asso­
+ciated  point.  For  a  circle  event,  this  is  the  position  of  the  sweep  line  which  is 
+(lower)  tangent  to  the  circle. 
+We  ﬁrst  insert  the  n  site  events  into  the  priority  queue,  as  we  know  the  y 
+coordinate  of  all  the  points.  Consider  moving  the  line  down  and  processing 
+events  as  they  occur.  Circle  events  are  deﬁned  by  looking  at  three  consecutive 
+segments  of  the  beach  line.  Every  time  we  introduce  a  new  segment  in  the 
+beach  line,  as  happens  in  a  site  event,  we  potentially  create  two  new  circle 
+events  (potentially,  since  three  consecutive  segments  create  a  circle  event  only 
+if  the  3  points  are  distinct).  We may  also  need  to  delete  some  circle  events. 
+Let  us  consider  the  addition  shown  in  Figure  7.  We  will  have  removed  the 
+potential  circle  event  pi  pj  pk  and  added  potential  circle  events  pi  pj  pl  and 
+pj  pl  pk .  Note  that  the  deleted  event  can  be  thought  of  as  a  fake  event  because 
+it was  removed before  it  really happened and was processsed.  Still  such a  circle 
+event  was  added  to  the  event  queue  and  then  removed.  There  is  at  most  one 
+deleted (fake) circle event for each site event processed.  Notice that the number 
+of  real  circle  events  is  equal  to  the  number  of  vertices  of  the  Voronoi  diagram, 
+nv  ≤ 2n − 5. 
+Any  circle  event  that  is  processed  is  real,  and  leads  to  a  segment  of  the  beach 
+line  disappearing.  In  terms  of  Figures  6  and  8, we would  take  p1  p2  p3  to  p1  p3 . 
+
+23-8
+
+
+Figure  8:  Circle  event.  Parabolae  shown with  thin  lines, Voronoi  diagram with  thick 
+lines,  and  the  sweep  line  with  a  thick  dashed  line. 
+
+In general, we can write this as “Go from pi  pj  pk  pl  pm  to pi  pj  pl  pm”.  We may 
+need  to  delete  up  to  two  circle  events  corresponding  to  the  lost  segment  and 
+add  two  new  events,  corresponding  to  the  new  order.  In  this  example,  we  are 
+deleting  circle  events  pi  pj  pk  and  pk  pl  pm  and  adding  pi  pj  pl  and  pj  pl  pm  (or 
+a  subset  of  them  if  some  of  the  indices  are  equal).  We  are  always  adding  and 
+deleting  a  constant  number  of  events  (for  each  site  event  and  real  circle  event), 
+thus  the  total  number  of  additions  and  deletions  to  the  priority  queue  will  be 
+linear.  Since we must process O(n) events corresponding to O(n) priority queue 
+operations,  the  total  runtime  will  be  O(n log n). 
+
+2.  Beach  line  encoding: 
+We keep track of the points corresponding to the parabola segments constituting 
+the beach line and the breakpoints pi  pj  by creating a binary search tree in which 
+points  are  leaves  and  internal  nodes  are  breakpoints. 
+Note  that  this  is  an  extension  of  the  standard  binary  search  tree  because  we 
+have  two  diﬀerent  types  of  nodes  (parabola  segments  and  breakpoints).  This 
+prevents us  from directly using a splay tree,  since the splay action permutes the 
+leaves  and  branches  of  the  tree.  One  way  to  deal  with  this  is  to  forget  about 
+parabola segments, and keep track of the breakpoints (as pairs of points), keyed 
+from  left  to  right. 
+When  a  site  event  occurs,  we  need  to  be  able  to  locate  the  x  value  in  the 
+beach  line.  To  use  a  binary  search  tree,  we  thus  need  to  be  able  to  perform 
+binary  comparisons  to  determine  if  the  desired  x  value  is  to  the  left  or  right 
+
+23-9
+
+
+of  a  breakpoint.  Given  a  breakpoint  as  an  ordered  pair  (pi , pj )  and  a  sweep 
+line,  we  can  easily  compute  the  x  position  of  the  breakpoint  and  decide  if  we 
+must move  to  the  right  or  to  the  left.  In  a  circle  event,  we  have  three  parabola 
+segments  and  must  remove  the  middle  one.  This  is  a  delete  operation.  Thus 
+there  are  a  constant  number  of  BST  operations  per  circle  or  site  event.  Using 
+a BST with  amortized  cost O(log n)  time per  operation, maintaining  the  beach 
+line  is  therefore  O(n log n)  time. 
+
+3.  Voronoi  Diagram: 
+Let  us  replace  each  edge  (shared  by  2  cells)  of  the  Voronoi  diagram  with  two 
+corresponding directed half-edges which are ‘twin’ to each other.  Each half edge 
+corresponds  to one of  the  two  cells,  and  each  is oriented  counterclockwise  (with 
+respect  to  its  cell).  For  each  half-edge,  we  deﬁne  pointers: 
+•  to  its  twin, 
+•  to  the  next  half-edge  on  the  cell, 
+•  to  the  previous  half-edge  on  the  cell. 
+
+From  a  given  vertex we  can  follow  the  half-edges  around  a  cell;  by  calling  twin, 
+we  can  move  between  cells  and  we  can  for  example  enumerate  all  half-edges 
+incident  to  a  vertex. 
+Let  us  consider  how  to  modify  this  structure  upon  processing  a  site  (Figure 
+7)  and  circle  (Figure  8)  events.  In  a  site  event,  the  two  new  breakpoints  are 
+equidistant  from  pj  and  pk ,  and  are  part  of  an  edge  of  the  Voronoi  diagram. 
+This will create two new half-edges.  In a circle event we  link the half edges that 
+meet  to  construct  the  diagram.  Thus  there  are  a  linear  number  of  operations 
+on  this  data  structure  as  wll. 
+
+In summary,  the ﬁrst structure requires a  linear number of operations each taking 
+O(log n)  time.  Similarly,  for  the  second  data  structure,  with  a  balanced  BST.  The 
+last  one  requires  constant  time  per  event,  for  a  linear  number  of  events.  Hence  the 
+total  time  to  construct  a  Voronoi  diagram  is  O(n log n). 
+We  can  show  this  is  optimal  because  the  Voronoi  diagram  of  the  set  of  points 
+given  by  P  =  {(xi , ±1)}  solves  the  problem  of  sorting  P ,  hence  the  diagram  must 
+take  at  least  O(n log n)  time  to  sort. 
+Note  we  use  ±1  since  we  have  assumed  throughout  this  that  we  are  not  in  the 
+purely  degenerate  case  in  which  all  points  are  colinear;  one  can  show  that  this  is 
+indeed  the  only  case  in  which  the  Voronoi  diagram  has  inﬁnite  lines  and  no  vertices. 
+
+23-10
+
+
+References 
+
+[1]  S Fortune.  A  sweepline  algorithm  for  voronoi  diagrams.  In  SCG  ’86:  Proceedings 
+of  the  second annual  symposium on Computational  geometry, pages 313–322, New 
+York,  NY,  USA,  1986.  ACM. 
+
+23-11
+
+
+

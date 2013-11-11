@@ -1,0 +1,551 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced  Algorithms 
+
+November 17, 2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  17 
+
+1 
+
+Introduction 
+
+We  continue  talking  about  approximation  algorithms. 
+Last  time,  we  discussed  the  design  and  analysis  of  approximation  algorithms,  and  saw  that  there 
+were  two  approaches  to  the  analysis  of  such  algorithms:  we  can  try  comparing  the  solution  obtained 
+by  our algorithm to the (unknown)  optimal  solution directly (as we did for  Christoﬁdes’s algorithm 
+for  TSP),  or,  when  that  is  not  possible,  we  can  compare  our  solution  to  a  relaxation  of  the  original 
+problem. 
+We  can  also  use  a  relaxation  to  design  algorithms, even  without solving  the relaxed problem:  we 
+saw a simple primal-dual  algorithm that used the LP  relaxation of the Vertex  Cover problem. 
+In this lecture,  we shall  examine further the primal-dual  approach  and  also the design of  approx­
+imation  algorithms  through  local  search,  and  illustrate  these  on  the  facility  location  problem. 
+
+2  The  facility  location  problem 
+
+2.1  Problem  statement 
+
+We  are  given  a  set  F  of  facilities,  and  a  set  D  of  clients.  Our  goal  is  to  open  some  facilities  and 
+assign  clients  to  them  so  that  each  client  is  served  by  exactly  one  facility.  We  are  given,  for  each 
+i  ∈  F ,  the  cost  fi  of  opening  facility  i  and  the  cost  cij  of  assigning  client  j  to facility  i  for  each 
+j ∈  D. 
+′ 
+� 
+i∈F ′  fi .  Subsequently, 
+If  we  open  a  certain  subset  F  ⊆  F  of  facilities,  the  cost  incurred  is 
+we  will  assign  each  client  to  the  nearest  facility,  incurring  a  cost  mini∈F ′  cij  for  client  j .  Thus  our 
+problem  can  be  stated  as  the  following  optimization  problem: 
+� 
+� 
+�  � 
+(min  cij ) 
+fi  + 
+i∈F ′ 
+i∈F ′ 
+j∈D 
+This problem arises naturally in many  settings,  where the facilities might be schools, warehouses, 
+servers, and  so on.  It is possible to imagine additional  constraints such  as capacities on the facilities; 
+we  shall  deal  with  the  simplest  case  and  assume  no  other  constraints.  We  shall  also  assume  that  the 
+costs  are  all  nonnegative,  and  that  the  cij s  are  in  fact  metric  costs  —  that  they  come  from  a  metric 
+on  F  ∪ D  where the distance between  i  ∈  F  and  j ∈  D  is  cij . 
+
+min 
+F ′ ⊆F
+
+. 
+
+2.2  Current  status 
+
+This problem is known to be NP-hard.  Hence we seek  to design approximation algorithms.  The best 
+algorithm known is a 1.5-approximation algorithm, due to Byrka [1].  This is close to the best possible, 
+in  the  sense  that  the  following  “inapproximability”  result  is  true:  if  there  is  a  1.463-approximation 
+algorithm, then NP  ⊆  DTIME(nlog log n ) (see [2]). 
+Since  our  focus  in  this  lecture  is  on  the  techniques,  we  will  see  simpler  approximation  algorithms 
+that  illustrate  the  approaches,  each  of  which  gives  only  a  3-approximation. 
+
+17-1 
+
+3  The  primal-dual  approach 
+
+We  shall  follow  the  general  outline  behind  primal-dual  approaches  to  many  problems: 
+
+1.  Formulate the problem  as  an integer program, 
+
+2.  Relax  it  to  a  linear  program, 
+
+3.  Look  at  the  dual  of  the  linear  program, 
+
+4.  Devise an algorithm that  ﬁnds an integral primal-feasible solution and  a dual-feasible solution, 
+
+5.  Show  that  the  solutions  are  within  a  small  factor  of  each  other,  and  hence  of  the  optimum. 
+
+3.1 
+
+IP  formulation 
+
+yi  = 
+
+Let  the  variable  yi  denote  whether  the  facility  i  is  opened,  i.e., 
+� 
+Similarly, let  xij  denote  whether  the  client  j  is  assigned  to  facility  i, i.e., 
+� 
+
+1 
+if  client  j  is  assigned  to  i, 
+0  otherwise 
+
+if  facility  i  is  opened, 
+otherwise 
+
+xij  = 
+
+for  each  i  ∈  F  and  j ∈  D. 
+
+1 
+0 
+
+for  each  i  ∈  F . 
+
+So  we  must  have 
+
+and 
+
+yi  ∈ {0, 1} for  all  i  ∈  F . 
+
+xij  ∈ {0, 1} for  all  i  ∈  F ,  j ∈  D. 
+
+(1) 
+
+(2) 
+
+Further,  we  have  the  condition  that  each  client  must  be  assigned  to  exactly  one  facility: 
+� 
+i∈F 
+and  the  condition  that  clients  can  be  assigned  only  to  facilities  that  are  actually  open,  i.e.  that 
+xij  = 1  =⇒  yi  = 1.  One  way  of  writing  this  as  a  linear  relation  is: 
+
+xij  = 1 
+
+(3) 
+
+yi  − xij  ≥  0 
+
+(4) 
+
+Finally, the  ob jective function (cost)  is 
+�  � 
+� 
+i∈F
+i∈F j∈D 
+The problem  of  minimizing (5)  sub ject to  conditions (1) (2) (3)  and (4), is  an integer programming 
+problem. 
+
+cij xij . 
+
+fiyi  + 
+
+(5) 
+
+17-2 
+
+3.2  LP  relaxation 
+
+The  conditions (1)  and (2)  are  not linear  constraints, but  we  can  try  to  relax  them  to  constraints 
+that  are linear.  We  write, for (2), the  condition 
+
+(we do not have to write xij  ≤  1, as that is already forced by (3)), and for (1), we write the condition 
+
+0  ≤  xij 
+
+(6) 
+
+0  ≤  yi 
+
+(7) 
+
+min 
+
+(as  the  cost  is  an  increasing  function  of  yi ,  the  minimization  will  make  sure  that  yi  ≤  1, if  at all 
+possible).  Thus  we  have  the  following  linear  program: 
+� 
+� 
+i∈F 
+� 
+xij  =  1 
+i∈F 
+yi  − xij  ≥  0 
+xij  ≥  0 
+yi  ≥  0 
+
+∀i  ∈  F, ∀j ∈  D 
+∀i  ∈  F 
+
+�  � 
+i∈F  j∈D 
+
+∀i  ∈  F, ∀j ∈  D 
+
+(11) 
+(12) 
+
+∀j ∈  D 
+
+fiyi  + 
+
+cij xij 
+
+� 
+
+(10) 
+
+s.t. 
+
+(8) 
+
+(9) 
+
+We  cannot  expect  every  vertex  of  this  LP  to  be  0-1;  there  can  exist  instances  for  which  the  LP 
+optimum  does  not  correspond  to  any  convex  combination  of  valid  facility  location  integral  solutions. 
+Thus the LP does  not give a  solution directly.  One  way  of  using  the LP  would be to  solve it  and 
+then  round  the  solution  to  a  valid  facility  location;  this  needs  some  care  but  can  be  used  to  derive 
+an  approximation  algorithm  for  the  facility  location  problem.  Another  possibility  is  to  pursue  the 
+primal-dual  approach  which  is  what  we  shall  now  do. 
+
+3.3  LP  dual 
+
+Let  us  look  at  the  dual  of  the  LP.  Introducing  dual  variables  vi  for  the  constraints (9)  and  wij  for 
+the  constraints (10),  we get the dual LP: 
+� 
+j∈D 
+� 
+j∈D 
+− wij  +  vj  ≤  cij 
+wij  ≥  0 
+
+∀i  ∈  F, ∀j ∈  D 
+∀i  ∈  F, ∀j ∈  D 
+
+(15) 
+(16) 
+
+wij  ≤  fi 
+
+∀i  ∈  F 
+
+max 
+
+(13) 
+
+(14) 
+
+s.t. 
+
+vi 
+
+At  the  optimal  solutions  to  the  primal  and  dual,  the  complementary  slackness  condition  says 
+that: 
+
+wij  =  fi 
+
+yi  >  0 =⇒ 
+
+� 
+j∈D 
+xij  >  0 =⇒  vj  − wij  =  cij 
+yi  − xij  >  0 =⇒  wij  = 0. 
+
+(17) 
+
+(18) 
+(19) 
+
+If  we  could  ﬁnd  a  primal  feasible  solution  and  a  dual  feasible  solution  that  satisﬁed  the  comple­
+mentary  slackness conditions, and furthermore the primal  solution was integral, then  we would have 
+
+17-3 
+
+solved  the problem.  But  as  we have seen, this is  not possible in general, because there  might  not be 
+an  integer  solution  corresponding  to  the  LP  optimum. 
+We  interpret  the  complementary  slackness  conditions  as  follows.  Client  j pays  a  charge  vj  ≥  cij , 
+if  assigned  to  i  (the  condition (18)).  The  surpluses  wij  pay  for the  cost  of  opening  the facility (the 
+condition (17)).  We  use this interpretation to guide  our primal-dual  algorithm. 
+
+3.4  Primal-dual  algorithm  for  the  facility  location  problem 
+
+We  will  maintain  vj ’s  and  wij ’s  that  always  constitute  a  dual-feasible  solution.  Initially,  set  each 
+vj  = 0  and  each  wij  = 0.  Start  increasing  all  the  vj ’s  at  rate 1.  We  watch  out for 3 possible  events: 
+
+1.  For  some  i, j ,  vj  reaches  cij ,  so that (18)  holds,  and (15) is in danger of being  violated: In this 
+case,  we  start  increasing  wij  at  rate  1  as  well,  so  that  vj  − wij  =  cij  will  continue  to  hold. 
+� 
+2.  For  some  i, 
+In  this  case,  we  freeze  (stop 
+j∈D  wij  reaches  fi  —  “facility  i  is  paid  for”: 
+increasing)  all  the  wij ’s.  We  also  freeze  all  the  vj ’s  for  which  wij  was  being  increased,  namely 
+{j  :  vj  > cij }.  Finally,  we  also  freeze  those  wi′  j  for  which  a  vj  has  been  frozen  now,   because 
+we  no  longer  need  to  increase  them. 
+
+3.  For  some  i, j ,  vj  reaches  cij ,  when  i  is  already  paid  for:  In  this  case,  we  cannot  increase  wij 
+now,  so  we  instead  freeze  vj ,  and  also  freeze  all  the  wi′  j . 
+
+We  repeat  this  process  until  every  vj  is  frozen.  The  procedure  we  have  described  is  often  referred 
+to  as  a  ’dual  ascent’  procedure,  we  we  have  only  increased  dual  variables. 
+� 
+j∈D  v¯j  when  we 
+Suppose  we  stop  with  the  values (¯v ,  w¯ ).  We  always  remain  dual-feasible,  so 
+stop  is  a  lower  bound  on  the  optimal  value  of  the  LP.  We  now  have  to  decide  how  to  convert  the 
+obtained  values  into  a  facility  location,  i.e.  which  facilities  to  open.  We  will  only  open  a  subset  of 
+the paid-for facilities. 
+Say  facility  i  is paid for  at time  ti .  When  we  terminate,  create  the  graph  G  = (F  ∪ D, E ) where 
+E  =  {(i, j ), w¯ij  >  0}.  Deﬁne  cluster(i) as  the  set  of  all  facilities  that  are  neighbors  of  neighbors  of  i 
+in this graph. 
+Process  the  paid-for  facilities  in  nondecreasing  order  of  ti .  First,  consider  the  ﬁrst  paid-for 
+facility, i.e.  i  for  which  ti  is  minimum,  and  open  it.  We  will  not  open  any  other  facility  in  cluster(i). 
+In  general,  open  facility  i ′  if  it  is  not  already  in  the  cluster  of  a  previously  opened  facility, i.e.  iﬀ 
+i ′  ∈/  i 
+cluster(i) where the  union is  over previously  opened facilities  i. 
+Having  selected  which  facilities  to  open,  we  assign  clients  to  facilities  the  natural  way:  assign 
+each  client  to  the  nearest  facility. 
+We  now prove that this  algorithm gives  a 3-approximation  algorithm. 
+
+3.5  Analysis  of  the  algorithm 
+
+3O +  A  ≤  3 
+
+Claim  1  Let  O  and  A  be  the  opening-cost  and  assigning-cost  of  the  (primal)  solution  constructed 
+by  the  algorithm.  Then, 
+� 
+j∈D 
+Proof:  Let  U  be  the  set  of  facilities  opened  by  the  algorithm,  and  σ(j ) ∈  U  be  the  facility  that 
+the  client  j  is  assigned  to.  We  need  to  show  that 
+�  � 
+fi  + 
+i∈U
+j∈D
+For  each  client  j ,  there  are  two  possible  scenarios: 
+
+� 
+j∈D 
+
+v¯j . 
+
+3 
+
+cσ(j)j  ≤  3 
+
+v¯j . 
+
+17-4 
+
+Figure 1:  Case (II). If   i  makes  vj  stop  increasing  via  the  third  event  from  Section  3.4,  there  is  no 
+edge between  i  and  j  in  G.  Otherwise, (i, j ) ∈  G. 
+
+(I)  j  has  exactly  one  open  facility,  say  i  =  σ(j ),  in  its  neighborhood  in G. 
+
+(II)  j  has  no  open  facility  in  its  neighborhood  in  G. 
+
+First consider case (I). Since  ¯wij  >  0  from  the  way  we  construct  G,  the  algorithm  freezes  variables 
+v¯j , w¯ij  after  tightening  the  equation  cij  =  v¯j  − w¯ij .  Thus,  we  have  cij  + ¯wij  =  v¯j ,  and  so 
+
+cij  + 3w¯ij  ≤  3(cij  + ¯wij ) = 3¯vj . 
+
+(20) 
+
+cσ(j)j  + 3 
+
+fi  ≤  3 
+
+v¯j . 
+
+If  we take the  summation  of (20)  over those  clients in  case (I),  we  obtain from 
+� 
+� 
+� 
+i∈U
+j∈D:case (I) 
+j∈D:case (I) 
+Thus,  the  opening  of  all  facilities  is  already  accounted  for. 
+Now  consider  case (II)  where  j  contributes  nothing  for  constructing  facilities.  Hence  for  com­
+pleting  the proof, it is  enough  to  show that the  assigning-cost for  j  is  at  most  3¯vj  i.e.  there  exists  a 
+facility  i ′  ∈  U  such  that  ci′  j  ≤  3¯vj . 
+Let  i  be  the  facility  that  makes  vj  stop  to  increase,  for  which  it  follows  that 
+
+j  3w¯ij  = 3fi  that 
+
+� 
+
+cij  ≤  v¯j 
+
+and 
+
+ti  ≤  v¯j . 
+
+(21) 
+
+In  the  case  when  i  ∈  U ,  it  follows  obviously  that  cij  ≤  v¯j  ≤  3¯vj .  Hence  assume  i /∈  U .  Since  i  is  not 
+open (although  i  is  fully  paid  for),  there  exists  a  facility  i ′  ∈  U  such  that  i  ∈  cluster(i ′  ).  Thus  there 
+exists  a  client  j  ′  which  is  connected  to  both  i  and  i ′  in  G.  Since  ¯wij ′  >  0  and  ¯wi′  j ′  >  0, 
+
+cij ′  ≤  ti 
+
+and 
+
+ci′  j ′  ≤  ti′  . 
+
+(22) 
+
+From the triangle inequality, (21), (22)  and  ti′  ≤  ti  ≤  v¯j  (since i  was  responsible  for  j  freezing),  we 
+have 
+
+ci′  j  ≤ 
+≤ 
+≤ 
+
+≤ 
+
+ci′  j ′  +  cij ′  +  cij 
+ti′  +  ti  +  v¯j 
+2ti  +  v¯j 
+3¯vj , 
+
+which  completes  the  proof. 
+
+� 
+
+4 
+
+The  local  search  based  approach 
+
+Now  we  study  a  diﬀerent  type  of  approximation  algorithm  based  on  local  search. 
+
+17-5 
+
+4.1  General  paradigm 
+
+Suppose  we  want  to  minimize  the  ob jective  function  c(x) over  the  space  S  of  feasible  solutions.  In 
+the  case  of  the  facility  problem,  S  is  a  subset  of  facilities  and  c(x)  is  the  sum  of  the  opening  costs 
+and  the  assigning  costs.  In  a  local  search  based  algorithm,  we  have  a  neighborhood  N :  S  →  2S 
+which  satisﬁes  the  following  two  conditions: 
+
+•	 v  ∈  N (v) for  all  v  ∈  S , 
+
+•	 there  exists  an  eﬃcient  algorithm  to  decide  whether  c(v) =  minu∈N (v)  c(u) for  a  given  v  and, 
+if  not,  ﬁnd  u  ∈  N (v) such  that  c(u) < c(v). 
+
+Using  this algorithm for searching  the  neighborhood, the  algorithm travels in the space  S  iteratively 
+ﬁnding  a  better  solution  in  N (v)  than  the  current  solution  v  ∈  S .  It  terminates  when  the  current 
+solution  v  cannot be improved i.e.  v  is  a  locally  optimal  solution.  In  a  local  search  based  algorithm, 
+one  also  needs  an  algorithm  for  ﬁnding  an  initial  feasible  solution. 
+We  can  raise  some  issues  related  to  the  design  and  analysis  of  local  search  algorithms: 
+
+Q0 :  What  neighborhood  N  should  we  choose?
+
+- If  |N (v)|  is  large,  one  can  ﬁnd  a  better  local  solution  in  each  iteration  but  designing  an
+
+algorithm  to  eﬃciently  search  the  neighborhood  might  be  more  diﬃcult.
+
+
+Q1 :  How good is  a locally  optimal  solution  which  the  algorithm provides?
+
+- This  decides  the  approximation  ratio  of  the  algorithm.
+
+
+Q2 :  How  many  iterations  does  the  algorithm  require  before  ﬁnding  a  local  optimum?
+
+- Using  the  local  search  algorithm  is  one  way  to  ﬁnd  a  local  optimum;  there  might  be  some
+
+more  direct  way,  and  the  complexity  of  ﬁnding  a  local  optimum  has  been  studied  (see  the
+
+discussion  about  the  class  PLS  in  next  lecture).
+
+
+Consider the  Traveling  Salesman  problem.  One possible neighborhood  N  arises from  2-exchange 
+where  u  ∈  N (v) if the tour  u  can  be  obtained  by  removing  two  edges  in  v  and  replacing  these  with 
+two  diﬀerent  edges  that  reconnect  the  tour.  Therefore,  |N (v)|  =  n 
+�  � 
+2  ,  hence  it  is  enough  to  check 
+only  O(n2 )  solutions  to  ﬁnd  a  better  solution  in  N (v).  Other  neighborhoods  can  also  be  deﬁned, 
+such  as  for  example  k-exchange  in  which  k  edges  are  replaced.  In  the  problem  set,  a  neighborhood 
+of  exponential  size  is  considered. 
+
+4.2  Local  search  algorithm  for  the  facility  location  problem 
+
+Now we explain  a local  search based  approximation algorithm for the facility  location problem.  The 
+set  U  of  open  facilities  is  enough  for  describing  any  solution  in  our  solution  space  S  since,  after 
+the  open facilities  are decided, the  optimal  assignment follows  easily (and  eﬃciently).  The  simplest 
+neighborhood  one  can  consider  is  to  simply  allow  the  addition  of  a  new  facility,  the  deletion  of  an 
+open  facility,  or  replacing  one  open  facility  by  another.  More  formally,  N (U ) is  designed  as  follows: 
+U  ′  ∈  N (U ) if  U  ′  =  U  ∪ {i},  U  ′  =  U  \ {i ′ },  or  U  ′  =  U  ∪ {i} \ {i ′ }  for  some  facilities  i  and  i ′  .  Note 
+that  |N (U )| =  O(n2 ) which  settles  the  time-complexity  issue  for  ﬁnding  a  better  solution  in  N (U ). 
+The  following  claim  settles  Q1 .  We  will  examine  Q2  in  the  next  lecture,  albeit  not  for  the  facility 
+location problem  per  se. 
+
+Claim  2  Consider  a  local ly  optimal  solution  v  for  the  above  neighborhood  N .  Then,  its  opening 
+cost  O  and  assigning  cost  A  satisfy 
+
+A  ≤  A∗  +  O∗ 
+O  ≤  O∗  + 2A∗  , 
+
+(23) 
+(24) 
+
+where  O∗  and  A∗  are  the  opening  cost  and  the  assigning  cost  of  the  optimal  solution  respectively. 
+
+17-6 
+
+Remark  1  Claim  2  guarantees  an  approximation  ratio  of  3  for  this  local-search  algorithm  since 
+
+A +  O  ≤  3A ∗  + 2O ∗  ≤  3(A ∗  +  O ∗  ) = 3OP T  ∗  . 
+
+Proof: 
+In  this  lecture,  we  will  see  only  the  proof  of  (23)  due  to  time  constraints.  (The  proof of 
+(24) would  take longer than the 5  minutes available at this point.)  Let  U  and  U ∗  be  the  sets  of  open 
+facilities  in  locally  and  globally  optimal  solutions  respectively.  For  a  facility  i  ∈  U ∗  \ U ,  the  local 
+optimality  of  U  implies 
+� 
+� 
+� 
+cσ∗ (j)j  − cσ(j)j  ≥  0, 
+j :σ∗  (j)=i 
+where  σ(j )  and  σ∗ (j )  are  the  open  facilities  which  j  is  assigned  to  in  U  and  in  U ∗  respectively 
+(since  we  could just  reassign just the  clients for  which σ( j ) is  i).  By  taking  the  summation  over  all 
+i  ∈  U ∗  \ U , it follows that 
+
+fi  + 
+
+O ∗  +  A ∗  − A  ≥  0. 
+
+� 
+Now  consider  the  time-complexity  issue  Q2 .  There  exist  instances  for  which  this  algorithm  will 
+take  an  exponential  number  of  steps.  In  fact,  the  negative  result  for  this  issue  comes  from  the  fact 
+that the facility location problem (with  this deﬁnition of  the  neighborhood) is PLS-complete [3],  see 
+next  lecture  for  more  details.  Furthermore,  it  is  unlikely  that  any  algorithm (not  necessarily  based 
+on  this  iterative  local  search  process)  can  ﬁnd  a  locally  optimal  solution  in  polynomial  time  in  the 
+worst  case.  However,  if  the  algorithm  walks  to  a  better  solution  only  when  it  improves  the  current 
+solution  signiﬁcantly  by  ε  factor,  it  can  be  guaranteed  that  the  algorithm  terminates  in  polytime 
+with  respect  to  n  and  ε.  Furthermore,  one  can  obtain  the  ε-version  of  Claim  4.2,  which  leads  to 
+(3 + ε ′  )-approximation  ratio  of the  algorithm. 
+
+References 
+
+[1]  Jaroslaw  Byrka.  An  optimal  bifactor  approximation  algorithm  for  the  metric  uncapacitated 
+facility  location problem.  Proceedings  of  APPROX  2007, 2007. 
+
+[2]  Sudipto  Guha  and  Samir  Khuller.  Greedy  strikes  back:  Improved  facility  location  algorithms. 
+In  Journal  of  Algorithms, pages 649–657, 1998. 
+
+[3]  Y. Kochetov and D. Ivanenko.  Computational ly  Diﬃcult Instances for the Uncapacitated Facility 
+Location Problem,  volume  32.  Springer  US,  2005. 
+
+17-7 
+
+

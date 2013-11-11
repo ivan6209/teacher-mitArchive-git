@@ -1,0 +1,230 @@
+Lecture 21
+
+Dynamic Programming III of IV
+
+6.006 Fall 2011
+
+Lecture 21: Dynamic Programming III
+
+Lecture Overview
+• Subproblems for strings
+• Parenthesization
+• Edit distance (& longest common subseq.)
+• Knapsack
+• Pseudopolynomial Time
+
+Review:
+
+* 5 easy steps to dynamic programming
+
+(a) deﬁne subproblems
+
+(b) guess (part of solution)
+
+(c) relate subproblem solutions
+
+(d) recurse + memoize
+problems
+OR build DP table bottom-up
+check subproblems acyclic/topological order
+
+count # subproblems
+
+count # choices
+
+compute time/subproblem
+time = time/subproblem · # sub-
+
+(e) solve original problem: = a subproblem
+OR by combining subproblem solutions
+* problems from L20 (text justiﬁcation, Blackjack) are on sequences (words, cards)
+(cid:41)
+* useful problems for strings/sequences x:
+suﬃxes x[i :]
+Θ(|x|)
+(cid:111)
+
+← cheaper =⇒ use if possible
+
+=⇒ extra time
+
+preﬁxes x[: i]
+substrings x[i : j ]
+
+Θ(x2 )
+
+1
+
+Lecture 21
+
+Dynamic Programming III of IV
+
+6.006 Fall 2011
+
+Parenthesization:
+Optimal evaluation of associative expression A[0] · A[1] · · · A[n − 1] — e.g., multiplying
+rectangular matrices
+
+Figure 1:
+(cid:124)(cid:123)(cid:122)(cid:125) (cid:124)(cid:123)(cid:122)(cid:125)
+2. guessing = outermost multiplication ( · · · )( · · · )
+↑k−1
+↑k
+=⇒ # choices = O(n)
+1. subproblems = preﬁxes & sufﬁxes? NO
+= cost of substring A[i : j ]
+=⇒ # subproblems = Θ(n2 )
+
+3. recurrence:
+• DP[i, j ] = min(DP [i, k ] + DP[k , j ]+ cost of multiplying (A[i] · · · A[k − 1]) by
+(A[k ] · · · A[j − 1]) for k in range(i + 1, j ))
+
+• DP[i, i + 1] = 0
+=⇒ cost per subproblem = O(j − i) = O(n)
+
+4. topological order: increasing substring size. Total time = O(n3 )
+
+5. original problem = DP [0, n]
+(& use parent pointers to recover parens.)
+NOTE: Above DP is not shortest paths in the subproblem DAG! Two dependencies =⇒
+not path!
+
+2
+
+..ABC..(A.B)CA(B.C)θ(n2) timeθ(n) timevsijijkDAGLecture 21
+
+Dynamic Programming III of IV
+
+6.006 Fall 2011
+
+Edit Distance
+
+Used for DNA comparison, diﬀ, CVS/SVN/. . . , spellchecking (typos), plagiarism detection,
+etc.
+Given two strings x & y , what is the cheapest possible sequence of character edits (insert
+c, delete c, replace c → c’) to transform x into y?
+• cost of edit depends only on characters c, c(cid:48)
+• for example in DNA, C → G common mutation =⇒ low cost
+• cost of sequence = sum of costs of edits
+• If insert & delete cost 1, replace costs 0, minimum edit distance equivalent to ﬁnd-
+ing longest common subsequence. Note that a subsequence is sequential but not
+necessarily contiguous.
+• for example H I E R O G L Y P H O L O G Y vs. M I C H A E L A N G E L O
+=⇒ HELLO
+
+Subproblems for multiple strings/sequences
+• combine suﬃx/preﬁx/substring subproblems
+• multiply state spaces
+• still polynomial for O(1) strings
+
+Edit Distance DP
+(1) subproblems: c(i, j ) = edit-distance(x[i :], y [j :]) for 0 ≤ i < |x|, 0 ≤ j < |y |
+=⇒ Θ(|x| · |y |) subproblems
+
+(2) guess whether, to turn x into y , (3 choices):
+• x[i] deleted
+• y [j ] inserted
+• x[i] replaced by y [j ]
+
+(3) recurrence: c(i, j ) = maximum of:
+• cost(delete x[i]) + c(i + 1, j ) if i < |x|,
+• cost(insert y [j ]) + c(i, j + 1) if j < |y |,
+• cost(replace x[i] → y [j ]) + c(i + 1, j + 1) if i < |x|&j < |y |
+base case: c(|x|, |y |) = 0
+=⇒ Θ(1) time per subproblem
+
+3
+
+Lecture 21
+
+Dynamic Programming III of IV
+
+6.006 Fall 2011
+
+(4) topological order: DAG in 2D table:
+
+• bottom-up OR right to left
+• only need to keep last 2 rows/columns
+=⇒ linear space
+• total time = Θ(|x| · |y |)
+
+(5) original problem: c(0, 0)
+
+Knapsack:
+
+Knapsack of size S you want to pack
+• item i has integer size si & real value vi
+• goal: choose subset of items of maximum total value sub ject to total size ≤ S
+
+First Attempt:
+
+1. subproblem = value for sufﬁx i: WRONG
+2. guessing = whether to include item i =⇒ # choices = 2
+
+3. recurrence:
+• DP [i] = max(DP [i + 1], vi + DP [i + 1] ifs 
+i ≤ S ?!)
+
+• not enough information to know whether item i ﬁts — how much space is left?
+GUESS!
+
+Correct:
+
+1. subproblem = value for suﬃx i:
+given knapsack of size X
+=⇒ # subproblems = O(nS )
+!
+
+4
+
+0 |y|0 |x|ijLecture 21
+
+Dynamic Programming III of IV
+
+6.006 Fall 2011
+
+3. recurrence:
+• DP [i, X ] = max(DP [i + 1, X ], vi + DP [i + 1, X − si ] if si ≤ X )
+• DP [n, X ] = 0
+=⇒ time per subproblem = O(1)
+
+4. topological order: for i in n, . . . , 0: for X in 0, . . . S
+
+total time = O(nS )
+
+5. original problem = DP [0, S ]
+(& use parent pointers to recover subset)
+
+AMAZING: eﬀectively trying all possible subsets! . . . but is this actually fast?
+
+Polynomial time
+
+Polynomial time = polynomial in input size
+• here Θ(n) if number S ﬁts in a word
+• O(n lg S ) in general
+• S is exponential in lg S (not polynomial)
+
+Pseudopolynomial Time
+
+Pseudopolynomial time = polynomial in the problem size AND the numbers (here: S , si ’s,
+vi ’s) in input. Θ(nS ) is pseudopolynomial.
+
+Remember:
+polynomial — GOOD
+exponential — BAD
+pseudopoly — SO SO
+
+5
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

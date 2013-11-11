@@ -1,0 +1,133 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854  Advanced Algorithms 	
+
+November  5, 2001 
+
+Lecturer:  Michel  X .   Goernans 	
+
+Scribe:  T imo thy  Danford 
+
+Lecture   15 
+
+Last  time we  saw t h a t  all the  operations on dynamic trees a re  expressed in terms of  expose, which 
+was  itself expressed  in terms of  splice and  splay.  We'll do th e  running time analysis of  dynamic trees 
+in  a  manner  very  similar  t o  t h e  way  we  did  t h e  analysis  of  splay  trees. 
+
+1 	 Analysis  of  Dynamic  Trees 
+
+-	 We'll maintain  a  credit  invariant,  th e   rank  of  th e  node.  
+
+S (X )   =  number  of  descendants of  x  in  the   virtual  tree.  
+
+=  log , (s (x ) )   
+
+The  credit  invariant:  every node maintains  r ( x )  units  of  credit.  
+
+
+-	 Now,  let's look a t  splicing: 
+
+- We  switch a middle child with  a left child, bu t   this has no  impact on th e  credit invariance. 
+- Splicing occurs only a t  S tep  2 of  expose, and  therefore can be charged t o  Step 3 of  expose. 
+(i.e., we  charge  the   splicing of  S tep  2 t o  t h e  splaying  of  S tep  3). 
+
+-	 Therefore, th e  cost of  our expose operations is th e  cost of  t h e  splaying in Step 1and  t h e  cost of 
+th e  splaying in  S tep  3  (everything else we  said  abou t   splay trees also  applies  t o  virtual  trees). 
+
+1.1  Splaying 
+We  showed t h a t  splay(v) had  the  amortized  cost of  3 ( r  (root) - r (v ) )  + 1= O(1og n )  since 0 < r (v) < 
+log n  for  any v  in  a  t ree  of  size n .  
+We  can double  th is  with  no  problem,  so th e   amortized  cost  of  expose(v) is  O(1ogn).  Therefore, 
+any sequence of  m  expose operations has an  amortized cost of  O (m  log n ) .   This implies t h a t  t h e  cost 
+is  O (m1ogn )  + O (n1ogn )  = O ( (m  + n )  logn ) .  
+find-cost,  find-root,  find-min,  add-cost:  no change in th e  t ree ,  so no change in t h e  credit invariant. 
+
+cut:  	 adds an  edge  and  removes another.  Therefore, we  gain  relative t o  th e  credit  invariant. 
+
+link: 	 we  add  a  subtree.  When we  do this, we've exposed two vertices w  and  v,  so they  a re  t h e  roots 
+of  their  respective  trees.  Then  when  we  link  the   two  trees,  the   credit  invariant  increases  by 
+logn   a t  only  one  node  (i.e.,  a t  v  if  we're linking w  t o  v)  and  by  O(1ogn) overall. 
+Bottom Line:  Any  sequence of  m  dynamic tree  operations  will  take  O ( (m  + n )  logn )   time. 
+
+2 	 Using  Dynamic  Trees  to   implement  Cancel  & Tighten ef- 
+ficiently 
+
+-	 We  have a  directed  graph G ,  a  flow  f , and  a  residual capacity uf. We want  t o  repeatedly  find 
+cycles and   push  as much  flow  along  those  cycles  as possible.  Some of  the   edges of  th e   graph 
+will  be  maintained  in  t h e  dynamic  tree  and  for  those  we  will  maintain  their  residual  capacity 
+uf; for  the  edges not  in th e   dynamic t ree ,  we  will maintain  their  ac tua l  flow.  Thus, whenever 
+
+a n   edge  is  removed  from  t h e   dynamic  tree  d a t a   s t ruc tu re ,  we  need  to   compute  its  flow  by 
+subtracting  the   residual  capacity  u f   from  th e   capacity  u ;  conversely when we  add   a n  edge t o  
+th e  tree. 
+
+- We  s t a r t  with  all th e  trees a s  singletons  from  th e  graph. 
+
+- We  always t ry   t o  find  a n  admissible  a rc  entering  the   root  of  one of  th e   (dynamic) trees. 
+
+- If  we  find  an   admissible  a rc   between  two  trees  (and   entering  th e   root  of  one  of  them ) ,   we 
+connect  them  with  l ink .   Observe  t h a t   t h e  resulting  t ree   is  still  a  tree  directed  away  from  i ts  
+root. 
+
+- If, on  th e  other  hand,  t h e  admissible  a rc  connects  a  node  t o  t h e  root  r  of  its  t ree ,  then  we 
+
+- have  found  a  cycle  t o   cancel  consisting  of  th e   a rc   and   th e   p a th   from  t h e   root  r  t o   the  
+other  endpoint  of  th e   arc, 
+- compute  the   amount  S by  which  we  can  cancel  th e   cycle  (which  is  t h e  minimum  of  the  
+residual  capcaities along  t h e  cycle), 
+- increase  t h e  flow  on  the   admissible  a rc  by  S ( the  a rc  is not  added t o  th e  tree) 
+- decrease th e  residual  capacity by  6 along th e  p a th  from  root  t o  th e  other endpoint  of  the  
+a rc   ( th e  call  to  addcost). 
+- remove all  t h e  edges t h a t   have  been  sa tu ra ted  
+
+- When  the re   a re  no  admissible  edges  entering  r ,  the re   are  no  more  admissible  cycles  passing 
+through r and  we  remove all t h e  arcs in th e  t ree  leaving r .   This means  t h a t   for every a rc  (r,v) 
+where v  is  a  child of  r  in  t h e  t ree ,  we  compute  i ts  flow  from  i t s  residual  capacity  and   remove 
+th e   a rc  from  th e  tree; we  then   remove  r from  consideration my  marking  i t .  
+
+2.1  Cancel  & Tighten Algorithm, with Dynamic  Trees 
+VV  : unmark(v), make - tree(v) 
+while  3 unmarked  v,  do 
+
+if  3 admissible  a rc   (w, r )  then 
+- if  findroot(w) # r  then  
+*  link(w, r ,  u f (w , r ) )  
+- else 
+*  S = m in (u f (w , r ) , findcost (findroot(w))) 
+*  f (w,4 + f (w,  + 6 
+*  if  f (w, r )  = u (w,r ) , then  (w ,r )  is  inadmissible 
+*  addcost(w, -S) 
+*  while  findcost(findmin(w)) = 0  do 
+. x t findmin(w) 
+f (parent(x),x) t u(parent(x), x) 
+. cut(x) 
+else  (there a re  no  admissible  arcs  (w, r ) )  
+
+- mark(r) 
+- for  each  child x of  v 
+*  f ( r ,X )= ~ ( r ,X )- findcost(x) 
+*  cut(x) 
+
+2.2  Correctness & Running Time 
+
+Correctness should be obvious, as should  running  time,  which  works ou t   as follows: 
+
+
+0( n log n C )  
+# of  cancel/tighten  steps 
+0 (m n  log n )  
+t ime  per  cancel  step  O (m )  
+tighten  step  O ( ( m+ n ) l o g n )  
+
+0(m2 	n log n )  
+or
+0(m n  log n log nC )
+
+

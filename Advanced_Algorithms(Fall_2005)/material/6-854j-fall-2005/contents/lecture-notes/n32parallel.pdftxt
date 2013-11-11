@@ -1,0 +1,704 @@
+Parallel Algorithms
+
+Two closely related models of parallel computation.
+Circuits
+• Logic gates (AND/OR/not) connected by wires
+• important measures
+
+– number of gates
+
+– depth (clock cycles in synchronous circuit)
+
+PRAM
+• P processors, each with a RAM, local registers
+• global memory of M locations
+• each processor can in one step do a RAM op or read/write to one global memory
+location
+• synchronous parallel steps
+• not realistic, but explores “degree of parallelism”
+
+Essntially the same models, but let us focus on diﬀerent things.
+
+Circuits
+• Logic gates (AND/OR/not) connected by wires
+• important measures
+
+– number of gates
+
+– depth (clock cycles in synchronous circuit)
+• bounded vs unbounded fan-in/out
+• AC (k) and N C (k): unbounded and bounded fan-in with depth O(logk n) for problems
+of size n
+• AC (k) ⊂ N C (k) ⊂ AC (k + 1) using full binary tree
+• N C = ∪N C (k) = ∪AC (k)
+
+Addition
+• consider adding ai and bi with carry ci−1 to produce output si and next carry ci
+• Ripple carry: O(n) gates, O(n) time
+
+1
+
+• Carry lookahead: O(n) gates, O(log n) time
+• preplan for late arrival of ci .
+• given ai and bi , three possible cases for ci
+– if ai = bi , then ci = ai determined without ci−1 : generate c1 = 1 or kil l ci = 0
+– otherwise, propogate ci = ci−1
+– write xi = k , g , p accordingly
+• consider 3 × 3 “multiplication table” for eﬀect of two adders in a row. pair propagates
+xi
+p
+k
+p
+g
+
+previous carry only if both propagate.
+
+g
+g
+g
+g
+
+k
+k
+k
+p k
+g
+k
+
+xi−1
+
+• Now let y0 = k , yi = yi−1 × xi
+
+• constraints “multiplication table” by induction
+
+xi
+g
+p
+k
+g
+k
+k
+k
+g
+p k never
+g
+g
+g
+k
+• conclude: yi = k means ci = 0, yi = g means ci = 1, and yi = p never happens
+• so problem reduced to computing all yi in parallel
+
+yi−1
+
+Parallel preﬁx
+• Build full binary tree
+• two gates at each node
+• pass up product of all children
+• pass down product of all xi preceding leftmost child
+• works for any associative function
+
+PRAM
+
+various conﬂict resolutions (CREW, EREW, CRCW)
+• CRCW (k) ⊂ EREW (k + 1)
+• N C = ∪CRCW (k)
+
+PRAMs simulate circuits, and vice versa
+
+2
+
+• So N C well-deﬁned
+
+diﬀerences in practice
+• EREW needs log n to ﬁnd max (info theory lower bound)
+• CRCW ﬁnds max in constant time with n2 processors
+
+– Compare every pair
+
+– If an item loses, write “not max” in its entry
+
+– Check all entries
+
+– If item is max (not overwritten), write its value in answer
+• in O(log log n) time with n processors
+
+– Suppose k items remain
+– Make k2/n blocks of n/k items
+– quadratic time max for each: (k2/n)(n/k)2 = n processors total
+– recurrence: T (k) = 1 + T (k2/n)
+– T (n/2i ) = 1 + T (n/22i )
+– so log log n iters.
+
+parallel preﬁx
+• using n processors
+
+list ranking EREW
+• next pointers n(x)
+• d(x)+ = d(n(x)); n(x) = n(n(x)).
+• by induction, sum of values on path to end doesn’t change
+
+0.1 Work-Eﬃcient Algorithms
+
+Idea:
+• We’ve seen parallel algorithms that are somewhat “ineﬃcient”
+• do more total work (processors times time) than sequential
+• Ideal solution: arrange for total work to be proportional to best sequential work
+• Work-Eﬃcient Algorithm
+• Then a small number of processors (or even 1) can “simulate” many processors in a
+fully eﬃcient way
+
+3
+
+• Parallel analogue of “cache oblivious algorithm”—you write algorithm once for many
+processors; lose nothing when it gets simulated on fewer.
+
+Brent’s theorem
+• Diﬀerent perspective on work: count number of processors actually working in each
+time step.
+• If algorithm does x total work and critical path t
+• Then p processors take x/p + t time
+• So, if use p = x/t processors, ﬁnish in time t with eﬃcient algorithm
+
+Work-eﬃcient parallel preﬁx
+• linear sequential work
+• going to need log n time
+• so, aim to get by with n/ log n processors
+• give each processor a block of log n items to add up
+• reduces problem to n/ log n values
+• use old algorithm
+• each processor ﬁxes up preﬁxes for its block
+
+Work-eﬃcient list ranking
+• harder: can’t easily give contiguous “blocks” of log n to each processor (requires list
+ranking)
+• However, assume items in arbitrary order in array of log n structs, so can give log n
+distinct items to each processor.
+• use random coin ﬂips to knock out “alternate” items
+• shortcut any item that is heads and has tails successor
+• requires at most one shortcut
+• and constant probability every other item is shortcut (and indepdendent)
+• so by chernoﬀ, 1/16 of items are shortcut out
+• “compact” remmaining items into smaller array using parallel preﬁx on array of point-
+ers (ignoring list structure) to collect only “marked” nodes and update their pointers
+• let each processoor handle log n (arbitrary) items
+
+4
+
+• O(n/ log n) processors, O(log n) time
+• After O(log log n) rounds, number of items reduced to n/ log n
+• use old algorithm
+• result: O(log n log log n) time, n/ log n processors
+• to improve, use faster “compaction” algorithm to collect marked nodes: O(log log n)
+time randomized, or O(log n/ log log n) deterministic. get optimal alg.
+• How about deterministic algorithm? Use “deterministic coin tossing”
+• take all local maxima as part of ruling set.
+
+Euler tour to reduce to parallel preﬁx for computing depth in tree.
+• work eﬃcient
+
+Expression Tree Evaluation: plus and times nodes
+Generalize problem:
+• Each tree edge has a label (a, b)
+• meaning that if subtree below evaluates to y then value (ay + b) should be passed up
+edge
+
+Idea: pointer jumping
+• prune a leaf
+• now can pointer-jump parent
+• problem: don’t want to disconnect tree (need to feed all data to root!)
+• solution: number leaves in-orde
+• three step process:
+
+– shunt odd-numbered left-child leaves
+
+– shunt odd-number right-child leaves
+
+– divide leaf-numbers by 2
+
+Consider a tree fragment
+• method for eliminating all left-child leaves
+• root q with left child p (product node) on edge labeled (a3 , b3 )
+• p has left child edge (a1 , b1) leaf (cid:1) with value v
+• right child edge to s with label (a2 , b2)
+
+5
+
+• fold out p and (cid:1), make s a child of q
+• what label of new edge?
+• prepare for s subtree to eval to y .
+• choose a, b such that ay + b = a3 · [(a1 v + b1 ) · (a2y + b2 )] + b3
+
+0.2 Sorting
+
+CREW Merge sort:
+• merge to length-k sequences using n processors
+• each element of ﬁrst seq. uses binary search to ﬁnd place in second
+• so knows how many items smaller
+• so knows rank in merged sequence: go there
+• then do same for second list
+• O(log k) time with n processors
+(cid:1)
+• total time O(
+i≤lg n log 2i ) = O(log2 n)
+
+Faster merging:
+• Merge n items in A with m in B in O(log log n) time
+n × √
+√
+• choose
+m evenly spaced fenceposts αi , βj among A and B respectively
+√
+• Do all
+nm ≤ n + m comparisons
+• use concurrent OR to ﬁnd βj ≤ αi ≤ βj + 1 in constant time
+√
+• parallel compare every αi to all
+m elements in (βj , βj+1)
+• Now αi can be used to divide up both A and B into consistent pieces, each with
+elements of A
+√
+• So recurse: T (n) = 2 + T (
+
+n) = O(log log n)
+
+√
+
+n
+
+Use in parallel merge sort: O(log n log log n) with n processors.
+• Cole shows how to “pipeline” merges, get optimal O(log n) time.
+
+Connectivity and connected components
+
+Linear time sequential trivial.
+
+6
+
+Directed
+
+Squaring adjacency matrix
+• log n time to reduce diameter to 1
+• mn processors for ﬁrst iter, but adds edges
+• so, n3 processors
+• improvements to mn processors
+• But “transitive closure bottleneck” still bedevils parallel algs.
+
+Undirected
+
+Basic approach:
+• Sets of connected vertices grouped as stars
+• One root, all others parent-point to it
+• Initially all vertices alone
+• Edge “live” if connects two distinct stars
+• Find live edges in constant time by checking roots
+• For live edge with roots u < v , connect u as child of v
+• May be conﬂicts, but CRCW resolves
+• Now get stars again
+
+– Use pointer jumping
+
+– Note: may have chains of links, so need log n jumps
+• Every live star attached to another
+• So number of stars decreases by 2
+• m + n processors, log2 n time.
+
+Smarter: interleave hooking and jumping:
+• Maintain set of rooted trees
+• Each node points to parent
+• Hook some trees together to make fewer trees
+• Pointer jump (once) to make shallower trees
+
+7
+
+• Eventually, each connected component is one star
+
+More details:
+• “top” vertex: root or its children
+• each vertex has label
+• ﬁnd root label of each top vertex
+• Can detect if am star in constant time:
+
+– no pointer double reaches root
+• for each edge:
+
+– If ends both on top, diﬀerent components, then hook smaller component to larger
+
+– may be conﬂicting hooks; assume CRCW resolves
+
+– If star points to non-star, hook it
+
+– do one pointer jump
+
+Potential function: height of live stars and tall trees
+• Live stars get hooked to something (star or internal)
+• But never hooked to leaf. So add 1 to height of target
+• So sum of heights doesn’t go up
+• But now, every unit of height is in a tall tree
+• Pointer doubling decreases by 1/3
+• Total heigh divided each time
+• So log n iterations
+
+Summary: O(m + n) processors, O(log n) time.
+Improvements:
+• O((m + n)α(m, n)/ log n) processors, log n time, CRCW
+• Randomized O(log n), O(m/ log n) processors, EREW
+
+8
+
+0.3 Randomization
+
+Randomization in parallel:
+• load balancing
+• symmetry breaking
+• isolating solutions
+
+Classes:
+• NC: poly processor, polylog steps
+• RNC: with randomization. polylog runtime, monte carlo
+• ZNC: las vegas NC
+• immune to choice of R/W conﬂict resolution
+
+Sorting
+
+Quicksort in parallel:
+• n processors
+• each takes one item, compares to splitter
+• count number of predecessors less than splitter
+• determines location of item in split
+• total time O(log n)
+• combine: O(log n) per layer with n processors
+• problem: Ω(log2 n) time bound
+• problem: n log2 n work
+
+Using many processors:
+• do all n2 comparisons
+• use parallel preﬁx to count number of items less than each item
+• O(log n) time
+• or O(n) time with n processors
+
+Combine with quicksort:
+• Note: single pivot step ineﬃcient: uses n processors and log n time.
+
+9
+
+√
+
+√
+
+n simultaneous pivots
+
+• Better: use
+√
+• Choose
+n intervals
+n random items and sort fully to get
+• For all n items, use binary search to ﬁnd right interval
+• recurse
+√
+• T (n) = O(log n) + T (
+
+4 log n + · · · ) = O(log n)
+2 log n + 1
+n) = O(log n + 1
+
+√
+
+Formal analysis:
+• consider root-leaf path to any item x
+• argue total number of parallel steps on path is O(log n)
+• consider item x
+• claim splitter within α
+n on each side
+√
+√
+• since prob. not at most (1 − α
+n ≤ e
+−α
+n/n)
+• ﬁx γ , d < 1/γ
+• deﬁne τk = dk
+• deﬁne ρk = n(2/3)k
+(ρk+1 = ρ2/3
+k )
+• note size ρk problem takes γ k log n time
+• note size ρk problem odds of having child of size > ρk+1 is less than e
+−ρ1/6
+k
+• argue at most dk size-ρk problems whp
+• follows because probability of dk size-ρk problems in a row is at most
+(cid:1)
+(cid:1)
+• deduce runtime
+(dγ )k log n = O(log n)
+dk γk =
+• note: as problem shrinks, allowing more divergence in quantity for whp result
+• minor detail: “whp” dies for small problems
+• OK: if problem size log n, ﬁnish in log n time with log n processors
+
+10
+
+Maximal independent set
+
+trivial sequential algorithm
+• inherently sequential
+• from node point of view: each thinks can join MIS if others stay out
+• randomization breaks this symmetry
+
+Randomized idea
+• each node joins with some probability
+• all neighbors excluded
+• many nodes join
+• few phases needed
+
+Algorithm:
+• all degree 0 nodes join
+• node v joins with probability 1/2d(v )
+• if edge (u, v ) has both ends marked, unmark lower degree vertex
+• put all marked nodes in IS
+• delete all neighbors
+
+Intuition: d-regular graph
+• vertex vanishes if it or neighbor gets chosen
+• mark with probability 1/2d
+• prob (no neighbor marked) is (1 − 1/2d)d , constant
+• so const prob. of neighbor of v marked—destroys v
+• what about unmarking of v ’s neighbor?
+• prob(unmarking forced) only constant as argued above.
+• So just changes constants
+• const fraction of nodes vanish: O(log n) phases
+• Implementing a phase trivial in O(log n).
+
+Prob chosen for IS, given marked, exceeds 1/2
+
+11
+
+• suppose w marked. only unmarked if higher degree neighbor marked
+• higher degree neighbor marked with prob. ≤ 1/2d(w)
+• only d(w) neighbors
+• prob. any superior neighbor marked at most 1/2.
+
+For general case, deﬁne good vertices
+• good: at least 1/3 neighbors have lower degree
+• prob. no neighbor of good marked ≤ (1 − 1/2d(v ))d(v)/3 ≤ e
+−1/6 .
+• So some neighbor marked with prob. 1 − e
+−1/6
+• Stays marked with prob. 1/2
+• deduce prob. good vertex killed exceeds (1 − e
+−1/6 )/2
+• Problem: perhaps only one good vertex?
+
+Good edges
+• any edge with a good neighbor
+• has const prob. to vanish
+• show half edges good
+• deduce O(log n) iterations.
+
+Proof
+• Let VB be bad vertices; we count edges with both ends in VB .
+• direct edges from lower to higher degree di is indegree, do outdegree
+• if v bad, then di(v ) ≤ d(v )/3
+• deduce
+(cid:2)
+
+(cid:2)
+
+(cid:2)
+
+di (v ) ≤ 1
+3
+
+VB
+
+VB
+
+d(v ) =
+
+(di(v ) + do (v ))
+
+1
+3
+
+VB
+
+(cid:1)
+
+(cid:1)
+• so
+VB di (v ) ≤ 1
+VB do (v )
+2
+• which means indegree can only “catch” half of outdegree; other half must go to good
+vertices.
+• more carefully,
+– do (v ) − di (v ) ≥ 1
+3 (d(v )) = 1
+3 (do (v ) + di(v )).
+
+12
+
+– Let VG , VB be good, bad vertices
+– degree of bad vertices is
+
+(cid:2)
+
+do (v ) + di (v )
+2e(VB , VB ) + e(VB , VG) + e(VG , VB ) =
+v∈VB
+(cid:2)
+≤ 3
+(do(v ) − di (v ))
+= 3(e(VB , VG) − e(VG , VB ))
+≤ 3(e(VB , VG) + e(VG , VB )
+Deduce e(VB , VB ) ≤ e(VB , VG ) + e(VG , VB ). result follows.
+Derandomization:
+• Analysis focuses on edges,
+• so unsurprisingly, pairwise independence suﬃcient
+• not immediately obvious, but again consider d-uniform case
+• prob vertex marked 1/2d
+• neighbors 1, . . . , d in increasing degree order
+• Let Ei be event that i is marked.
+• Let E
+(cid:4)
+i be Ei but no Ej for j < i
+• Ai event no neighbor of i chosen
+• Then prob eliminate v at least(cid:2)
+(cid:2)
+i ∩ Ai ] =
+(cid:4)
+Pr[E
+≥ (cid:2)
+
+i ] Pr[Ai | E
+(cid:4)
+(cid:4)
+i ]
+Pr[E
+(cid:4)
+Pr[E
+i ] Pr[Ai ]
+
+• Wait: show Pr[Ai | E
+i ] ≥ Pr[Ai ]
+(cid:4)
+– true if independent
+i ] ≤ (cid:1)
+– measure Pr[¬Ai | E
+(cid:4)
+– measure
+
+Pr[Ew | E
+(cid:4)
+i ] =
+
+=
+
+(cid:4)
+
+Pr[Ew | E
+(cid:4)
+i ] (sum over neighbors w of i)
+Pr[Ew ∩ E
+]
+(cid:4)
+Pr[E
+i ]
+Pr[(Ew ∩ ¬E1 ∩ · · · ) ∩ Ei ]
+Pr[(¬E1 ∩ · · · ) ∩ Ei ]
+Pr[Ew ∩ ¬E1 ∩ · · · | Ei ]
+Pr[¬E1 ∩ · · · | Ei ]
+Pr[Ew | Ei ]
+1 − (cid:1)
+j≤i Pr[Ej | Ei ]
+= Θ(Pr[Ew ])
+
+=
+≤
+
+13
+
+(last step assumes d-regular so only d neighbors with odds 1/2d)
+• But expected marked neighbors 1/2, so by Markov Pr[Ai ] > 1/2
+(cid:1)
+• so prob eliminate v exceeds
+i ] = Pr[∪Ei ]
+(cid:4)
+Pr[E
+Pr[Ei ] − (cid:1)
+(cid:1)
+Pr[Ei ∩ Ej ] = 1/2 − d(d − 1)/8d2 > 1/4
+• lower bound as
+• so 1/2d prob. v marked but no neighbor marked, so v chosen
+• Generate pairwise independent with O(log n) bits
+• try all polynomial seeds in parallel
+• one works
+• gives deterministic N C algorithm
+with care, O(m) processors and O(log n) time (randomized)
+LFMIS P-complete.
+
+Perfect Matching
+
+We focus on bipartite; book does general case.
+Last time, saw detection algorithm in RN C :
+• Tutte matrix
+• Sumbolic determinant nonzero iﬀ PM
+• assign random values in 1, . . . , 2m
+• Matrix Mul, Determinant in N C
+How about ﬁnding one?
+• If unique, no problem
+• Since only one nozero term, ok to replace each entry by a 1.
+• Remove each edge, see if still PM in parallel
+• multiplies processors by m
+• but still N C
+Idea:
+• make unique minimum weight perfect matching
+• ﬁnd it
+Isolating lemma: [MVV]
+
+14
+
+• Family of distinct sets over x1 , . . . , xm
+• assign random weights in 1, . . . , 2m
+• Pr(unique min-weight set)≥ 1/2
+• Odd: no dependence on number of sets!
+• (of course < 2m)
+
+Proof:
+• Fix item xi
+• Y is min-value sets containing xi
+• N is min-value sets not containing xi
+• true min-sets are either those in Y or in N
+• how decide? Value of xi
+• For xi = −∞, min-sets are Y
+• For xi = +∞, min-sets are N
+• As increase from −∞ to ∞, single transition value when both X and Y are min-weight
+• If only Y min-weight, then xi in every min-set
+• If only X min-weight, then xi in no min-set
+• If both min-weight, xi is ambiguous
+• Suppose no xi ambiguous. Then min-weight set unique!
+• Exactly one value for xi makes it ambiguous given remainder
+• So Pr(ambiguous)= 1/2m
+• So Pr(any ambiguous)< m/2m = 1/2
+
+Usage:
+• Consider tutte matrix A
+• Assign random value 2wi to xi , with wi ∈ 1, . . . , 2m
+• Weight of matching is 2
+P
+wi
+• Let W be minimum sum
+• Unique w/pr 1/2
+
+15
+
+• If so, determinant is odd multiple of 2W
+• Try removing edges one at a time
+• Edge in PM iﬀ new determinant/2W is even.
+• Big numbers? No problem: values have poly number of bits
+
+N C algorithm open.
+For exact matching, P algorithm open.
+
+16
+
+

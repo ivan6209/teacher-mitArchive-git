@@ -1,0 +1,715 @@
+1 Maximum  Flow  
+
+1.1  Deﬁnitions 
+Tarjan:  Data  Structures  and  Network  Algorithms
+
+Ford  and  Fulkerson,  Flows  in  Networks,  1962  (paper  1956) 
+
+Ahuja, Magnanti, Orlin Network  Flows. Problem:  do min-cost. 
+
+Problem:  in  a  graph,  ﬁnd  a  ﬂow  that  is  feasible  and  has maximum  value. 
+
+Directed  graph,  edge  capacities  u(e) or  u(v , w).  Why  not  c?  reserved  for  costs, 
+
+later.
+
+source  s,  sink  t
+
+Goal:  assign  a  ﬂow  value  to  each  edge:  (raw/gross ﬂow  form)
+
+�
+w  g (v , w) − g (w, v) = 0  unless  v = s, t 
+•  conservation: 
+•  capacity:  0 ≤ g (e) ≤ u(e) (ﬂow  is  feasible/legal) 
+�
+w  g (s, w) − g (w, s)  (in  gross model). 
+•  Flow  value  |f | = 
+Water  hose  intuition.  Also  routing  commodities,  messages  under  bandwidth
+
+constraints,  etc.  Often  “per  unit  time”  ﬂows/capacities. 
+
+Maximum  ﬂow  problem:  ﬁnd  ﬂow  of maximum  value.
+
+Alternative  formulation:  (net  ﬂow  form) 
+
+•  Note  that  all  that  matters  is  diﬀerence  f (v , w) − f (w, v) 
+•  Adding  same  in  both  directions  has  no  net  eﬀect 
+•  skew  symmetry:  f (v , w) = −f (w, v) 
+�
+•  conservation: 
+w  f (v , w) = 0  unless  v = s, t 
+•  capacity:  f (e) ≤ u(e) (ﬂow is  feasible/legal) 
+Equivalence:  ﬁrst  formulation  has  “gross ﬂow”  g ,  ﬁrst  has  “net  ﬂow”  f (v , w) = 
+g (v , w) − g (w, v).  To  go  other  way,  sign  of  f  deﬁnes  “direction”  of  ﬂow  in  g . 
+For  intuition,  gross ﬂow  nice.  But  for  analysis,  we’ll  focus  on  net  ﬂow model. 
+Path  decomposition  (another  picture): 
+•  claim:  any  s-t  ﬂow  can  be  decomposed  into  paths  with  quantities 
+•  proof:  induction  on  number  of  edges  with  nonzero  ﬂow 
+•  if  s  has  out  ﬂow,  ﬁnd  an  s-t  path  (why  can  we?  conservation)  and  kill 
+•  if  some  vertex  has  outﬂow,  ﬁnd  a  cycle  and  kill 
+•  corollary:  ﬂow  into  t  equals  ﬂow  out  of  s  (global  conservation) 
+Point A.  15 minutes  to  here. 
+Cuts: 
+
+1 
+
+•  partition  of  vertices  into  2  groups 
+•  s-t-cut  if  one  has  s, other  t 
+•  represent  as  (S, S ) or  just  S 
+•  f (S ) =  net  ﬂow  leaving  S 
+•  lemma:  for  any  s-t  cut,  f (S ) =  |f |  (all  cuts  carry  same  ﬂow) 
+–  suppose move  v  from  S  to  S . 
+–  adds  f (v , S )  to  crossing  ﬂow  value  (no  longer  subtracting  from  net) 
+–  also  add  f (v , S )  (adding  to  net  ﬂow  value) 
+–  total  change:  f (v , S ∪ S ) = 0 
+Flows  versus  cuts: 
+�
+•  Deduce:  |f | ≤ u(S ) = 
+e∈S×S  u(e). 
+•  in  other  words, max-ﬂow ≤ minimum  s=t  cut  value. 
+•  soon,  we’ll  see  equal   (duality) 
+•  ﬁrst,  need more machinery. 
+Residual  network. 
+•  Given:  ﬂow  f  in  graph G 
+•  deﬁne  Gf  to  have  capacities  u = ue  − fe
+(cid:2) 
+e 
+•  if  f  feasible,  all  capacities  positive 
+•  Since  fe  can  be  negative,  some  residual  capacities  grow  
+•  Suppose  f
+(cid:2)  is  a  feasible  ﬂow  in  Gf 
+•  then  f  + f
+(cid:2)  is  feasible  ﬂow  in  G  of  value  f  + f
+–  ﬂow 
+–  feasible 
+•  Suppose  f
+(cid:2)  is  feasible  ﬂow  in  G 
+(cid:2) | − |f |) 
+(cid:2)  − f  is  feasible  ﬂow  in  Gf  (value  |f
+•  then  f
+•  corollary: max-ﬂows  in G  correspond  to  max-ﬂows  in  Gf 
+•  Many  algorithms  for max-ﬂow: 
+–  ﬁnd  some  ﬂow  f 
+–  recurse  on  Gf 
+
+(cid:2) 
+
+2 
+
+How  can  we  know  a  ﬂow  is  maximum? 
+•	 check  if  residual  network  has  0 max-ﬂow 
+•	 augmenting  path:  s-t  path  of  positive  capacity  in  Gf 
+•  if  one  exists,  not max-ﬂow 
+Max-ﬂow Min-cut 
+•	 Equivalent  statements: 
+–	 f  is  max-ﬂow 
+–	 no  augmenting  path  in  Gf 
+–  |f | = u(S ) for  some  S 
+
+Proof: 
+•	 if  augmenting  path,  can  increase  f 
+•	 let  S  be  vertices  reachable  from  S  in  Gf .  All  outgoing  edges  have  f (e) = 
+u(e) 
+•	 since  |f | ≤ u(S ),  equality  implies maximum 
+
+1.2  Algorithms 
+
+1.2.1   Augmenting   paths  
+
+Can  always  ﬁnd  one.
+
+If  capacities  integral,  always  ﬁnd  an  integer. 
+
+•	 So  terminate 
+•	 Running  time  O(mf ) 
+•	 Lemma:   ﬂow  integrality 
+•	 Polynomial  for  unit-capacity  graphs 
+•	 Also  terminate  for  rationals  (but  not  polynomial) 
+•  might  not  terminate  for  reals. 
+Note:  complex  greedy  algorithm 
+•	 always  have  augmentation 
+•	 but  augmentations may ﬁght  each other,  adding  ﬂow  to  an  edge  and  then 
+removing 
+•	 diamond  example  (s, x),  (s, y ),  (y , t),  (x, t),  (x, y ). 
+
+3 
+
+1.2.2   max   capacity   augmenting   path  
+
+How  ﬁnd  one? 
+
+Running  time:
+
+•	 recall  ﬂow  decomposition  bound 
+•	 Get  1/m  of  ﬂow  each  time. 
+•	 So  m log f  ﬂows  suﬃce  for  integer  f 
+weakly  vs.  strongly  polynomial  bounds
+
+Works  for  rational  capacities  too. 
+
+
+1.3  Scaling 
+Idea  of max-capacity  augment was  to  be  greedy 
+•	 get  most  of  solution  as  quick  as  possible. 
+•	 decrease  residual  ﬂow  quickly 
+Another  approach:scaling. 
+
+Gabow  ’85  . 
+•	 Also  [Dinitz  ’73],  but  appeared  only  in  Russian  so,  as  often  the  case  in 
+this  area,  the  american  discovery was much  later  but  independent. 
+
+General  principle  for  applying  “unit  case”  to  “general numeric  case”. 
+
+Idea:  number  is  bits;  bits  are  unit  case! 
+
+Scaling  is  reverse  of  rounding. 
+
+•	 start with  rounded  down  value  (drop  low  order  bits) 
+•	 put  back  low  order  its,  ﬁxup  solution 
+big  beneﬁt:  aside  from  scaling  phase,  often  as  simple  as  unit  case  (eg  no  data 
+
+structures!)
+
+Basic  approach:
+
+•	 capacities  are  log U  bit  numbers 
+•	 start with  all  capacities  0  (max-ﬂow  easy!) 
+•	 roll  in  one bit  of  capacity  at a  time,  starting with  high  order  and working 
+down. 
+•	 after  rollin,  update  max-ﬂow  by  ﬁnding  max-ﬂow  in  residual  graph 
+•	 eﬀect  of  rollin: 
+–	 double  all  capacities  and  ﬂow  values 
+
+4 
+
+–  double  all  residual  capacities 
+–  add  1  to  some  residual  capacities 
+•  after  log U  roll-ins,  all  numbers  are  correct,  so  ﬂow  is max-ﬂow 
+Algorithm:  repeatedly 
+•  Shift  in  one  bit  at  a  time 
+•  Run  plain  augmenting  paths 
+Analysis: 
+•  before  bit  shift,  some  cut  has  capacity  0 
+•  after  bit  shift,  cut  has  capacity  at most m 
+•  so m  augmentations  suﬃce. 
+Running  time:  O(m2  log U ).
+
+Discuss  relation  to max  capacity  algorithm. 
+
+polynomial,  but  not  strongly  polynomial. 
+
+Point B:  got   here   from   point   A
+
+
+1.4   Problem   Variants  
+Multiple  sinks 
+Edge  lower  bounds 
+Bipartite matching. 
+Vertex  capacities  (HW). 
+
+1.5  Applications 
+Matrix  Rounding  (ﬂow  with  lower  bounds). 
+P (cid:3)rj , pmtn(cid:3)Cmax  
+
+1.5.1   Shortest   Augmenting   Path  
+
+Strongly  polynomial.
+
+Instead of  being  directly  “primal”  greedy,  tackle  a  “dual”  function  that  bounds
+
+residual.
+
+•  Idea:  if  s, t  far  apart,  not much  ﬂow  can  ﬁt  in  network 
+•  So  try  to  push  up  s, t  residual  distance. 
+Lemma:   For  shortest  augment,  (s.i) and  (i, t)  distance  in  residual  graph  non-
+decreasing. 
+•  Among  i  that  got  closer  to  s 
+
+5 
+
+•  Consider  closest  to  s  (after  change) 
+•  i  has  parent  j  on  new  shortest  path 
+•  j  didn’t  get  closer  to  s 
+•  so  (j, i)  path  got  shorter 
+•  so  didn’t  used  to  have  residual  (j, i) edge 
+•  so  ﬂow  added  from  i  to  j 
+•  so  j  was  farther  than  i  from  s 
+•  now  they  swapped  places 
+•  but  j  didn’t  get  closer! 
+•  so  i  must  be  farther—contra. 
+Lemma:   at most mn/2  augmentations. 
+•  Consider  edge  (i, j )  saturated  by  augmenting  path 
+•  Before  used  again, must  push  ﬂow  on  (j, i) 
+•  In  ﬁrst  aug,  i  was  closer  than  j  to  s 
+•  In  next,  j  was  closer  than  i 
+•  Since  no  distances  go  down, must  have  increased  distance  of  i. 
+•  only  happens  n  times  per  edge 
+Running  time:  O(m2n). 
+•  Strongly  polynomial 
+•  Note  reason:  distance  is  an  integer  < n 
+
+2  Blocking  Flows 
+
+Extension  of  shortest  augmenting  path. 
+•  Strongly  polynomial  bound 
+•  increasing  source-sink  distance 
+•  wait  a minute:  can  we  beneﬁt more  from  our  shortest  path  computation? 
+Dinic’s  algorithm 
+•  layered  graph,  based  on  distance  from  sink 
+
+6 
+
+•	 admissible  arcs:  those  pointing  toward  sink 
+•	 admissible  path:  made  of  admissible  arcs 
+•	 ﬁnd  ﬂow  that  saturated  an  arc  on  every  admissible  path 
+•	 (idea  from  last  time:  when  saturate  arc,  discard  (reverse  arc  not  admis-
+sible). 
+•	 increases  source-sink  distance  by  1 
+–	 No  longer  have  admissible  path  in  layered  graph 
+–	 So  every  path  uses  at  least  one  nonadmissible  edge 
+–	 Augmentations  create  no  edge  hopping  a  level 
+–	 So  cannot make  up  for  distance  lost  traversing  nonadmissible  arc 
+–	 So  lose  at  least  one  unit  distance  on  any  path 
+•  so  n  blocking  ﬂows will  ﬁnd  a max-ﬂow 
+How  to  ﬁnd  one? 
+
+2.1  Unit  Blocking  Flows 
+Will  start  by  considering  special  case:  unit  capacity  edges. 
+•	 dfs,  like  search  for  augmenting  path 
+•	 change:  conserve  information  about  edges  once  traversed 
+•	 advance:  follow  some  outgoing  edge  from  current  vertex 
+•	 retreat:  current  node  blocked  from  sink.  move  back  to  parent 
+•	 eventually,  reach  sink:  augment  along  current  path 
+•	 seems much  like  aug  path  algorithm 
+•  but  can  save  info  since  don’t  create  residual  arcs
+
+•  once  vertex  is  blocked,  stays  that  way
+
+•	 so  when  retreat  on  edge,  can  “delete”  edge 
+•	 when  vertex  has  no  outgoing  arcs,  know  it  is  blocked 
+•	 when  augment  along  path,  can  also  “delete”  edges 
+•	 so  total  cost  of  blocking  ﬂow  is  O(m). 
+•	 so  ﬁnd  ﬂow  in  O(mn) 
+
+7 
+
+Wait  a  minute,  augmenting  path  is  also  O(mn)  on  unit  capacity!  (not  if  have 
+parallel  edges).  Why  bother? 
+•	 get  other  nice  bounds  for  uncapacitated 
+•	 get  similar  bounds  for  capacitated 
+•  better  in  practice 
+Other  unit  bounds: 
+•	 suppose  do  k  blocking  ﬂows 
+•	 consider max-ﬂow  in  residual  graph 
+•	 decompose  into  paths  (number=value  of  residual  ﬂow) 
+•	 each  has  length  k 
+•	 paths  are  disjoint 
+•	 so  number  of  paths  at most m/k 
+•	 so m/k  more  blocking  ﬂows  (or  aug  paths)  suﬃce
+
+•	 total  time:  O(km + m/k) = O(m
+
+3/2 )
+
+•  similar  argument  gives  a  bound  of  O(mn
+Bipartite matching: 
+•	 recall  problem  and  reduction 
+•	 initial and residual graphs are unit graphs:  every vertex either has indegree 
+1 or outdegree 1 
+•	 do  k  blocking  ﬂows,  decompose  as  above 
+•	 note  paths  are  vertex  disjoint 
+•	 deduce  O(n/k) ﬂow  remains
+
+√
+
+•  balance  to  get O(m n) runtime 
+What  breaks  in  general  graphs? 
+•	 basic  idea  of  advance/retreat/block  still  valid 
+•	 every  advance  is  paid  for  by  retreat  or  augment,  ignore 
+•	 still  O(m)  retreats  in  a  phase 
+•	 unfortunately,  augment  only  zaps  one  edge  (min-capacity  on  path) 
+•	 must  charge  n  (augmenting  path  work)  to  zapped  edge 
+•	 O(mn)  time  bound  for  blocking  ﬂow 
+•	 O(mn2 ) for max-ﬂow 
+•	 (still  better  than  shortest  augmenting  path) 
+
+2/3 )
+
+
+8 
+
+2.2   Data   Structures  
+goal:  preserve  info: 
+•	 zapped  edge  breaks  aug  path  into  2  pieces 
+•	 both  pieces  still  legitimate  for  aug. 
+•	 if  encounter  vertex  on  piece,  want  to  jump  to  head  of  piece  and  continue 
+from  there 
+•	 still  problem  if  must  traverse  all  edges  to  do  augment,  so  also  want  to 
+augment (reducing all edge capacities and splitting path) in constant time? 
+
+details: 
+•	 maintain  in-forest  of  augmentable  (nonsaturated)  edges 
+•	 initially  all  vertices  isolated 
+•	 “current”  vertex  always  a  root  of  tree  containing  source 
+•	 advance: 
+–	 “link”  current  (root)  vertex  to  head  of  arc 
+–	 merges  two  trees 
+–	 jump  to  root  of  (new)  current  tree 
+•	 retreat: 
+–	 “cut”  trees  into  separate  pieces 
+–	 tail  of  cut  edge  becomes  root 
+•	 augment:
+
+–  occurs  when  reach  sink
+
+–	 source/sink  in  same  tree 
+–	 ﬁnd  min-capacity  c  on  tree  path  from  source  to  sink 
+–	 decrease  all  capacities  on  this  path  by  c 
+–	 cut  at  edge  that  drops  to  0  capacity 
+•	 four  operations:  link,  cut,  min-path,  add-path 
+•	 supported  by  Dynamic  Tree  data  structure  of  (surprise)  Sleator-Tarjan 
+•	 basic  idea:  path 
+–	 maintain  ordered  list  of  vertices  on  path  in  balanced  search  tree 
+–	 store  “deltas”  so  that  true  value  of  node  is  sum  of  values  on  path  to 
+it 
+
+9 
+
+–	 easy  to maintain  under  rotations 
+–	 to  add  x  to  path  from  v ,  splay  successor  of  v  to  root,  add  x  to  root 
+of  left  subtree 
+–	 similarly, maintain  at  each  node  min  of  its  subtree 
+
+2.3  Scaling  Blocking  Flows 
+As  before,  do  log U  bit  shifts. 
+Analysis  of  one  scaling  phase: 
+•	 In  blocking  ﬂow,  we  saw  2  costs:  retreats  and  augments 
+•	 bounded  retreat  cost  by O(m)  per  blocking  ﬂow, O(mn)  total 
+•	 now  bound  augment  cost. 
+•	 claim:  at  start  of  phase,  residual  graph  ﬂow  is  O(m) 
+•	 each  augment  step  reduces  residual  ﬂow  by  1 
+•	 thus,  over whole  phase,  O(m) augments 
+•	 pay  n  for  each,  total O(mn) 
+•	 proof  of  claim: 
+–	 before  phase,  residual  graph  had  a  capacity  0  cut  (X, X ) 
+–	 each  edge  crossing  it  has  capacity  0 
+–	 then  roll  in  next  bit 
+–	 each  edge  crossing  cut  has  capacity  increase  to  at most  1 
+–	 cut  capacity  at  most m,  bound  ﬂows  value. 
+•	 Summary:  O(mn)  for  retreats  and  augments  in  a  phase. 
+•	 O(log U )  phase 
+•	 O(mn log U )  time  bound  for  ﬂows. 
+3/2
+In  recent work, Goldberg-Rao have extended  the  other  unit-cost  bounds  (m , 
+mn2/3 )  to  capacitated  graphs  using  scaling  techniques. 
+1:25   from   point   B.  
+
+10 
+
+3   Push-Relabel  
+
+covered   in   recitation  
+Goldberg  Tarjan.  (earlier work  by  Karzanov, Dinic) 
+Two  “improvements”  on  blocking  ﬂows: 
+•	 be  lazy:  update  distance  labels  only  when  necessary 
+•	 make your work count:  instead  of waiting  till  ﬁnd  augmenting  path,  push 
+ﬂow  along  each  augmentable  edge  you  ﬁnd  (no  augmentation work!). 
+
+Time  bounds  still  O(mn)-like  (no  better/worse  than  blocking  ﬂows)  but: 
+•	 some  alternative  approaches  to  get  good  time  bounds  without  fancy  data 
+structures  (or  scaling) 
+•  fantastic  in  practice—best  choice  for  real  implementations. 
+What  did  we  use  layered  graph  for? 
+•	 maintain  distances  from  sink 
+•	 send  ﬂow  on  “admissible”  arcs  (v , w) have  d(v) = d(w) + 1. 
+•  when  source-sink  distance  exceeds  n,  have max-ﬂow 
+Distance  Labels: 
+•	 lazy measure  of  distance  from  sink 
+•	 d(t) = 0 
+•	 if  residual  (v , w)  has  positive  capacity,  then  d(v) ≤ d(w) + 1 
+•	 lower  bounds  on  actual  distances 
+•	 so  when  d(s) = n, done 
+•	 arc  is  admissible  if  d(v) = d(w) + 1 
+•	 corresponds  to  level  graph  (good  to  push  ﬂow) 
+•	 if  no  admissible  arc  out  of  edge,  can  relabel,  increasing  distance,  until  get 
+one. 
+•	 distances  only  increase,  so  n  relabels  per  vertex 
+•  allows  same bounds  as blocking ﬂow O(n2m), without  explicit  bfs phases. 
+Avoid  augmenting  paths: 
+•	 consider  advance/retreat process 
+•	 instead  of waiting  till  hit  sink  to  augment,  augment  as  advance 
+
+11 
+
+•  augment  (v , w)  amount  is  min  of  ﬂow  reaching  v  and  (v , w) 
+•  “unaugment”  when  retreat—augment  reverse  arc! 
+•  means  some  vertices  have more  ﬂow  incomming  than  outgoing 
+Preﬂow: 
+•  assigns  ﬂow  to  each  edge
+
+•  obeys  capacity  constraints
+
+•	 at  all  vertices  except  sink,  net  ﬂow  into  vertex  positive: 
+
+� 
+f (w, v) ≥ 0.
+
+
+e(v) = 
+
+w 
+•  This  quantity  is  called  the  excess  at  node  v 
+•  excess  always  nonnegative 
+•  node  with  positive  excess  is  active 
+•  if  no  node  has  excess,  preﬂow  is  a  ﬂow 
+Decomposition:  any  preﬂow  is  a  collection  of 
+•  cycles 
+•  paths  from  source  to  active  nodes  and  sink 
+Push  relabel  algorithm: 
+•  maintain  valid  distance  labeling 
+•  ﬁnd  active  node  (one  with  excess) 
+•  push  along  admissible  arc  (towards  sink) 
+•  if  no  admissible  arcs,  relabel  node  (increasing  distance) 
+•  keep  pushing  ﬂow  down  till  reaches  sink. 
+Initialize: 
+•  saturate  every  arc  leaving  s  (set  f (s, v) = u(s, v),  so  e(v) = u(s, v) 
+•  set  d(s) = n  (to  absorb  blocked  ﬂow—know will  get  there  eventully) 
+•  (creates valid distance  labeling, since no residual arc from s to any vertex) 
+•  gives  preﬂow, make  into  ﬂow  by  pushes  and  relabels 
+Push: 
+
+12 
+
+•	 applies  if  active  node  v  has  admissible  outgoing  arc  (v , w) 
+•	 send min(e(v), uf (v , w))  (residual  capacity)  from  v  to  w 
+–	 saturating  push  if  send  uf (v , w) 
+–  nonsaturating  if  send  e(v) < u(v , w) 
+
+Relabel: 
+•	 applies  to  active  node  v  without  admissible  arcs 
+•  set  d(v) = 1 + min d(w) over  all  (v , w) ∈ Gf  (increases  d(v)) 
+Generic  algorithm:  while  can  push  or  relabel,  do  so. 
+•	 generally  2  phases: 
+•	 ﬁrst  max-preﬂow 
+•  then  return  excess  to  sink 
+Correctness:  Any  active  vertex  can  push  or  relabel: 
+•	 if  admissible  arc,  push 
+•	 if  no  admissible  arc,  then  (since  active)  net  ﬂow  in  is  positive,  so  residual 
+arc  out 
+•  thus,  relabel  to  larger  than  current 
+Correctness:  if  no  active  vertex,  have max-ﬂow 
+•	 no  active  vertex means  have  ﬂow 
+•	 suppose  have  augmenting  path  in  residual  graph 
+•	 working  backwards,  each  residual  arc  increases  distance  at most  1 
+•  but  we  know  d(s) = n,  contra. 
+Analysis  I:  no  distance  label  exceeds  2n 
+•	 relabel  only  on  active  vertex 
+•	 decomposition  of  preﬂow  shows  residual  path  to  source 
+•	 source  has  distance  n 
+•  v  has  distance  only  n more. 
+Deduce:  O(n)  relabels  per  node, 
+•	 O(n2 )  relabels 
+•	 total  cost O(mn).  (why?) 
+
+13 
+
+Analysis  II:  saturating  pushes 
+•  suppose  saturating  push  on  (v , w) 
+•  can’t  push  on  (v , w)  again  till  push  on  (w, v) 
+•  can’t  do  that  till  d(w)  increases 
+•  then  to  push  (v , w),  d(v) must increase 
+•  d(v)  up  by  2  each  saturating  push 
+•  O(n)  saturating  pushes  per  edge 
+•  work O(nm). 
+•  (same  arg  as  for  shortest  augmenting  path) 
+Analysis  III:  nonsaturating  pushes. 
+•  potential  function:  active  set  S ,  function 
+� 
+d(v) 
+v∈S 
+
+•  intially  0
+
+•  over  course  of  alg,  relabels  increase  qtty  by O(n2 )
+
+•  saturating push increases by at most 2n (new active vertex) (total O(mn2 )) 
+•  nonsaturating  push  decreases  by  at  least  1  (kills  active  vertex) 
+•  so  O(mn2 )  nonsaturating  pushes 
+Summary:  generic  push-relabel  does  O(mn2 ) work. 
+Waitaminit,  how  ﬁnd  admissible  arc? 
+•  keep  list  of  edges  incident  on  vertex 
+•  maintain  “current  arc”  pointer  for  each  vertex 
+•  look  for  admissible  arc  by  advancing  current  pointer 
+•  when  reach  end,  claim  can  relabel 
+•  O(n)  relables  per  node,  so  each  arc  scanned O(n) times 
+•  O(mn)  work  searching  for  current  arc. 
+Discharge method: 
+•  What  bottleneck?  Nonsaturating  pushes. 
+•  idea:  bound  nonsaturating  pushes  in  terms  of  other  operations 
+
+14 
+
+•	 discharge  operation:  push/relabel  vertex  till  becomes  inactive 
+•	 note  ends  with  at  most  1  nonsaturating  push 
+•  so  if  bound  discharges,  also  bound  bad  pushes 
+FIFO: 
+•	 keep  active  vertices  in  queue 
+•	 go  through  queue,  discharging  vertices 
+•  add  new  active  vertices  at  end  of  queue 
+Analysis: 
+•	 phase  1:  original  queue  vertices 
+•	 phase  i + 1:  vertices  enqueue  in  phase  i 
+•	 only  1  nonsaturating  push  per  vertex  per  phase  (0  excess,  remove  from 
+queue) 
+•	 claim  O(n2 )  phases: 
+
+φ = max  d(v) 
+v  active 
+•	 φ  increases  only  during  relabels:  O(n2 )  total 
+•	 if  no  relabel,  then  at  end  of  phase max  distance  decreases! 
+–	 But  total  increase O(n2 ),  so O(n2 )  relabel  phase. 
+•	 O(n)  nonsaturating  pushes  per  phase,  so O(n3 )  nonsat  pushes. 
+
+4  Fancy  Push  Relabel  Algorithms 
+
+4.1  Excess  Scaling 
+Way  to  achieve  O(nm)  without  data  structs,  but  must  discard  strong  polyno-
+
+miality.
+
+Basic  idea:  make  sure  your  pushes  send  lots  of  ﬂow. 
+
+Instead  of  highest  level,  do  lowest  level! 
+
+Can  explain  by  bit  shifts,  but  slightly  cleaner  to  talk  about  ∆-phases:
+
+•	 starts  with  all  excesses  below ∆ 
+•	 ends  with  all  excesses  below ∆/2 
+•	 initially  ∆ = U 
+•	 when  ∆ < 1,  done. 
+
+15 
+
+•	 O(log U )  phases 
+•	 each  takes  O(nm) time 
+•  so  O(nm log U ). 
+Doing  a  phase:  make  sure  pushes  are  big 
+•	 large  excess  nodes  have  e(v) ≥ ∆/2 
+•	 push  maximum  possible  without  exceeding ∆  excess  at  destination 
+•	 (turns  some  potentially  saturating  pushes  nonsaturating) 
+•	 to  ensure  big  push,  always  push  from  large  excess  with  smallest  label 
+•	 if  push  nonsaturating,  has  value  at  least ∆/2 
+–	 large  excess  source  has  at  least ∆/2, 
+–	 small  excess  dest  can  receieve  at  least  this  much  without  going  over 
+∆ 
+
+Claim:  O(n2 )  nonsaturating  pushes  per  phase: 
+•	 potential  function
+
+� 
+d(i)e(i)/∆
+
+Φ = 
+•	 relabel  increases  by  total  of  O((n2∆)/∆) = O(n2 ) 
+•	 saturating  push  decreases 
+•	 nonsaturating  push  sense ∆/2  downhill:  decrease  by  1/2 
+•	 so  O(n2 )  nonsaturating  pushes. 
+•  note:  in  this  alg,  saturating  pushes  form  bottleneck. 
+Deduce:  O(nm + n2  log U )  running  time. 
+
+4.2  Highest  Label 
+Highest  label  (more  sophisticated  ﬁfo): 
+•	 idea:  avoid  sending  nonsaturating  pushes  down  a  path  more  than  once 
+•	 keep  vertices  arranged by  distance  label  (in  buckets) 
+•	 always  discharge  from  highest  label  (ﬂow  “accumulates”  into  fewer  piles 
+as moves  towards  sink) 
+•	 easy  analysis:  if  n  discharges without  relabel,  done. 
+•	 so  1  relabel  every  n  discharges 
+
+16 
+
+•	 so  O(n3 )  discharges/nonsaturating pushes. 
+•  so  O(n3 )  time  since  relabels,  sat  pushes  O(nm). 
+Keeping  track  of  level: 
+•	 like  bucketing  shortest  paths  algorithms 
+•	 keep  pointer  to  current  highest  level 
+•	 raise  when  relabel  if  necessary 
+•	 advance  downward  to  ﬁnd  next  nonempty  bucket 
+•	 total  raising O(n2 ) 
+•  also  bound  total  descent. 
+Better  analysis: 
+•	 Basic  idea: 
+–	 block  of  excess  “originates” with  some  saturating  push  or  relabel 
+–	 then  ﬂows  downhill  on  nonsaturating  pushes 
+–	 account  by  combination  bound  on  originating  pushes  and  distance 
+travelled  downhill. 
+•	 Consider  phase  between  two  relabels 
+•	 Current  arcs 
+–	 each  vertex  has  a  “current  arc”  along which  most  recently  pushed. 
+–	 within  phase,  these  form  a  forest. 
+–	 all  nonsaturating  pushes  travel  along  forest  edges 
+•	 Consider  a  nonsaturating  push  from  a max-label  node 
+•	 work  backwards  along  current  arcs  until  get  to  leaf 
+•	 why  is  it  a  leaf ? 
+–  either  ﬂow  arrived  because  of  a  saturating  push
+
+–  or  came  with  relabel  of  leaf
+
+•  “blame”  push  we  just  sent  on  this  leaf 
+Study  “tra jectories”  of  ﬂow. 
+•	 Saturating  pushes  and  relabels  “originate”  some  excess 
+•	 then  it  ﬂows  down  nonsaturating  pushes 
+
+17 
+
+•	 until  participates  in  new  saturating  push  or  relabel. 
+•	 note  nonsaturating  push  never  “splits”  excess  (all  goes  in  one  push) 
+•	 so  nonsaturating  pushes  of  a  block  of  excess  form  a  path—  “tra jectory” 
+•	 tra jectories might  merge. 
+–	 If  so,  highest  label  rule  says  excesses  will  merge  too 
+–	 so  end  one  tra jectory 
+–	 So  can  consider  tra jectories  vertex  disjoint 
+√ 
+•	 Two  kinds  of  pushes.  “Short”  within  n/  m  of  originating  event,  “long” 
+otherwise. 
+•	 short  pushes
+
+√
+
+–	 short  path  has  O(n/  m)  nonsat  pushes 
+–	 each  starts  with  one  of O(nm)  sat  pushes  or  relabels 
+√ 
+–	 so  O(n2 m)  total  nonsat  pushes 
+•	 long  pushes 
+–	 Consider  long  push.  Work  backwards  along  current  arcs  of  nonsat. 
+pushes  excess  followed,  till  get  to  leaf 
+–	 Why is it a leaf ?  because a sat.  push or relabel delivered excess there 
+√ 
+–	 so,  leaf  must  be  more  than  n/  m  distance  from  excess  (else  short 
+push) 
+–	 but,  these  tra jectories  are  vertex  disjoint! 
+–	 so,  at most  sqrtm  distinct  tra jectories  in  phase 
+–	 deﬁne  length  of  phase  as  total  drop  in maximum  distance 
+–	 claim:  sum  of  phase  lengths  O(n2 ): 
+∗	 decreases must  be  balanced  by  increases 
+∗	 total  increase  (relabels) O(n2 )  √
+√ 
+–	 number  of  long  phases  at most  n2/(n/  m) = O(n m) 
+–	 phase  has  only  n  pushes 
+√ 
+–	 so  total O(n2 m) 
+
+Best  known  strong  poly  bound  for  push-relabel  without  fancy  data  structs. 
+
+18 
+
+4.3  Wrapup 
+Text  discusses  practical  choice,  argues  for: 
+•  shortest  aug  path  simple,  often  good  enough 
+•  highest  label  best  in  practice  if  time  to  code 
+•  excess  scaling  also  good. 
+Open:  O(nm)-ish  without  scaling,  data  structs 
+
+19 
+
+

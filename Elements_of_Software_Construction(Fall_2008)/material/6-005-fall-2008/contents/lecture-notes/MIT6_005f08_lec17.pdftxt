@@ -1,0 +1,633 @@
+MIT OpenCourseWare 
+http://ocw.mit.edu 
+
+6.005 Elements of Software Construction 
+Fall 2008 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+Today’s lecture 
+Composite pattern 
+¾ Example: view hierarchy in GUIs 
+Event-based programming 
+i input handli
+dlingi in graphihicall useri interf
+¾¾ E
+le:
+Exampl
+faces 
+h
+Model-view-controller pattern 
+¾ Found throughout user interfaces 
+
+Event-Based Programming 
+
+Rob Miller 
+Fall 2008 
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+Graphical User Interfaces 
+GUIs are composed from small reusable pieces 
+window (JFrame) 
+button (JButton) 
+
+View Hierarchy 
+A GUI is structured as a hierarchy of views 
+¾ A view is an object that displays itself on a rectangular region of the screen 
+
+tree widget 
+(JTree) 
+
+JFrame 
+
+JSplitPane 
+
+JPanel 
+
+JScrollPane 
+
+JPanel 
+
+S 
+ll 
+JScrollPane 
+
+JPanel 
+JP 
+l 
+
+splitter bar 
+(JSplitPane) 
+
+© Robert Miller 2008 
+
+scrolling pane 
+(JSplitPane) 
+
+JButton
+JButton
+JButton
+JButton 
+
+JTree 
+
+Thumbnail
+Thumbnail
+Thumbnail
+Thumbnail
+Thumbnail 
+
+© Robert Miller 2008 
+
+1 
+
+Composite Pattern 
+View hierarchy is an example of the Composite pattern 
+¾ Primitive views don’t contain other views 
+•  button, tree widget, textbox, thumbnail, etc .
+ 
+¾ Composite views are used for grouping or modifying other views
+
+¾ Composite views are used for grouping or modifying other views
+•  JSplitPane displays two views side-by-side with an adjustable splitter 
+•  JScrollPane displays only part of a view, with adjustable scrollbars 
+Key idea 
+¾ primitives and composites implement a common interface (JComponent) 
+¾ containers can hold any JComponent, so both primitives and other 
+containers 
+
+JScrollPane 
+
+JScrollPane 
+
+JTree 
+
+JPanel 
+
+© Robert Miller 2008 
+
+Thumbnail
+Thumbnail
+Thumbnail	 
+
+Handling Mouse Input 
+Centralized approach? 
+while (true) { 
+read mouse click 
+if (c licked on New Album) doNewAlbum(); 
+if (c licked on New Album) doNewAlbum(); 
+else if (c licked on Delete Album) doDeleteAlbum(); 
+else if (c licked on Add Photos) doAddPhotos(); 
+... 
+else if (c licked on an album in the tree) doSelectAlbum(); 
+else if (c licked on +/- button in the tree) doToggleTreeExpansion(); 
+.... 
+else if (c licked on a thumbnail) doToggleThumbnailSelection(); 
+... 
+Not modular! 
+¾ Mixes up responsibilities for button panel, album tree, and thumbnails all in 
+one place 
+
+© Robert Miller 2008 
+
+How the View Hierarchy Is Used 
+Output  
+ 
+¾ GUIs change their output by mutating the view hierarchy
+ 
+•	  e.g., to show a new set of photos, the current Thumbnails are removed 
+from the tree and a new set of Thumbnails is added in their place
+from the tree and a new set of Thumbnails is added in their place
+
+¾ A redraw algorithm automatically redraws the affected views using the 
+ 
+interpreter pattern (paint() method)
+ 
+Input 
+¾ GUIs receive keyboard and mouse input by attaching listeners to views 
+ 
+(more on this in a bit) 
+ 
+Layout 
+¾ An automatic layout algorithm automatically calculates positions and sizes 
+of views using the interpreter pattern (doLayout() method) 
+•  Specialized composites (JSplitPane, JScrollPane) do layout themselves 
+•	  Generic composites (JPanel, JFrame) delegate layout decisions to a 
+layout manager (e.g. FlowLayout, GridLayout, BorderLayout, ...) 
+
+© Robert Miller 2008 
+
+Input Handling on the View Hierarchy 
+Input handlers are associated with views 
+ 
+¾ Also called listeners, event handlers, subscribers, and observers 
+ 
+
+JFrame 
+
+JSplitPane 
+
+not to be confused with
+not to be confused with 
+observer methods in a
+observer methods in a 
+datatype
+datatype 
+
+JPanel 
+
+JScrollPane 
+
+JPanel 
+
+JScrollPane 
+
+JPanel 
+
+JButton
+JButton
+JButton
+JButton 
+
+deleteAlbum:
+newAlbum: 
+MouseListener
+MouseListener 
+
+JTree 
+
+selectAlbum: 
+MouseListener 
+
+Thumbnail
+Thumbnail
+Thumbnail
+Thumbnail
+Thumbnai 
+l
+
+© Robert Miller 2008 
+
+selectThumbnail: 
+MouseListener 
+
+2 
+
+
+
+
+
+Event-Based Programming 
+Control flow through a graphical user interface 
+¾ A top-level event loop reads input from mouse and keyboard 
+¾ For each input event, it finds the right view in the hierarchy (by looking at 
+the x,y position of the mouse) and sends the event to that view s listeners 
+the x,y position of the mouse) and sends the event to that view’s listeners
+¾ Listener does its thing (e.g. modifying the view hierarchy) and returns 
+
+immediately to the event loop 
+
+
+A Closer Look at Listeners 
+JComponent 
+
+Listener 
+
+class JComponent { 
+... 
+
+public void addMouseListener(MouseListener l) ... 
+public void removeMouseListener(MouseListener l) ... 
+
+private void fireMousePress(int x, int y) { 
+MouseEvent event = new MouseEvent(..., x, y, ...); 
+for (MouseListener l : listeners) { 
+l.mousePressed(e); 
+
+}
+} 
+
+} 
+
+interface MouseListener { 
+void mousePressed(MouseEvent e); 
+id 
+R l   d(M 
+void mouseReleased(MouseEvent e); 
+E 
+)
+void mouseMoved(MouseEvent e); 
+... 
+
+} 
+
+© Robert Miller 2008 
+
+Component is very weakly coupled to its listeners 
+¾ Component doesn’t depend on the identity of the listening class, only that 
+it implements the MouseListener interface 
+¾ Component doesn’t depend on the number of listeners, and listeners can 
+come and go 
+© Robert Miller 2008 
+
+Publish-Subscribe Pattern 
+GUI input handling is an example of the Publish-
+ 
+Subscribe pattern
+ 
+¾ aka Listener, Event, Observer 
+An event source generates a stream of discrete events
+An event source generates a stream of discrete events 
+¾ In this example, the mouse is the event source 
+¾ Events are state transitions in the source 
+¾ Events often include additional info about the transition (e.g. x,y position of 
+mouse), bundled into an event object or passed as parameters
+ 
+Listeners register interest in events from the source
+ 
+¾ Can often register only for specific events – e g e.g.,  only want mouse events 
+–
+¾ Can often register only for specific events 
+only want mouse events 
+occurring inside a view’s bounds 
+¾ Listeners can unsubscribe when they no longer want events 
+When an event occurs, event source distributes it to all 
+interested listeners 
+
+Other Examples of Publish-Subscribe 
+Higher-level GUI input events 
+¾ JButton sends an action event when it is pressed (whether by the mouse 
+ 
+or by the keyboard) 
+ 
+¾ JTree sends a selection event when the selected element changes (whether 
+¾ JTree sends a selection event when the selected element changes (whether 
+by mouse or by keyboard) 
+¾ JTextbox sends change events when the text inside it changes for any 
+reason 
+Internet messaging 
+¾ Email mailing lists 
+ 
+¾ IM chatrooms 
+ 
+
+© Robert Miller 2008 
+
+© Robert Miller 2008 
+
+3 
+
+Separating Frontend from Backend 
+We’ve seen how to separate input and output in GUIs 
+¾ Output is represented by the view hierarchy
+
+¾ Input is handled by listeners attached to views
+
+the system 
+Missing piece is the backend of the system
+Missing piece is the backend of
+¾ Backend (aka model) represents the actual data that the user interface is 
+showing and editing 
+¾ Why do we want to separate this from the user interface? 
+
+Model-View-Controller Pattern 
+Model-View-Controller (MVC) separates responsibilities 
+¾ View displays output
+
+¾ Controller handles input
+
+Model
+aes 
+n oaticippl
+data
+
+ stor
+¾ Model stores application data
+¾
+
+© Robert Miller 2008 
+
+A More Detailed Look 
+Listener interface decouples the view from the 
+controller (somewhat)
+
+
+MVC with a Mutable Model 
+Controller mutates the model; model updates the view
+
+
+4 
+
+Decoupling the Model from the View 
+More interfaces decouple the view and the model 
+
+Another MVC Example:Textbox 
+
+Summary of MVC 
+View handles output	
+• calls observers on the model to display it 
+• listens for model changes and updates display 
+
+Controller handles input 
+• listens for input events on the view hierarchy 
+• calls mutators on model or view 
+
+Advantages of Model-View-Controller 
+Separation of responsibilities 
+¾ Each module is responsible for just one feature 
+•  Model: data 
+•  View: output 
+ 
+i 
+•  C t
+ i
+l
+t
+lll
+Contro  er :  nput 
+Decoupling 
+¾ View and model are decoupled from each other, so they can be changed
+independently 
+¾ Model can be reused with other views 
+•	 e.g. JTree view that displays the full filesystem tree, and a JLabel view
+
+that just displays the number of files
+
+¾ Multiple views can simultaneously share the same model
+
+¾ Views can be reused with other models, as long as the model implements 
+an interface 
+•  e.g. JTree class (the view) and TreeModel interface 
+
+© Robert Miller 2008 
+
+5 
+
+Risks of Event-Based Programming
+Spaghetti of event handlers
+(cid:190) Control flow through an event-based program is not simple
+(cid:190) You can’t follow the control just by studying the source code, because 
+control flow depends on listener relationships established at runtime
+control flow depends on listener relationships established at runtime
+(cid:190) Careful discipline about who listens to what (like the model-view-
+controller pattern) is essential for limiting the complexity of control flow
+Obscured control flow leads to some unexpected 
+pitfalls...
+
+© Robert Miller 2008
+
+Pitfall #1: Listener Calls Observers
+The listener often calls methods on the source
+(cid:190) e.g., when a textbox gets a change event from its model, it needs to call 
+getText() to get the new text and display it
+(cid:190) So observer method calls may occur while the mutator is still in progress
+(cid:190) So observer method calls may occur while the mutator is still in progress
+
+client
+
+source
+
+listener
+
+mutator
+
+changeEvent
+observer
+
+Why is this a potential problem?
+
+Basic Interaction of Event Passing
+Sequence diagram is good for depicting control flow
+(cid:190) Time flows downward
+(cid:190) Each vertical time line shows one object’s lifetime
+(cid:190) Horizontal arrows show calls and returns  trading control between objects
+(cid:190) Horizontal arrows show calls and returns, trading control between objects
+(cid:190) Dark rectangles show when a method is active (i.e., has been called but 
+hasn’t returned yet)
+client
+
+listener
+
+source
+
+addListener
+
+mutator
+
+interface Source {
+addListener()
+removeListener()
+observer()
+mutator()
+mutator()
+
+}
+
+changeEvent
+
+© Robert Miller 2008
+
+interface Listener {
+changeEvent()
+
+}
+
+Pitfall #1: Specific Example
+class Filesystem {
+private Map<File, List<File>> cache;
+public List<File> getContents(File folder) {
+check for folder in cache , otherwise read it from disk and update cache }
+check for folder in cache , otherwise read it from disk and update cache }
+public void deleteContents(File folder) {
+for (File f: getContents(folder)) {
+f.delete();
+fireChangeEvent(f, REMOVED);  // notify listeners that f was deleted }
+cache.remove(folder);  // cache is no longer valid for this folder}
+
+}
+
+Solution
+(cid:190) source must establish rep invariant before giving up control to any listeners
+(cid:190) often done simply by waiting to send events until end of  mutator
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+11/7/2008
+
+6
+
+Pitfall #2: Listener Calls Mutators
+The listener might call mutator on the source
+(cid:190) e.g., when two sources are listening to each other in order to keep their 
+state synchronized
+(cid:190) So calls to mutators may occur while mutator is still in progress
+(cid:190) So calls to mutators may occur while mutator is still in progress
+
+client
+
+source1
+
+listener 
+
+source 2
+
+listener 
+
+mutator
+
+changeEvent
+
+mutator
+
+mutator
+
+changeEvent
+
+Pitfall #2: Specific Example
+
+change event
+
+ChangeListener
+ChangeListener
+
+setText()
+
+JSlider
+
+JTextbox
+
+setValue()
+
+ChangeListener
+
+change event
+
+Why is this a potential problem?
+
+Solution
+(cid:190) only send events when mutator actually causes a state change 
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+Pitfall #3: Listener Removes Itself
+The listener might call removeListener() on the source
+(cid:190) This happens when the listener is done its work, e.g. a listener that 
+executes a stock trade as soon as a certain price is reached 
+(cid:190) So calls to removeListener() may occur while mutator is still in progress
+(cid:190) So calls to removeListener() may occur while mutator is still in progress
+
+client
+
+source
+
+listener
+
+set
+
+changeEvent
+removeListener
+
+Why is this a potential problem?
+
+Pitfall #3: Specific Example
+class Source {
+private Listener[] listeners;  
+private int size;
+public void removeListener(Listener l) { 
+public void removeListener(Listener l) { 
+for (int i = 0; i < size; ++i) {
+if (listeners[i] == l) { listeners[i] = listeners[size-1]; --size; } }
+private void fireChangeEvent(...) {
+for (int i = 0; i < size; ++i) listeners[i].changed(...);   } 
+
+What happens if 
+listeners[i] removes 
+itself here?
+itself here? 
+
+}
+(cid:190) Java collections (Set, List, etc) have the same problem:
+It’s not safe to mutate a collection while you’re iterating over it
+Solution
+(cid:190) fire events by iterating over a copy of the listeners data structure
+(cid:190) or use javax.swing.EventListenerList which copies only when necessary
+
+© Robert Miller 2008
+
+© Robert Miller 2008
+
+11/7/2008
+
+7
+
+Summary 
+View hierarchy 
+¾ Organizes the screen into a tree of nested rectangles 
+¾ Used for dispatching input as well as displaying output 
+¾ Uses the Composite pattern: compound views (windows, panels) can be 
+¾ Uses the Composite pattern: compound views (windows  panels) can be 
+treated just like primitive views (buttons, labels) 
+Publish-subscribe pattern 
+¾ An event source sends a stream of events to registered listeners
+ 
+¾ Decouples the source from the identity of the listeners
+ 
+¾ Beware of pitfalls 
+ 
+MVC pattern
+MVC pattern 
+¾ Separation of responsibilities: model=data, view=output, controller=input 
+¾ Decouples view from model 
+
+© Robert Miller 2008 
+
+8 
+
+

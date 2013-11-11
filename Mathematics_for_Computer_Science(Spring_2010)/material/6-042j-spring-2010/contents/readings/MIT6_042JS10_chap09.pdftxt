@@ -1,0 +1,1642 @@
+Chapter 9 
+
+State Machines 
+
+9.1  State machines 
+
+State machines  are  an  abstract model  of  step-by-step  processes,  and  accordingly, 
+they  come  up  in  many  areas  of  computer  science.  You  may  already  have  seen 
+them in a digital logic course, a compiler course, or a probability course. 
+
+9.1.1  Basic deﬁnitions 
+A state machine is really nothing more than a binary relation on a set, except that 
+the elements of the set are called “states,” the relation is called the transition relation, 
+and  a  pair  (p, q)  in  the  graph  of  the  transition  relation  is  called  a  transition.  The 
+transition  from state p  to state q will be written p  −→  q .  The  transition  relation  is 
+also  called  the  state  graph  of  the machine.  A  state machine  also  comes  equipped 
+with a designated start state. 
+State  machines  used  in  digital  logic  and  compilers  usually  have  only  a  ﬁnite 
+number of states, but machines that model continuing computations typically have 
+an  inﬁnite  number  of  states.  In many  applications,  the  states,  and/or  the  transi­
+tions have  labels  indicating  input or output values, costs, capacities, or probabili­
+ties, but for our purposes, unlabelled states and transitions are all we need.1 
+Example 9.1.1.  A bounded counter, which counts from 0 to 99 and overﬂows at 100. 
+The transitions are pictured in Figure 9.1, with start state zero.  This machine isn’t 
+much use once it overﬂows, since it has no way to get out of its overﬂow state. 
+Example 9.1.2.  An unbounded counter is similar, but has an inﬁnite state set.  This 
+is harder to draw :-)
+
+Example 9.1.3.  In the movie Die Hard 3: With a Vengeance, the characters played by
+
+Samuel L. Jackson and Bruce Willis have to disarm a bomb planted by the diaboli­
+
+cal Simon Gruber:
+
+1We  do  name  states,  as  in  Figure  9.1,  so we  can  talk  about  them,  but  the  names  aren’t  part  of  the 
+state machine. 
+
+135 
+
+136 
+
+CHAPTER 9.  STATE MACHINES 
+
+Figure 9.1:  State transitions for the 99-bounded counter. 
+
+Simon:  On  the  fountain,  there  should  be  2  jugs,  do  you  see  them?  A  5­
+gallon and a 3-gallon.  Fill one of  the  jugs with  exactly 4 gallons of water 
+and  place  it  on  the  scale  and  the  timer  will  stop.  You  must  be  precise; 
+one  ounce more  or  less will  result  in  detonation.  If  you’re  still  alive  in  5 
+minutes, we’ll speak. 
+Bruce:  Wait, wait a second.  I don’t get it. Do you get it? 
+Samuel:  No. 
+Bruce:  Get the jugs.  Obviously, we can’t ﬁll the 3-gallon jug with 4 gallons 
+of water. 
+Samuel:  Obviously. 
+Bruce:  All right.  I know, here we go.  We ﬁll the 3-gallon jug exactly to the 
+top, right? 
+Samuel:  Uh-huh. 
+Bruce:  Okay,  now  we  pour  this  3  gallons  into  the  5-gallon  jug,  giving  us 
+exactly 3 gallons in the 5-gallon jug, right? 
+Samuel:  Right, then what? 
+Bruce:  All right. We take the 3-gallon jug and ﬁll it a third of the way... 
+Samuel:  No! He said, “Be precise.” Exactly 4 gallons. 
+Bruce:  Sh - -.  Every cop within 50 miles is running his a - - off and I’m out 
+here playing kids games in the park. 
+Samuel:  Hey, you want to focus on the problem at hand? 
+
+Fortunately,  they ﬁnd a  solution  in  the nick of  time.  We’ll  let  the  reader work 
+out how. 
+The Die Hard series is getting tired, so we propose a ﬁnal Die Hard Once and For 
+All. Here Simon’s brother returns to avenge him, and he poses the same challenge, 
+but with the 5 gallon jug replaced by a 9 gallon one. 
+We can model jug-ﬁlling scenarios with a state machine.  In the scenario with a 
+3 and a 5 gallon water  jug,  the states will be pairs, (b, l) of real numbers such that 
+
+01299overflowstartstate9.1.  STATE MACHINES 
+
+137 
+
+0 ≤  b ≤  5, 0 ≤  l  ≤  3.  We let b and l be arbitrary real numbers.  (We can prove that 
+the values of b and l will only be nonnegative integers, but we won’t assume this.) 
+The start state is (0, 0), since both jugs start empty. 
+Since the amount of water in the jug must be known exactly, we will only con­
+sider moves in which a jug gets completely ﬁlled or completely emptied. There are 
+several kinds of transitions: 
+1.  Fill the little jug:  (b, l) −→ (b, 3) for l < 3. 
+2.  Fill the big jug:  (b, l) −→ (5, l) for b < 5. 
+3.  Empty the little jug:  (b, l) −→ (b, 0) for l > 0. 
+4.  Empty the big jug:  (b, l) −→ (0, l) for b > 0. 
+� 
+5.  Pour from the little jug into the big jug:  for l > 0, 
+if b + l ≤ 5,
+(b + l, 0) 
+(5, l − (5 − b))  otherwise. 
+� 
+6.  Pour from big jug into little jug:  for b > 0, 
+if b + l ≤ 3,
+(0, b + l) 
+(b − (3 − l), 3)  otherwise. 
+
+(b, l) −→ 
+
+(b, l) −→ 
+
+Note  that  in  contrast  to  the  99-counter  state  machine,  there  is  more  than  one 
+possible  transition  out  of  states  in  the  Die  Hard  machine.  Machines  like  the  99­
+counter with  at most  one  transition  out  of  each  state  are  called  deterministic.  The 
+Die Hard machine  is nondeterministic because some states have  transitions  to sev­
+eral different states. 
+Quick exercise: Which states of the Die Hard 3 machine have direct transitions 
+to exactly two states? 
+
+9.1.2  Reachability and Preserved Invariants 
+The Die Hard 3 machine models every possible way of pouring water among  the 
+jugs  according  to  the  rules.  Die Hard  properties  that we want  to  verify  can  now 
+be  expressed  and  proved  using  the  state  machine  model.  For  example,  Bruce’s 
+character will disarm the bomb if he can get to some state of the form (4, l). 
+A  (possibly  inﬁnite)  path  through  the  state  graph  beginning  at  the  start  state 
+corresponds to a possible system behavior; such a path is called an execution of the 
+state machine. A state is called reachable if it appears in some execution. The bomb 
+in Die Hard 3 gets disarmed successfully because the state (4,3) is reachable. 
+A useful approach in analyzing state machine is to identify properties of states 
+that are preserved by transitions. 
+
+138 
+
+CHAPTER 9.  STATE MACHINES 
+
+Deﬁnition 9.1.4.  A preserved invariant of a state machine is a predicate, P , on states, 
+such  that whenever  P (q)  is  true  of  a  state,  q ,  and  q  −→  r  for  some  state,  r ,  then 
+P (r) holds. 
+
+The Invariant Principle 
+
+If a preserved invariant of a state machine is true for the start state, 
+then it is true for all reachable states. 
+
+The Invariant Principle  is nothing more than the Induction Principle reformu­
+lated  in a convenient  form  for state machines.  Showing  that a predicate  is  true  in 
+the  start  state  is  the  base  case  of  the  induction,  and  showing  that  a predicate  is  a 
+preserved invariant is the inductive step.2 
+
+Die Hard Once and For All 
+
+Now back to Die Hard Once and For All.  This time there is a 9 gallon  jug instead 
+of  the  5  gallon  jug.  We  can  model  this  with  a  state  machine  whose  states  and 
+transitions  are  speciﬁed  the  same  way  as  for  the  Die  Hard  3  machine,  with  all 
+occurrences of “5” replaced by “9.” 
+Now reaching any state of the form (4, l) is impossible. We prove this using the 
+Invariant Principle.  Namely, we deﬁne  the preserved  invariant predicate, P (b, l), 
+to be that b and l are nonnegative integer multiples of 3.  So P  obviously holds for 
+the state state (0, 0). 
+To prove that P  is a preserved invariant, we assume P (b, l) holds for some state 
+(b, l) and show  that  if (b, l)  −→  (b� , l� ),  then P (b� , l� ).  The proof divides  into cases, 
+according  to  which  transition  rule  is  used.  For  example,  suppose  the  transition 
+followed  from  the “ﬁll  the  little  jug”  rule.  This means  (b, l)  −→  (b, 3).  But P (b, l) 
+implies  that b  is an  integer multiple of 3, and of course 3  is an  integer multiple of 
+3, so P  still holds for the new state (b, 3).  Another example is when the transition 
+rule used is “pour from big jug into little jug” for the subcase that b + l >  3.  Then 
+state  is  (b, l)  −→  (b − (3 − l), 3).  But  since  b and  l  are  integer multiples of 3,  so  is 
+b − (3 − l).  So in this case too, P  holds after the transition. 
+We  won’t  bother  to  crank  out  the  remaining  cases,  which  can  all  be  checked 
+just  as  easily.  Now  by  the  Invariant  Principle,  we  conclude  that  every  reachable 
+
+2 Preserved  invariants  are  commonly  just  called  “invariants”  in  the  literature  on  program  correct­
+ness,  but  we  decided  to  throw  in  the  extra  adjective  to  avoid  confusion  with  other  deﬁnitions.  For 
+example, another subject at MIT uses “invariant” to mean “predicate true of all reachable states.” Let’s 
+call this deﬁnition “invariant-2.” Now invariant-2 seems like a reasonable deﬁnition, since unreachable 
+states by deﬁnition don’t matter, and all we want to show is that a desired property is invariant-2.  But 
+this  confuses  the  objective  of  demonstrating  that  a  property  is  invariant-2  with  the  method  for  show­
+ing  that  it  is.  After all,  if we already knew  that a property was  invariant-2, we’d have no need  for an 
+Invariant Principle to demonstrate it. 
+
+9.1.  STATE MACHINES 
+
+139 
+
+state satisiﬁes P .  But since no state of  the  form (4, l) satisiﬁes P , we have proved 
+rigorously that Bruce dies once and for all! 
+By the way, notice that the state (1,0), which satisﬁes NO T(P ), has a transition to 
+(0,0), which satisﬁes P . So it’s wrong to assume that the complement of a preserved 
+invariant is also a preserved invariant. 
+
+A Robot on a Grid 
+
+There is a robot.  It walks around on a grid, and at every step it moves diagonally 
+in a way that changes its position by one unit up or down and one unit left or right. 
+The robot starts at position (0, 0). Can the robot reach position (1, 0)? 
+To get some  intuition, we can simulate some robot moves.  For example, start­
+ing  at  (0,0)  the  robot  could  move  northeast  to  (1,1),  then  southeast  to  (2,0),  then 
+southwest to (1,-1), then southwest again to (0,-2). 
+Let’s model the problem as a state machine and then ﬁnd a suitable  invariant. 
+A  state  will  be  a  pair  of  integers  corresponding  to  the  coordinates  of  the  robot’s 
+position.  State (i, j ) has transitions to four different states:  (i ± 1, j ± 1). 
+The  problem  is  now  to  choose  an  appropriate  preserved  invariant,  P ,  that  is 
+true  for  the  start  state  (0, 0)  and  false  for  (1, 0).  The  Invariant  Theorem  then will 
+imply that the robot can never reach (1, 0). A direct attempt for a preserved invari­
+ant is the predicate P (q) that q = (1
+, 0). 
+Unfortunately,  this  is  not  going  to  work.  Consider  the  state  (2, 1).  Clearly 
+P (2, 1)  holds  because  (2, 1)  �=  (1, 0).  And  of  course  P (1, 0)  does  not  hold.  But 
+(2, 1) −→ (1, 0), so this choice of P  will not yield a preserved invariant. 
+We need a stronger predicate.  Looking at our example execution you might be 
+able  to guess a proper one, namely,  that  the sum of  the coordinates  is even!  If we 
+can  prove  that  this  is  a  preserved  invariant,  then  we  have  proven  that  the  robot 
+never  reaches  (1, 0) —because  the  sum  1 + 0  of  its  coordinates  is  odd,  while  the 
+sum 0 + 0 of the coordinates of the start state is even. 
+
+Theorem 9.1.5.  The sum of the robot’s coordinates is always even. 
+
+Proof.  The proof uses the Invariant Principle. 
+Let P (i, j ) be the predicate that i + j  is even. 
+First, we must  show  that  the  predicate  holds  for  the  start  state  (0, 0).  Clearly, 
+P (0, 0) is true because 0 + 0 is even. 
+Next,  we must  show  that  P  is  a  preserved  invariant.  That  is,  we must  show 
+that  for  each  transition  (i, j )  −→  (i� , j � ),  if  i + j  is  even,  then  i�  + j �  is  even.  But 
+i�  =  i ± 1 and j �  =  j ± 1 by deﬁnition of the transitions.  Therefore, i�  + j �  is equal 
+to i + j  or i + j ± 2, all of which are even. 
+� 
+
+Corollary 9.1.6.  The robot cannot reach (1, 0). 
+
+�
+140 
+
+CHAPTER 9.  STATE MACHINES 
+
+Robert W. Floyd 
+
+The Invariant Principle was formulated by Robert Floyd at Carnegie Techa  in 1967. 
+Floyd was  already  famous  for work  on  formal  grammars which  transformed  the 
+ﬁeld  of  programming  language  parsing;  that  was  how  he  got  to  be  a  professor 
+even though he never got a Ph.D. (He was admitted to a PhD program as a teenage 
+prodigy, but ﬂunked out and never went back.) 
+In  that  same  year,  Albert  R.  Meyer  was  appointed  Assistant  Professor  in  the 
+Carnegie Tech Computer Science Department where he ﬁrst met Floyd. Floyd and 
+Meyer were the only theoreticians in the department, and they were both delighted 
+to talk about their shared interests. After just a few conversations, Floyd’s new ju­
+nior colleague decided that Floyd was the smartest person he had ever met. 
+Naturally,  one  of  the  ﬁrst  things  Floyd wanted  to  tell Meyer  about was  his  new, 
+as yet unpublished,  Invariant Principle.  Floyd explained  the result  to Meyer, and 
+Meyer wondered  (privately)  how  someone  as  brilliant  as  Floyd  could  be  excited 
+by  such a  trivial observation.  Floyd had  to  show Meyer a bunch of examples be­
+fore Meyer understood Floyd’s excitement —not at the truth of the utterly obvious 
+Invariant Principle,  but  rather  at  the  insight  that  such  a  simple  theorem  could be 
+so widely and easily applied in verifying programs. 
+Floyd left for Stanford the following year. He won the Turing award —the “Nobel 
+prize”  of  computer  science—  in  the  late  1970’s,  in  recognition  both  of  his  work 
+on  grammars  and  on  the  foundations  of  program  veriﬁcation.  He  remained  at 
+Stanford  from 1968 until his death  in September,  2001.  You can  learn more about 
+Floyd’s life and work by reading the eulogy written by his closest colleague, Don 
+Knuth. 
+
+a The following year, Carnegie Tech was renamed Carnegie-Mellon Univ. 
+
+9.1.3  Sequential algorithm examples 
+Proving Correctness 
+
+Robert Floyd, who pioneered modern approaches to program veriﬁcation, distin­
+guished two aspects of state machine or process correctness: 
+1.  The  property  that  the  ﬁnal  results,  if  any,  of  the  process  satisfy  system  re­
+quirements. This is called partial correctness.
+
+You might  suppose  that  if  a  result was  only  partially  correct,  then  it might
+
+also be partially incorrect, but that’s not what he meant.  The word “partial”
+
+comes from viewing a process that might not terminate as computing a partial
+
+function.  So partial correctness means that when there is a result, it is correct,
+
+but  the  process might  not  always  produce  a  result,  perhaps  because  it  gets
+
+stuck in a loop.
+
+
+9.1.  STATE MACHINES 
+
+141 
+
+2.  The  property  that  the  process  always  ﬁnishes,  or  is  guaranteed  to  produce 
+some legitimate ﬁnal output. This is called termination. 
+
+Partial correctness can commonly be proved using the Invariant Principle. Ter­
+mination can commonly be proved using the Well Ordering Principle.  We’ll illus­
+trate  Floyd’s  ideas  by  verifying  the  Euclidean  Greatest  Common  Divisor  (GCD) 
+Algorithm. 
+
+The Euclidean Algorithm 
+
+The  Euclidean  algorithm  is  a  three-thousand-year-old  procedure  to  compute  the 
+greatest  common  divisor,  gcd(a, b)  of  integers  a  and  b.  We  can  represent  this  al­
+gorithm as a  state machine.  A  state will be a pair of  integers  (x, y) which we  can 
+think of as integer registers in a register program. The state transitions are deﬁned 
+by the rule 
+(x, y) −→ (y , remainder(x, y)) 
+for y = 0
+. The algorithm terminates when no further transition is possible, namely 
+when y = 0. The ﬁnal answer is in x. 
+We want to prove: 
+
+1.  Starting  from  the state with x  =  a and y  =  b >  0,  if we ever ﬁnish,  then we 
+have the right answer.  That is, at termination, x  =  gcd(a, b).  This is a partial 
+correctness claim. 
+
+2.  We do actually ﬁnish. This is a process termination claim. 
+
+Partial Correctness of GCD  First let’s prove that if GCD gives an answer,  it is a 
+correct answer.  Speciﬁcally,  let d ::= gcd(a, b).  We want to prove that if  the proce­
+dure ﬁnishes in a state (x, y), then x = d. 
+
+Proof.  Deﬁne the state predicate 
+
+P (x, y) ::=  [gcd(x, y) = d and (x > 0 or y > 0)]. 
+
+P  holds for the start state (a, b), by deﬁnition of d and the requirement that b is 
+positive. Also, the preserved invariance of P  follows immediately from 
+Lemma 9.1.7.  For all m, n ∈ N such that n = 0
+, 
+
+gcd(m, n) = gcd(n, remainder(m, n)). 
+
+(9.1) 
+
+Lemma 9.1.7 is easy to prove:  let q be the quotient and r be the remainder of m 
+divided by n.  Then m = qn + r by deﬁnition.  So any factor of both r and n will be 
+a factor of m, and similarly any factor of both m and n will be a factor of r .  So r, n 
+and m, n have the same common factors and therefore the same gcd.  Now by the 
+Invariant Principle, P  holds for all reachable states. 
+
+�
+�
+142 
+
+CHAPTER 9.  STATE MACHINES 
+
+Since  the  only  rule  for  termination  is  that  y  = 0,  it  follows  that  if  (x, y)  is  a 
+terminal  state,  then  y  = 0.  If  this  terminal  state  is  reachable,  then  the  preserved 
+invariant  holds  for  (x, y).  This  implies  that  gcd(x, 0)  =  d  and  that  x >  0.  We 
+� 
+conclude that x = gcd(x, 0) = d. 
+
+Termination  of  GCD  Now  we  turn  to  the  second  property,  that  the  procedure 
+must terminate. To prove this, notice that y gets strictly smaller after any one tran­
+sition.  That’s  because  the  value  of  y  after  the  transition  is  the  remainder  of  x  di­
+vided by y , and this remainder is smaller than y by deﬁnition. But the value of y is 
+always a nonnegative integer, so by the Well Ordering Principle, it reaches a mini­
+mum value among all its values at reachable states.  But there can’t be a transition 
+from a state where y has its minimum value, because the transition would decrease 
+y  still  further.  So  the  reachable  state where  y  has  its minimum  value  is  a  state  at 
+which no further step is possible, that is, at which the procedure terminates. 
+Note  that  this  argument  does  not  prove  that  the minimum  value  of  y  is  zero, 
+only that the minimum value occurs at termination. But we already noted that the 
+only  rule  for  termination  is  that y  = 0,  so  it  follows  that  the minimum value of y 
+must indeed be zero. 
+
+The Extended Euclidean Algorithm 
+An important fact about the gcd(a, b) is that it equals an integer linear combination 
+of a and b, that is, 
+
+gcd(a, b) = sa + tb 
+(9.2) 
+for some s, t ∈ Z. We’ll see some nice proofs of (9.2) later when we study Number 
+Theory,  but  now we’ll  look  at  an  extension  of  the  Euclidean  Algorithm  that  efﬁ­
+ciently,  if  obscurely,  produces  the  desired  s  and  t.  It  is  presented  here  simply  as 
+another example of application of the Invariant Method (plus, we’ll need a proce­
+dure like this when we take up number theory based cryptography in a couple of 
+weeks). 
+Don’t  worry  if  you  ﬁnd  this  Extended  Euclidean  Algorithm  hard  to  follow,  and  you 
+can’t  imagine where  it  came  from.  In  fact,  that’s  good,  because  this will  illustrate  an  im­
+portant  point:  given  the  right  preserved  invariant,  you  can  verify  programs  you  don’t 
+understand. 
+In  particular,  given  nonnegative  integers  x  and  y ,  with  y >  0,  we  claim  the 
+following procedure3  halts with registers S and T containing integers s and t satis­
+fying (9.2). 
+Inputs:  a, b ∈ N, b > 0. 
+Registers: X,Y,S,T,U,V,Q. 
+Extended Euclidean Algorithm: 
+
+X  :=  a;  Y  :=  b;  S  :=  0;  T  :=  1;  U  :=  1;  V  :=  0; 
+loop: 
+
+3 This procedure is adapted from Aho, Hopcroft, and Ullman’s text on algorithms. 
+
+9.1.  STATE MACHINES 
+
+143 
+
+if  Y  divides  X,  then  halt 
+else 
+Q  :=  quotient(X,Y); 
+;;the  following  assignments  in  braces  are  SIMULTANEOUS 
+{X  :=  Y, 
+Y  :=  remainder(X,Y); 
+U  :=  S, 
+V  :=  T, 
+S  :=  U  - Q  *  S, 
+T  :=  V  - Q  *  T}; 
+goto  loop; 
+
+Note that X,Y behave exactly as in the Euclidean GCD algorithm in Section 9.1.3, 
+except that this extended procedure stops one step sooner, ensuring that gcd(x, y) 
+is  in  Y  at  the  end.  So  for  all  inputs  x, y ,  this  procedure  terminates  for  the  same 
+reason  as  the  Euclidean  algorithm:  the  contents,  y ,  of  register  Y  is  a  nonnegative 
+integer-valued variable that strictly decreases each time around the loop. 
+The  following  properties  are  preserved  invariants  that  imply  partial  correct­
+ness: 
+
+gcd(X, Y )  =  gcd(a, b), 
+S a + T b  =  Y ,  and 
+U a + V b  =  X. 
+
+(9.3) 
+(9.4) 
+(9.5) 
+
+To  verify  that  these  are  preserved  invariants,  note  that  (9.3)  is  the  same  one 
+we  observed  for  the  Euclidean  algorithm.  To  check  the  other  two  properties,  let 
+x, y , s, t, u, v be the contents of registers X,Y,S,T,U,V at the start of the loop and 
+assume  that  all  the  properties  hold  for  these  values.  We  must  prove  that  (9.4) 
+and  (9.5) hold  (we already know  (9.3) does)  for  the new contents x� , y � , s� , t� , u� , v � 
+of these registers at the next time the loop is started. 
+Now according to the procedure, u�  = s, v �  = t, x�  = y , so (9.5) holds for u� , v � , x� 
+because of (9.4) for s, t, y . Also, 
+s�  = u − qs, 
+
+t�  = v − qt,  y �  = x − qy 
+
+where q = quotient(x, y), so 
+s�a + t� b = (u − qs)a + (v − qt)b = ua + vb − q(sa + tb) = x − qy = y � , 
+and therefore (9.4) holds for s� , t� , y � . 
+Also,  it’s  easy  to  check  that  all  three  preserved  invariants  are  true  just  before 
+the ﬁrst time around the loop. Namely, at the start: 
+
+X  = a, Y  = b, S  = 0, T  = 1 
+S a + T b = 0a + 1b = b = Y 
+
+so 
+conﬁrming (9.4). 
+
+144	
+
+Also, 
+
+CHAPTER 9.  STATE MACHINES 
+
+U  = 1, V  = 0, 
+U a + V b = 1a + 0b = a = X 
+
+so 
+conﬁrming (9.5). 
+
+Now  by  the  Invariant  Principle,  they  are  true  at  termination.  But  at  termination, 
+the  contents,  Y ,  of  register  Y  divides  the  contents,  X ,  of  register  X,  so  preserved 
+invariants (9.3) and (9.4) imply 
+
+gcd(a, b) = gcd(X, Y ) = Y  = S a + T b. 
+
+So we have the gcd in register Y and the desired coefﬁcients in S, T. 
+Now we don’t claim that this veriﬁcation offers much insight.  In fact, if you’re 
+not wondering how somebody came up with this concise program and invariant, 
+you: 
+
+•	 are blessed with an  inspired  intellect allowing you  to see how  this program 
+and its invariant were devised, 
+
+•	 have lost interest in the topic, or 
+
+•	 haven’t read this far. 
+
+If none of the above apply to you, we can offer some reassurance by repeating that 
+you’re not expected to understand this program. 
+We’ve  already  observed  that  a  preserved  invariant  is  really  just  an  induction 
+hypothesis.  As  with  induction,  ﬁnding  the  right  hypothesis  is  usually  the  hard 
+part. We repeat: 
+
+Given the right preserved invariant, it can be easy to verify a program 
+even if you don’t understand it. 
+
+We expect that the Extended Euclidean Algorithm presented above illustrates this 
+point. 
+
+9.1.4  Derived Variables 
+The preceding  termination proofs  involved ﬁnding a nonnegative  integer-valued 
+measure  to  assign  to  states.  We  might  call  this  measure  the  “size”  of  the  state. 
+We  then  showed  that  the  size of  a  state decreased with  every  state  transition.  By 
+the Well Ordering  Principle,  the  size  can’t  decrease  indeﬁnitely,  so when  a mini­
+mum size state  is reached,  there can’t be any  transitions possible:  the process has 
+terminated. 
+More  generally,  the  technique  of  assigning  values  to  states  —not  necessarily 
+nonnegative  integers  and  not  necessarily  decreasing  under  transitions—  is  often 
+useful in the analysis of algorithms. Potential functions play a similar role in physics. 
+In  the  context  of  computational  processes,  such  value  assignments  for  states  are 
+called derived variables. 
+
+9.1.  STATE MACHINES 
+
+145 
+
+For  example,  for  the Die Hard machines we  could have  introduced  a derived 
+→
+R,  for  the  amount  of  water  in  both  buckets,  by  setting 
+variable,  f  :  states 
+f ((a, b)) ::= a + b. Similarly, in the robot problem, the position of the robot along the 
+x-axis would be given by the derived variable x-coord, where x-coord((i, j )) ::=  i. 
+We can formulate our general termination method as follows: 
+Deﬁnition  9.1.8.  Let  �  be  a  strict  partial  order  on  a  set,  A.  A  derived  variable 
+→ 
+f  : states 
+A is strictly decreasing iff 
+q −→ q �  implies f (q � ) � f (q). 
+
+We conﬁrmed termination of the GCD and Extended GCD procedures by ﬁnd­
+ing derived variables, y and Y, respectively, that were nonnegative integer-valued 
+and  strictly decreasing.  We  can  summarize  this approach  to proving  termination 
+as follows: 
+Theorem 9.1.9.  If f  is a strictly decreasing N-valued derived variable of a state machine, 
+then the length of any execution starting at state q  is at most f (q). 
+
+Of course we could prove Theorem 9.1.9 by induction on the value of f (q), but 
+think about what it says:  “If you start counting down at some nonnegative integer 
+f (q), then you can’t count down more than f (q) times.” Put this way, it’s obvious. 
+
+Weakly Decreasing Variables 
+
+In  addition  being  strictly  decreasing,  it  will  be  useful  to  have  derived  variables 
+with some other, related properties. 
+Deﬁnition  9.1.10.  Let �  be  a weak  partial  order  on  a  set,  A.  A  derived  variable 
+→ 
+f  : Q A is weakly decreasing iff 
+q −→ q �  implies f (q � ) � f (q). 
+Strictly increasing and weakly increasing derived variables are deﬁned similarly.4 
+
+9.1.5  Problems 
+Homework Problems 
+
+Problem 9.1. 
+You are given  two buckets, A and B , a water hose, a receptacle, and a drain.  The 
+buckets  and  receptacle  are  initially  empty.  The  buckets  are  labeled with  their  re­
+spectively capacities, positive integers a and b.  The receptacle can be used to store 
+an  unlimited  amount  of water,  but  has  no measurement markings.  Excess water 
+can be dumped into the drain. Among the possible moves are: 
+
+4Weakly  increasing variables are often also  called nondecreasing.  We will avoid  this  terminology  to 
+prevent  confusion between nondecreasing variables and variables with  the much weaker property of 
+not being a decreasing variable. 
+
+146 
+
+CHAPTER 9.  STATE MACHINES 
+
+1.  ﬁll a bucket from the hose, 
+
+2.  pour from the receptacle to a bucket until the bucket is full or the receptacle 
+is empty, whichever happens ﬁrst, 
+
+3.  empty a bucket to the drain, 
+
+4.  empty a bucket to the receptacle, 
+
+5.  pour  from  A  to  B  until  either  A  is  empty  or  B  is  full,  whichever  happens 
+ﬁrst, 
+
+6.  pour  from  B  to  A  until  either  B  is  empty  or  A  is  full,  whichever  happens 
+ﬁrst. 
+
+(a)  Model  this  scenario with a  state machine.  (What are  the  states?  How does a 
+state change in response to a move?) 
+(b)  Prove  that  we  can  put  k  ∈  N  gallons  of  water  into  the  receptacle  using  the 
+above  operations  if  and  only  if  gcd(a, b)  |  k .  Hint:  Use  the  fact  that  if  a, b  are 
+positive  integers  then  there  exist  integers  s, t  such  that  gcd(a, b) =  sa +  tb  (see 
+Notes 9.1.3). 
+
+Problem 9.2. 
+Here is a very, very fun game.  We start with two distinct, positive integers written 
+on a blackboard.  Call them a and b.  You and I now take turns.  (I’ll let you decide 
+who goes ﬁrst.) On each player ’s turn, he or she must write a new positive integer 
+on the board that is the difference of two numbers that are already there.  If a player 
+can not play, then he or she loses. 
+For example,  suppose  that 12 and 15 are on  the board  initially.  Your ﬁrst play 
+must be 3, which is 15 − 12.  Then I might play 9, which is 12 − 3.  Then you might 
+play 6, which is 15 − 9. Then I can not play, so I lose. 
+(a)  Show that every number on the board at the end of the game is a multiple of 
+gcd(a, b). 
+
+(b)  Show that every positive multiple of gcd(a, b) up to max(a, b)  is on the board 
+at the end of the game. 
+
+(c)  Describe a strategy that lets you win this game every time. 
+
+Problem 9.3. 
+In the late 1960s, the military junta that ousted the government of the small repub­
+lic of Nerdia completely outlawed built-in multiplication operations, and also for­
+bade division by any number other than 3.  Fortunately, a young dissident found a 
+way to help the population multiply any two nonnegative integers without risking 
+persecution by the junta. The procedure he taught people is: 
+
+9.1.  STATE MACHINES 
+
+147 
+
+procedure multiply(x, y :  nonnegative integers)
+
+r  := x;
+
+s := y ;
+
+a := 0;
+
+while s = 0 do
+
+if 3 | s then
+
+r  := r + r + r ;
+
+s := s/3;
+
+else if 3 | (s − 1) then
+
+a := a + r ;
+
+r  := r + r + r ;
+
+s := (s − 1)/3;
+
+else 
+a := a + r + r ;
+
+r  := r + r + r ;
+
+s := (s − 2)/3;
+
+return a; 
+
+We can model the algorithm as a state machine whose states are triples of non­
+negative  integers (r, s, a).  The  initial state  is (x, y , 0).  The  transitions are given by 
+⎧ ⎪⎨ ⎪⎩ 
+the rule that for s > 0: 
+(3r, s/3, a) 
+(3r, (s − 1)/3, a + r) 
+(3r, (s − 2)/3, a + 2r) 
+(a)  List  the  sequence  of  steps  that  appears  in  the  execution  of  the  algorithm  for 
+inputs x = 5 and y = 10. 
+
+if 3 | s 
+if 3 |
+(s − 1) 
+otherwise. 
+
+(r, s, a) → 
+
+(b)  Use the Invariant Method to prove that the algorithm is partially correct —that 
+is, if s = 0, then a = xy . 
+
+(c)  Prove  that  the algorithm  terminates after at most 1 + log3 y  executions of  the 
+body of the do statement. 
+
+Problem 9.4. 
+A  robot named Wall-E wanders  around  a  two-dimensional  grid.  He  starts  out  at 
+(0, 0) and is allowed to take four different types of step: 
+1.  (+2, −1) 
+2.  (+1, −2) 
+3.  (+1, +1) 
+
+�
+148 
+
+CHAPTER 9.  STATE MACHINES 
+
+4.  (−3, 0) 
+Thus,  for  example,  Wall-E  might  walk  as  follows.  The  types  of  his  steps  are 
+listed above the arrows. 
+(0, 0) → (2, −1) → (3, 0) → (4, −2) → (1, −2) → . . . 
+2 
+1 
+4
+3
+Wall-E’s  true  love,  the  fashionable  and  high-powered  robot,  Eve,  awaits  at 
+(0, 2). 
+(a)  Describe a state machine model of this problem. 
+
+(b)  Will Wall-E  ever ﬁnd his  true  love?  Either ﬁnd  a path  from Wall-E  to Eve or 
+use the Invariant Principle to prove that no such path exists. 
+
+Problem 9.5. 
+A  hungry  ant  is  placed  on  an  unbounded  grid.  Each  square  of  the  grid  either 
+contains a crumb or is empty. The squares containing crumbs form a path in which, 
+except at the ends, every crumb is adjacent to exactly two other crumbs. The ant is 
+placed at one end of the path and on a square containing a crumb. For example, the 
+ﬁgure below shows a situation in which the ant faces North, and there is a trail of 
+food leading approximately Southeast.  The ant has already eaten the crumb upon 
+which it was initially placed. 
+
+The ant can only smell food directly  in  front of  it.  The ant can only remember 
+a small number of things, and what it remembers after any move only depends on 
+what  it  remembered  and  smelled  immediately  before  the move.  Based  on  smell 
+and memory, the ant may choose to move forward one square, or it may turn right 
+or left.  It eats a crumb when it lands on it. 
+The  above  scenario  can  be  nicely  modelled  as  a  state  machine  in  which  each 
+state is a pair consisting of the “ant’s memory” and “everything else” —for exam­
+ple, information about where things are on the grid. Work out the details of such a 
+
+9.1.  STATE MACHINES 
+
+149 
+
+model state machine; design  the ant-memory part of  the state machine so  the ant 
+will  eat  all  the  crumbs  on  any  ﬁnite  path  at which  it  starts  and  then  signal when 
+it  is  done.  Be  sure  to  clearly  describe  the  possible  states,  transitions,  and  inputs 
+and  outputs  (if  any)  in  your model.  Brieﬂy  explain why  your  ant will  eat  all  the 
+crumbs. 
+Note that the last transition is a self-loop; the ant signals done for eternity. One 
+could also add another end state so that the ant signals done only once. 
+
+Problem 9.6. 
+Suppose  that  you  have  a  regular  deck  of  cards  arranged  as  follows,  from  top  to 
+bottom: 
+
+A♥ 2♥ . . . K♥ A♠ 2♠ . . . K♠ A♣ 2♣ . . . K♣ A♦ 2♦ . . . K♦ 
+Only  two  operations  on  the  deck  are  allowed:  inshufﬂing  and  outshufﬂing.  In 
+both,  you  begin  by  cutting  the  deck  exactly  in  half,  taking  the  top  half  into  your 
+right hand and the bottom into your left. Then you shufﬂe the two halves together 
+so  that  the cards are perfectly  interlaced;  that  is,  the shufﬂed deck consists of one 
+card from the left, one from the right, one from the left, one from the right, etc. The 
+top card in the shufﬂed deck comes from the right hand in an outshufﬂe and from 
+the left hand in an inshufﬂe. 
+(a)  Model this problem as a state machine. 
+
+(b)  Use the Invariant Principle to prove that you can not make the entire ﬁrst half 
+of the deck black through a sequence of inshufﬂes and outshufﬂes. 
+Note:  Discovering a suitable invariant can be difﬁcult!  The standard approach 
+is to identify a bunch of reachable states and then look for a pattern, some feature 
+that they all share.5 
+
+Problem 9.7. 
+The following procedure can be applied to any digraph, G: 
+
+1.  Delete an edge that is traversed by a directed cycle. 
+→
+v  if  there  is  a  directed  path  from  vertex  u  to  vertex  v  that
+2.  Delete  edge  u
+v .→ 
+does not traverse u
+→ 
+v if there is no directed path in either direction between vertex 
+3.  Add edge u
+u and vertex v . 
+
+Repeat these operations until none of them are applicable. 
+This procedure can be modeled as a state machine. The start state is G, and the 
+states are all possible digraphs with the same vertices as G. 
+
+5 If this does not work, consider twitching and drooling until someone takes the problem away. 
+
+150 
+
+CHAPTER 9.  STATE MACHINES 
+
+(a)  Let G be the graph with vertices {1, 2, 3, 4} and edges 
+4}
+{1
+→ → → → → 
+2, 2
+2, 1
+4, 3
+3, 3
+What are the possible ﬁnal states reachable from G? 
+A  line  graph  is  a  graph whose  edges  can  all  be  traversed  by  a  directed  simple 
+path. All the ﬁnal graphs in part (a) are line graphs. 
+(b)  Prove  that  if  the  procedure  terminates  with  a  digraph,  H ,  then  H  is  a  line
+
+graph with the same vertices as G.
+
+Hint:  Show that if H  is not a line graph, then some operation must be applicable.
+
+
+(c)  Prove that being a DAG is a preserved invariant of the procedure.
+
+
+(d)  Prove that if G is a DAG and the procedure terminates, then the path relation
+
+of the ﬁnal line graph is a topological sort of G.
+
+Hint: Verify that the predicate
+
+
+P (u, v) ::= there is a directed path from u to v 
+
+is a preserved invariant of the procedure, for any two vertices u, v of a DAG. 
+
+(e)  Prove that if G is ﬁnite, then the procedure terminates. 
+Hint:  Let s be the number of simple cycles, e be the number of edges, and p be the 
+number of pairs of vertices with a directed path (in either direction) between them. 
+Note  that  p  ≤  n2  where  n  is  the  number  of  vertices  of G.  Find  coefﬁcients  a, b, c 
+such that as + bp + e + c is a strictly decreasing, N-valued variable. 
+
+Class Problems 
+
+Problem 9.8. 
+In this problem you will establish a basic property of a puzzle toy called the Fifteen 
+Puzzle using the method of invariants. The Fifteen Puzzle consists of sliding square 
+tiles  numbered  1, . . . , 15  held  in  a  4 × 4  frame  with  one  empty  square.  Any  tile 
+adjacent to the empty square can slide into it. 
+The standard initial position is 
+
+4 
+3 
+2 
+1 
+6 
+8 
+7 
+5 
+9 
+10  11  12 
+13  14  15 
+
+We would like to reach the target position (known in my youth as “the impossible” 
+— ARM): 
+
+15  14  13  12 
+11  10 
+9 
+8 
+5 
+6 
+7 
+4 
+3 
+2 
+1 
+
+9.1.  STATE MACHINES 
+
+151 
+
+A state machine model of the puzzle has states consisting of a 4 × 4 matrix with 
+16  entries  consisting  of  the  integers  1, . . . , 15  as  well  as  one  “empty”  entry—like 
+each of the two arrays above. 
+The state  transitions correspond  to exchanging  the empty square and an adja­
+cent numbered tile. For example, an empty at position (2, 2) can exchange position 
+with tile above it, namely, at position (1, 2): 
+
+n2 
+
+n4 
+n3 
+n1 
+n6 
+n7 
+n5 
+n9  n10  n11 
+n8 
+n12  n13  n14  n15 
+
+−→ 
+
+n4 
+n3 
+n1 
+n2 
+n7 
+n6 
+n5 
+n9  n10  n11 
+n8 
+n12  n13  n14  n15 
+
+We  will  use  the  invariant  method  to  prove  that  there  is  no  way  to  reach  the 
+target state starting from the initial state. 
+We begin by noting  that a  state can also be  represented as a pair  consisting of 
+two things: 
+
+1.	 a  list  of  the  numbers  1, . . . , 15  in  the  order  in  which  they  appear—reading 
+rows left-to-right from the top row down, ignoring the empty square, and 
+
+2.  the coordinates of  the empty square—where  the upper  left square has coor­
+dinates (1, 1), the lower right (4, 4). 
+
+(a)	 Write out the “list” representation of the start state and the “impossible” state. 
+Let L be a  list of  the numbers 1, . . . , 15  in  some order.  A pair of  integers  is an 
+out-of-order pair in L when the ﬁrst element of the pair both comes earlier in the list 
+and  is  larger,  than  the  second  element of  the pair.  For  example,  the  list  1, 2, 4, 5, 3 
+has two out-of-order pairs:  (4,3) and (5,3).  The increasing list 1, 2 . . . n has no out-
+of-order pairs. 
+Let a state, S , be a pair (L, (i, j )) described above. We deﬁne the parity of S to be 
+the mod 2 sum of the number, p(L), of out-of-order pairs in L and the row-number 
+of the empty square, that is the parity of S  is p(L) + i  (mod  2). 
+(b)  Verify that the parity of the start state and the target state are different. 
+
+(c)  Show  that  the parity of a  state  is preserved under  transitions.  Conclude  that 
+“the impossible” is impossible to reach. 
+By the way, if two states have the same parity, then in fact there is a way to get 
+from  one  to  the  other.  If  you  like  puzzles,  you’ll  enjoy working  this  out  on  your 
+own. 
+
+Problem 9.9. 
+The  most  straightforward  way  to  compute  the  bth  power  of  a  number,  a,  is  to 
+multiply a by itself b times.  This of course requires b − 1 multiplications.  There is 
+another way  to  do  it  using  considerably  fewer multiplications.  This  algorithm  is 
+called fast exponentiation: 
+
+152 
+
+CHAPTER 9.  STATE MACHINES 
+
+Given  inputs  a  ∈  R, b  ∈  N,  initialize  registers x, y , z  to a, 1, b  respectively,  and 
+repeat the following sequence of steps until termination: 
+•  if z = 0 return y and terminate 
+•  r  := remainder(z , 2) 
+•  z  := quotient(z , 2) 
+•  if r = 1, then y  := xy 
+•  x := x2 
+We claim this algorithm always terminates and leaves y = ab . 
+(a)  Model  this  algorithm with  a  state machine,  carefully  deﬁning  the  states  and 
+transitions. 
+
+(b)  Verify that the predicate P ((x, y , z )) ::=  [yx = ab ] is a preserved invariant. 
+z
+
+(c)  Prove that the algorithm is partially correct:  if it halts, it does so with y = ab . 
+
+(d)  Prove that the algorithm terminates. 
+(e)  In fact, prove that it requires at most 2 �log2 (b + 1)� multiplications for the Fast 
+Exponentiation algorithm to compute ab  for b > 1. 
+
+Problem 9.10. 
+A  robot moves  on  the  two-dimensional  integer  grid.  It  starts  out  at  (0, 0),  and  is 
+allowed to move in any of these four ways: 
+
+1.  (+2,-1) Right 2, down 1 
+
+2.  (-2,+1) Left 2, up 1 
+
+3.  (+1,+3) 
+
+4.  (-1,-3) 
+
+Prove that this robot can never reach (1,1). 
+
+Problem 9.11. 
+The Massachusetts Turnpike Authority is concerned about the integrity of the new 
+Zakim bridge.  Their consulting architect has warned that the bridge may collapse 
+if  more  than  1000  cars  are  on  it  at  the  same  time.  The  Authority  has  also  been 
+warned  by  their  trafﬁc  consultants  that  the  rate  of  accidents  from  cars  speeding 
+across bridges has been increasing. 
+Both to lighten trafﬁc and to discourage speeding, the Authority has decided to 
+make the bridge one-way and to put tolls at both ends of the bridge (don’t laugh, this 
+is Massachusetts).  So  cars will  pay  tolls  both  on  entering  and  exiting  the  bridge, 
+
+9.1.  STATE MACHINES 
+
+153 
+
+but  the  tolls  will  be  different.  In  particular,  a  car  will  pay  $3  to  enter  onto  the 
+bridge and will pay $2 to exit. To be sure that there are never too many cars on the 
+bridge,  the Authority will  let a  car onto  the bridge only  if  the difference between 
+the amount of money currently at the entry toll booth minus the amount at the exit 
+toll booth is strictly less than a certain threshold amount of $T0 . 
+The consultants have decided to model this scenario with a state machine whose 
+states are triples of natural numbers, (A, B , C ), where 
+•  A is an amount of money at the entry booth, 
+
+•  B  is an amount of money at the exit booth, and 
+
+•  C  is a number of cars on the bridge. 
+Any  state  with  C >  1000  is  called  a  collapsed  state,  which  the  Authority  dearly 
+hopes to avoid. There will be no transition out of a collapsed state. 
+Since the toll booth collectors may need to start off with some amount of money 
+in  order  to  make  change,  and  there  may  also  be  some  number  of  “ofﬁcial”  cars 
+already  on  the  bridge  when  it  is  opened  to  the  public,  the  consultants  must  be 
+ready to analyze the system started at any uncollapsed state. So let A0  be the initial 
+number of dollars at the entrance toll booth, B0  the initial number of dollars at the 
+exit toll booth, and C0  ≤  1000 the number of ofﬁcial cars on the bridge when  it  is 
+opened.  You should assume that even ofﬁcial cars pay tolls on exiting or entering 
+the bridge after the bridge is opened. 
+(a)  Give a mathematical model of  the Authority’s  system  for  letting cars on and 
+off the bridge by specifying a transition relation between states of the form (A, B , C ) 
+above. 
+
+(b)  Characterize each of the following derived variables 
+A, B , A + B , A − B , 3C − A, 2A − 3B , B + 3C, 2A − 3B − 6C, 2A − 2B − 3C 
+as one of the following 
+C 
+constant 
+SI 
+strictly increasing 
+strictly decreasing 
+SD 
+weakly increasing but not constant  WI 
+weakly decreasing but not constant  WD 
+N 
+none of the above 
+and brieﬂy explain your reasoning. 
+The Authority  has  asked  their  engineering  consultants  to determine  T  and  to 
+verify that this policy will keep the number of cars from exceeding 1000. 
+The  consultants  reason  that  if  C0  is  the  number  of  ofﬁcial  cars  on  the  bridge 
+when it is opened, then an additional 1000 − C0  cars can be allowed on the bridge. 
+So as long as A − B  has not increased by 3(1000 − C0 ), there shouldn’t more than 
+1000 cars on the bridge.  So they recommend deﬁning 
+T0  ::= 3(1000 − C0 ) + (A0  − B0 ), 
+
+(9.6) 
+
+154 
+
+CHAPTER 9.  STATE MACHINES 
+
+where A0  is the initial number of dollars at the entrance toll booth, B0  is the initial 
+number of dollars at the exit toll booth. 
+(c)  Use  the  results  of  part  (b)  to  deﬁne  a  simple  predicate,  P ,  on  states  of  the 
+transition  system which  is  satisﬁed  by  the  start  state,  that  is P (A0 , B0 , C0 )  holds, 
+is not  satisﬁed by any collapsed state,  and  is a preserved  invariant of  the  system. 
+Explain why your P  has these properties. 
+
+(d)  A clever MIT intern working for the Turnpike Authority agrees that the Turn­
+pike’s bridge management policy will be safe:  the bridge will not collapse. But she 
+warns her boss that the policy will lead to deadlock— a situation where trafﬁc can’t 
+move on the bridge even though the bridge has not collapsed. 
+Explain more precisely  in terms of system transitions what the  intern means, and 
+brieﬂy, but clearly, justify her claim. 
+
+Problem 9.12. 
+Start with  102  coins  on  a  table,  98  showing  heads  and  4  showing  tails.  There  are 
+two ways to change the coins: 
+
+(i)  ﬂip over any ten coins, or 
+(ii)  let n be the number of heads showing. Place n + 1 additional coins, all show­
+ing tails, on the table. 
+
+For example, you might begin by ﬂipping nine heads and one tail, yielding 90 
+heads and 12 tails, then add 91 tails, yielding 90 heads and 103 tails. 
+(a)  Model this situation as a state machine, carefully deﬁning the set of states, the 
+start state, and the possible state transitions. 
+
+(b)  Explain how to reach a state with exactly one tail showing. 
+
+(c)  Deﬁne the following derived variables: 
+
+C 
+T 
+H2 
+
+::= 
+the number of coins on the table,  H 
+::= 
+the number of tails, 
+C2 
+::=  remainder(H/2), 
+T2 
+
+::= 
+the number of heads, 
+::=  remainder(C/2), 
+::=  remainder(T /2). 
+
+Which of these variables is 
+
+1.  strictly increasing 
+2.  weakly increasing 
+3.  strictly decreasing 
+4.  weakly decreasing 
+5.  constant 
+
+(d)  Prove that it is not possible to reach a state in which there is exactly one head 
+showing. 
+
+9.1.  STATE MACHINES 
+
+155 
+
+Problem 9.13. 
+In  some  terms when  6.042  is not  taught  in  a TEAL  room,  students  sit  in  a  square 
+arrangement during recitations.  An outbreak of beaver ﬂu sometimes  infects stu­
+dents  in  recitation;  beaver  ﬂu  is  a  rare  variant  of  bird  ﬂu  that  lasts  forever,  with 
+symptoms including a yearning for more quizzes and the thrill of late night prob­
+lem set sessions. 
+Here  is  an  example of  a  6 × 6  recitation  arrangement with  the  locations of  in­
+fected students marked with an asterisk. 
+∗ 
+
+∗ 
+
+∗ 
+
+∗  ∗ 
+∗ 
+
+∗ 
+∗ 
+Outbreaks of infection spread rapidly step by step. A student is infected after a 
+step if either 
+
+•	 the student was infected at the previous step (since beaver ﬂu lasts forever), 
+or 
+
+•	 the  student was adjacent  to at  least  two already-infected  students at  the pre­
+vious step. 
+
+Here  adjacent means  the  students’  individual  squares  share  an  edge  (front,  back, 
+left or right, but not diagonal). Thus, each student is adjacent to 2, 3 or 4 others. 
+In the example, the infection spreads as shown below. 
+∗  ∗  ∗ 
+∗  ∗ 
+∗ 
+∗ 
+∗ 
+∗  ∗  ∗ 
+∗  ∗  ∗  ∗ 
+∗  ∗  ∗ 
+∗  ∗  ∗  ∗ 
+∗ 
+∗  ∗  ∗ 
+∗  ∗  ∗ 
+∗  ∗ 
+∗  ∗  ∗  ∗ 
+∗  ∗  ∗  ∗ 
+
+∗  ∗ 
+∗ 
+
+⇒ 
+
+⇒ 
+
+∗ 
+
+∗ 
+
+∗ 
+
+∗ 
+
+In  this  example,  over  the  next  few  time-steps,  all  the  students  in  class  become 
+infected. 
+Theorem.  If  fewer  than  n  students  among  those  in  an  n × n  arrangment  are  initially 
+infected in a ﬂu outbreak, then there will be at least one student who never gets infected in 
+this outbreak, even if students attend all the lectures. 
+
+Prove this theorem. 
+Hint: Think of the state of an outbreak as an n × n square above, with asterisks 
+indicating infection. The rules for the spread of infection then deﬁne the transitions 
+of a state machine.  Try to derive a weakly decreasing state variable that leads to a 
+proof of this theorem. 
+
+156 
+
+CHAPTER 9.  STATE MACHINES 
+
+9.2  The Stable Marriage Problem 
+
+Okay,  frequent  public  reference  to  derived  variables  may  not  help  your  mating 
+prospects. But they can help with the analysis! 
+
+9.2.1  The Problem 
+Suppose  there  are  a  bunch  of  boys  and  an  equal  number  of  girls  that  we  want 
+to marry  off.  Each  boy  has  his  personal  preferences  about  the  girls —in  fact,  we 
+assume he has a  complete  list of all  the girls  ranked according  to his preferences, 
+with no ties. Likewise, each girl has a ranked list of all of the boys. 
+The preferences don’t have  to be  symmetric.  That  is,  Jennifer might  like Brad 
+best, but Brad doesn’t necessarily  like  Jennifer best.  The goal  is  to marry off boys 
+and  girls:  every  boy  must  marry  exactly  one  girl  and  vice-versa—no  polygamy. 
+In  mathematical  terms,  we  want  the  mapping  from  boys  to  their  wives  to  be  a 
+bijection or perfect matching. We’ll just call this a “matching,” for short. 
+Here’s the difﬁculty:  suppose every boy likes Angelina best, and every girl likes 
+Brad  best,  but  Brad  and  Angelina  are  married  to  other  people,  say  Jennifer  and 
+Billy Bob.  Now Brad and Angelina prefer each other to their spouses, which puts their 
+marriages  at  risk:  pretty  soon,  they’re  likely  to  start  spending  late  nights  doing 
+6.042 homework together. 
+This situation  is  illustrated  in  the  following diagram where  the digits “1” and 
+“2” near a boy shows which of the two girls he ranks ﬁrst and which second, and 
+similarly for the girls: 
+
+More  generally,  in  any matching,  a  boy  and  girl who  are  not married  to  each 
+other and who like each other better than their spouses, is called a rogue couple.  In 
+the situation above, Brad and Angelina would be a rogue couple. 
+Having a rogue couple is not a good thing, since it threatens the stability of the 
+marriages.  On the other hand, if there are no rogue couples, then for any boy and 
+girl who  are  not married  to  each  other,  at  least  one  likes  their  spouse  better  than 
+the other, and so won’t be tempted to start an affair. 
+
+Deﬁnition 9.2.1.  A stable matching is a matching with no rogue couples. 
+
+The  question  is,  given  everybody’s  preferences,  how  do  you  ﬁnd  a  stable  set 
+of marriages?  In the example consisting solely of the four people above, we could 
+
+AngelinaJenniferBillyBobBrad212121219.2.  THE STABLE MARRIAGE PROBLEM 
+
+157 
+
+let Brad and Angelina both have  their ﬁrst  choices by marrying  each other.  Now 
+neither Brad nor Angelina prefers anybody else to their spouse, so neither will be 
+in a rogue couple.  This leaves Jen not-so-happily married to Billy Bob, but neither 
+Jen nor Billy Bob can entice somebody else to marry them. 
+It  is  something  of  a  surprise  that  there  always  is  a  stable  matching  among  a 
+group of boys and girls, but  there  is,  and we’ll shortly explain why.  The surprise 
+springs  in part  from  considering  the  apparently  similar  “buddy” matching prob­
+lem.  That  is,  if  people  can  be  paired  off  as  buddies,  regardless  of  gender,  then 
+a  stable matching may not be possible.  For  example,  Figure  9.2  shows  a  situation 
+with a love triangle and a fourth person who is everyone’s last choice.  In this ﬁgure 
+Mergatoid’s preferences aren’t shown because they don’t even matter. 
+
+Figure 9.2:  Some preferences with no stable buddy matching. 
+
+Let’s see why there is no stable matching: 
+
+Lemma.  There is no stable buddy matching among the four people in Figure 9.2. 
+
+Proof.  We’ll prove this by contradiction. 
+Assume, for the purposes of contradiction, that there is a stable matching. Then 
+there are two members of the  love triangle that are matched.  Since preferences in 
+the triangle are symmetric, we may assume in particular, that Robin and Alex are 
+matched. Then the other pair must be Bobby-Joe matched with Mergatoid. 
+But  then  there  is  a  rogue  couple:  Alex  likes  Bobby-Joe  best,  and  Bobby-Joe 
+prefers  Alex  to  his  buddy  Mergatoid.  That  is,  Alex  and  Bobby-Joe  are  a  rogue 
+� 
+couple, contradicting the assumed stability of the matching. 
+
+So getting a stable buddy matching may not only be hard, it may be impossible. 
+But when  boys  are  only  allowed  to marry  girls,  and  vice  versa,  then  it  turns  out 
+that a stable matching is not hard to ﬁnd. 
+
+BobbyJoeRobinAlex231321132Mergatoid158 
+
+CHAPTER 9.  STATE MACHINES 
+
+9.2.2  The Mating Ritual 
+The  procedure  for  ﬁnding  a  stable  matching  involves  a  Mating  Ritual  that  takes 
+place over several days. The following events happen each day: 
+Morning:  Each girl stands on her balcony. Each boy stands under the balcony 
+of  his  favorite  among  the  girls  on  his  list,  and  he  serenades  her.  If  a  boy  has  no 
+girls left on his list, he stays home and does his 6.042 homework. 
+Afternoon:  Each girl who has one or more suitors serenading her, says to her 
+favorite among them, “We might get engaged. Come back tomorrow.” To the other 
+suitors, she says, “No.  I will never marry you! Take a hike!” 
+Evening:  Any boy who  is  told by a girl  to  take a hike,  crosses  that girl off his 
+list. 
+Termination condition: When every girl has at most one suitor, the ritual ends 
+with each girl marrying her suitor, if she has one. 
+There  are  a  number  of  facts  about  this  Mating  Ritual  that  we  would  like  to 
+prove: 
+
+•  The Ritual has a last day. 
+
+•  Everybody ends up married. 
+
+•  The resulting marriages are stable. 
+
+9.2.3  A State Machine Model 
+Before we  can  prove  anything, we  should  have  clear mathematical  deﬁnitions  of 
+what we’re talking about.  In this section we sketch how to deﬁne a rigorous state 
+machine model of the Marriage Problem. 
+So let’s begin by formally deﬁning the problem. 
+
+Deﬁnition 9.2.2.  A Marriage Problem consists of two disjoint sets of the same ﬁnite 
+size,  called  the-Boys and  the-Girls.  The members of  the-Boys are called boys,  and 
+members of  the-Girls are  called girls.  For each boy, B ,  there  is a  strict  total order, 
+<B , on the-Girls, and for each girl, G, there is a strict total order, <G , on the-Boys. 
+If G1  <B  G2  we  say B  prefers girl G2  to girl G1 .  Similarly,  if B1  <G  B2  we  say G 
+prefers boy B2  to boy B1 . 
+→
+A marriage assignment or perfect matching is a bijection, w  : the-Boys 
+the-Girls. 
+If B  ∈ the-Boys, then w(B ) is called B ’s wife in the assignment, and if G
+∈ the-Girls, 
+then w−1 (G)  is  called G’s  husband. A  rogue  couple  is  a  boy,  B ,  and  a  girl, G,  such 
+that B  prefers G  to  his wife,  and G  prefers B  to  her  husband.  An  assignment  is 
+stable if it has no rogue couples. A solution to a marriage problem is a stable perfect 
+matching. 
+
+To model the Mating Ritual with a state machine, we make a key observation: 
+to determine what happens on any day of the Ritual, all we need to know is which 
+girls are still on which boys’ lists on the morning of that day.  So we deﬁne a state 
+to be some mathematical data structure providing this  information.  For example, 
+
+9.2.  THE STABLE MARRIAGE PROBLEM 
+
+159 
+
+we  could  deﬁne  a  state  to  be  the  “still-has-on-his-list”  relation,  R,  between  boys 
+and girls, where B R G means girl G is still on boy B ’s list. 
+We start the Mating Ritual with no girls crossed off. That is, the start state is the 
+complete bipartite relation in which every boy is related to every girl. 
+According to the Mating Ritual, on any given morning, a boy will serenade the 
+girl  he most  prefers  among  those  he  has  not  as  yet  crossed  out.  Mathematically, 
+the girl he is serenading is  just the maximum among the girls on B ’s list, ordered 
+by <B .  (If  the  list  is  empty,  he’s  not  serenading  anybody.)  A  girl’s  favorite  is  just 
+the maximum, under her preference ordering, among the boys serenading her. 
+Continuing in this way, we could mathematically specify a precise Mating Rit­
+ual state machine, but we won’t bother.  The intended behavior of the Mating Rit­
+ual  is clear enough  that we don’t gain much by giving a  formal state machine,  so 
+we  stick  to  a more memorable  description  in  terms  of  boys,  girls,  and  their  pref­
+erences.  The  point  is,  though,  that  it’s  not  hard  to  deﬁne  everything  using  basic 
+mathematical data structures like sets, functions, and relations, if need be. 
+
+9.2.4  There is a Marriage Day 
+It’s easy to see why  the Mating Ritual has a terminal day when people ﬁnally get 
+married.  Every day on which the ritual hasn’t terminated, at least one boy crosses 
+a girl off his list.  (If the ritual hasn’t terminated, there must be some girl serenaded 
+by  at  least  two  boys,  and  at  least  one  of  them  will  have  to  cross  her  off  his  list). 
+So  starting  with  n  boys  and  n  girls,  each  of  the  n  boys’  lists  initially  has  n  girls 
+on  it,  for  a  total  of n2  list  entries.  Since  no  girl  ever  gets  added  to  a  list,  the  total 
+number of entries on the lists decreases every day that the Ritual continues, and so 
+the Ritual can continue for at most n2  days. 
+
+9.2.5  They All Live Happily Every After... 
+We still have to prove that the Mating Ritual leaves everyone in a stable marriage. 
+To  do  this,  we  note  one  very  useful  fact  about  the  Ritual:  if  a  girl  has  a  favorite 
+boy  suitor  on  some  morning  of  the  Ritual,  then  that  favorite  suitor  will  still  be 
+serenading her the next morning —because his list won’t have changed.  So she is 
+sure to have today’s favorite boy among her suitors tomorrow. That means she will 
+be able  to choose a  favorite  suitor  tomorrow who  is at  least as desirable  to her as 
+today’s favorite.  So day by day, her favorite suitor can stay the same or get better, 
+never worse.  In others words, a girl’s favorite is a weakly increasing variable with 
+respect to her preference order on the boys. 
+Now  we  can  verify  the  Mating  Ritual  using  a  simple  invariant  predicate,  P , 
+that captures what’s going on: 
+
+For every girl, G, and every boy, B ,  if G is crossed off B ’s list, then 
+G has a suitor whom she prefers over B . 
+
+Why is P  invariant?  Well, we know that G’s favorite tomorrow will be at least 
+
+160 
+
+CHAPTER 9.  STATE MACHINES 
+
+as desirable to her as her favorite today, and since her favorite today is more desir­
+able than B , tomorrow’s favorite will be too. 
+Notice that P  also holds on the ﬁrst day, since every girl is on every list.  So by 
+the Invariant Theorem, we know that P  holds on every day that the Mating Ritual 
+runs.  Knowing  the  invariant holds when  the Mating Ritual  terminates will  let us 
+complete the proofs. 
+Theorem 9.2.3.  Everyone is married by the Mating Ritual. 
+Proof.  Suppose,  for  the  sake  of  contradiction,  that  it  is  the  last  day  of  the Mating 
+Ritual and some boy does not get married.  Then he can’t be serenading anybody, 
+and  so  his  list  must  be  empty.  So  by  invariant  P ,  every  girl  has  a  favorite  boy 
+whom  she  prefers  to  that  boy.  In  particular,  every  girl  has  a  favorite  boy  whom 
+she marries  on  the  last day.  So  all  the  girls  are married.  What’s more  there  is no 
+bigamy:  a boy only serenades one girl, so no two girls have the same favorite. 
+But there are the same number of girls as boys, so all the boys must be married 
+� 
+too. 
+
+Theorem 9.2.4.  The Mating Ritual produces a stable matching. 
+Proof.  Let Brad be some boy and Jen be any girl that he is not married to on the last 
+day of the Mating Ritual. We claim that Brad and Jen are not a rogue couple.  Since 
+Brad is an arbitrary boy, it follows that no boy is part of a rogue couple. Hence the 
+marriages on the last day are stable. 
+To prove the claim, we consider two cases: 
+Case 1.  Jen is not on Brad’s list.  Then by invariant P , we know that Jen prefers 
+her husband  to Brad.  So  she’s not  going  to  run  off with Brad:  the  claim holds  in 
+this case. 
+Case 2.  Otherwise, Jen is on Brad’s list.  But since Brad is not married to Jen, he 
+must  be  choosing  to  serenade  his wife  instead  of  Jen,  so  he must  prefer  his wife. 
+� 
+So he’s not going to run off with Jen:  the claim also holds in this case. 
+
+...Especially the Boys 
+9.2.6 
+Who is favored by the Mating Ritual, the boys or the girls?  The girls seem to have 
+all the power:  they stand on their balconies choosing the ﬁnest among their suitors 
+and  spurning  the  rest.  What’s  more,  we  know  their  suitors  can  only  change  for 
+the  better  as  the  Ritual  progresses.  Similarly,  a  boy  keeps  serenading  the  girl  he 
+most prefers among those on his list until he must cross her off, at which point he 
+serenades the next most preferred girl on his list.  So from the boy’s point of view, 
+the  girl he  is  serenading  can  only  change  for  the worse.  Sounds  like  a  good deal 
+for the girls. 
+But  it’s not!  The  fact  is  that  from  the beginning,  the boys are  serenading  their 
+ﬁrst  choice  girl,  and  the  desirability  of  the  girl  being  serenaded  decreases  only 
+enough to give the boy his most desirable possible spouse.  The mating algorithm 
+actually  does  as well  as  possible  for  all  the  boys  and  does  the worst  possible  job 
+for the girls. 
+
+9.2.  THE STABLE MARRIAGE PROBLEM 
+
+161 
+
+To  explain  all  this  we  need  some  deﬁnitions.  Let’s  begin  by  observing  that 
+while the mating algorithm produces one stable matching, there may be other sta­
+ble matchings  among  the  same  set  of  boys  and  girls.  For  example,  reversing  the 
+roles of boys and girls will often yield a different stable matching among them. 
+But some spouses might be out of the question in all possible stable matchings. 
+For  example,  Brad  is  just  not  in  the  realm  of  possibility  for  Jennifer,  since  if  you 
+ever pair them, Brad and Angelina will form a rogue couple; here’s a picture: 
+
+Deﬁnition 9.2.5.  Given any marriage problem,  one person  is  in another person’s 
+realm  of  possible  spouses  if  there  is  a  stable  matching  in  which  the  two  people  are 
+married. A person’s optimal spouse is their most preferred person within their realm 
+of  possibility.  A  person’s  pessimal  spouse  is  their  least  preferred  person  in  their 
+realm of possibility. 
+Everybody  has  an  optimal  and  a  pessimal  spouse,  since  we  know  there  is  at 
+least  one  stable matching,  namely  the  one  produced  by  the Mating  Ritual.  Now 
+here is the shocking truth about the Mating Ritual: 
+Theorem 9.2.6.  The Mating Ritual marries every boy to his optimal spouse. 
+Proof.  Assume  for  the  purpose  of  contradiction  that  some  boy  does  not  get  his 
+optimal  girl.  There  must  have  been  a  day  when  he  crossed  off  his  optimal  girl 
+—otherwise he would still be serenading her or some even more desirable girl. 
+By  the Well Ordering Principle,  there must be a ﬁrst day when a boy,  call him 
+“Keith,” crosses off his optimal girl, Nicole. 
+According to the rules of the Ritual, Keith crosses off Nicole because Nicole has 
+a favorite suitor, Tom, and 
+Nicole prefers Tom to Keith (*) 
+(remember, this is a proof by contradiction :-) ). 
+Now  since  this  is  the  ﬁrst day  an  optimal  girl  gets  crossed  off, we  know  Tom 
+hasn’t crossed off his optimal girl.  So 
+Tom ranks Nicole at least as high as his optimal girl.  (**) 
+By  the deﬁnition of an optimal girl,  there must be some stable set of marriages  in 
+which  Keith  gets  his  optimal  girl,  Nicole.  But  then  the  preferences  given  in  (*) 
+and  (**)  imply  that  Nicole  and  Tom  are  a  rogue  couple  within  this  supposedly 
+� 
+stable set of marriages (think about it). This is a contradiction. 
+
+AngelinaJenniferBrad2111162 
+
+CHAPTER 9.  STATE MACHINES 
+
+Theorem 9.2.7.  The Mating Ritual marries every girl to her pessimal spouse. 
+Proof.  Say Nicole and Keith marry each other as a result of  the Mating Ritual.  By 
+the previous Theorem 9.2.6, Nicole is Keith’s optimal spouse, and so in any stable 
+set of marriages, 
+Keith rates Nicole at least as high as his spouse.  (+) 
+Now suppose for the purpose of contradiction that there is another stable set of 
+marriages where Nicole does worse than Keith.  That is, Nicole is married to Tom, 
+and 
+
+Nicole prefers Keith to Tom (++) 
+Then  in  this  stable  set of marriages where Nicole  is married  to Tom,  (+) and  (++) 
+imply  that  Nicole  and  Keith  are  a  rogue  couple,  contradicting  stability.  We  con­
+� 
+clude that Nicole cannot do worse than Keith. 
+
+9.2.7  Applications 
+Not surprisingly, a stable matching procedure  is used by at  least one  large dating 
+agency.  But  although  “boy-girl-marriage”  terminology  is  traditional  and  makes 
+some of  the deﬁnitions  easier  to  remember  (we hope without offending  anyone), 
+solutions to the Stable Marriage Problem are widely useful. 
+The Mating Ritual was ﬁrst announced in a paper by D. Gale and L.S. Shapley 
+in 1962, but ten years before the Gale-Shapley paper was appeared, and unknown 
+by them, the Ritual was being used to assign residents to hospitals by the National 
+Resident Matching Program (NRMP). The NRMP has, since  the  turn of  the  twen­
+tieth  century,  assigned  each  year ’s  pool  of  medical  school  graduates  to  hospital 
+residencies  (formerly  called  “internships”) with  hospitals  and  graduates  playing 
+the roles of boys and girls.  (In this case there may be multiple boys married to one 
+girl, but  there’s an easy way  to use  the Ritual  in  this situation  (see Problem 9.18). 
+Before the Ritual was adopted, there were chronic disruptions and awkward coun­
+termeasures  taken  to  preserve  assignments  of  graduates  to  residencies.  The  Rit­
+ual  resolved  these  problems  so  successfully,  that  it  was  used  essentially  without 
+change at least through 1989.6 
+MIT Math Prof. Tom Leighton, who  regularly  teaches  6.042  and  also  founded 
+the internet infrastructure company, Akamai, reports another application. Akamai 
+uses a variation of the Gale-Shapley procedure to assign web trafﬁc to servers.  In 
+the early days, Akamai used other combinatorial optimization algorithms that got 
+to be too slow as the number of servers and trafﬁc increased.  Akamai switched to 
+Gale-Shapley since it is fast and can be run in a distributed manner.  In this case, the 
+web  trafﬁc  corresponds  to  the  boys  and  the web  servers  to  the  girls.  The  servers 
+have preferences based on latency and packet loss; the trafﬁc has preferences based 
+on the cost of bandwidth. 
+6Much  more  about  the  Stable  Marriage  Problem  can  be  found  in  the  very  readable  mathematical 
+monograph by Dan Gusﬁeld and Robert W. Irving, The Stable Marriage Problem:  Structure and Algo­
+rithms, MIT Press, Cambridge, Massachusetts, 1989, 240 pp. 
+
+9.2.  THE STABLE MARRIAGE PROBLEM 
+
+163 
+
+9.2.8  Problems 
+Practice Problems 
+
+Problem 9.14. 
+Four Students want separate assignments to four VI-A Companies.  Here are their 
+preference rankings: 
+
+Student 
+Albert: 
+Rich: 
+Megumi: 
+Justin: 
+
+Companies 
+HP, Bellcore, AT&T, Draper 
+AT&T, Bellcore, Draper, HP 
+HP, Draper, AT&T, Bellcore 
+Draper, AT&T, Bellcore, HP 
+
+Company 
+AT&T: 
+Bellcore: 
+HP: 
+Draper: 
+
+Students 
+Justin, Albert, Megumi, Rich 
+Megumi, Rich, Albert, Justin 
+Justin, Megumi, Albert, Rich 
+Rich, Justin, Megumi, Albert 
+
+(a)  Use  the Mating Ritual  to  ﬁnd  two  stable  assignments  of  Students  to Compa­
+nies. 
+
+(b)  Describe a simple procedure to determine whether any given stable marriage 
+problem has a unique solution, that is, only one possible stable matching. 
+
+Problem 9.15. 
+Suppose  that Harry  is  one  of  the  boys  and Alice  is  one  of  the  girls  in  the Mating 
+Ritual. Which of the properties below are preserved invariants? Why? 
+
+a.  Alice is the only girl on Harry’s list. 
+
+b.  There is a girl who does not have any boys serenading her. 
+
+c.  If Alice is not on Harry’s list, then Alice has a suitor that she prefers to Harry. 
+
+d.  Alice is crossed off Harry’s list and Harry prefers Alice to anyone he is sere­
+nading. 
+
+e.  If Alice is on Harry’s list, then she prefers to Harry to any suitor she has. 
+
+Class Problems 
+
+Problem 9.16. 
+A preserved invariant of the Mating ritual is: 
+
+For  every girl, G,  and  every boy, B ,  if G  is  crossed off B ’s  list,  then G 
+has a favorite suitor and she prefers him over B . 
+
+164 
+
+CHAPTER 9.  STATE MACHINES 
+
+Use  the  invariant  to  prove  that  the  Mating  Algorithm  produces  stable  mar­
+riages.  (Don’t look up the proof in the Notes or slides.) 
+
+Problem 9.17. 
+Consider  a  stable  marriage  problem  with  4  boys  and  4  girls  and  the  following 
+partial information about their preferences: 
+
+– 
+– 
+B1:  G1  G2 
+– 
+– 
+B2:  G2  G1 
+–  G4  G3 
+– 
+B3: 
+–  G3  G4 
+B4: 
+– 
+– 
+– 
+G1:  B2  B1 
+G2:  B1  B2 
+– 
+– 
+B3  B4 
+– 
+– 
+G3: 
+G4: 
+– 
+– 
+B4  B3 
+
+(a)  Verify that 
+
+(B 1, G1), (B 2, G2), (B 3, G3), (B 4, G4) 
+will be a stable matching whatever the unspeciﬁed preferences may be. 
+
+(b)  Explain why the stable matching above is neither boy-optimal nor boy-pessimal 
+and so will not be an outcome of the Mating Ritual. 
+
+(c)  Describe how to deﬁne a set of marriage preferences among n boys and n girls 
+which have at least 2n/2  stable assignments. 
+Hint:  Arrange  the boys  into a  list of n/2 pairs, and  likewise arrange  the girls  into 
+a  list  of  n/2  pairs  of  girls.  Choose  preferences  so  that  the  kth  pair  of  boys  ranks 
+the kth pair of girls just below the previous pairs of girls, and likewise for the kth 
+pair of girls. Within the kth pairs, make sure each boy’s ﬁrst choice girl in the pair 
+prefers the other boy in the pair. 
+
+Homework Problems 
+
+Problem 9.18. 
+The most famous application of stable matching was in assigning graduating med­
+ical students to hospital residencies. Each hospital has a preference ranking of stu­
+dents  and  each  student  has  a  preference  order  of  hospitals,  but  unlike  the  setup 
+in the notes where there are an equal number of boys and girls and monogamous 
+marriages, hospitals generally have differing numbers of available residencies, and 
+the total number of residencies may not equal the number of graduating students. 
+Modify the deﬁnition of stable matching so it applies in this situation, and explain 
+how  to  modify  the  Mating  Ritual  so  it  yields  stable  assignments  of  students  to 
+residencies. No proof is required. 
+
+9.2.  THE STABLE MARRIAGE PROBLEM 
+
+165 
+
+Problem 9.19. 
+Give an example of a stable matching between 3 boys and 3 girls where no person 
+gets their ﬁrst choice. Brieﬂy explain why your matching is stable. 
+
+Problem 9.20. 
+In a stable matching between n boys and girls produced by the Mating Ritual, call 
+a person lucky if they are matched up with one of their �n/2� top choices.  We will 
+prove: 
+
+Theorem.  There must be at least one lucky person. 
+
+To prove this, deﬁne the following derived variables for the Mating Ritual: 
+
+q(B ) =  j , where j is the rank of the girl that boy B  is courting.  That is to say, boy 
+B  is always courting the j th girl on his list. 
+r(G) is the number of boys that girl G has rejected. 
+� 
+�
+q(B ) − 
+S  ::= 
+r(G). 
+G∈the-Girls 
+B∈the-Boys 
+Show that S  remains the same from one day to the next in the Mating Ritual. 
+
+(a)	 Let 
+
+(9.7) 
+
+(b)  Prove the Theorem above.  (You may assume for simplicity that n is even.) 
+Hint: A girl is sure to be lucky if she has rejected half the boys. 
+
+166 
+
+CHAPTER 9.  STATE MACHINES 
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.042J / 18.062J Mathematics for Computer Science 
+Spring 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

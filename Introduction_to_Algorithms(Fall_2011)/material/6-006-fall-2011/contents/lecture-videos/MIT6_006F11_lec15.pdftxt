@@ -1,0 +1,290 @@
+Lecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Lecture 15: Shortest Paths I: Intro
+
+Lecture Overview
+• Weighted Graphs
+• General Approach
+• Negative Edges
+• Optimal Substructure
+
+Readings
+
+CLRS, Sections 24 (Intro)
+
+Motivation:
+
+Shortest way to drive from A to B Google maps “get directions”
+Formulation: Problem on a weighted graph G(V , E ) W : E → (cid:60)
+
+Two algorithms: Dijkstra O(V lg V + E ) assumes non-negative edge weights
+Bellman Ford O(V E ) is a general algorithm
+
+Application
+• Find shortest path from CalTech to MIT
+
+– See “CalTech Cannon Hack” photos web.mit.edu
+
+– See Google Maps from CalTech to MIT
+• Model as a weighted graph G(V , E ), W : E → (cid:60)
+
+– V = vertices (street intersections)
+
+– E = edges (street, roads); directed edges (one way roads)
+
+– W (U, V ) = weight of edge from u to v (distance, toll)
+path p = < v0 , v1 , . . . vk >
+(cid:88)
+(vi , vi+1 ) ∈ E for 0 ≤ i < k
+k−1
+i=0
+
+w(vi , vi+1 )
+
+w(p) =
+
+1
+
+Lecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Weighted Graphs:
+
+means p is a path from v to v . (v ) is a path from v to v of weight
+0
+k
+0
+0
+0
+
+Notation:
+p
+−→
+
+v0
+vk
+0.
+Deﬁnition:
+(cid:26)
+
+Shortest path weight from u to v as
+δ(u, v) = 
+Single Source Shortest Paths:
+
+min
+∞
+
+w(p) :
+
+p
+u −→ v
+
+(cid:27)
+
+if ∃ any such path
+
+otherwise
+
+(v unreachable from u)
+
+Given G = (V , E ), w and a source vertex S , ﬁnd δ(S, V ) [and the best path] from S
+to each v ∈ V .
+Data structures:
+
+circle
+
+(cid:27)
+
+(cid:26)
+d[v ] = value inside
+
+=
+
+0
+if v = s
+∞ otherwise
+⇐= at end
+= δ
+(s, v)
+d[v ] ≥ δ(s, v) at all times
+
+⇐
+= initially
+
+d[v ] decreases as we ﬁnd better paths to v , see Figure 1.
+Π[v ] = predecessor on best path to v , Π[s] = NIL
+
+2
+
+Lecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Example:
+
+Figure 1: Shortest Path Example: Bold edges give predecessor Π relationships
+
+Negative-Weight Edges:
+• Natural in some applications (e.g., logarithms used for weights)
+• Some algorithms disallow negative weight edges (e.g., Dijkstra)
+• If you have negative weight edges, you might also have negative weight cycles
+=⇒ may make certain shortest paths undeﬁned!
+
+Example:
+
+See Figure 2
+
+B → D → C → B (origin) has weight −6 + 2 + 3 = −1 < 0!
+Shortest path S −→ C (or B , D, E ) is undeﬁned. Can go around B → D → C as
+
+3
+
+1A2B0S5C3D3E4F22211331114253Lecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Figure 2: Negative-weight Edges.
+
+many times as you like
+Shortest path S −→ A is deﬁned and has weight 2
+If negative weight edges are present, s.p. algorithm should ﬁnd negative weight cycles
+(e.g., Bellman Ford)
+
+General structure of S.P. Algorithms (no negative cycles)
+
+Initialize:
+
+← ∞
+for v ∈ V :
+d [v ]
+Π [v ] ← NIL
+d[S ] ← 0
+select edge (u, v)
+repeat
+Main:
+[somehow]
+“Relax” edge (u, v)  d[v ] ← d[u] + w(u, v)
+if d[v ] > d[u] + w(u, v) :
+π [v ] ← u
+until all edges have d[v ] ≤ d[u] + w(u, v)
+
+4
+
+ABSCDE2-21342-6Lecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Complexity:
+
+Termination?
+(needs to be shown even without negative cycles)
+Could be exponential time with poor choice of edges.
+
+Figure 3: Running Generic Algorithm. The outgoing edges from v0 and v1 have
+weight 4, the outgoing edges from v2 and v3 have weight 2, the outgoing edges from
+v4 and v5 have weight 1.
+
+In a generalized example based on Figure 3, we have n nodes, and the weights of
+edges in the ﬁrst 3-tuple of nodes are 2 2 . The weights on the second set are 2 2 −1 ,
+n
+n
+−
+and so on. A pathological selection of edges will result in the initial value of d(vn 1 )
+× n
+(2 2 + 2 2 −1 + · · · + 4 + 2 + 1). In this ordering, we may then relax the edge
+n
+to be 2
+of weight 1 that connects vn−3 to vn−1 . This will reduce d(vn−1 ) by 1. After we relax
+−
+−
+−
+the edge between vn 5 and vn 3 of weight 2, d(vn 2 ) reduces by 2. We then might
+relax the edges (vn−3 , vn−2 ) and (vn−2 , vn−1 ) to reduce d(vn−1 ) by 1. Then, we relax
+−3
+n−1
+n−1
+again. In this manner, we might reduce d(v
+) by 1 at
+the edge from vn
+to v
+each relaxation all the way down to 2 2 + 2 2 −1 + · · ·
+n
+n
+n
++ 4 + 2 + 1. This will take O(2 2 )
+time.
+
+Optimal Substructure:
+
+Theorem: Subpaths of shortest paths are shortest paths
+Let p = < v0 , v1 , . . . vk > be a shortest path
+≤ ≤ ≤
+Let pij = < vi , vi+1 , . . . vj > 0
+i
+j
+k
+
+5
+
+v0v1v2v3v4v5v6v74810121314131011126784689107911T(0) = 0   v0, v1    v1, v2T(n+2) = 3 + 2T(n)  v2, vn    v0, v2T(n) = θ(2n/2)   v2, vnLecture 15
+
+Shortest Paths I: Intro
+
+6.006 Fall 2011
+
+Proof: p =
+
+Then pij is a shortest path.
+pij
+p0,i
+pj k
+i → j → vk
+v0 → v
+v
+→
+p(cid:48)
+ij
+If p(cid:48)
+ij is shorter than pij , cut out pij and replace with p(cid:48)
+ij ; result is shorter than p.
+Contradiction.
+
+Triangle Inequality:
+Theorem: For all u, v , x ∈ X , we have
+≤
+
+δ (u, v)
+
+δ (u, x) + δ (x, v)
+
+Proof:
+
+Figure 4: Triangle inequality
+
+6
+
+uvxδ (u,v)δ (x,v)δ (u,x)MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

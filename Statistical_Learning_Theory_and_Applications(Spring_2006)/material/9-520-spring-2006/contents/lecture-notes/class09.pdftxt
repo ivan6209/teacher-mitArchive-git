@@ -1,0 +1,1872 @@
+Ranking Problems
+
+
+9.520 Class 09, 08 March 2006 
+Giorgos Zacharia 
+
+•	
+
+Supervised Ranking Problems
+
+•	 Preference Modeling: 
+
+–	 Given a set of possible product configurations x1, x2,…xd  predict 
+the most preferred one; predict the rating 
+Information Retrieval: 
+
+–	 Given a query q, and set of candidate matches x1, x2,…xd  predict 
+the best answer 
+Information Extraction:
+
+–	 Given a set of possible part of speech tagging choices, x1, 
+x2,…xd  predict the most correct tag boundaries 
+•	 E.g “The_day_they_shot_John_Lennon/WE at the 
+Dogherty_Arts_Center/WE” 
+•	 Multiclass classification:
+
+–	 Given a set of possible class labels y1, y2,…yd and confindense 
+scores c1, c2,…cd, predict the correct label 
+
+•	
+
+Types of information available 
+
+
+•  Preference modeling: 
+–  Metric based: 
+•  User rated configuration x with y =U (x )
+i 
+i
+i
+–  Choice based: 
+•  Given choices x1, x2,…xd, the user chose xf 
+–  Prior information about the features:
+
+•  Cheaper is better 
+•  Faster is better 
+• etc  
+
+Types of information available 
+
+
+•  Information Retrieval: 
+–  Metric based: 
+•  Users clicked on link xi with a frequency y =U (x )
+i
+i
+–  Choice based: 
+•  Given choices x1, x2,…xd, the user clicked on xf 
+–  Prior information about the features: 
+•  Keyword matches (the more the better) 
+•  Unsupervised similarity scores (TFIDF) 
+• etc  
+
+Types of information available 
+
+
+•  Information Extraction: 
+–	 Choice based: 
+•  Given tagging choices x1, x2,…xd, the hand labeling chose xf 
+–	 Prior information about the features: 
+•	 Unsupervised scores 
+•  Multiclass: 
+–	 Choice based: 
+•	 Given vectors the confidence scores c1, c2,…cd  for class labels 
+1,2,…d the correct label was yf.. .  The confidence scores may be 
+coming from set of weak classifiers, and/or OVA comparisons. 
+–	 Prior information about the features: 
+•	 The higher the confidence score the more likely to represent the 
+correct label. 
+
+(Semi-)Unsupervised Ranking Problems
+
+
+•	 Learn relationships of the form: 
+–	 Class A is closer to B, than it is to C 
+•	 We are given a set of l labeled comparisons for 
+a user, and a set of u seemingly-unrelated 
+comparisons from other users. 
+–  How do we incorporate the seemingly-unrelated 
+information from the u instances 
+–	 How do we measure similarity
+
+
+Rank Correlation Kendall’s τ
+
+
+τ= 
+
+= 1 −
+
+− 1
+
+
+P Q
+−	
+P Q	
++	
+
+2Q   P
+2
+=
+n
+n
+⎛ ⎞ 
+⎛ ⎞
+
+⎜ ⎟
+⎜ ⎟ 
+2
+2
+⎝ ⎠ 
+⎝ ⎠ 
+•	 P is the number of concordant pairs
+
+•	 Q is the number of discordant pairs
+
+•	 Value ranges from -1 for reverse rankings to +1 
+for  same rankings. 
+•	 0 implies independence 
+
+
+Example
+
+
+A  B  C  D  E  F  G  H 
+
+Person 
+Rank by Height  1  2  3  4  5  6  7  8 
+Rank by Weight  3  4  1  2  5  7  8  6 
+
+•  P = 5 + 4 + 5 + 4 + 3 + 1 + 0 + 0 = 22
+
+
+τ=
+
+
+2
+P
+
+1
+− =
+
+n 
+⎛ ⎞ 
+⎜ ⎟
+2
+⎝ ⎠ 
+
+44
+ 1− = 0.57 
+22
+
+
+Minimizing discordant pairs
+
+
+maximize 
+
+2Q
+Kendall   ' s τ= −  n⎛ ⎞
+
+1
+⎜ ⎟
+2
+⎝ ⎠
+
+
+Equivalent to 
+satisfying all 
+constraints: 
+
+∀ r(x  )  ≥ r(x j ): wΦ(x  )  ≥ wΦ(x j )
+i
+i 
+
+Familiar problem
+
+
+accounting for noise:
+
+∀ r(x  )  ≥ r(x  ): wΦ(x  )  ≥  wΦ(x  )+1-ξ ij
+
+i
+j
+i 
+j 
+ξ 
+ij  ≥ 0 
+rearranging : 
+w (Φ(x  ) -Φ(x j ) ) ≥ 1-ξ
+ij 
+i 
+equivalent to classification of pairwise difference vectors 
+
+Regularized Ranking
+
+
+l 
+min f H K ∑ V ( y
+i
+∈ 
+j i = 
+, 1
+
+− 
+
+ y
+
+j , 
+
+ f ( x
+i 
+
+−
+
+x j ) ) +γ  f
+
+2
+K 
+
+Notes: 
+V(.) can be any relevant loss function 
+We could use any binary classifier; RLSC, SVM, Boosted Trees, etc 
+The framework for classifying vectors of differences is general 
+enough to apply to both metric, and choice based problems 
+
+Bound on Mean Average Precision
+
+Minimizing Q, works for other IR metrics as well. 
+Consider Mean Average Precision: 
+i
+1 ∑ 
+n 
+Mean  ( AvgPrec  ) = 
+i =1  pi
+
+n 
+p  = rank   of  sorted retrieved item i 
+
+i 
+n  = number of ranked  retrieved  items 
+n ∑ p  =
+)
+(
+ n
+ + 1 /  2  
+i
+
+i =1
+
+number of   discordant   items  
+Q  
+= 
+n1
+min  ∑ i 
+i =1  pi
+
+n 
+(cid:96)  i
+subject to   p   < p j  ∈  ∀ <  j
+
+i 
+
++ n
+
+Q 
+
+Bound on Mean Average Precision
+
+L
+
+=
+
+min
+
+use Lagrange multipliers
+i
+1
+n
+n
+⎡
+∑
+∑
+μ
+⎢
+n
+p
+⎣
+i
+i
+1
+1
+=
+=
+i
+i
+n
+
+L
+∂
+p
+∂
+i
+
+= −
+
++
+
+2
+−
+
+p
+i
+
+p
+0
+μ
++ = ⇒ =
+i
+
+i
+n
+μ
+
+:
+
+(
+p Q n n
+− −
+i
+
++
+
+)
+1 / 2
+
+⎤
+⎥
+⎦
+
+L
+
+=
+
+1
+n
+
+L
+∂
+μ
+∂
+
+=
+
+i
+
+n
+∑
+i
+1
+=
+
+i
+n
+μ
+1
+n
+∑
+n
+μ
+i
+1
+=
+
++
+
+⎡
+μ
+⎢
+⎣
+
+n
+∑
+i
+1
+=
+
+i
+n
+μ
+
+(
+Q n n
+− −
+
++
+
+)
+1 / 2
+
+=
+
+2
+
+⎤
+⎥
+⎦
+
+n
+μ
+∑
+n
+i
+1
+=
+
+i
+
+−
+
+μ
+⎡
+⎣
+
+(
+Q n n
++
+
++
+
+)
+1 / 2
+
+⎤
+⎦
+
+(
+i Q n n
+−
+⎡
++
+⎣
+
++
+
+)
+1 / 2
+
+⎤
+⎦
+
+0
+μ
+= ⇒ =
+
+1
+n
+
+⎡
+⎢
+⎣
+
+n
+∑
+i
+1
+=
+
+(
+i Q n n
++
+⎡
+⎣
+
++
+
+)
+1 / 2
+
+⎤
+⎦
+
+2
+
+⎤
+⎥
+⎦
+
+⇒
+
+(
+Mean AvgPrec
+
+)
+
+≥
+
+1
+n
+
+⎛
+⎜
+⎝
+
+n
+∑
+i
+1
+=
+
+i
+
+2
+⎞
+⎡
+⎟ ⎣
+⎠
+
+(
+Q n n
++
+
++
+
+)
+1 / 2
+
+1
+−
+
+⎤
+⎦
+
+Prior Information
+
+• Ranking problems come with a lot of prior 
+knowledge
+– Positivity constraints
+• For a pairwise comparison, where all attributes are 
+equal, except one, the instance with the highest 
+(lowest) value is preferred.
+– If A is better than B, then B is worse than A
+
+Prior information
+
+Positivity constraints
+
+Symmetric comparisons
+
+Assume linear SVM case:
+n
+∑
++∑
+ξ ξ λ
+i
+w
+,
+m i
+m
+f
+i
+1...
+1
+=
+=
+
+min
+
+,...,
+
+w
+1
+
+w
+
+i
+∀ ∈
+
+{
+1, ...,
+
+}
+n
+
+fw
+
+ 1-
+fξ≥
+
+, 
+
+∀
+
+f = 1, . . .m
+
+2
+f
+
+if
+(
+f x
+i
+then
+(
+f x
+
+−
+
+x
+
+j
+
+−
+
+x
+i
+
+j
+
+)
+
+)
+
+1
+= +
+
+1  
+= −
+
+The problem becomes:
+m
+n
+∑
+∑
+ξ λ
+ξ ξ
++
+f
+i
+w
+,
+m i
+f
+f
+i
+1
+1
+=
+=
+
+min
+
+C
+
++
+
+w
+1
+
+,...,
+
+∑
+m
+1...
+=
+
+w
+
+2
+f
+
+Constructing the training set from examples
+
+• Sometimes the comparisons are not explicit:
+– Information Retrieval (Learn from clickthrough data)
+• “Winning” instances are the ones clicked most often 
+• Features are other ranking scores (similarity of query with 
+title, or text segments in emphasis etc).  This also implies 
+positivity constraints 
+– Supervised summarization
+• “Winning” words are they ones that show up in the summary
+• Features are other content-word predictors (TFIDF score, 
+distance from beginning of text, etc). We can again 
+incorporate positivity constraints
+
+Semi-unsupervised Ranking
+
+• Learn distance metrics from comparisons of the form:
+– A is closer to B, than C
+• Examples from WEBKB (Schultz&Joachims):
+– Webpages from the same university are closer than ones from 
+different schools
+– Webpages about the same topic (faculty, student, project, and 
+course) are closer than pages from different ones
+– Webpages about same topic are close. If from 
+different topics, but one of them a student page, and 
+one a faculty page, then they are closer than other 
+different topic pages.
+
+Learning weighted distances
+
+y
+
+)
+
+)
+T
+
+W
+Φ Φ
+
+Τ
+
+(
+( )
+(
+x
+φ φ
+−
+
+y
+
+)
+
+)
+
+Φ
+
+W
+,
+
+=
+
+:
+
+2
+
+d
+
+=
+
+)
+
+−
+
+y
+
+)
+
+)
+
+2
+
+)
+
+)
+
+AWA
+T
+
+(
+K y x
+,
+i
+
+(
+( )
+(
+x
+φ φ
+−
+
+(
+( )
+(
+x
+,
+φ φ
+n
+(
+∑
+(
+W K x x
+,
+i
+ij
+i
+1
+=
+this leads to
+1min
+∑
+2
+i j k
+,
+,
+(
+x
+P
+j k
+s t
+i
+. . ( ,
+:
+, )
+∈
+i
+train
+or we can write it as
+:
+1min
+∑
+2
+i j k
+,
+,
+with A
+A A A A s t
+(
+. .
+)
+)(
+T
+T
+
+w Lw C
+T
++
+
+L
+,
+= Φ =
+
++
+
+C
+
+ξ
+ijk
+
+x
+k
+
+)
+T
+
+ξ
+ijk
+
+−
+
+(
+AWA x
+T
+i
+
+−
+
+x
+k
+
+)
+
+−
+
+(
+
+x
+i
+
+−
+
+x
+
+j
+
+)
+T
+
+(
+AWA x
+T
+i
+
+−
+
+x
+
+j
+
+)
+
+1
+≥ −
+
+ξ
+ijk
+
+2T
+A
+WA
+
+=
+
+w Lw
+T
+
+Learning distance metrics
+Experiments (Schultz&Joachims)
+
+Learned 
+
+98.43% 
+
+University 
+Distance     
+Topic Distance          
+75.40% 
+
+Topic+FacultyStu
+dent Distance
+
+79.67% 
+
+Binary 
+
+67.88% 
+
+61.82% 
+
+63.08% 
+
+TFIDF
+
+80.72%
+
+55.57%
+
+55.06%
+
+Note: Schultz&Joachims report that they got the best results with a linear kernel 
+where A=I.  They do not regularize the complexity of their weighted distance 
+metric (Remember Regularized Manifolds from previous class)
+
+Learning from seemingly-unrelated comparisons
+
+(Evgeniou&Pontil; Chappelle&Harchaoui )
+Given l comparisons from the same user 
+and u comparisons from seemingly-unrelated users:
+
+(
+V y
+i
+
+−
+
+(
+f x
+i
+
+)
+
+)
+
++
+
+2
+μ
+
+l u
++
+∑
+l
+i
+1
+= +
+
+(
+V y
+i
+
+−
+
+(
+f x
+i
+
+)
+
+)
+
++
+
+γ
+
+f
+
+2
+K
+
+f H
+∈
+
+min
+
+l
+∑
+K
+i
+1
+=
+1
+0
+μ
+≤
+≤
+where y
+i
+
+=
+
+y
+
+−
+
+y and x
+k
+i
+
+j
+
+=
+
+x
+
+j
+
+j
+x
+,
+− ∀ ≠
+k
+
+k
+
+Results of RLSC experiments with l=10 comparisons per 
+user, with u instances of seemingly-unrelated comparisons, 
+and weight μ on loss contributed by the seemingly-
+unrelated data. 
+u=10
+18.141 %
+18.268 %
+
+u=20
+18.090 %
+18.117 %
+
+u=100
+18.430 %
+18.009 %
+
+μ=0
+μ=0.00000
+1
+μ=0.00001
+μ=0.0001
+μ=0.001
+μ=0.01
+μ=0.1
+μ=0.2
+μ=0.3
+μ=0.4
+μ=0.5
+μ=0.6
+
+u=30
+18.380 %
+17.847 %
+
+u=50
+18.040%
+18.152%
+
+17.897 %
+17.999 %
+18.182 %
+17.986 %
+17.132 %
+16.133 %
+
+15.998 %
+16.581 %
+17.455 %
+18.748 %
+
+18.123 %
+18.135 %
+17.835 %
+17.905 %
+16.508 %
+
+15.520 %
+15.602 %
+16.786 %
+17.810 %
+19.589 %
+
+18.217 %
+18.067 %
+18.092 %
+18.043 %
+16.225 %
+
+15.157 %
+15.918 %
+17.162 %
+18.676 %
+20.440 %
+
+18.182%
+18.089 %
+18.140 %
+18.023 %
+15.636 %
+
+15.323 %
+16.304 %
+17.812 %
+19.838 %
+22.355 %
+
+18.164 %
+18.036 %
+18.135 %
+18.174 %
+
+15.242%
+15.276 %
+17.055 %
+19.494 %
+22.090 %
+25.258 %
+
+Ranking learning with seemingly-
+unrelated data
+• More seemingly-unrelated comparisons in the 
+training set improve results
+• There is no measure of similarity of the 
+seemingly-unrelated data (recall 
+Schultz&Joachims)
+
+Regularized Manifolds
+
+*
+
+f
+
+=
+
+argmin 
+
+f H
+∈
+
+K
+
+1
+l
+
+l
+∑
+i
+1
+=
+
+(
+V x y f
+,
+,
+i
+i
+
+)
+
++
+
+γ
+A
+
+f
+
+2
+K
+
+=
+
+argmin 
+
+Laplacian 
+
+K
+
+f H
+∈
+
+1
+l
+∑
+l
+i
+1
+=
+L D W
+=
+−
+
+(
+V x y f
+,
+,
+i
+i
+
+)
+
++
+
+γ
+A
+
+f
+
+2
+K
+
++
+
+(
+
+(
+(
+V f x
+
+i
+
+)
+
+−
+
+2
+)
+(
+)
+f x W
+ij
+j
+
+l
+∑
+j
+i
+,
+1
+=
+
+2
+
+)
+
++
+
+γ
+I
+(
+u l
++
+γ
+I
+u l
++
+
+2
+
+)
+
+f Lf
+T
+
+Laplacian RLSC:
+
+min 
+
+f H
+∈
+
+K
+
+1
+l
+
+l
+∑
+i
+1
+=
+
+(
+
+y
+i
+
+−
+
+(
+f x
+i
+
+2
+
+)
+
+)
+
++
+
+γ
+A
+
+f
+
+2
+K
+
++
+
+γ
+I
+u l
++
+
+(
+
+2
+
+)
+
+f Lf
+T
+
+Laplacian RLSC for ranking with seemingly-
+unrelated data
+
+min 
+
+f H
+∈
+
+K
+
+1
+l
+
+l
+∑
+i
+1
+=
+
+(
+
+y
+i
+
+−
+
+(
+f x
+i
+
+2
+
+)
+
+)
+
++
+
+2
+μ
+u
+
+l u
++
+∑
+l
+i
+1
+= +
+
+(
+
+y
+i
+
+−
+
+(
+f x
+i
+
+2
+
+)
+
+)
+
++
+
+γ
+A
+
+f
+
+2
+K
+
++
+
+γ
+I
+u l
++
+
+(
+
+2
+
+)
+
+f Lf
+T
+
+This is equivalent to the following minimization:
+
+min 
+
+f H
+∈
+
+K
+
+1
+l
+
+l u
++
+∑
+i
+1
+=
+
+(
+
+y
+μ
+i
+
+−
+
+(
+f x
+μ
+i
+
+)
+
+2
+
+)
+
++
+
+γ
+A
+
+f
+
+2
+K
+
++
+
+γ
+I
+u l
++
+
+(
+
+2
+
+)
+
+f Lf
+T
+
+Laplacian RLSC for ranking with seemingly-
+unrelated data
+
+*
+
+f
+
+( )
+x
+
+(
+K x x
+,
+μ
+i
+
+)
+
+=
+
+l u
++
+∑
+*
+α
+i
+i
+1
+=
+y x
+,
+μ
+=
+i
+i
+y x
+,
+′
+μ
+μ
+i
+i
+l
+μ
+u
+
+y
+μ
+i
+y
+μ
+i
+
+=
+=
+
+′ =
+μ
+
+x
+i
+=
+
+ for 
+x
+′
+μ
+i
+
+i
+l
+≤
+ for 
+
+l
+
+i
+l u
+< ≤ +
+
+)
+
+(
+(
+)
+l u
+K
+l u
+ is the 
+  gram matrix 
+μ
++
+× +
+Y
+y
+y
+y
+y
+,
+...
+...
+⎡
+⎤
+μ
+μ μ
+= ⎣
+⎦
+l u
+l
+l
+1
+1
++
++
+( )
+f x
+, take partial derivatives and solve for 
+Replace 
+*
+α
+1
+−
+
+x
+K x
+,
+(
+)
+μ μ
+j
+i
+
+μ
+ij
+
+K
+
+=
+
+*
+α
+
+=
+
+μ
+
+K
+
++
+
+γ
+A
+
+lI
+
++
+
+(
+
+⎛
+⎜
+⎜
+⎝
+
+l
+γ
+I
+u l
++
+
+μ
+
+LK
+
+2
+
+)
+
+⎞
+⎟
+⎟
+⎠
+
+μ
+
+Y
+
+Results of Laplacian RLSC experiments with l=10
+comparisons per user, with u instances of seemingly-
+unrelated data, and μ weight on loss contributed by the 
+seemingly-unrelated comparisons. 
+u=10
+u=20
+u=30
+
+u=50
+
+μ=0
+
+μ=0.000001
+
+μ=0.00001
+
+μ=0.0001
+
+μ=0.001
+
+μ=0.01
+
+μ=0.1
+
+μ=0.2
+
+μ=0.3
+
+μ=0.4
+
+μ=0.5
+
+μ=0.6
+
+17.50%
+
+17.34 %
+
+18.30 %
+
+18.56 %
+
+17.20 %
+
+16.92 %
+
+16.86 %
+
+14.80 %
+
+16.22 %
+
+15.94 %
+
+17.90 %
+
+17.74 %
+
+18.50%
+
+19.46 %
+
+18.20 %
+
+18.76 %
+
+18.12 %
+
+17.52 %
+
+16.68 %
+
+14.68 %
+
+16.76 %
+
+16.54 %
+
+16.64 %
+
+20.20 %
+
+18.38%
+
+17.52 %
+
+17.54 %
+
+18.02 %
+
+18.28 %
+
+17.98 %
+
+16.04 %
+
+14.86 %
+
+16.74 %
+
+17.94 %
+
+18.74 %
+
+20.60 %
+
+18.20%
+
+18.11 %
+
+18.46 %
+
+17.73 %
+
+17.87 %
+
+17.70 %
+
+15.58 %
+
+14.89 %
+
+16.57 %
+
+17.93 %
+
+19.48 %
+
+22.38 %
+
+u=100
+
+17.54%
+
+20.10 %
+
+18.10 %
+
+17.90 %
+
+18.00 %
+
+18.15 %
+
+16.30 %
+
+14.30 %
+
+18.60 %
+
+20.75 %
+
+20.60 %
+
+25.35 %
+
+Observations
+
+• Optimal μ (estimated by CV) gives better 
+performance, than without the Manifold setting
+• More seemingly-unrelated data, do not affect 
+performance significantly
+• Seemingly-unrelated examples have impact that 
+depends on the manifold transformation:
+– The intrinsic penalty term accounts for examples that 
+are neighboring on the manifold, and have opposite 
+labels.
+
+

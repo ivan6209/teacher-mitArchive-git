@@ -1,0 +1,292 @@
+Lecture 20
+
+Dynamic Programming II of IV
+
+6.006 Fall 2011
+
+Lecture 20: Dynamic Programming II
+
+Lecture Overview
+• 5 easy steps
+• Text justiﬁcation
+• Perfect-information Blackjack
+• Parent pointers
+
+Summary
+* DP ≈ “careful brute force”
+* DP ≈ guessing + recursion + memoization
+* DP ≈ dividing into reasonable # subproblems whose solutions relate — acyclicly —
+usually via guessing parts of solution.
+(cid:124)
+(cid:123)(cid:122)
+(cid:125)
+* time = # subproblems × time/subproblem
+as O(1)
+treating
+recursiv
+e calls
+(usually mainly guessing)
+• essentially an amortization
+• count each subproblem only once; after ﬁrst time, costs O(1) via memoization
+* DP ≈ shortest paths in some DAG
+
+5 Easy Steps to Dynamic Programming
+
+1. deﬁne subproblems
+
+count # subproblems
+
+2. guess (part of solution)
+
+count # choices
+
+3. relate subproblem solutions
+
+4. recurse + memoize
+problems
+OR build DP table bottom-up
+check subproblems acyclic/topological order
+
+compute time/subproblem
+time = time/subproblem · # sub-
+
+5. solve original problem: = a subproblem
+OR by combining subproblem solutions
+
+=⇒ extra time
+
+1
+
+Lecture 20
+
+Dynamic Programming II of IV
+
+6.006 Fall 2011
+
+Examples:
+subprobs:
+
+# subprobs:
+guess:
+# choices:
+recurrence:
+
+time/subpr:
+topo. order:
+total time:
+
+Fibonacci
+Fk
+for 1 ≤ k ≤ n
+n
+nothing
+1
+−
+Fk = Fk 1
++Fk−2
+Θ(1)
+for k = 1, . . . , n
+Θ(n)
+
+orig. prob.:
+extra time:
+
+Fn
+Θ(1)
+
+Shortest Paths
+δk (s, v) for v ∈ V , 0 ≤ k < |V |
+= min s → v path using
+≤
+k edges
+V 2
+edge into v (if any)
+indegree(v) + 1
+{ k−1
+δk (s, v) = min δ
+(s, u) + w(u, v)
+| (u, v) ∈ E }
+Θ(1 + indegree(v))
+for k = 0, 1, . . . |V | − 1 for v ∈ V
+Θ(V E )
++ Θ(V 2 ) unless eﬃcient about indeg. 0
+δ|V |−1 (s, v) for v ∈ V
+Θ(V )
+
+Text Justiﬁcation
+
+Split text into “good” lines
+• obvious (MS Word/Open Oﬃce) algorithm: put as many words that ﬁt on ﬁrst line,
+repeat
+• but this can make very bad lines
+
+Figure 1: Good vs. Bad Text Justiﬁcation.
+
+• Deﬁne badness(i, j ) for line of words[i : j ].
+• goal: split words into lines to min (cid:80) badness
+For example, ∞ if total length > page width, else (page width − total length)3 .
+
+1. subproblem = min. badness for suﬃx words[i :]
+=⇒ # subproblems = Θ(n) where n = # words
+
+2. guessing = where to end ﬁrst line, say i : j
+=⇒ # choices = n − i = O(n)
+
+2
+
+blah blah blah      blah           blahb      l      a       h     vs. blah     blahreallylongword   reallylongword:) : <Lecture 20
+
+Dynamic Programming II of IV
+
+6.006 Fall 2011
+
+3. recurrence:
+• DP[i] = min(badness (i, j ) + DP [j ] for j in range (i + 1, n + 1))
+• DP [n] = 0
+=⇒ time per subproblem = Θ(n)
+4. order: for i = n, n − 1, . . . , 1, 0
+total time = Θ(n2 )
+
+Figure 2: DAG.
+
+5. solution = DP [0]
+
+Perfect-Information Blackjack
+• Given entire deck order: c0 , c1 , · · · cn−1
+• 1-player game against stand-on-17 dealer
+• when should you hit or stand? GUESS
+• goal: maximize winnings for ﬁxed bet $1
+• may beneﬁt from losing one hand to improve future hands!
+(cid:125)1
+(cid:124)
+(cid:123)(cid:122)
+ci , . . . cn−
+cards
+remaining
+
+1. subproblems: BJ(i) = best play of
+
+where i is # cards “already played”
+
+=⇒ # subproblems = n
+
+2. guess: how many times player “hits” (hit means draw another card)
+=⇒ # choices ≤ n
+
+3. recurrence: BJ(i) = max(
+outcome ∈ {+1, 0, −1} + BJ(i + # cards used)
+for # hits in 0, 1, . . . if valid play ∼ don’t hit after bust
+
+O(n)
+O(n)
+
+3
+
+ijbadness(i,j)Lecture 20
+
+Dynamic Programming II of IV
+
+6.006 Fall 2011
+
+)
+=⇒ time/subproblem = Θ(n2 )
+4. order: for i in reversed(range(n))
+n(cid:88)−1 n−(cid:88)i−O(1)
+total time = Θ(n3 )
+i=0 #h=0
+
+time is really
+
+Θ(n − i − #h) = Θ(n3 ) still
+
+(cid:40)
+
+5. solution: BJ(0)
+detailed recurrence: before memoization (ignoring splits/betting)
+
+
+
+
+
+
+
+
+
+
+BJ(i):
+if n − i < 4: return 0 (not enough cards)
+for p in range(2, n − i − 1): (# cards taken)
+player = sum(ci , ci+2 , ci+4:i+p+2 )
+if player > 21: (bust)
+options.append(−1(bust) + BJ (i + p + 2))
+break
+in range(2, n − i − p
+for d
+)
+i+1 ci+3 , ci+p+2:i+
+dealer = sum(c
+,
+if dealer ≥ 17: break
+if dealer > 21: dealer = 0 (bust)
+options.append(cmp(player, dealer) + BJ(i + p + d))
+return
+max(options)
+
+
+
+
+
+
+Θ(n) with care
+
+)
+
+p+d
+
+Θ(n)
+
+Θ(n2 )
+
+Figure 3: DAG View
+
+Parent Pointers
+
+To recover actual solution in addition to cost, store parent pointers (which guess used at
+each subproblem) & walk back
+
+4
+
+valid playsoutcomes+1-10Lecture 20
+
+Dynamic Programming II of IV
+
+6.006 Fall 2011
+
+• typically: remember argmin/argmax in addition to min/max
+• example: text justiﬁcation
+
+(3)’ DP[i] = min(badness(i,j) + DP[i][0],j)
+for j in range(i+1,n+1)
+DP[n] = (0, None)
+(5)’ i = 0
+while i is not None:
+start line before word i
+i = DP[i][1]
+
+• just like memoization & bottom-up, this transformation is automatic
+no thinking required
+
+5
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006  Introduction to Algorithms
+ 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

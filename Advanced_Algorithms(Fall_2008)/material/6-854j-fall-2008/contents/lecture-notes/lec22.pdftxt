@@ -1,0 +1,364 @@
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.854J / 18.415J Advanced Algorithms 
+Fall 2008
+��
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms. 
+
+18.415/6.854 Advanced Algorithms 
+
+December 1, 2008 
+
+Lecturer:  Michel  X.  Goemans 
+
+Lecture  22 
+
+In this lecture, we introduce Seidel’s algorithm [3]  to solve linear programs  with  n  constraints 
+in dimension  d,  when  the  dimension  is  small.  The  expected  running  time  of  Seidel’s  algorithm  is 
+O(d!n), i.e. it is strongly polynomial for  ﬁxed dimension d  (strongly,  since  it  does  not  depend  on  the 
+size  of  the  input  coeﬃcients).  Then,  we  use  Seidel’s  algorithm  to  develop  a  randomized  convex-hull 
+algorithm  in  an  arbitrary  dimension  d  which  is  the  best  possible  when  d ≥ 4. 
+
+1  Linear  Programming  in  Fixed  Dimension 
+
+In  this  section,  we  ﬁx  the  dimension  d.  We  wish  to  ﬁnd  a  strongly-polynomial  time  algorithm  to 
+solve linear programming. 
+
+1.1  Seidel’s  Algorithm 
+Let  H  be  a  set  of  n  inequalities.  Each  inequality  corresponds  to  a  half-space  h  determined  by  a 
+hyperplane.  Let  LP (H ) be  the  linear  program  that  minimizes  cT x  sub ject  to  the  constraints: 
+ 
+h,  x ∈ Rd . 
+\
+x ∈ 
+h∈H 
+To  make  the  description  of  the  algorithm  simpler,  we  make  the  following  two  assumptions: 
+
+1.  Bounded:  the  feasible  region  is  bounded,  i.e.  there  exists  M  such  that,  for  any  feasible  x, 
+−M  ≤ xi  ≤ M  for  all  i = 1, 2, . . . , d. 
+This  assumption  can  be  enforced  by  ﬁcticiously  imposing  a  large  bounding  box,  and  whenever 
+one  of  the  inequalities  of  this  bounding  box  is  tight  at  optimum,  we  know  that  the  linear 
+program  is  unbounded. 
+
+2.  Non-degenerate:  the  intersection  of  any  d + 1  hyperplanes  is  empty.  In   2-D,  non-degeneracy 
+means  that  there  do  not  exist  three  lines  meeting  at  the  same  point. 
+If  H  does not  meet this assumption, we can use some standard tricks like perturbation to make 
+it non-degenerate.  This can be handled by  doing  so-called lexicographic perturbation. 
+These two assumptions imply  that for any  H ′  ⊆ H ,  LP (H ′ ) has a unique solution x(H ′ ).  Seidel’s 
+algorithm  will  actually  apply  to a more general  class of problems than linear programming, but here 
+we’ll focus  on linear programming.  What is  actually  needed in the generalization is that the  unique 
+solution  x(H ′ ) is  deﬁned  by  a  basis: 
+Deﬁnition 1  A  subset  B ⊆ H ′  is  cal led  a  basis  of  the  linear  program  LP (H ′ ) if  x(B ) =  x(H ′ ) and 
+B  is  minimal. 
+Seidel’s algorithm solves the linear program H  incrementally as follows.  Chooes uniformly  h ∈ H . 
+Solve  the  linear  program  with  h  removed,  and  get  a  solution  x.  If   the  solution  x  satisﬁes  h,  then 
+return  x.  If  the  solution  x does  not  satisfy  h,  we  impose  the  condition  that  h  is  satisﬁed  at  equality, 
+and  eliminate one variable.  Then solve the linear program with  d − 1 variables and  n − 1 inequalities. 
+The  correctness  of  this  algorithm  was  proved  in  the  last  lecture. 
+In  Seidel’s  algorithm,  we  can  stop  the  recursion  when  we  have  either  n  constraints in  d  = 1 
+variable (which  takes  O(n) time  to  solve),  or  1  constraint  in  d  variables (which takes  O(d) time  to 
+optimize  over  our  ﬁcticious  bounding  box). 
+
+22-1 
+
+1.2  Analysis  of  Running  Time 
+Let  T (d, n)  be  the  expected  running  time  of  Seidel’s  algorithm  on  an  instance  with  n  inequalities 
+and  d  variables.  To  ﬁnd  a  recursive  relation  for  T (d, n),  note  that  we  ﬁrst  recursively solve  an  LP 
+with  n − 1  inequalities  and  d  variables,  which  takes  time  T (d, n − 1). 
+If  the  solution  x  satisﬁes 
+the  removed  constraint  h  (which  takes  O(d)  time  to  check),  we  are  done  and  simply  return  the  d 
+coordinates  of  x.  If   x  does  not  satisfy  h,  we  ﬁrst  reduce  the  LP  to  only  d − 1  variables  in  O(dn) 
+time (it  takes  O(d)  time  to  eliminate  one  variable  in  each  constraint)  using  the  constraint  h,  and 
+then  solve  the  LP  with  n − 1 inequalities and  d − 1 variables in  T (d − 1, n − 1)  time.  The probability 
+that  x  does  not  satisfy  h  is  d/n,  since  the  optimal  solution  is  determined  by  exactly  d  inequalities 
+and  we  have  selected  an  inequality  uniformly  at  random.  This  is  the  important  step  in  the  analysis 
+and  is  known  as  backward  analysis. 
+By  the  analysis  above,  we  have 
+
+d 
+(O(dn) + T (d − 1, n − 1)) 
+T (d, n) =  T (d, n − 1) + O(d) + 
+n 
+d
+T (d − 1, n − 1) + O(d2 ). 
+=  T (d, n − 1) + 
+n 
+The  base  cases  are  T (1, n) =  O(n) and  T (d, 1)  =  O(d). 
+Using  this  recursive  relation,  we  can  prove  by  induction  on  d +  n  that 
+
+Claim 1 
+
+ 
+
+ 
+ 
+
+  i2 
+ =  O(d!n). 
+ d!n
+ 
+X
+T (d, n) =  O 
+
+
+i! 
+1≤i≤d 
+Proof:  The  base  case  is  satisﬁed.  We  need  to  check  the  induction  step.  Suppose  that 
+ 
+ 
+
+
+
+  i2 
+ d!(n − 1) 
+ ,
+ 
+X
+T (d, n − 1)  =  O 
+
+
+i! 
+1≤i≤d 
+ 
+ 
+
+
+
+ 
+i2 
+ 
+ (d − 1)!(n − 1) 
+X
+T (d − 1, n − 1)  =  O 
+
+
+i! 
+1≤i≤d−1 
+ 
+
+
+  i2 
+i2 
+d 
+  X
+i!  ·  (d − 1)!(n − 1) + d2  ≤ 
+n  X
+X
+i!  
+1≤i≤d 
+1≤i≤d 
+1≤i≤d−1
+the  claim  also  holds  for  T (d, n). 
+The  second  equality  in  the  claim  follows  from  the  fact  that  P∞ i2 
+is  ﬁnite. 
+�
+i=1  i! 
+Thus,  we  have  shown  a  strongly  polynomial  time  algorithm  to  solve  linear  programs  in  a  ﬁxed 
+small dimension  d. 
+
+  i2 
+i!  ·  d!(n − 1) + 
+
+ 
+ d!n, 
+
+Since 
+
+ 
+
+ . 
+
+1.3 
+
+Improvement  (Matousek,  Sharir,  Welzl  [2]) 
+
+Although  the  expected  running  time  of  Seidel’s  algorithm  is  strongly-polynomial  in  n, it increases 
+exponentially  when  d increases (more precisely, the dependence on d is 2O(d log d)).  In this subsection, 
+we brieﬂy  introduce an improvement to Seidel’s  algorithm which gives a  subexponential bound in  d. 
+We consider the linear program as follows. The LP algorithm  LP (H, C ) takes as input a candidate 
+set  C  (that  plays  the  role  of a  basis),  and  returns  x  as  well  as  a  basis  B .  Initially,  we  call  LP (H, C ) 
+with  C  =  ∅. 
+
+22-2 
+
+The  algorithm  proceeds  as  follows.  If  H  =  C ,  then  return  C .  If  H  =  C ,  choose  h  randomly 
+among  H − C .  We  recursively call  LP (H − {h}, C ) and get  a basis  B .  If  h  is satisﬁed by  the solution 
+deﬁned by  B ,  then  return  B .  Otherwise,  we  call  LP (H, basis(B , h)),  where  basis(B , h) denotes  an 
+ 
+optimal basis for  LP (B  {h}). 
+S
+Claim 2  The  expected  running  time  is 
+ 
+2√d log(n/√d)+O(√d)+O(log n)
+(cid:16)
+(cid:17)
+O e 
+When  d  is  ﬁxed,  the  running  time  is  a  polynomial  of  n.  When  n  is  ﬁxed,  the  running  time  is 
+O(e √d ),  subexponential  in d. 
+Use a trick due to Clarkson (through  random sampling), one can show that linear programs with 
+n  inequalities in  d  dimensions  can  be  solved  in 
+O(d2 n +  e √d log d ) 
+
+ 
+. 
+
+time.  This  is  the  best  bound  currently  known  that  is  independent  on  the  size  of  entries.  See 
+Goldwasser [1]  for  a discussion. 
+
+2  Convex  Hull 
+
+Given  n  points  x1 , . . . , xn  Rd .  Let  P  be  the  convex  hull  of  x1 , . . . , xn .  For  d  =  2  and  d  = 3,  P
+∈
+can be found in  O(n log n)  time.  In  the  previous  lecture,  we  showed  several  algorithms  that  solve 
+2-dimensional  convex  hull  in  O(n log n) time. 
+Throughout  this  section,  we  assume  that  the  points  x1 , . . . , xn  are  in  general  position,  meaning 
+that  any  d+1 points do not lie on the same hyperplane. If that’s not the case, a standard perturbation 
+argument  can  be  used. 
+
+2.1  Outputs  of  Convex  Hull  Algorithms 
+
+In  dimension  2,  it  is  suﬃcient  to  output  the  vertices  of  the  convex  hull  in  counterclockwise  order. 
+In  this  subsection,  we  introduce  what  the  output  is  for  a  general  d. 
+
+Deﬁnition 2  For  any  0  ≤ k < d, a  k-face  of  a  d-dimensional  polytope  P  is  a  face  of  P  with 
+dimension  k . A  (d − 1)-face  is  cal led  a  facet.  A  (d − 2)-face  is  cal led  a  ridge.  A  1-face  is  cal led  an 
+edge.  A  0-face  is  cal led  a  vertex. 
+
+Deﬁnition 3  A  simplicial  polytope  is  a  polytope  where  every  face  is  a  simplex. 
+
+Since the points  x1 , . . . , xn  are in general position, the  convex hull  P  is  a  simplicial  polytope. 
+The  convex hull  algorithm outputs  a facet graph  F (P ).  The  vertices  of  F (P ) are  all  facets  of  P . 
+The  edges  of  F (P ) correspond  to  the  ridges  of  P ,  connecting  two facets  shared by  the  ridge (Figure 
+1). 
+For general  d,  one  can  show  that  the  number  of  facets  of  P  is  O(n⌊d/2⌋ ).  Since  the  convex  hull 
+algorithm  needs  to  output  all  the  facets  of  P ,  the  running  time  of  any  such  algorithm  is  at  least 
+Ω(n⌊d/2⌋ ). 
+
+2.2  Convex  Hull  Algorithms 
+Clarkson  and  Shor  ’89  developed  a  randomized  algorithm  to  compute  convex  hull  in  O(n log n + 
+n⌊d/2⌋ ) expected  time.  Chazelle  ’93  developed  a  deterministic  algorithm  in  O(n log n + n⌊d/2⌋ ) time. 
+These  algorithms  are  optimal  by  the  analysis  in  the  previous  subsection. 
+
+22-3 
+
+6
+Figure  1:  The  ﬁgure  on  the  left  is  part  of  a  3-dimensional  simplicial  polytope  with  four  vertices 
+labeled  x1 , x2 , x3 , x4 .  On the right is the corresponding facet graph, where the faces  x1x2 x3 ,  x2 x3x4 , 
+and  the  edge  x2x3  are labeled. 
+
+We  will illustrate Seidel’s  algorithm [3],  which has  running  time  O(n2  +  n⌊d/2⌋ ).  For  d =  2  and 
+d = 3, Seidel’s algorithm takes time  O(n2 ), which is not optimal.  But for larger d, Seidel’s algorithm 
+is  optimal,  and  is  considerably  simpler. 
+We  take  a  random  permutation  x1 , x2 , . . . , xn  of  the  points.  Let  Pi  be  the  convex  hull  of  the 
+points  x1 , . . . , xi . 
+Initially Pd+1  = conv(x1 , . . . , xd+1 ) is a d-dimensional  simplex.  F (Pd+1 ) is the complete graph on 
+d + 1 points.  We incrementally  compute  Pd+2 , . . . , Pn .  To  do  this,  we  need  the  following  deﬁnitions. 
+
+Deﬁnition 4  A  facet  F  of  a  polytope  P  is  visible  from  a  point  xi  if  the  supporting  hyperplane  of  F 
+seperates  xi  from  P .  Otherwise,  F  is  cal led  obscured. 
+
+Deﬁnition 5  A  ridge  of  a  polytope  P  is  cal led  visible  from  a  point  xi  if  both  facets  it  connects  are 
+visible,  and  obscured  if  both  facets  are  obscured.  A  ridge  is  cal led  a  horizon  ridge  if  one  of  the  facets 
+it  connects  is  visible  and  the  other  is  obscured. 
+
+To  compute  the  convex  hull  Pi  when  adding  a  new  point  xi ,  Seidel’s  algorithm  performs  the 
+following  four  steps. 
+
+Step  1  Find  one  visible  facet  F  if  one  exists.  If  there  is  no  visible  facet,  we  are  done.  This  step  can 
+be  done  using  linear  programming  in  O(d!i) time.  Indeed  we  would  like  to  ﬁnd  a  hyperplane 
+aT x
+b  (where  the  unknowns  are  a  Rd  and  b)  such  that  aT xi  =  b  and  aT xi 
+b  for 
+≤
+∈
+≤
+, i − 1.  Any  extreme  solution  will  correspond  to  a  new  facet  and  to  a  horizon  ridge. 
+j  = 1, 
+· · · 
+One  of  the  two  facets  indicident  to  this  horizon  ridge  is  visible. 
+
+Step  2  Find  all  visible  facets.  Determine  all  horizon  ridges.  Delete  all  visible  facets  and  all  visible 
+ridges.
+
+
+This  can be done by  depth-ﬁrst-search (DFS),  since the  visible facets  and invisible facets  are
+
+seperated by horizon ridges.  In terms of  running  time, we charge the deletion time of  the facets
+
+to  when  the  facets  were  created.
+
+
+Step  3  Construct  all  new  facets.  Each  horizon  ridge  corresponds  to  a  new  facet  containing  the  point 
+xi  and the  ridge (Figure 4). 
+
+Step  4  Each  new  facet  contains  d  ridges.  Generate  all  these  new  ridges.  Every  new  ridge  R  is  a 
+sequence  of  d − 1 points  a1  < a2  <  . . . < ad−1 .  Then  match  corresponding  ridges  using  radix 
+sort  to  construct  the  facet  graph. 
+
+22-4 
+
+Figure 2:  In 3-D,  ridges  are just  edges. 
+
+Figure  3:  The  visible  ridges  and  the  invisible  ridges  are  seperated  by  horizon  ridges. 
+
+22-5
+
+
+Figure  4:  In  the  ﬁgure  on  the  top,  the  shaded  regions  are  visible  facets.  In  the  ﬁgure  on  the  bottom, 
+visible  facets  are  removed  and  new  facets  are  added. 
+
+22-6
+
+
+The  expected  running  time  of  Seidel’s  algorithm  to  compute  the  convex  hull  is  O(n2  +  n⌊d/2⌋ ). 
+Indeed  the  running  time  is 
+ 
+ 
+n 
+ 
+!
+X
+O 
+(i +  Ni ) 
+i=d+2 
+where  Ni  is  the  number  of  facets  created  at  step  i.  One  has  that 
+ 
+i−1 
+(cid:1)
+(cid:0)
+ 1  O(i⌊d/2⌋ ) = 
+d
+−
+i 
+(cid:0)
+(cid:1)
+d 
+
+E [Ni ] =  E [facets  of Pi  containing  xi ] ≤ 
+
+d
+O(i⌊d/2⌋ ),
+i 
+
+ 
+
+, 
+
+giving  the  required  time  bound. 
+
+References 
+
+[1]  M.  Goldwasser,  “A  survey  of  linear  programming  in  randomized  subexponential  time”,  ACM 
+SIGACT  News,  26, 96–104, 1995. 
+
+[2]  J.  Matousek,  M.  Sharir,  and  E.  Welzl,  “A  subexponential  bound  for  linear  programming”, 
+Algorithmica,  16, 498–516, 1996. 
+
+[3]  R.  Seidel,  “Small-dimensional  linear  programming  and  convex  hulls  made  easy”,  Discrete  & 
+Computational  Geometry,  6, 423–434, 1991. 
+
+22-7 
+
+

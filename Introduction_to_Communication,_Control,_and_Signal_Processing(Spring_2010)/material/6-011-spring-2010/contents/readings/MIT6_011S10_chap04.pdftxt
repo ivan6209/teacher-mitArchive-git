@@ -1,0 +1,1735 @@
+C H A P T E R 
+
+4 
+
+State-Space Models 
+
+4.1  INTRODUCTION 
+
+In  our  discussion  of  system  descriptions  up  to  this  point,  we  have  emphasized 
+and  utilized  system  models  that  represent  the  transformation  of  input  signals  into 
+output  signals.  In  the  case  of  linear  and  time-invariant  (LTI)  models,  our  focus 
+has  been  on  the  impulse  response,  frequency  response  and  transfer  function.  Such 
+input-output  models  do  not  directly  consider  the  internal  behavior  of  the  systems 
+they  model. 
+
+In  this  chapter  we  begin  a  discussion  of  system  models  that  considers  the  internal 
+dynamical behavior of the system as well as the input-output characteristics.  Inter­
+nal  behavior  can  be  important  for  a  variety  of  reasons.  For  example,  in  examining 
+issues  of  stability,  a  system  can  be  stable  from  an  input-output  perspective  but 
+hidden  internal  variables  may  be  unstable,  yielding  what  we  would  want  to  think 
+of  as  unstable  system  behavior. 
+
+We introduce in this chapter an important model description that highlights internal 
+behavior of the system and is specially suited to representing causal systems for real-
+time  applications  such  as  control.  Speciﬁcally,  we  introduce  state-space models  for 
+ﬁnite-memory (or lumped) causal systems.  These models exist for both continuous-
+time (CT) and discrete-time (DT) systems, and for nonlinear, time-varying systems 
+—  although  our  focus  will  be  on  the  LTI  case. 
+
+Having  a  state-space  model  for  a  causal  DT  system  (similar  considerations  apply 
+in  the CT  case)  allows  us  to  answer  a  question  that  gets  asked  about  such  systems 
+in  many  settings:  Given  the  input  value  x[n]  at  some  arbitrary  time  n,  how  much 
+information  do  we  really  need  about  past  inputs,  i.e.,  about  x[k ]  for  k < n,  in 
+order  to determine  the present output y [n] ?  As  the  system  is  causal, we know  that 
+having  all  past  x[k ]  (in  addition  to  x[n])  will  suﬃce,  but  do  we  actually  need  this 
+much  information?  This question addresses the  issue of memory  in the system, and 
+is  a  worthwhile  question  for  a  variety  of  reasons. 
+
+For example,  the answer gives us an  idea of the complexity, or number of degrees of 
+freedom,  associated  with  the  dynamic  behavior  of  the  system.  The  more  informa­
+tion we need about past  inputs  in order  to determine  the present output,  the  richer 
+the  variety  of  possible  output  behaviors,  i.e.,  the more ways we  can  be  surprised  in 
+the  absence  of  information  about  the  past. 
+
+Furthermore,  in  a  control  application,  the  answer  to  the  above  question  suggests 
+the  required  degree  of  complexity  of  the  controller,  because  the  controller  has  to 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+65
+
+66  Chapter  4 
+
+State-Space  Models 
+
+L 
+
+vL 
+
++ 
+
+iL 
+� 
+
+− 
+
+� 
+iR1 
+
++ 
+
++ 
+− 
+
+v 
+
+vR1 
+
+R1 
+
+− 
++ 
+
+vC 
+− 
+
+C 
+
+iC 
+� 
+
+FIGURE  4.1  RLC  circuit. 
+
+� 
+iR2 
++ 
+
+R2 
+
+vR2 
+
+− 
+
+remember enough about the past to determine the eﬀects of present control actions 
+on  the  response  of  the  system.  In  addition,  for  a  computer  algorithm  that  acts 
+causally  on  a  data  stream,  the  answer  to  the  above  question  suggests  how  much 
+memory  will  be  needed  to  run  the  algorithm. 
+
+With  a  state-space  description,  everything  about  the  past  that  is  relevant  to  the 
+present  and  future  is  summarized  in  the  present  state,  i.e.,  in  the  present  values  of 
+a  set  of  state  variables.  The  number  of  state  variables,  which  we  refer  to  as  the 
+order  of  the  model,  thus  indicates  the  amount  of  memory  or  degree  of  complexity 
+associated  with  the  system  or  model. 
+
+4.2  INPUT-OUTPUT  AND  INTERNAL  DESCRIPTIONS 
+
+As  a  prelude  to  developing  the  general  form  of  a  state-space  model  for  an  LTI 
+system,  we  present  two  examples,  one  in  CT  and  the  other  in  DT. 
+
+4.2.1  An  RLC  circuit 
+
+Consider  the  RLC  circuit  shown  in  Figure  4.1.  We  have  labeled  all  the  component 
+voltages  and  currents  in  the  ﬁgure. 
+
+The  deﬁning  equations  for  the  components  are: 
+
+= vL (t)
+
+diL (t)
+L 
+dt
+
+dvC (t)
+
+C 
+dt 
+vR1 (t) = R1 iR1 (t) 
+vR2 (t) = R2 iR2 (t)  , 
+
+= iC (t)
+
+(4.1) 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.2 
+
+Input-output  and  internal  descriptions  67 
+
+while the voltage source is deﬁned by the condition that its voltage is v(t) regardless 
+of  its  current  i(t).  Kirchhoﬀ ’s  voltage  and  current  laws  yield 
+
+v(t) = vL (t) + vR2 (t) 
+vR2 (t) = vR1 (t) + vC (t) 
+i(t) = iL (t) 
+iL (t) = iR1 (t) + iR2 (t) 
+iR1 (t) = iC (t)  . 
+
+(4.2) 
+
+All  these equations  together  constitute a detailed and explicit  representation of  the 
+circuit. 
+
+H (s) = 
+
+Y (s) 
+X (s)
+
+= 
+
+s2  + α
+
+1 
+LC 
+
+Let  us  take  the  voltage  source  v(t)  as  the  input  to  the  circuit;  we  shall  also  denote 
+this  by  x(t),  our  standard  symbol  for  inputs.  Choose  any  of  the  circuit  voltages 
+or  currents  as  the  output —  let  us  choose  vR2 (t)  for  this  example,  and  also  denote 
+it  by  y(t),  our  standard  symbol  for  outputs.  We  can  then  combine  (4.1)  and  (4.2) 
+using,  for  example,  Laplace  transforms,  in  order  to  obtain  a  transfer  function  or 
+a  linear  constant-coeﬃcient  diﬀerential  equation  relating  the  input  and  output. 
+The  coeﬃcients  in  the  transfer  function  or  diﬀerential  equation  will,  of  course  be 
+functions  of  the  values  of  the  components  in  the  circuit.  The  resulting  transfer 
+function  H (s)  from  input  to  output  is 
+³ 
+1  ´ 
+R1 
+α L  s +  LC 
+³ 
+R1 ´
+1 
++ 
+s + α
+L 
+R2C
+where  α  denotes  the  ratio  R2/(R1  + R2 ).  The  corresponding  input-output  diﬀer­
+ential  equation  is 
+³  1  ´
+³ R1 ´ dx(t) 
+³  1  ´
+R1 ´ dy(t) 
+³  1 
++ 
++ α
++ α
+dt 
+LC 
+dt 
+LC 
+R2C
+L
+L
+An  important  characteristic  of  a  circuit  such  as  in  Figure  4.1  is  that  the  behavior 
+for  a  time  interval  beginning  at  some  t  is  completely  determined  by  the  input 
+tra jectory  in  that  interval  as  well  as  the  inductor  currents  and  capacitor  voltages 
+at  time  t.  Thus,  for  the  speciﬁc  circuit  in  Figure  4.1,  in  determining  the  response 
+for  times  ≥  t,  the  relevant  past  history  of  the  system  is  summarized  in  iL (t)  and 
+vC (t).  The  inductor  currents  and  capacitor  voltages  in  such  a  circuit  at  any  time 
+t  are  commonly  referred  to  as  state  variables,  and  the  particular  set  of  values  they 
+take  constitutes  the  state  of  the  system  at  time  t.  This  state,  together  with  the 
+input  from  t  onwards,  are  suﬃcient  to  completely  determine  the  response  at  and 
+beyond  t. 
+
+d2 y(t) 
++ α
+dt2 
+
+x(t)  .  (4.4) 
+
+y(t) = α
+
+(4.3) 
+
+The  concept  of  state  for  dynamical  systems  is  an  extremely  powerful  one.  For  the 
+RLC circuit of Figure 4.1 it motivates us to reduce the full set of equations (4.1) and 
+(4.2)  into  a  set  of  equations  involving  just  the  input,  output,  and  internal  variables 
+iL (t)  and  vC (t).  Speciﬁcally,  a  description  of  the  desired  form  can  be  found  by 
+appropriately  eliminating  the  other  variables  from  (4.1)  and  (4.2),  although  some 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+68  Chapter  4 
+
+State-Space  Models 
+
+attention  is  required  in  order  to  carry  out  the  elimination  eﬃciently.  With  this, 
+we  arrive  at  a  condensed  description,  written  here  using  matrix  notation,  and  in  a 
+format  that  we  shall  encounter  frequently  in  this  chapter  and  the  next  two: 
+iL (t)  ¶ µ 
+diL (t)/dt  ¶ µ 
+¶ µ 
+µ	
+1/L  ¶ 
+−αR1 /L 
+−α/L 
+v(t)  . 
++ 
+dvC (t)/dt  = 
+0 
+−1/(R1  + R2 )C
+α/C 
+vC (t)
+The use of matrix notation  is a convenience; we could of course have simply written 
+the  above  description  as  two  separate  but  coupled  ﬁrst-order  diﬀerential  equations 
+with  constant  coeﬃcients. 
+
+(4.5) 
+
+We  shall  come  to  appreciate  the  properties  and  advantages  of  a  description  in  the 
+form  of  (4.5),  referred  to  as  a CT  (and,  in  this  case,  LTI)  state-space  form.  Its  key 
+feature  is  that  it  expresses  the  rates  of  change  of  the  state  variables  at  any  time  t 
+as  functions  (in  this  case,  LTI  functions)  of  their  values  and  those  of  the  input  at 
+that  same  time  t. 
+
+As  we  shall  see  later,  the  state-space  description  can  be  used  to  solve  for  the  state 
+variables iL (t) and vC (t), given the input v(t) and appropriate auxiliary information 
+(speciﬁcally,  initial  conditions  on  the  state  variables).  Furthermore,  knowledge  of 
+iL (t),  vC (t)  and  v(t)  suﬃces  to  reconstruct  all  the  other  voltages  and  currents  in 
+the  circuit  at  time  t.  In  particular,  any  output  variable  can  be  written  in  terms  of 
+the  retained  variables.  For  instance,  if  the  output  of  interest  for  this  circuit  is  the 
+voltage  vR2 (t)  across  R2 ,  we  can  write  (again  in  matrix  notation) 
+iL (t)  ¶ 
+αR1  α  ¢ µ 
+vR2 (t) = ¡ 
++ ( 0 ) v(t) . 
+vC (t) 
+For  this  particular  example,  the  output  does  not  involve  the  input  v(t)  directly — 
+hence  the  term  ( 0 )  v(t)  in  the  above  output  equation  —  but  in  the  general  case 
+the  output  equation will  involve  present  values  of  any  inputs  in  addition  to  present 
+values  of  the  state  variables. 
+
+(4.6) 
+
+4.2.2  A  delay-adder-gain  system 
+
+For  DT  systems,  the  role  of  state  variables  is  similar  to  the  role  discussed  in  the 
+preceding  subsection  for  CT  systems.  We  illustrate  this  with  the  system  described 
+by  the  delay-adder-gain  block  diagram  shown  in  Figure  4.2.2.  The  corresponding 
+detailed  equations  relating  the  indicated  signals  are 
+
+q1 [n + 1] = q2 [n] 
+q2 [n + 1] = p[n] 
+p[n] = x[n] − (1/2)q1 [n] + (3/2)q2 [n] 
+y [n] = q2 [n] + p[n]  . 
+
+(4.7) 
+
+The  equations  in  (4.7)  can  be  combined  together  using,  for  example,  z-transform 
+methods,  to  obtain  the  transfer  function  or  linear  constant-coeﬃcient  diﬀerence 
+equation  relating  input  and  output: 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.2 
+
+Input-output  and  internal  descriptions  69 
+
+x[n] 
+
+�
+
++ 
+� 
+� 
+
+�1 
+
+p[n] 
+
+� 
+
+�y [n] 
+
+1 �  + 
+� 
+
+� 
+D 
+q2 [n] 
+� 
+
+� 
+D 
+q1 [n] 
+
+1 
+
+� 
+3/2 
+
+� 
+−1/2 
+
+FIGURE  4.2  Delay-adder-gain  block  diagram. 
+
+and 
+
+H (z ) = 
+
+Y (z ) 
+X (z )
+
+= 
+
+1 + z−1 
+2 z−1  +  1
+1 −  3
+2 z−2 
+
+y [n] − 
+
+3
+2
+
+1 
+y [n − 1] +  y [n − 2] = x[n] + x[n − 1]  . 
+2 
+
+(4.8) 
+
+(4.9) 
+
+The  response  of  the  system  in  an  interval  of  time ≥ n  is  completely  determined  by 
+the input for times ≥ n and the values q1 [n] and q2 [n] that are stored at the outputs 
+of  the  delay  elements  at  time  n.  Thus,  as  with  the  energy  storage  elements  in  the 
+circuit of Figure 4.1,  the delay elements  in  the delay-adder-gain  system capture  the 
+state  of  the  system  at  any  time,  i.e.,  summarize  all  the  past  history  with  respect 
+to  how  it  aﬀects  the  present  and  future  response  of  the  system.  Consequently,  we 
+condense  (4.7)  in  terms  of  only  the  input,  output  and  state  variables  to  obtain  the 
+following  matrix  equations: 
+q1 [n + 1]  ¶ µ 
+µ 
+0  ¶ 
+q1 [n]  ¶ µ 
+1  ¶ µ 
+q2 [n + 1]  = 
+x[n] 
++
+1 
+3/2 
+q2 [n]
+µ 
+q1 [n]  ¶ 
+q2 [n]  + (1)x[n]  . 
+5/2 ) 
+In  this  case  it  is  quite  easy  to  see  that,  if we  are  given  the  values  q1 [n]  and  q2 [n]  of 
+the  state  variables  at  some  time  n,  and  also  the  input  tra jectory  from  n  onwards, 
+i.e.,  x[n]  for  times  ≥  n,  then  we  can  compute  the  values  of  the  state  variables  for 
+all  times  > n,  and  the  output  for  all  times  ≥ n.  All  that  is  needed  is  to  iteratively 
+apply  (4.10)  to  ﬁnd  q1 [n + 1]  and  q2 [n + 1],  then  q1 [n + 2]  and  q2 [n + 2],  and  so  on 
+for  increasing  time  arguments,  and  to  use  (4.11)  at  each  time  to  ﬁnd  the  output. 
+
+y [n] = (  −1/2
+
+0
+−1/2
+
+(4.10) 
+
+(4.11) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+70  Chapter  4 
+
+State-Space  Models 
+
+4.3  STATE-SPACE  MODELS 
+
+As  illustrated  in  Sections  4.2.1  and  4.2.2,  it  is  often  natural  and  convenient,  when 
+studying  or  modeling  physical  systems,  to  focus  not  just  on  the  input  and  output 
+signals but rather to describe the interaction and time-evolution of several key vari­
+ables  or  signals  that  are  associated  with  the  various  component  processes  internal 
+to the system.  Assembling the descriptions of these components and their intercon­
+nections  leads  to  a  description  that  is  richer  than  an  input–output  description.  In 
+particular,  in  Sections  4.2.1  and  4.2.2  the  description  is  in  terms  of  the  time  evolu­
+tion  of  variables  referred  to  as  the  state  variables, which  completely  capture  at  any 
+time  the  past  history  of  the  system  as  it  aﬀects  the  present  and  future  response. 
+We  turn  now  to  a  more  formal  deﬁnition  of  state-space  models  in  the  DT  and  CT 
+cases,  followed  by  a  discussion  of  two  deﬁning  characteristics  of  such  models. 
+
+4.3.1  DT  State-Space Models 
+
+A  state-space  model  is  built  around  a  set  of  state  variables;  the  number  of  state 
+variables  in  a  model  or  system  is  referred  to  as  its  order.  Although  we  shall  later 
+cite examples of distributed or  inﬁnite-order  systems, we  shall only deal with  state-
+space  models  of  ﬁnite  order,  which  are  also  referred  to  as  lumped  systems.  For  an 
+Lth-order  model  in  the  DT  case,  we  shall  generically  denote  the  values  of  the  L 
+· · · 
+state  variables  at  time  n  by  q1 [n], q2 [n], 
+, qL [n].  It  is  convenient  to  gather  these 
+variables  into  a  state  vector:
+
+q1 [n]  
+
+ 
+
+
+
+[n] 
+q[n] =  q2
+ . 
+ .  
+.
+.   
+ 
+qL [n] 
+The  value  of  this  vector  constitutes  the  state  of  the model  or  system  at  time  n. 
+A  DT  LTI  state-space  model  with  single  (i.e.,  scalar)  input  x[n]  and  single  output 
+y [n]  takes  the  following  form,  written  in  compact  matrix  notation: 
+
+(4.12) 
+
+q[n + 1] = Aq[n] + bx[n]  , 
+(4.13) 
+y [n] = c T q[n] + dx[n] . 
+(4.14) 
+In  (4.13),  A  is  an  L × L  matrix,  b  is  an  L × 1  matrix  or  column-vector,  and  cT  is 
+a 1 × L matrix  or  row-vector,  with  the  superscript  T  denoting  transposition  of  the 
+column  vector  c  into  the  desired  row  vector.  The  quantity  d  is  a  1 × 1 matrix,  i.e., 
+a  scalar.  The  entries  of  all  these matrices  in  the  case  of  an  LTI model  are  numbers 
+or  constants  or  parameters,  so  they  do  not  vary  with  n.  Note  that  the  model  we 
+arrived  at  in  (4.10)  and  (4.11)  of  Section  4.2.2  has  precisely  the  above  form.  We 
+refer to (4.13) as the state evolution equation, and to (4.14) as the output equation. 
+These  equations  respectively  express  the  next  state  and  the  current  output  at  any 
+time  as  an  LTI  combination  of  the  current  state  variables  and  current  input. 
+
+Generalizations  of  the  DT  LTI  State-Space Model.  There  are  various  nat­
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.3 
+
+State-Space  Models  71 
+
+ural  generalizations  of  the  above  DT  LTI  single-input,  single-output  state-space 
+model.  A  multi-input  DT  LTI  state-space  model  replaces  the  single  term  bx[n]  in 
+(4.13)  by  a  sum  of  terms,  b1x1 [n] +  + bM xM [n],  where  M  is  the  number  of 
+· · · 
+inputs.  This  corresponds  to  replacing  the  scalar  input  x[n]  by  an  M -component 
+vector x[n] of  inputs, with a  corresponding  change of b  to a matrix B of dimension 
+L × M .  Similarly,  for  a multi-output  DT  LTI  state-space model,  the  single  output 
+equation  (4.14)  is  replaced by  a  collection  of  such  output  equations,  one  for  each  of 
+the  P  outputs.  Equivalently,  the  scalar  output  y [n]  is  replaced  by  a  P -component 
+vector  y[n]  of  outputs,  with  a  corresponding  change  of  cT  and  d  to  matrices  CT 
+and D  of  dimension  P  × L  and  P  × M  respectively. 
+A  linear  but  time-varying  DT  state-space  model  takes  the  same  form  as  in  (4.13) 
+and  (4.14)  above,  except  that  some  or  all  of  the matrix  entries  are  time-varying.  A 
+linear  but  periodically  varying  model  is  a  special  case  of  this,  with  matrix  entries 
+that all vary periodically with a common period.  A nonlinear, time-invariant model 
+expresses  q[n + 1]  and  y[n]  as  nonlinear  but  time-invariant  functions  of  q[n]  and 
+x[n],  rather  than  as  the  LTI  functions  embodied  by  the  matrix  expressions  on  the 
+right-hand-sides  of  (4.13)  and  (4.14).  A  nonlinear,  time-varying  model  expresses 
+q[n + 1] and y[n] as nonlinear,  time-varying  functions of q[n] and x[n], and one can 
+also  deﬁne  nonlinear,  periodically  varying models  as  a  particular  case  in  which  the 
+time-variations  are  periodic  with  a  common  period. 
+
+4.3.2  CT  State-Space Models 
+
+Continuous-time  state-space  descriptions  take  a  very  similar  form  to  the  DT  case. 
+We  denote  the  state  variables  as  qi (t),  i = 1, 2, ..., L,  and  the  state  vector  as 
+q1 (t)   
+ 
+
+
+(t) 
+q(t) =  q2
+ . 
+ .  
+.
+.   
+ 
+qL (t) 
+Whereas  in  the  DT  case  the  state  evolution  equation  expresses  the  state  vector  at 
+the  next  time  step  in  terms  of  the  current  state  vector  and  input  values,  in  CT 
+the  state  evolution  equation  expresses  the  rates  of  change  (i.e.,  derivatives)  of  each 
+of  the  state  variables  as  functions  of  the  present  state  and  inputs.  The  general 
+Lth-order  CT  LTI  state-space  representation  thus  takes  the  form 
+
+(4.15) 
+
+dq(t) 
+dt 
+
+= q˙ (t) = Aq(t) + bx(t)  , 
+
+y(t) = c T q(t) + dx(t)  , 
+
+(4.16) 
+
+(4.17) 
+
+where dq(t)/dt = q˙ (t) denotes the vector whose entries are the derivatives, dqi (t)/dt, 
+of  the  corresponding  entries,  qi (t),  of  q(t).  Note  that  the  model  in  (4.5)  and  (4.6) 
+of  Section  4.2.1  is  precisely  of  the  above  form. 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+72  Chapter  4 
+
+State-Space  Models 
+
+Generalizations to multi-input and multi-output models, and to linear and nonlinear 
+time-varying or periodic models, can be described just as in the case of DT systems, 
+by  appropriately  relaxing  the  restrictions  on  the  form  of  the  right-hand  sides  of 
+(4.16),  (4.17).  We  shall  see  an  example  of  a  nonlinear  time-invariant  state-space 
+model  in  Section  1. 
+
+4.3.3  Characteristics  of  State-Space Models 
+
+The  designations  of  “state”  for  q[n]  or  q(t),  and  of  “state-space  description”  for 
+(4.13),  (4.14)  and  (4.16),  (4.17) —  or  for  the  various  generalizations  of  these  equa­
+tions —  follow  from  the  following  two  key  properties  of  such  models. 
+
+State  Evolution  Property:  The  state  at  any  initial  time,  along  with  the  inputs 
+over any interval from that initial time onwards, determine the state over that 
+entire  interval.  Everything  about  the  past  that  is  relevant  to  the  future  state 
+is  embodied  in  the  present  state. 
+
+Instantaneous  Output  Property:  The  outputs  at  any  instant  can be written  in 
+terms  of  the  state  and  inputs  at  that  same  instant. 
+
+The  state  evolution  property  is  what  makes  state-space  models  particularly  well 
+suited  to  describing  causal  systems.  In  the  DT  case,  the  validity  of  this  state 
+evolution property  is evident  from the state evolution equation (4.13), which allows 
+us  to update q[n]  iteratively,  going  from  time n  to  time n + 1 using only knowledge 
+of  the  present  state  and  input.  The  same  argument  can  also  be  applied  to  the 
+generalizations  of  DT  LTI models  that  we  outlined  earlier. 
+
+The  state  evolution  property  should  seem  intuitively  reasonable  in  the  CT  case  as 
+well.  Speciﬁcally, knowledge of both the state and the rate of change of the state at 
+any  instant  allows  us  to  compute  the  state  after  a  small  increment  in  time.  Taking 
+this  small  step  forward,  we  can  re-evaluate  the  rate  of  change  of  the  state,  and 
+step  forward  again.  A  more  detailed  proof  of  this  property  in  the  general  nonlin­
+ear  and/or  time-varying  CT  case  essentially  proceeds  this  way,  and  is  treated  in 
+texts  that  deal  with  the  existence  and  uniqueness  of  solutions  of  diﬀerential  equa­
+tions.  These  more  careful  treatments  also  make  clear  what  additional  conditions 
+are  needed  for  the  state  evolution  property  to  hold  in  the  general  case.  However, 
+the  CT  LTI  case  is  much  simpler,  and  we  shall  demonstrate  the  state  evolution 
+property  for  this  class  of  state-space  models  in  the  next  chapter,  when  we  show 
+how  to  explicitly  solve  for  the  behavior  of  such  systems. 
+
+The  instantaneous  output  property  is  immediately  evident  from  the  output  equa­
+tions (4.14), (4.17).  It also holds for the various generalizations of basic single-input, 
+single-output  LTI models  that  we  listed  earlier. 
+
+The  two properties  above may be  considered  the deﬁning  characteristics  of  a  state-
+space model.  In eﬀect, what we do  in setting up a state-space model  is to  introduce 
+the  additional  vector  of  state  variables  q[n]  or  q(t),  to  supplement  the  input  vari­
+ables  x[n]  or  x(t)  and  output  variables  y [n]  or  y(t).  This  supplementation  is  done 
+precisely  in  order  to  obtain  a  description  that  satisﬁes  the  two  properties  above. 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.4 
+
+Equilibria  and  Linearization  of  Nonlinear  State-Space  Models  73 
+
+Often there are natural choices of state variables suggested directly by the particular 
+context or application.  In both DT and CT  cases,  state variables are  related  to  the 
+“memory”  of  the  system.  In  many  physical  situations  involving  CT  models,  the 
+state  variables  are  associated  with  energy  storage,  because  this  is  what  is  carried 
+over  from  the  past  to  the  future.  Natural  state  variables  for  electrical  circuits  are 
+thus  the  inductor  currents  and  capacitor  voltages,  as  turned  out  to  be  the  case  in 
+Section 4.2.1.  For mechanical systems, natural state variables are the positions and 
+velocities  of  all  the  masses  in  the  system  (corresponding  respectively  to  potential 
+energy and kinetic energy variables), as we will see  in  later examples.  In the case of 
+a CT integrator-adder-gain block diagram, the natural state variables are associated 
+with the outputs of the integrators, just as in the DT case the natural state variables 
+of  a  delay-adder-gain model  are  the  outputs  of  the  delay  elements,  as  was  the  case 
+in  the  example  of  Section  4.2.2. 
+
+In  any  of  the  above  contexts,  one  can  choose  any  alternative  set  of  state  variables 
+that  together  contain  exactly  the  same  information.  There  are  also  situations  in 
+which  there  is  no  particularly  natural  or  compelling  choice  of  state  variables,  but 
+in  which  it  is  still  possible  to  deﬁne  supplementary  variables  that  enable  a  valid 
+state-space  description  to  be  obtained. 
+
+Our  discussion  of  the  two  key  properties  above  —  and  particularly  of  the  role  of 
+the  state  vector  in  separating  past  and  future —  suggests  that  state-space  models 
+are particularly  suited  to describing causal  systems.  In  fact,  state-space models are 
+almost  never  used  to  describe  non-causal  systems.  We  shall  always  assume  here, 
+when  dealing  with  state-space  models,  that  they  represent  causal  systems.  Al­
+though causality  is not a central  issue  in analyzing many aspects of communication 
+or  signal  processing  systems,  particularly  in  non-real-time  contexts,  it  is  generally 
+central  to  simulation  and  control  design  for  dynamic  systems.  It  is  accordingly  in 
+such dynamics  and  control  settings  that  state-space descriptions ﬁnd  their  greatest 
+value  and  use. 
+
+4.4	 EQUILIBRIA  AND  LINEARIZATION  OF 
+NONLINEAR  STATE-SPACE  MODELS 
+
+An  LTI  state-space  model most  commonly  arises  as  an  approximate  description  of 
+the  local (or “small-signal”) behavior of a nonlinear time-invariant model,  for small 
+deviations of its state variables and inputs from a set of constant equilibrium values. 
+In  this  section  we  present  the  conditions  that  deﬁne  equilibrium,  and  describe  the 
+role  of  linearization  in  obtaining  the  small-signal  model  at  this  equilibrium. 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+74  Chapter  4 
+
+State-Space  Models 
+
+4.4.1  Equilibrium 
+
+, 
+
+(4.18) 
+
+. 
+
+(4.19) 
+
+To  make  things  concrete,  consider  a  DT  3rd-order  nonlinear  time-invariant  state-
+space  system,  of  the  form 
+´ 
+³
+q1 [n + 1] = f1  q1 [n], q2 [n], q3 [n], x[n]
+´ 
+³
+q2 [n + 1] = f2  q1 [n], q2 [n], q3 [n], x[n]
+´ 
+³
+q3 [n + 1] = f3  q1 [n], q2 [n], q3 [n], x[n]
+with  the  output  y [n]  deﬁned  by  the  equation 
+´ 
+³
+y [n] = g q1 [n], q2 [n], q3 [n], x[n]
+The  state  evolution  functions  fi (  ),  for  i  = 1, 2, 3,  and  the  output  function  g( )
+· 
+·
+are  all  time-invariant  nonlinear  functions  of  the  three  state  variables  qi [n]  and  the 
+input x[n].  (Time-invariance of the functions simply means that they combine their 
+arguments  in  the  same  way,  regardless  of  the  time  index  n.)  The  generalization  to 
+an  Lth-order  description  should  be  clear.  In  vector  notation,  we  can  simply  write 
+´ 
+´ 
+³
+³
+q[n + 1] = f q[n], x[n]
+y [n] = g q[n], x[n]
+where  for  our  3rd-order  case 
+f1 ( )   
+ 
+· 
+f (  ) =   f2 ( )    . 
+· 
+·
+f3 ( )· 
+Suppose  now  that  the  input  x[n]  is  constant  at  the  value  x  for  all  n.  The  corre­
+sponding  state  equilibrium  is  a  state  value  q  with  the  property  that  if  q[n] =  q 
+with  x[n] = x,  then  q[n + 1] = q.  Equivalently,  the  point  q  in  the  state  space  is  an 
+equilibrium  (or  equilibrium  point)  if,  with  x[n]  ≡  x  for  all  n  and  with  the  system 
+initialized  at  q,  the  system  subsequently  remains  ﬁxed  at  q.  From  (4.20),  this  is 
+equivalent  to  requiring 
+
+(4.21) 
+
+, 
+
+(4.20) 
+
+,
+
+The  corresponding  equilibrium  output  is 
+
+q = f (q, x)  . 
+
+y = g(q, x)  . 
+
+(4.22) 
+
+(4.23) 
+
+In  deﬁning  an  equilibrium,  no  consideration  is  given  to  what  the  system  behavior 
+is  in  the  vicinity  of  the  equilibrium  point,  i.e.,  of  how  the  system  will  behave  if 
+initialized  close  to  —  rather  than  exactly  at  —  the  point  q.  That  issue  is  picked 
+up  when  one  discusses  local  behavior,  and  in  particular  local  stability,  around  the 
+equilibrium. 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.4 
+
+Equilibria  and  Linearization  of  Nonlinear  State-Space  Models  75 
+
+In  the  3rd-order  case  above,  and  given  x,  we would  ﬁnd  the  equilibrium  by  solving 
+the  following  system  of  three  simultaneous  nonlinear  equations  in  three  unknowns: 
+
+q1  = f1 (q1 , q2 , q3 , x) 
+q2  = f2 (q1 , q2 , q3 , x) 
+q3  = f3 (q1 , q2 , q3 , x)  . 
+
+(4.24) 
+
+There is no guarantee in general that an equilibrium exists for the speciﬁed constant 
+input x, and there is no guarantee of a unique equilibrium when an equilibrium does 
+exist. 
+
+We  can  apply  the  same  idea  to  CT  nonlinear  time-invariant  state-space  systems. 
+Again  consider  the  concrete  case  of  a  3rd-order  system: 
+´ 
+³
+q˙1 (t) = f1  q1 (t), q2 (t), q3 (t), x(t)
+´ 
+³
+q˙2 (t) = f1  q1 (t), q2 (t), q3 (t), x(t)
+´ 
+³
+q˙3 (t) = f1  q1 (t), q2 (t), q3 (t), x(t)
+´ 
+³
+, 
+y(t) = g q1 (t), q2 (t), q3 (t), x(t)
+´ 
+´ 
+³
+³
+y(t) = g q(t), x(t)
+q˙ (t) = f q(t), x(t)
+Deﬁne the equilibrium q again as a state value that  the system does not move  from 
+when  initialized  there,  and  when  the  input  is  ﬁxed  at  x(t) =  x.  In  the  CT  case, 
+what  this  requires  is  that  the  rate  of  change  of  the  state,  namely  q˙ (t),  is  zero  at 
+the  equilibrium,  which  yields  the  condition 
+
+or  in  vector  notation, 
+
+(4.26) 
+
+. 
+
+(4.27) 
+
+, 
+
+(4.25) 
+
+with 
+
+,
+
+For  the  3rd-order  case,  this  condition  takes  the  form 
+
+0 = f (q, x)  . 
+
+(4.28) 
+
+0 = f1 (q1 , q2 , q3 , x) 
+0 = f2 (q1 , q2 , q3 , x) 
+0 = f3 (q1 , q2 , q3 , x)  , 
+
+(4.29) 
+
+which  is  again  a  set  of  three  simultaneous  nonlinear  equations  in  three  unknowns, 
+with  possibly  no  solution  for  a  speciﬁed  x,  or  one  solution,  or  many. 
+
+4.4.2  Linearization 
+
+We  now  examine  system  behavior  in  the  vicinity  of  an  equilibrium.  Consider  once 
+more the 3rd-order DT nonlinear system (4.18), and suppose that  instead of x[n] ≡ 
+x,  we  have  x[n]  perturbed  or  deviating  from  this  by  a  value  xe[n],  so 
+xe[n] = x[n] − x . 
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+(4.30) 
+
+76  Chapter  4 
+
+State-Space  Models 
+
+(4.31) 
+
+The  state  variables  will  correspondingly  be  perturbed  from  their  respective  equi­
+librium  values  by  amounts  denoted  by 
+qei [n] = qi [n] − q i 
+· · · 
+for  i = 1, 2, 3  (or more generally  i = 1, 
+, L),  and  the output will be perturbed by 
+ye[n] = y [n] − y . 
+Our  ob jective  is  to  ﬁnd  a  model  that  describes  the  behavior  of  these  various  per­
+turbations  from  equilibrium. 
+The  key  to  ﬁnding  a  tractable  description  of  the  perturbations  or  deviations  from 
+equilibrium  is  to  assume  they  are  small,  thereby  permitting  the  use  of  truncated 
+Taylor  series  to  provide  good  approximations  to  the  various  nonlinear  functions. 
+Truncating  the  Taylor  series  to  ﬁrst  order,  i.e.,  to  terms  that  are  linear  in  the 
+deviations,  is  referred  to  as  linearization,  and  produces  LTI  state-space  models  in 
+our  setting. 
+
+(4.32) 
+
+To  linearize  the  original  DT  3rd-order  nonlinear model  (4.18),  we  rewrite  the  vari­
+ables  appearing  in  that  model  in  terms  of  the  perturbations,  using  the  quantities 
+deﬁned  in  (4.30),  (4.31),  and  then  expand  in Taylor  series  to  ﬁrst  order  around  the 
+equilibrium  values: 
+´ 
+³
+q i  + qei [n + 1] = fi  q1  + qe1 [n], q2  + qe2 [n], q3  + qe3 [n], x + xe[n]
+for  i = 1, 2, 4 
+∂ fi 
+∂ fi 
+∂ fi 
+∂ fi 
+xe[n]  . 
+qe3 [n] + 
+qe1 [n] + 
+qe2 [n] + 
+≈ fi (q1 , q2 , q3 , x) + 
+∂x 
+∂ q3 
+∂ q1 
+∂ q2 
+(4.33) 
+All  the  partial  derivatives  above  are  evaluated  at  the  equilibrium  values,  and  are 
+therefore constants, not dependent on the time  index n.  (Also note that the partial 
+derivatives  above  are  with  respect  to  the  continuously  variable  state  and  input 
+arguments; there are no “derivatives” taken with respect to n, the discretely varying 
+time  index!)  The  deﬁnition  of  the  equilibrium  values  in  (4.24)  shows  that  the  term 
+q i  on  the  left of  the above  set of  expressions  exactly  equals  the  term fi (q1 , q2 , q3 , x) 
+on  the  right,  so  what  remains  is  the  approximate  relation 
+∂ fi 
+∂ fi 
+∂ fi 
+∂ fi 
+qe1 [n] + 
+qe2 [n] + 
+qe3 [n] + 
+xe[n] 
+qei [n + 1] ≈ 
+∂x 
+∂ q1 
+∂ q2 
+∂ q3 
+for i = 1, 2, 3.  Replacing the approximate equality sign (≈) by the equality sign (=) 
+in  this  set  of  expressions produces what  is  termed  the  linearized model  at  the  equi­
+librium  point.  This  linearized  model  approximately  describes  small  perturbations 
+away  from  the  equilibrium  point. 
+We may  write  the  linearized  model  in matrix  form: 
+q1 [n + 1]    
+  
+   ∂ f1  
+ 
+∂ f1  ∂ f1  ∂ f1
+
+q1 [n] 
+qe2 [n] + 
+e
+∂ q1  ∂ q2  ∂ q3 
+∂x
+
+  ∂ q1  ∂ q2  ∂ q3    
+∂x  
+
+  
+ 
+∂ f2  ∂ f2  ∂ f2 
+∂ f2
+q2 [n + 1]  =
+ 
+e
+e
+∂ f3  ∂ f3  ∂ f3  
+q3 [n + 1] 
+∂ f3 
+qe3 [n]
+
+e
+∂x 
+q[n{z 
+{z 
+| 
+| 
+{z  }
+∂ q1  ∂ q2  ∂ q3 
+}
+}
+|
+| 
+{z 
+}
+e
+eq[n] 
++1] 
+b
+A 
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+xe[n]  . 
+
+(4.35) 
+
+(4.34) 
+
+Section  4.4 
+
+Equilibria  and  Linearization  of  Nonlinear  State-Space  Models  77 
+
+(4.36) 
+
+We  have  therefore  arrived  at  a  standard  DT  LTI  state-space  description  of  the 
+state  evolution  of  our  linearized  model,  with  state  and  input  variables  that  are 
+the  respective  deviations  from  equilibrium  of  the  underlying  nonlinear model.  The 
+corresponding  output  equation  is  derived  similarly,  and  takes  the  form 
+∂ g  ∂ g  ∂ g  i 
+h 
+∂ g 
+q[n] + 
+xe[n]  . 
+y [n] = 
+e
+e
+∂x 
+∂ q1  ∂ q2  ∂ q3 
+| 
+{z 
+} 
+|{z}
+d 
+cT 
+The  matrix  of  partial  derivatives  denoted  by  A  in  (4.35)  is  also  called  a  Jacobian 
+matrix,  and  denoted  in matrix-vector  notation  by 
+h ∂ f  i
+∂q  q,x 
+The  entry  in  its  ith  row  and  j th  column  is  the  partial  derivative  ∂ fi ( )/∂ qj ,  eval­
+· 
+uated  at  the  equilibrium  values  of  the  state  and  input  variables.  Similarly, 
+h ∂ g i
+h ∂ f i 
+h ∂ g i
+∂x  q,x 
+∂q  q,x 
+∂x  q,x 
+The  derivation  of  linearized  state-space  models  in  CT  follows  exactly  the  same 
+route,  except  that  the CT equilibrium condition  is  speciﬁed by  the condition  (4.28) 
+rather  than  (4.22). 
+
+T 
+,  c  = 
+
+(4.38) 
+
+,  d = 
+
+. 
+
+A = 
+
+.	
+
+(4.37) 
+
+b = 
+
+EXAMPLE  4.1 
+
+A  Hoop-and-Beam  System 
+
+As  an  example  to  illustrate  the  determination  of  equilibria  and  linearizations,  we 
+consider  in  this  section  a  nonlinear  state-space  model  for  a  particular  hoop-and­
+beam  system. 
+
+The  system  in  Figure  4.3  comprises  a  beam  pivoted  at  its  midpoint,  with  a  hoop 
+that  is  constrained  to  maintain  contact  with  the  beam  but  free  to  roll  along  it, 
+without  slipping.  A  torque  can  be  applied  to  the  beam,  and  acts  as  the  control 
+input.  Our  eventual  ob jective  might  be  to  vary  the  torque  in  order  to  bring  the 
+hoop  to —  and  maintain  it  at —  a  desired  position  on  the  beam.  We  assume  that 
+the  only  measured  output  that  is  available  for  feedback  to  the  controller  is  the 
+position  of  the  hoop  along  the  beam. 
+
+Natural  state  variables  for  such  a  mechanical  system  are  the  position  and  velocity 
+variables  associated  with  each  of  its  degrees  of  freedom,  namely: 
+
+•	 the  position  q1 (t)  of  the  point  of  contact  of  the  hoop  relative  to  the  center  of 
+the  beam; 
+•	 the  angular  position  q2 (t)  of  the  beam  relative  to  horizontal; 
+•	 the  translational  velocity  q3 (t) = q˙1 (t)  of  the  hoop  along  the  beam; 
+•	 the  angular  velocity  q4 (t) = q˙2 (t)  of  the  beam. 
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+78  Chapter  4 
+
+State-Space  Models 
+
+FIGURE  4.3  A  hoop  rolling  on  a  beam  that  is  free  to  pivot  on  its  support.  The 
+variable q1 (t) is the position of the point of contact of the hoop relative to the center 
+of  the  beam.  The  variable  q2 (t)  is  the  angle  of  the  beam  relative  to  horizontal. 
+
+The measured  output  is 
+
+y(t) = q1 (t)  . 
+
+(4.39) 
+
+To  specify  a  state-space  model  for  the  system,  we  express  the  rate  of  change  of 
+each  of  these  state  variables  at  time  t  as  a  function  of  these  variables  at  t,  and  as 
+a  function  of  the  torque  input  x(t).  We  arbitrarily  choose  the  direction  of  positive 
+torque  to  be  that  which  would  tend  to  increase  the  angle  q2 (t).  The  required 
+expressions, which we do not derive here, are most easily obtained using Lagrange’s 
+equations of motion, but can also be found by applying the standard and rotational 
+forms  of  Newton’s  second  law  to  the  system,  taking  account  of  the  constraint  that 
+the  hoop  rolls  without  slipping.  The  resulting  nonlinear  time-invariant  state-space 
+model  for  the  system,  with  the  time  argument  dropped  from  the  state  variables  qi 
+and  input  x  to  avoid  notational  clutter,  are: 
+
+dq1 
+dt
+
+dq2
+
+dt
+
+dq3 
+dt 
+dq4 
+dt 
+
+= q3
+
+= 
+
+= q4
+¡q1 q4  − g sin(q2 )¢ 
+1 
+2
+
+2 
+mgr sin(q2 ) − mgq1 cos(q
+2 ) − 2mq1 q3 q4  + x
+J + mq1 
+2
+
+= 
+
+. 
+
+(4.40) 
+
+Here  g  represents  the  acceleration  due  to  gravity,  m  is  the  mass  of  the  hoop,  r  is 
+its  radius,  and  J  is  the moment  of  inertia  of  the  beam. 
+
+Equilibrium values of  the model.  An equilibrium state of a system is one that 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+Section  4.4 
+
+Equilibria  and  Linearization  of  Nonlinear  State-Space  Models  79 
+
+can  (ideally)  be  maintained  indeﬁnitely  without  the  action  of  a  control  input,  or 
+more  generally  with  only  constant  control  action.  Our  control  ob jective  might  be 
+to design a feedback control system that regulates the hoop-and-beam system to its 
+equilibrium  state,  with  the  beam  horizontal  and  the  hoop  at  the  center,  i.e.,  with 
+q1 (t) ≡ 0 and q2 (t) ≡ 0.  The possible zero-control equilibrium positions  for any CT 
+system described  in  state-space  form  can be  found by  setting  the  control  input and 
+the  state  derivatives  to  0,  and  then  solving  for  the  state  variable  values. 
+
+For  the  model  above,  we  see  that  the  only  zero-control  equilibrium  position  (with 
+the  realistic  constraint  that  − π
+π
+< q2  < 
+)  corresponds  to  a  horizontal  beam  with 
+2 
+2
+the  hoop  at  the  center,  i.e.,  q1  =  q2  =  q3  =  q4  =  0.  If  we  allow  a  constant  but 
+nonzero  control  input,  it  is  straightforward  to  see  from  (4.40)  that  it  is  possible  to 
+have  an  equilibrium  state  (i.e.,  unchanging  state  variables)  with  a  nonzero  q1 ,  but 
+still  with  q2 ,  q3  and  q4  equal  to  0. 
+
+Linearization  for  small  perturbations. 
+It  is  generally  quite  diﬃcult  to  elu­
+cidate  in  any  detail  the  global  or  large-signal  behavior  of  a  nonlinear  model  such 
+as  (4.40).  However,  small  deviations  of  the  system  around  an  equilibrium,  such  as 
+might occur in response to small perturbations of the control input from 0, are quite 
+well  modeled  by  a  linearized  version  of  the  nonlinear  model  above.  As  already  de­
+scribed  in the previous subsection, a  linearized model  is obtained by approximating 
+all  nonlinear  terms  using  ﬁrst-order  Taylor  series  expansions  around  the  equilib­
+rium.  Linearization  of  a  time-invariant  model  around  an  equilibrium  point  always 
+yields a model that  is time  invariant, as well as being  linear.  Thus, even though the 
+original nonlinear model may be diﬃcult to work with,  the  linearized model around 
+an equilibrium point can be analyzed in great detail, using all the methods available 
+to  us  for  LTI  systems.  Note  also  that  if  the  original  model  is  in  state-space  form, 
+the  linearization will  be  in  state-space  form  too,  except  that  its  state  variables will 
+be  the  deviations  from  equilibrium  of  the  original  state  variables. 
+
+Since  the  equilibrium  of  interest  to  us  in  the  hoop-and-beam  example  corresponds 
+to  all  state  variables  being  0,  small  deviations  from  this  equilibrium  correspond  to 
+all  state  variables  being  small.  The  linearization  is  thus  easy  to  obtain  without 
+formal  expansion  into  Taylor  series.  Speciﬁcally,  as  we  discard  from  the  nonlinear 
+model  (4.40)  all  terms  of  higher  order  than  ﬁrst  in  any  nonlinear  combinations  of 
+2 
+terms,  sin(q2 )  gets  replaced  by  q2 ,  cos(q2 )  gets  replaced  by  1,  and  the  terms  q1 q4
+2  are  eliminated.  The  result  is  the  following  linearized  model  in 
+and  q1 q3 q4  and  q1
+state-space  form: 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+80  Chapter  4 
+
+State-Space  Models 
+
+dq1 
+dt 
+dq2 
+dt 
+dq3 
+dt 
+dq4 
+dt 
+
+= q3
+
+= q4
+
+g 
+= −
+q2 
+2 
+mg(rq2  − q1 ) + x 
+= 
+J 
+
+(4.41) 
+
+This model, along with the deﬁning equation (4.39) for the output (which is already 
+linear  and  therefore  needs  no  linearization),  can  be  written  in  the  standard matrix 
+form  (4.16)  and  (4.17)  for  LTI  state-space  descriptions,  with 
+0   
+ 
+ 
+0  
+0 
+1
+0
+A = 
+b =  0  
+0   , 
+0 
+1 
+0 
+0
+0
+ 
+ 
+
+
+0 
+−g/2 
+0
+−mg/J  mgr/J  0
+0 
+1/J 
+0  ¤ 
+T c  = £ 
+1 0 0
+The  LTI  model  is  much  more  tractable  than  the  original  nonlinear  time-invariant 
+model,  and  consequently  controllers  can  be  designed more  systematically  and  con­
+ﬁdently.  If  the  resulting  controllers, when  applied  to  the  system, manage  to  ensure 
+that deviations  from equilibrium remain small,  then our use of the  linearized model 
+for  design  will  have  been  justiﬁed. 
+
+(4.42) 
+
+4.5  STATE-SPACE  MODELS  FROM  INPUT–OUTPUT  MODELS 
+
+State-space representations can be very naturally and directly generated during the 
+modeling process in a variety of settings, as the examples in Sections 4.2.1 and 4.2.2 
+suggest.  Other  —  and  perhaps  more  familiar  —  descriptions  can  then  be  derived 
+from  them;  again,  these  previous  examples  showed  how  input–output  descriptions 
+could  be  obtained  from  state-space  descriptions. 
+
+It  is  also  possible  to  proceed  in  the  reverse  direction,  constructing  state-space  de­
+scriptions  from  impulse  responses  or  transfer  functions  or  input–output  diﬀerence 
+equations,  for instance.  This is often worthwhile as a prelude to simulation, or ﬁlter 
+implementation,  or  in  control  design,  or  simply  in  order  to  understand  the  initial 
+description  from  another  point  of  view.  The  following  two  examples  illustrate  this 
+reverse process, of synthesizing state-space descriptions  from  input–output descrip­
+tions. 
+
+4.5.1  Determining  a  state-space  model  from  an  impulse  response  or  transfer  function 
+
+Consider  the  impulse  response  h[n]  of  a  causal  DT  LTI  system.  Causality  requires 
+of  course  that  h[n]  = 0 for  n <  0.  The  output  y [n]  can  be  related  to  past  and 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+Section  4.5 
+
+State-Space  Models  from  Input–Output  Models  81 
+
+(4.44) 
+
+(4.43) 
+
+´ 
+h[n − k ] x[k ] +  h[0]x[n]  . 
+
+present  inputs  x[k ],  k ≤ n,  through  the  convolution  sum 
+y [n] =  X 
+n
+h[n − k ] x[k ] 
+k=−∞ 
+³  X 
+n−1
+= 
+k=−∞ 
+The  ﬁrst  term  above,  namely 
+q [n] =  X 
+n−1
+k=−∞ 
+represents the eﬀect of the past on the present, at time n, and would therefore seem 
+to  have  some  relation  to  the  notion  of  a  state  variable.  Updating  q [n]  to  the  next 
+time  step,  we  obtain 
+q [n + 1] =  X 
+n
+k=−∞ 
+In general,  if  the  impulse  response has no  special  form,  the  successive values of  q [n] 
+have  to  be  recomputed  from  (4.46)  for  each  n.  When  we  move  from  n  to  n + 1, 
+none of the past  inputs x[k ]  for k ≤ n,  can be discarded, because all of the past will 
+again  be  needed  to  compute  q [n + 1].  In  other  words,  the memory  of  the  system  is 
+inﬁnite. 
+
+h[n + 1 − k ] x[k ]  . 
+
+h[n − k ] x[k ]  , 
+
+(4.45) 
+
+(4.46) 
+
+(4.48) 
+
+(4.47) 
+
+However, consider the class of systems for which h[n] has the essentially exponential 
+form 
+
+H (z ) = 
+
+h[n] = β λn−1 u[n − 1] + d δ [n]  , 
+where  β ,  λ  and  d  are  constants.  The  corresponding  transfer  function  is 
+β 
+z − λ 
+(with  ROC  z > λ ).  What  is  important  about  this  impulse  response  is  that  a 
+| | 
+|
+|
+time-shifted  version  of  it  is  simply  related  to  a  scaled  version  of  it,  because  of  its 
+DT-exponential  form.  For  this  case, 
+q [n] = β  X 
+n−1
+k=−∞ 
+q [n + 1] = β  X 
+n
+λn−k x[k ] 
+k=−∞ 
+= λ³ 
+λn−1−k x[k ] ´ 
+β  X 
+n−1
+k=−∞ 
+= λq [n] + βx[n]  . 
+
+λn−1−k x[k ] 
+
++  βx[n] 
+
+(4.51) 
+
+and 
+
++ d 
+
+(4.49) 
+
+(4.50) 
+
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+82  Chapter  4 
+
+State-Space  Models 
+
+x[n] 
+� 
+
+� 
+
+� 
+
+� 
+
+d 
+
+β1 
+. . . 
+z − λ1 
+βL 
+z − λL 
+
+� 
+
+� 
+
+� 
+
+y [n] 
+�
+
+� 
+
+� 
+� 
+
+FIGURE  4.4  Decomposition  of  rational  transfer  function  with  distinct  poles. 
+
+Gathering  (4.44)  and  (4.49) with  (4.51)  results  in  a  pair  of  equations  that  together 
+constitute  a  state-space  description  for  this  system: 
+
+q [n + 1] = λq [n] + βx[n] 
+y [n] = q [n] + dx[n]  . 
+
+(4.52) 
+(4.53) 
+
+(4.54) 
+
+Let  us  consider  next  a  similar  but  higher  order  system  with  impulse  response: 
++ βLλn−1  )u[n − 1] + d δ [n] 
+h[n] = ( β1λn−1  + β2λn−1  +
+· · · 
+2 
+1
+L
+with  the  βi  and  d  being  constants.  The  corresponding  transfer  function  is 
+´ 
+³  L
+H (z ) =  X
+βi
++ d  . 
+z − λi
+i=1 
+By  using  a  partial  fraction  expansion,  the  transfer  function  H (z )  of  any  causal 
+LTI  DT  system  with  a  rational  transfer  function  can  be  written  in  this  form,  with 
+appropriate  choices  of  the  βi ,  λi ,  d  and  L,  provided H (z )  has  non-repeated —  i.e., 
+distinct — poles.  Note that although we only treat rational transfer functions H (z ) 
+whose  numerator  and  denominator  polynomials  have  real  coeﬃcients,  the  poles  of 
+H (z )  may  include  some  complex  λi  (and  associated  βi ),  but  in  each  such  case  its 
+complex conjugate λ∗i  will also be a pole  (with associated weighting  factor βi∗ ), and 
+the  sum 
+
+(4.55) 
+
+βi (λi )n  + βi ∗ (λ∗ 
+i )n 
+
+(4.56) 
+
+will  be  real. 
+
+The  block  diagram  in  Figure  4.5.1  shows  that  this  system  can  be  considered  as 
+being  obtained  through  the  parallel  interconnection  of  subsystems  corresponding 
+to  the  simpler  case  of  (4.47).  Motivated  by  this  structure  and  the  treatment  of  the 
+ﬁrst-order  example,  we  deﬁne  a  state  variable  for  each  of  the  L  subsystems: 
+qi [n] = βi X 
+n−1
+−∞ 
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+n−1−k x[k ]  ,
+λi
+
+i = 1, 2, . . . , L  . 
+
+(4.57) 
+
+Section  4.5 
+
+State-Space  Models  from  Input–Output  Models  83 
+
+With  this,  we  obtain  the  following  state-evolution  equations  for  the  subsystems: 
+
+qi [n + 1] = λi qi [n] + βix[n]  ,
+
+i = 1, 2, . . . , L  . 
+
+(4.58) 
+
+Also,  combining  (4.45),  (4.53)  and  (4.54)  with  the  deﬁnitions  in  (4.57),  we  obtain 
+the  output  equation 
+
+(4.59) 
+
+(4.60) 
+
+y [n] = q1 [n] + q2 [n] +  + qL [n] + d x[n]  . 
+· · · 
+Equations (4.58) and (4.59) together comprise an Lth-order state-space description 
+of  the  given  system.  We  can  write  this  state-space  description  in  our  standard 
+matrix  form  (4.13)  and  (4.14),  with 
+ 
+ 
+β1   
+0  
+· · · 
+0 
+0
+0
+λ1 
+ β2  
+ 0  λ2  0 
+0  
+· · · 
+0
+.   ,  b =  .  
+A =  . 
+. 
+.  
+ . 
+ .  
+.
+.
+.
+.  
+.  
+. 
+.
+.
+.
+.
+ 
+ 
+. 
+.
+.
+.
+· · · 
+0  λL 
+0 
+βL
+0
+0
+T c  = ¡ 
+1  ¢ 
+· · · 
+· · · 
+· · · 
+1 
+. 
+1
+The diagonal  form of A  in (4.60) reﬂects the  fact that the state evolution equations 
+in this example are decoupled, with each state variable being updated independently 
+according  to  (4.58).  We  shall  see  later how a general description of  the  form  (4.13), 
+(4.14),  with  a  distinct-eigenvalue  condition  that  we  shall  impose,  can  actually  be 
+transformed  to  a  completely  equivalent  description  in  which  the  new  A  matrix  is 
+diagonal,  as  in  (4.60).  (Note,  however,  that  when  there  are  complex  eigenvalues, 
+this  diagonal  state-space  representation  will  have  complex  entries.) 
+
+(4.61) 
+
+4.5.2  Determining  a  state-space  model  from  an  input–output  diﬀerence  equation 
+
+Let  us  examine  some  ways  of  representing  the  following  input-output  diﬀerence 
+equation  in  state-space  form: 
+
+y [n] + a1 y [n − 1] + a2 y [n − 2] = b1x[n − 1] + b2x[n − 2] . 
+One  approach,  building  on  the  development  in  the  preceding  subsection,  is  to  per­
+form  a  partial  fraction  expansion  of  the  2-pole  transfer  function  associated  with 
+this  system,  and  thereby  obtain  a  2nd-order  realization  in  diagonal  form.  (If  the 
+real  coeﬃcients  a1  and  a2  are  such  that  the  roots  of  z 2  + a1 z + a2  are  not  real  but 
+form  a  complex  conjugate  pair,  then  this  diagonal  2nd-order  realization  will  have 
+complex  entries.) 
+
+(4.62) 
+
+For  a  more  direct  attempt  (and  to  guarantee  a  real-valued  rather  than  complex-
+valued  state-space  model),  consider  using  as  state  vector  the  quantity 
+y [n − 1]   
+ 
+q[n] =  y [n − 2]   . 
+ x[n − 1]  
+ 
+
+x[n − 2] 
+c°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+
+(4.63) 
+
+84  Chapter  4 
+
+State-Space  Models 
+
+= 
+
+1 0
+
+(4.65) 
+
+b1 
+0
+0
+1
+
+b2 
+0 
+0 
+0 
+
+−a1  −a2 
+
+b1 
+
+b2
+
+q[n + 1] = 
+
+−a1  −a2 
+0 
+1
+0 
+0
+0
+0
+
+The  corresponding  4th-order  state-space  model  would  take  the  form 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+y [n] 
+0 
+y [n − 1] 
+
+
+
+
+
+
+
+
+y [n − 1] 
+y [n − 2] 
+0
++
+x[n]
+
+  
+
+
+
+1 
+x[n − 1] 
+x[n]
+x[n − 1] 
+x[n − 2] 
+0 
+ 
+ 
+y [n − 1] 
+¢ 
+y [n]  =  ¡ 
+
+
+y [n − 2] 
+(4.64) 
+ 
+x[n − 1] 
+x[n − 2] 
+If  we  are  somewhat  more  careful  about  our  choice  of  state  variables,  it  is  possible 
+to  get  more  economical  models.  For  a  3rd-order  model,  suppose  we  pick  as  state 
+vector 
+x[n − 1]   . 
+q[n] =  
+y [n] 
+y [n − 1] 
+The  corresponding  3rd-order  state-space  model  takes  the  form 
+y [n]   =  
+0    
+q[n + 1] =  
+y [n] 
+y [n + 1] 
+−a1  −a2 
+b2 
+y [n − 1] 
+0 
+1
+x[n − 1] 
+x[n] 
+0 
+0
+0
+0  ¢  
+
+y [n] 
+y [n]  =  ¡ 
+y [n − 1] 
+x[n − 1] 
+A  still more  subtle choice of  state variables yields a 2nd-order  state-space model by 
+picking 
+¶ 
+µ
+y [n]
+−a2 y [n − 1] + b2x[n − 1] 
+The  corresponding  2nd-order  state-space  model  takes  the  form 
+−a1  1  ¶ µ 
+µ 
+¶ 
+µ
+y [n] 
+y [n + 1] 
+= 
+−a2 y [n − 1] + b2x[n − 1] 
+−a2 y [n] + b2x[n] 
+0 
+−a2 
+0  ¢ µ 
+¶ 
+y [n] =  ¡ 
+y [n] 
+1
+−a2 y [n − 1] + b2x[n − 1] 
+It turns out to be impossible in general to get a state-space description of order lower 
+than  2  in  this  case.  This  should  not  be  surprising,  in  view  of  the  fact  that  (4.63) 
+is  a  2nd-order  diﬀerence  equation, which we  know  requires  two  initial  conditions  in 
+order  to  solve  forwards  in  time.  Notice  how,  in  each  of  the  above  cases,  we  have 
+incorporated  the  information  contained  in  the  original  diﬀerence  equation  (4.63) 
+that  we  started  with. 
+
+ +    x[n] 
+b1 
+0 
+1 
+(4.66) 
+
+¶ 
++
+
+µ 
+
+q[n] = 
+
+. 
+
+(4.67) 
+
+b1
+b2
+
+¶ 
+x[n]
+(4.68) 
+
+°Alan  V.  Oppenheim  and  George  C.  Verghese,  2010 
+c
+
+MIT OpenCourseWare
+http://ocw.mit.edu 
+
+6.011 Introduction to Communication, Control, and Signal Processing 
+Spring 2010 
+
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms . 
+
+

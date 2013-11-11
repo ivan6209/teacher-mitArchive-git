@@ -1,0 +1,776 @@
+Homework  7 
+
+26 October  2006 
+
+Problem  1 
+
+There  are  a  few  ways  to  solve  this  problem,  one  could  formulate  it  as  a 
+ODE  or  as  a  DAE  (We  are  going  to  formulate  the  problem  as  a ODE).  The 
+(cid:2)2
+(cid:2)
+governing  equation  in  the  problem  are  given  below. 
+(cid:2) (cid:2) 
+(cid:2)
+D2 v 2  = [D(h)]2  (cid:2)(cid:2) 
+(cid:2)(cid:2) 
+(cid:2) dt 
+π 
+dh 
+π
+p p 
+4 
+4 
+⎤ 
+(cid:9) 
+(cid:10)
++ patm  + ρgh ⎦− 
+2  + patm  + ρg (−Lp ) = KL 
+1 
+ρvp 
+2
+
+(cid:12)
+(cid:11) 
+π
+2 vp 
+2  +fD 
+Dp
+4 
+
+⎡
+(cid:5) (cid:6)2 
+⎣ 1 
+dh 
+ρ 
+dt 
+2 
+
+(1)
+(cid:5)
+
+(cid:6) (cid:11) 
+(cid:12) 
+π
+Lp 
+2 vp 
+2 
+Dp
+4 
+Dp 
+(2) 
+
+(e/Dp )  + 
+3.7 
+
+where  the  friction  factor  fD  can  be  calculated  as  follows. 
+(cid:10)  Re < 2100 
+(cid:9)
+Re > 4000 
+
+24
+fD  =  Re 
+√1  = −2 log10 
+√
+2.51 
+fD 
+fD
+Re 
+In this formulation we evaluate the value of vp  using equation (1) in terms 
+of  h  and  dh .  The  friction  factor  can  be  calculated  using  vp  or  in  terms  of  h
+dt 
+and  dh .  Ofcourse  none  of  this  needs  to  be  done  analytically.  Everything  is 
+dt 
+coded as a matlab function.  Using  this  friction  factor and vp , which are both 
+functions  of  h  and  dh ,  we  can  get  one  single  equation  which  can  be  written 
+dt 
+as  g (h, dh ) = 0.  This  equation  can  be  solved  to  obtain  a  value  of  dh  for  any 
+dt 
+dt 
+given  value of h.  The  scheme  outlined here  can be used  to  solve  the problem 
+and  calculate  the height  of  the  tank at  any given  point  in  time.  We  can  stop 
+the  ode  from  integrating  on  after  the  height  has  reached  0,  we  use  events 
+function.To  calculate  the  volume  of  the  liquid  in  tank  we  use  the  equation 
+
+(3) 
+
+dV 
+dh 
+
+= 
+
+π [D(h)]2 
+4 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+1 
+
+and  integrate  it.  For  the  implimentation  of  this  method  see  the  function 
+problem1.  A  sample  run  with  the  program  is  shown  below 
+>>  [t,h]=problem1; 
+The  tank  gets  empty  at  time:  2529.8923  s 
+The  height  and  volume  of  water  in  the  tank  are  shown  below. 
+
+The height in the tank 
+
+ 
+)
+m
+(
+ 
+t
+h
+g
+i
+e
+H
+
+ 
+ )
+3
+m
+(
+ 
+e
+m
+u
+l
+o
+V
+
+2 
+
+1.8 
+
+1.6 
+
+1.4 
+
+1.2 
+
+1 
+
+0.8 
+
+0.6 
+
+0.4 
+
+0.2 
+
+0 
+0 
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+0 
+0 
+
+500 
+
+1000 
+
+1500 
+Time (sec)
+
+
+2000 
+
+2500 
+
+3000
+
+
+The volume of water in tank 
+
+500 
+
+1000 
+
+1500 
+Time(sec)
+
+
+2000 
+
+2500 
+
+3000
+
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+2
+
+
+10.34 – Fall 2006 
+Homework #7 - Solutions 
+
+Problem 2 – CSTR Optimization (Beers’ text 5.B.4) 
+
+In  this  problem,  we  wished  to  find  the  optimal  operating  condition  for  a  CSTR  in  order  to 
+produce  the maximum  amount  of  [C].   We were  given  a  reaction mechanism  and  the  necessary 
+rate constants, and we asked to vary the initial concentrations of A and B, the reactor temperature 
+between 298 K and 335 K, and the reactor volume from 10 L to 10000 L.   
+
+The  solution  procedure  involves  using  a  constrained  optimization  program  (fmincon  in Matlab) 
+to  solve  the problem.   The other potential difficulty  in  the problem  is  that  the we do not have an 
+explicit  cost  function,  but must  solve  for  the  steady-state  concentrations  in  the CSTR.   This  can 
+be  done  using  fsolve  to  solve  the  nonlinear  equations,  or  using  an  ODE  solver  to  integrate  to  a 
+long time so that the reactor is at a steady state.  The general reactor equations are: 
+[
+]  ∑ 
+V 
+d X  
+([
+] 
+[
+flow  X  − X
+ν  R  + 
+=
+X n, 
+n
+dt 
+Vrxtr 
+in 
+n  reactions 
+
+n [
+] [
+:  R  = k  A B
+ 
+n
+
+where
+
+) 
+] 
+
+ 
+
+] 
+
+In  the above expression, vX,n  is  the stoichiometric coefficient of species X  in  reaction n, Rn  is  the 
+rate  of  reaction  n.  At  steady-state,  the  time  derivative  will  be  equal  to  zero,  yielding  a  set  of 
+nonlinear equations. 
+
+One  notable  problem  encountered  in  this  problem  was  that  fmincon  would  not  vary  the  reactor 
+volume  variable  when  trying  to  perform  the  optimization.    This  problem  could  be  remedied  in 
+several  ways.  Perhaps  the  best  way  was  to  scale  this  variable,  one  possibility  was  to  make  the 
+optimization  variable  LN(V_rxtr).    What  this  does  is  to  effectively  make  the  variable  smaller, 
+and a unit change  in  the scaled variable will make a much  larger change  in  the cost function  that 
+a unit change in the unscaled variable.  Another way to improve the optimizer performance when 
+using  unscaled  variables  was  to  increase  the  tolerances  (TolFun,  TolX,  and  TolCon).    Making 
+these  small  helped  to  gain  a  true  solution  for  a wide  range  of  initial  guesses.   Matlab  codes  that 
+solve  the  problem  using  scaling  and  an  ODE  solver,  and  well  as  solving  the  unscaled  problem 
+using an ODE solver and fsolve are included. 
+
+The optimal reactor operating conditions are: 
+Inlet [A] = 1.3515 M
+Inlet [B] = 0.64845 M
+Reactor Temperature = 298 K
+Reactor Volume = 478.896 L 
+Outlet [C] = 0.24913 M 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+The following plots are for diagnostic reason only, and were not required for the homework: 
+
+10-1  
+
+10-2  
+
+10-3  
+
+10-4  
+
+ 
+)
+s
+-
+e
+l
+o
+m
+/
+L
+(
+ 
+t
+n
+a
+t
+s
+n
+o
+C
+ 
+e
+t
+a
+R
+
+10-5  
+270 
+
+280 
+
+290 
+
+ and k
+k
+ data  
+2
+1
+ and k
+k
+  f it  
+1
+2
+k
+,  k
+ data  
+,  k
+5
+4
+3
+,  k
+,  k
+k
+  f it  
+3
+4
+5
+
+300 
+310 
+Temperature  (K) 
+
+320 
+
+330 
+
+340 
+
+D id Reactor  Reach Steady-State?  
+
+[A]  
+[B]  
+[C]  
+[D]  
+
+0.8 
+
+0.7 
+
+0.6 
+
+0.5 
+
+0.4 
+
+0.3 
+
+0.2 
+
+0.1 
+
+ 
+)
+M
+(
+ 
+n
+o
+i
+t
+a
+r
+t
+n
+e
+c
+n
+o
+C
+
+0 
+0 
+
+1 
+
+2 
+
+3 
+
+4 
+
+5 
+Time (s) 
+
+6 
+
+7 
+
+8 
+
+9 
+
+10 
+x 104 
+
+ 
+)
+M
+
+ 
+t
+u
+]o
+C
+[
+-
+(
+ 
+n
+o
+i
+t
+c
+n
+u
+F
+ 
+t
+s
+o
+C
+
+-0.06  
+
+-0.08  
+
+-0.1  
+
+-0.12  
+
+-0.14  
+
+-0.16  
+
+-0.18  
+
+-0.2  
+
+-0.22  
+
+-0.24  
+
+-0.26  
+101 
+
+Cost Function 
+fmincon Solut ion 
+
+102 
+
+103 
+
+Reactor  Volume  (L)  
+
+104 
+
+This plot simply serves to show that 
+the fitted value of A and EA for the rate 
+constant are correct and fit the data 
+
+In the cases where an ODE solver is 
+used to estimate the SS condition of the 
+reactor, it is useful to run the time-
+dependence to convince yourself that 
+you integrating to a large enough time 
+to ensure that a SS is achieved.  This is 
+not a guarantee that all parameters sets 
+encountered during the optimization 
+yield a SS at this length of time. 
+
+Since the reactor volume was giving us 
+problems, it is useful to see how the cost 
+function varies with V_rxtr at the 
+“optimal” solution returned by fmincon.  
+In this case, you can see that the fmincon 
+solution appears to be correct.  If the 
+volume was not adjusted to its optimum 
+value by fmincon, the open circle would 
+not be at the minimum of the cost 
+function. 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+Problem 3 – Chemical Equilibria 
+
+This  problem  with  chemical  equilibria  in  a  system  where  the  reactions  are  not  known,  and  the 
+assumption  is  that  there  are  enough  reactions  that  connect  the  species  that  there  are  no 
+stoichiometric  constraints  imposed  by  reactions.    This  could  also  be  considered  the  “absolute” 
+equilibrium  condition  of  the  system  for  a  given  initial  condition  (meaning  that  this  will  be  the 
+absolute lowest Gibbs free energy obtainable for the given conditions).   
+
+The  cost  function  was  set  up  in  the  problem  for  you,  and  essentially  was  minimizing  the  total 
+Gibbs free energy of the system. 
+
+⎛ 
+Gtotal  = ∑  ni  ⎜
+Gi
+o  + RT
+⎜ 
+⎝
+species 
+
+⎞
+
+⎛  ni  ⎟⎟
+⎞
+ 
+ln ⎜⎜
+⎟
+⎝ ∑ ni  ⎠ ⎠
+⎟
+
+
+What  you  end  up  with  is  an  optimization  problem  based  on  the  number  of  moles  each  species. 
+The constraints on the system are two-fold.  The first is obvious and is that all species must have 
+a number of moles that is greater than zero (in this problem, the lower bound actually needs to be 
+set  to  a  number  greater  than  zero,  if  not,  the  natural  log  term  will  cause  problems).    The  other 
+constraint  is  based  on  the  atom  balances,  saying  that  the  total moles  of  H,  C,  and  O  initially  in 
+the  system  must  be  equal  to  the  number  of  moles  of  H,  C,  and  O  at  equilibrium.    This  type  of 
+constraint can be written as follows: 
+
+A n
+⋅
+jk
+eq 
+
+=  A n
+ 
+⋅ 
+jk 
+0 
+
+where the elements of Ajk are number of j atoms in species k.   We can then use fmincon to solve 
+this optimization problem. 
+
+Part A: 
+
+Consider  a  constant  T  and  P  equilibrium  reactor,  with  T  =  1000  K  and  P  =  1  atm.    The  initial  
+
+charge  of  reactants  is:  2  moles  CH4,  3  moles  H2O,  0.5  moles  CO,  and  1  mole  of  H2.   Give  the  
+
+number of moles of each species at equilibrium, as well as the corresponding mole fraction.   
+
+Total moles initially:  6.5 
+
+Initial Volume (L):  533.39 
+
+Total moles at equilibrium:  10.0216 
+
+Final Volume (L):  822.3757 
+
+  
+ 
+number of moles: 0.23918 
+
+CH4:  mole fraction: 0.02387, 
+  
+number of moles: 0.85129 
+
+ 
+H2O:  mole fraction: 0.08495, 
+  
+number of moles: 1.90558 
+
+  
+mole fraction: 0.19015, 
+CO: 
+  
+ 
+CO2:  mole fraction: 0.03545, 
+number of moles: 0.35524 
+
+  
+  
+number of moles: 6.65402 
+
+mole fraction: 0.66397, 
+H2: 
+  
+number of moles: 0.01632 
+
+HOOH:  mole fraction: 0.00163, 
+HO2:  mole fraction: 9.98e-014,  number of moles: 1.00e-012 
+
+ 
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+Part B: 
+
+The species HO2 is a radical species and would typically be found in very small quantities.  What  
+
+would  be  the  approximate  number  of  moles  at  equilibrium  for  HO2  estimated  using  the  
+
+concentrations  of  the major  species?   Does  the  value  found  using  the minimization make  sense,  
+
+explain? 
+
+
+The idea of this part was to show that you cannot always trust the numerical estimates when you 
+have many orders of magnitudes between variables.  If you played with the tolerances in 
+fmincon, you may have found that the number of moles of HO2 found using fmincon typically be 
+at the lower bound set for the solver, even if it is set at 1e-14.   
+
+However, there is a manual technique that can be used to estimate the concentration of a minor 
+species in equilibrium with other major species.  The inherent assumption is that the major 
+species’ concentrations are constant and unaffected by changes in the minor species 
+concentration.  First, you have to think of an arbitrary reaction that relates the major species the 
+minor species.  This reaction can be anything you want and does not have to be physical in any 
+way.  Two such reactions for this system could be: 
+
+4H O U 3H  + 2HO 
+2 
+2
+2 
+
+or 
+
+2HOOH U H  + 2HO 
+2
+2 
+
+Then you can write an equilibrium expression for this reaction in terms of the Gibbs free 
+energies of the species: 
+
+⎛ −∆G 
+⎞ 
+K A  = exp ⎜ 
+reaction  ⎟ 
+RT 
+⎝ 
+⎠
+
+and 
+
+⎞νi
+
+⎛φˆ y P
+K A  = ∏ ⎜ i
+i 
+0  ⎟
+
+⎝ P 
+⎠
+
+
+ 
+
+If you assume that the system behave ideally, then phi = 1 and the following holds: 
+
+∏ i 
+)y 
+(
+νi 
+
+A  ∏ i 
+(
+⎯⎯ ⎯ K  = 
+y
+const .  P
+⎯→ 
+
+)
+νi 
+
+n 
+P  ∆ reaction 
+⎛
+⎞
+= 
+⎜ P 0 
+⎟ 
+⎠ 
+⎝
+
+y P  νi
+A  ∏ ⎛
+⎞
+K  = 
+i 
+⎜ P
+⎟ 
+0 
+⎠
+⎝ 
+or 
+exp ⎛ −∆Greaction  ⎞ = 
+⎟ ∏ yi
+(
+⎜ 
+RT 
+⎠ 
+⎝ 
+
+)νi
+
+We will take the 2nd reaction listed above:  2HOOH Ù H2 + 2HO2.  The delta G of reaction for 
+this can be calculated to be 284120 J/mole. 
+y 2 
+y
+⎛ −284120  ⎞ 
+⎟ =  H 
+2  HO
+exp ⎜ 
+yHOOH 
+⎝ 8.314 × 1000 ⎠ 
+2
+
+y 2 
+HOOH  ⋅1.4406 × 10−15  = 7.593 × 10−11 
+yH 2 
+
+yHO  = 
+2 
+
+ 
+2  ⇒ 
+
+The approximate number of moles should be 7.61x10-10 .  This shows that the value calculated by 
+fmincon is incorrect, and even inconsistent with the given data.  For numerical reason, this very 
+small number cannot be calculated accurately, and changes depending on the tolerances given.   
+
+Cite as: William Green, Jr., course materials for 10.34 Numerical Methods Applied to 
+Chemical Engineering, Fall 2006. MIT OpenCourseWare (http://ocw.mit.edu), 
+Massachusetts Institute of Technology. Downloaded on [DD Month YYYY]. 
+
+

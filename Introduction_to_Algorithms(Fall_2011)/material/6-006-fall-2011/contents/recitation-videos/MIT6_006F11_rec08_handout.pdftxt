@@ -1,0 +1,384 @@
+6.006 Intro to Algorithms
+Line-Sweep Algorithms
+
+Recitation 8
+
+October 5, 2011
+
+1 class CrossVerifier(object):
+def _events_from_layer(self, layer):
+2
+3
+"""Populates the sweep line events from the wire layer."""
+left_edge = min([wire.x1 for wire in layer.wires.values()])
+4
+for wire in layer.wires.values():
+5
+if wire.is_horizontal():
+6
+7
+self.events.append([left_edge, 0, wire.object_id, ’add’,
+wire])
+
+8
+9
+
+else:
+self.events.append([wire.x1, 1, wire.object_id, ’query’,
+wire])
+
+for event in self.events:
+event_x, event_type, wire = event[0], event[3], event[4]
+
+1 class CrossVerifier(object):
+def _compute_crossings(self, count_only):
+2
+3
+"""Implements count_crossings and wire_crossings."""
+if count_only:
+4
+5
+result = 0
+else:
+6
+7
+result = self.result_set
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+
+if event_type == ’add’:
+self.index.add(KeyWirePair(wire.y1, wire))
+elif event_type == ’query’:
+self.trace_sweep_line(event_x)
+cross_wires = []
+for kwp in self.index.list(KeyWirePairL(wire.y1),
+KeyWirePairH(wire.y2)):
+if wire.intersects(kwp.wire):
+cross_wires.append(kwp.wire)
+if count_only:
+result += len(cross_wires)
+else:
+for cross_wire in cross_wires:
+result.add_crossing(wire, cross_wire)
+
+return result
+
+16.006 Intro to Algorithms
+Range Index
+
+Recitation 8
+
+October 5, 2011
+
+def __init__(self):
+"""Initially empty range index."""
+self.data = []
+
+1 class RangeIndex(object):
+2
+"""Array-based range index implementation."""
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+
+def remove(self, key):
+"""Removes a key from the range index."""
+self.data.remove(key)
+
+def add(self, key):
+"""Inserts a key in the range index."""
+if key is None:
+raise ValueError(’Cannot insert nil in the index’)
+self.data.append(key)
+
+def list(self, first_key, last_key):
+"""List of values for the keys that fall within [first_key,
+last_key]."""
+return [key for key in self.data if first_key <= key <= last_key
+]
+
+def count(self, first_key, last_key):
+"""Number of keys that fall within [first_key, last_key]."""
+result = 0
+for key in self.data:
+if first_key <= key <= last_key:
+result += 1
+return result
+
+20
+
+21
+22
+23
+24
+25
+26
+27
+28
+
+26.006 Intro to Algorithms
+
+Recitation 8
+
+October 5, 2011
+
+def __init__(self):
+"""Initially empty range index."""
+self.data = []
+
+def add(self, key):
+"""Inserts a key in the range index."""
+if key is None:
+raise ValueError(’Cannot insert None in the index’)
+self.data.insert(self._binary_search(key), key)
+
+1 class BlitRangeIndex(object):
+2
+"""Sorted array-based range index implementation."""
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+
+def remove(self, key):
+"""Removes a key from the range index."""
+index = self._binary_search(key)
+if index < len(self.data) and self.data[index] == key:
+self.data.pop(index)
+
+def list(self, low_key, high_key):
+"""List of values for the keys that fall within [low_key,
+high_key]."""
+low_index = self._binary_search(low_key)
+high_index = self._binary_search(high_key)
+return self.data[low_index:high_index]
+
+def count(self, low_key, high_key):
+"""Number of keys that fall within [low_key, high_key]."""
+low_index = self._binary_search(low_key)
+high_index = self._binary_search(high_key)
+return high_index - low_index
+
+def _binary_search(self, key):
+"""Binary search for the given key in the sorted array."""
+low, high = 0, len(self.data) - 1
+while low <= high:
+mid = (low + high) // 2
+mid_key = self.data[mid]
+if key < mid_key:
+high = mid - 1
+elif key > mid_key:
+low = mid + 1
+else:
+return mid
+return high + 1
+
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+
+36.006 Intro to Algorithms
+Comparison Model
+
+Recitation 8
+
+October 5, 2011
+
+Once created, a key-wire pair is immutable."""
+
+1 class KeyWirePair(object):
+2
+"""Wraps a wire and the key representing it in the range index.
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+
+def __init__(self, key, wire):
+"""Creates a new key for insertion in the range index."""
+self.key = key
+self.wire = wire
+self.wire_id = wire.object_id
+def __lt__(self, other):
+return (self.key < other.key or
+(self.key == other.key and self.wire_id < other.wire_id)
+)
+def __le__(self, other):
+return (self.key < other.key or
+(self.key == other.key and self.wire_id <= other.wire_id
+))
+def __gt__(self, other):
+return (self.key > other.key or
+(self.key == other.key and self.wire_id > other.wire_id)
+)
+def __ge__(self, other):
+return (self.key > other.key or
+(self.key == other.key and self.wire_id >= other.wire_id
+))
+def __eq__(self, other):
+return self.key == other.key and self.wire_id == other.wire_id
+def __ne__(self, other):
+return self.key == other.key and self.wire_id == other.wire_id
+
+14
+15
+16
+
+17
+18
+19
+
+20
+21
+22
+
+23
+24
+25
+26
+
+1 class KeyWirePairL(KeyWirePair):
+def __init__(self, key):
+2
+3
+self.key = key
+4
+self.wire = None
+5
+self.wire_id = -1000000000
+6
+7 class KeyWirePairH(KeyWirePair):
+def __init__(self, key):
+8
+9
+self.key = key
+10
+self.wire = None
+11
+self.wire_id = 1000000000
+
+46.006 Intro to Algorithms
+Recitation 8
+L I ST Range Queries in BSTs
+
+October 5, 2011
+
+L I S T(tree , l , h )
+1 lca = LCA(tree , l , h )
+2 result = []
+3 NOD E -L I ST(lca, l , h , result )
+4 return result
+
+LCA(tree , l , h )
+1 node = tree . root
+2 until node = = N I L or (l ≤ node . key and h ≥ node . key )
+if l < node . key
+3
+4
+node = node . left
+5
+6
+node = node . right
+7 return node
+
+else
+
+NOD E -L I ST(node , l , h , result )
+1 if node = = N I L
+return
+2
+3 if node . key ≥ l
+4
+NOD E -L I ST(node . left , l , h , result )
+5 if l ≤ node . key and node . key ≤ h
+6
+ADD -K EY(result , node . key )
+7 if node . key ≤ h
+NOD E -L I ST(node . right , l , h , result )
+8
+
+5MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Fall 2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

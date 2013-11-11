@@ -1,0 +1,359 @@
+6.006 Introduction to Algorithms
+Dynamic Programming
+
+Recitation 19
+
+November 23, 2011
+
+Dynamic Programming (DP) is used heavily in optimization problems (ﬁnding the maximum and
+the minimum of something). Applications range from ﬁnancial models and operation research to
+biology and basic algorithm research. So the good news is that understanding DP is proﬁtable.
+However, the bad news is that DP is not an algorithm or a data structure that you can memorize. It
+is a powerful algorithmic design technique.
+
+Optimal Sub-structure
+DP takes the advantage of the optimal sub-structure of a problem. A problem has an optimal sub-
+structure if the optimum answer to the problem contains optimum answer to smaller sub-problems.
+
+Shortest Path with Dynamic Programming
+
+The shortest path problem has an optimal sub-structure. Supose s ; u ; v is a shortest path
+from s to v . This implies that s ; u is a shortest path from s to u, and this can be proven by
+contradiction. If there is a shorter path between s and u, we can replace s ; u with the shorter
+path in s ; u ; v , and this would yield a better path between s and v . But we assumed that
+s ; u ; v is a shortest path between s and v , so have a contradiction.
+Based on this optimal sub-structure, we can write down the recursive formulation of the single
+source shortest path problem as the following:
+
+δ(s, v) = min{δ(s, u) + w(u, v)|(u, v) ∈ E }
+
+DAG
+For a DAG, we can directly use memoized DP algorithm to solve this problem. The following is
+the Python code:
+1 class ShortestPathResult(object):
+def __init__(self):
+2
+3
+self.d = {}
+4
+self.parent = {}
+5
+6 def shortest_path(graph, s):
+7
+’’’Single source shortest paths using DP on a DAG.
+8
+9
+10
+11
+12
+13
+14
+
+’’’
+result = ShortestPathResult()
+result.d[s] = 0
+
+Args:
+graph: weighted DAG.
+s: source
+
+16.006 Introduction to Algorithms
+
+Recitation 19
+
+November 23, 2011
+
+result.parent[s] = None
+for v in graph.itervertices():
+sp_dp(graph, v, result)
+return result
+
+Args:
+graph: weighted DAG.
+v: a vertex in graph.
+result: for memoization and keeping track of the result.
+
+15
+16
+17
+18
+19
+20 def sp_dp(graph, v, result):
+21
+’’’Recursion on finding the shortest path to v.
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+
+’’’
+if v in result.d:
+return result.d[v]
+result.d[v] = float(’inf’)
+result.parent[v] = None
+for u in graph.inverse_neighbors(v): # Theta(indegree(v))
+new_distance = sp_dp(graph, u, result) + graph.weight(u, v)
+if new_distance < result.d[v]:
+result.d[v] = new_distance
+result.parent[v] = u
+return result.d[v]
+The total running time of DP = number of subproblems × time per subproblem (ignoring
+(cid:88) indegree(v) + 1) =
+recursion). In this case, the subproblem is represented by δ(s, v) which is parameterized by v
+because s is ﬁxed. The number of possible values for v is |V |, so there are |V | subproblems. Each
+subproblem takes Θ(indegree(v) + 1) time. So the total time is Θ(
+v∈V
+
+Args:
+graph: weighted DAG.
+s: source
+
+Θ(E + V ) by Handshaking Lemma.
+For the bottom-up version, we need to topologically sort the vertices to ﬁnd the right order to
+compute δ(s, v).
+1 def shortest_path_bottomup(graph, s):
+2
+’’’Bottom-up DP for finding single source shortest paths on a DAG.
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+
+’’’
+order = topological_sort(graph)
+result = ShortestPathResult()
+for v in graph.itervertices():
+result.d[v] = float(’inf’)
+result.parent[v] = None
+result.d[s] = 0
+for v in order:
+for w in graph.neighbors(v):
+new_distance = result.d[v] + graph.weight(v, w)
+if result.d[w] > new_distance:
+result.d[w] = new_distance
+
+26.006 Introduction to Algorithms
+
+Recitation 19
+
+November 23, 2011
+
+19
+20
+
+result.parent[w] = v
+return result
+
+Graph with Cycles
+In order for DP to work, the subproblem dependency should be acyclic, otherwise there will be
+inﬁnte loops. We can create more subproblems to remove the cyclic dependencies. Let δk (s, v) be
+the shortest s ; v path using ≤ k edges. Then we can redeﬁne the recurrence as the following:
+∈ E }
+δk (s, v) = min{δk 1 (s, u) + w(u, v)|(u, v)
+−
+
+The base cases are:
+
+δ0 (s, v) = ∞ for v = s
+δk (s, s) = 0 for any k
+
+If there are no negative cycles, δ(s, v) = δ|V |−1 (s, v) because the maximum possible number
+of edges of a simple path is |V | − 1.
+We can visualize this as a graph transformation as well. Let G = (V , E ) be a directed graph
+with cycles. For every v ∈ V , make |V | copies of v as v0 , v1 , . . . , v|V |−1 in the new graph G(cid:48) . For
+∈
+|
+| −
+1 in G(cid:48) .
+every edge (u, v) E , create an edge (uk 1 , v )
+k for k = 1, . . . , V
+−
+
+B
+
+A
+
+C
+
+A0 B0 C0
+
+A1 B1 C1
+
+A2 B2 C2
+
+Figure 1: Transforming a cyclic graph into an acylic graph.
+
+In the following Python implementation, we do not transform the graph. We just use the tuple
+(k , v) as the key in the dictionaries for memoization.
+1 def shortest_path_cycle(graph, s):
+2
+’’’Single source shortest paths using DP on a graph with cycles but no
+3
+negative cycles.
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+’’’
+result = ShortestPathResult()
+num_vertices = graph.num_vertices()
+for i in range(num_vertices):
+result.d[(i, s)] = 0
+result.parent[(i, s)] = None
+
+Args:
+graph: weighted graph with no negative cycles.
+s: source
+
+3(cid:54)
+6.006 Introduction to Algorithms
+
+Recitation 19
+
+November 23, 2011
+
+for v in graph.itervertices():
+if v is not s:
+result.d[(0, v)] = float(’inf’)
+for v in graph.itervertices():
+sp_cycle_dp(graph, num_vertices - 1, v, result)
+
+d = {}
+parent = {}
+for v in graph.itervertices():
+d[v] = result.d[(num_vertices - 1, v)]
+parent[v] = result.parent[(num_vertices - 1, v)]
+result.d, result.parent = d, parent
+return result
+
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29 def sp_cycle_dp(graph, k, v, result):
+30
+’’’Recursion on finding the shortest path to v with no more than k edges
+31
+on a graph with cycles.
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+
+’’’
+if (k, v) in result.d:
+return result.d[(k, v)]
+result.d[(k, v)] = float(’inf’)
+result.parent[(k, v)] = None
+for u in graph.inverse_neighbors(v):
+new_distance = sp_cycle_dp(graph, k - 1, u, result) + graph.weight(u, v)
+if new_distance < result.d[(k, v)]:
+result.d[(k, v)] = new_distance
+result.parent[(k, v)] = u
+return result.d[(k, v)]
+(cid:0) (cid:88)
+(cid:1)
+The subproblem is parameterized by two variables k and v . The number of values k can take
+is |V |, and the number of values v can take is |V | as well. Time per subproblem is the same as
+before: Θ(indegree(v) + 1). To total time is Θ V
+indegree(v) + 1 = Θ(V E ). Note that
+v∈V
+this is the same running time as Bellmand-Ford algorithm,
+and you should observ
+e the similarities
+between the two algorithms.
+
+Args:
+graph: weighted graph.
+k: kth level subproblem, i.e. finding paths with no more than k edges.
+v: a vertex in the graph.
+result: for memoization and keeping track of the result.
+
+Crazy 8’s
+
+See the previous year’s lecture notes (slides 14 - 20): http://courses.csail.mit.edu/
+6.006/spring11/lectures/lec18.pdf
+In the game Crazy 8’s, given an input of a sequence of cards C [0], . . . , C [n−1], e.g., 7♣, 7♥, K♣, K♠, 8♥,
+we want to ﬁnd the longest “trick subsequence” of cards where consecutive cards must have the
+
+46.006 Introduction to Algorithms
+
+Recitation 19
+
+November 23, 2011
+
+same value, same suit, or contains at least one eight. The longeset such subsequence in the example
+is 7♣, K♣, K♠, 8♥.
+If the cards are stored in array C , we want to keep an auxiliary score array S where S [i]
+represents the length of the longest subsequence ending with card C [i].
+We start with S [0] = 1 since the longest subsequence ending with the ﬁrst card is that card
+itself and has a length of 1. We iteratively calculate the next score S [i] by scanning all previous
+scores and set S [i] to be S [k ] + 1 where S [k ] represents the length of the longest subsequence that
+card C [i] can be appended to.
+
+5MIT OpenCourseWare
+http://ocw.mit.edu
+
+6.006 Introduction to Algorithms
+Fall 2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms .
+
+

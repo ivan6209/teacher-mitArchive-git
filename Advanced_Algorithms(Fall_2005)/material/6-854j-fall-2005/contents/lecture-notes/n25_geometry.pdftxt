@@ -1,0 +1,484 @@
+1 Geometry  
+
+Field: 
+•	 We  have  been  doing  geometry—eg  linear  programming 
+•	 But  in  computational  geometry,  key  diﬀerence  in  focus:  low   dimension  
+d 
+•	 Lots  of  algorithms  that  are  great  for  d  small,  but  exponential  in  d 
+
+1.1  Range  Trees  for  Orthogonal  Range  Queries 
+One  key  idea  in  CG:  reducing  dimension 
+•	 Do  some  work  that  reduces  problem  to  smaller  dimension 
+•  Since  few  dimensions,  work  doesn’t  add  up  much. 
+What  points  are  in  this  box? 
+•	 goal:  O(n) space 
+•	 query  time  O(log n) plus  number of points 
+•	 (can’t  beat  log n  even  for  1d) 
+•	 1d  solution:  binary  tree. 
+–	 Find  leftmost  in  range 
+–  Walk  tree  till  rightmost 
+
+Generalize:  Solve  in  each  coordinate  “separately” 
+•	 Idea  1:  solve  each  coord,  intersecting 
+–	 Too  expensive:  maybe  large  solution  in  each  coord, none  in  intersec-
+tion 
+•	 Idea: 
+–	 we  know  x  query  will  be  an  interval, 
+–	 so  build  a  y -range  structure  on  each distinct  subrange of  points by  x 
+–	 Use  binary  search  to  locate  right  x  interval 
+–	 Than  solve  1d  range  search  on  y 
+–	 Problem:  n2  distinct  intervals 
+–  So  n3  space  and  time  to  build 
+
+Reﬁne  idea: 
+•	 Build  binary  search  tree  on  x  coords 
+
+1 
+
+•	 Each  internal  node  represents  an  interval  containing  some  points 
+•	 Our  query’s  x  interval  can  be  broken  into  O(log n) tree  intervals 
+•	 We  want  to  reduce  dimension:  on  each  subinterval,  range  search y  coords 
+only   amound  nodes  in  that  x  interval 
+•	 Solution:  each  internal  node  has  a  y -coord  search  tree  on  points  in  its 
+subtree 
+•	 Size:  O(n log n),  since  each  point  in  O(log n)  internal  nodes 
+•	 Query  time:  ﬁnd O(log n) nodes,  range search in  each y -tree,  so O(log2  n) 
+(plus  output  size) 
+•	 more  generally, O(logd  n) 
+•  fractional  cascading  improves  to  O(log n) 
+Dynamic maintenance: 
+•	 Want  to  insert/delete  points 
+•	 Problem  to maintain  tree  balance 
+•	 When  insert  x  coord, may  want  to  rebalance 
+•	 Rotations  are  obious  choice,  but  have  to  rebuild  auxiliary  structures 
+•	 Linear  cost  to  rotate  a  tree. 
+•	 Remember  treaps? 
+–	 We  showed  expect  1  rotation 
+–	 Can  show  expected  size  of  rotated  tree  is  small 
+–	 Then  insert  y  coord  in  O(log n)  auxiliary  structures 
+–	 So, O(log2  n)  update  cost 
+
+2  Sweep  Algorithms 
+
+Another  key  idea: 
+•	 dimension  is  low, 
+•	 so  worth  expending  lots  of  energy  to  reduce  dimension 
+•	 plane  sweep  is  a  general-purpose  dimension  reduction 
+•	 Run  a  plane/line  across  space 
+•	 Study  only  what  happens  on  the  frontier 
+•	 Need  to  keep  track  of  “events”  that  occur  as  sweep  line  across 
+•	 simplest  case,  events  occur  when  line  hits  a  feature 
+
+2 
+
+2.1  Convex  Hull  by  Sweep  Line 
+•  deﬁne 
+•  good  for:  width,  diameter,  ﬁltering 
+•  assume  no  3  points  on  straight  line. 
+
+•  output:
+
+–  points  and  edges  on  hull 
+–  in  counterclockwise  order 
+–  can  leave  out  edges  by  hacking  implementation 
+•  Ω(n log n)  lower  bound  via  sorting 
+Build  upper  hull: 
+•  Sort  points  by  x  coord 
+•  Sweep  line  from  left  to  right 
+•  maintain  upper  hull  “so  far” 
+•  as  encounter  next  point,  check  if  hull  turns  right  or  left  to  it 
+•  if  right,  ﬁne 
+•  if  left,  hull  is  concave.  Fix  by  deleting  some  previous  points  on  hull. 
+•  just  work  backwards  till  no  left  turn. 
+•  Each  point  deleted  only  once,  so  O(n) 
+•  but  O(n log n)  since must  sort  by  x  coord. 
+
+2.2  Halfspace  intersection 
+Duality. 
+•  (a, b) → ax + by + 1 = 0. 
+•  line  through  two  points  becomes  point  at  intersection  of  2  lines 
+•  point at distance  d  antipodal  line  at  distance  1/d. 
+•  intersection  of  halfspace  become  convex  hull. 
+So, O(n log n) time. 
+
+3 
+
+2.3  Segment  intersections 
+We  saw  this  one  using  persistent  data  structures. 
+•	 Maintain  balanced  search  tree  of  segments  ordered  by  current  height. 
+•	 Heap  of  upcoming  “events”  (line  intersections/crossings) 
+•	 pull  next  event  from  heap,  output,  swap  lines  in  balanced  tree 
+•	 check  swapped  lines  against  neighbors  for  new  intersection  events 
+•	 lemma:  next  event  always  occurs  between  neighbors,  so  is  in  heap 
+•	 note:   next  event  is  always  in  future  (never  have  to  backtrack). 
+•	 so  sweep  approach  valid 
+•	 and  in  fact,  heap  is monotone! 
+
+3  Voronoi  Diagram 
+
+Goal:  ﬁnd  nearest MIT server  terminal  to  query  point. 
+Deﬁnitions: 
+•	 point  set  p 
+•	 V (pi )  is  space  closer  to  pi  than  anything  else 
+•	 for  two  points,  V (P )  is  bisecting  line 
+•	 For  3  points,  creates  a  new  “voronoi”  point 
+•	 And  for many points, V (pi )  is  intersection of halfplanes, so a convex poly-
+hedron 
+•	 And  nonempty  of  course. 
+•	 but  might  be  inﬁnite 
+•	 Given  VD,  can  ﬁnd  nearest  neighbor  via  planar  point  location: 
+•  O(log n)  using  persistent  trees 
+Space  complexity: 
+•	 VD  is  a  planar  graph:  no  two  voronoi  edges  cross  (if  count  voronoi 
+points) 
+•	 add  one  point  at  inﬁnity  to  make  it  a  proper  graph  with  ends 
+•	 Euler’s  formula:  nv  − ne  + nf  = 2 
+
+4 
+
+•	 (nv  is  voronoi points,  not  original  ones) 
+•	 But  nf  = n 
+•	 Also,  every  voronoi  point  has  degree  at  least  3  while  every  edge  has  two 
+endpoints. 
+•	 Thus,  2ne  ≥ 3(nv  + 1) 
+•	 rewrite  2(n + nv  − 2) ≥ 3(nv  + 1) 
+•	 So  n − 2 ≥ (nv  + 3)/2,  ie  nv  ≤ 2n − 7 
+•  Gives  ne  ≤ 3n − 6 
+Summary:  V (P )  has  linear  space  and O(log n) query  time. 
+
+3.1   Construction  
+VD  is  dual  of  pro jection  of  lower CH  of  lifting  of  points  to  parabola  in  3D.
+
+And  3D  CH  can  be  done  in  O(n log n)
+
+Can  build  each  vornoi  cell  in  O(n log n),  so  O(n2  log n).
+
+
+3.2  Plane  Sweep 
+Basic  idea: 
+•	 Build  portion  of  Vor  behind  sweep  line. 
+•	 problem:  not  fully  determined!  may  be  about  to  hit  a  new  site. 
+•	 What  is  determined?  Stuﬀ  closer  to  a  point  than  to  line 
+•	 boundary  is  a  parabola 
+•	 boundary  of  know  space  is  pieces  of  parabolas:  “beach  line” 
+•	 as  sweep  line  descends,  parabolas  descend  too. 
+•  We  need  to maintain  beach  line  as  “events”  change  it 
+Descent  of  one  parabola: 
+•	 sweep  line  (horizontal)  y  coord  is  t 
+•	 Equation  (x − xf  )2  + (y − yf )2  = (y − t)2  . 
+•	 Fix  x,  ﬁnd  dy/dt 
+•	 2(y − yf )dy/dt = 2(y − t)(dy/dt − 1) 
+•	 So  dy/dt = −(y − t)/(y − yf ) 
+
+5 
+
+•  Thus, the higher yf  (farther from sweep line) the slower parabola descends. 
+Site  event: 
+•	 Sweep  line  hits  site 
+•	 creates  new  degenerate  parabola  (vertical  line) 
+•	 widens  to  normal  parabola 
+•  adds  arc  piece  to  beach  line. 
+Claim:  no  other  create  events. 
+•	 case  1:  one  parabola  passing  through  one  other 
+–	 At  crossover, two  parabolas  are  tangent. 
+–	 then  “inner”  parabola  has  higher  focus  then  outer 
+–	 so  descends  slower 
+–	 so  outer  one  stays  ahead,  no  crossover. 
+•	 case  2:  new  parabola  descends  through  intersection  point  of  two  previous 
+parabolas. 
+
+–	 At  crossover, all  3  parabolas  intersect 
+–	 thus,  all 3  foci and sweep  line  on boundary of circle with  intersection 
+at  center. 
+–	 called  circle   event  
+–	 “appearing”  parabola  has  highest  focus 
+–	 so  it  is  slower:  won’t  cross  over 
+–  In  fact,  this  is  how  parabola’s  disappear  from  beach  line 
+–  outer  parabolas  catch  up  with,  cross  inner  parabola. 
+
+Summary: 
+•  only  site   events   add  to  beach  line
+
+•  only  circle   events   remove  from  beach  line.
+
+•	 n  site  events 
+•	 so  only  n  circle  events 
+•	 as  insert/remove  events,  only  need  to  check  for  events  in  newly  adjacent 
+parabolas 
+•	 so  O(n log n) time 
+
+6 
+
+4   Randomized   Incremental   Constructions  
+
+BSP  
+•	 linearity  of  expectation.  hat  check  problem 
+•	 Rendering  an  image 
+–	 render  a  collection  of  polygons  (lines) 
+–	 painters  algorithm:  draw  from  back  to  front;  let  front  overwrite 
+–	 need  to  ﬁgure  out  order with  respect  to  user 
+•	 deﬁne  BSP. 
+–	 BSP  is  a  data  structure  that  makes  order  determination  easy 
+–	 Build  in  preprocess  step,  then  render  fast. 
+–	 Choose  any  hyperplane  (root  of  tree),  split  lines  onto  correct  side  of 
+hyperplane,  recurse 
+–	 If  user  is  on  side  1  of  hyperplane,  then  nothing  on  side  2  blocks  side 
+1,  so  paint  it  ﬁrst.  Recurse. 
+–	 time=BSP  size 
+•	 sometimes must  split  to  build  BSP 
+•	 how  limit  splits? 
+•	 autopartitions 
+•	 random  auto 
+•	 analysis 
+–	 index  (u, v) = k  if  k  lines  block  v  from  u 
+–	 u (cid:4) v  if  v  cut  by  u  auto 
+–	 probability  1/(1 + index  (u, v)). 
+–	 tree  size  is  (by  linearity  of  E ) 
+� 
+1/index  (u, v)  ≤ 
+n + 
+
+� 
+2Hn 
+
+u 
+
+•	 result:  exists   size  O(n log n) auto 
+•	 gives  randomized  construction 
+•	 equally  important,  gives probabilistic   existence   proof   of  a  small  BSP 
+•	 so might  hope  to  ﬁnd  deterministically. 
+
+7 
+
+Backwards  Analysis—Convex  Hulls 
+Deﬁne.
+
+algorithm  (RIC):
+
+•  random  order  p i 
+•  insert  one  at  a  time  (to  get  S i ) 
+•  update  conv(S i−1 ) → conv(S i ) 
+–  new  point  stretches  convex  hull 
+–  remove  new  non-hull  points 
+–  revise  hull  structure 
+•  Data  structure: 
+–  point  p 0  inside  hull  (how  ﬁnd?) 
+–  for  each  p , edge of  conv(S i ) hit  by  (cid:1)p 0p 
+–  say  p  cuts  this  edge 
+•  To  update  p i  in  conv(S i−1 ): 
+–  if  p i  inside,  discard 
+–  delete  new  non  hull  vertices  and  edges 
+–  2  vertices  v 1 , v 2  of  conv(S i−1 )  become  p i -neighbors 
+–  other  vertices  unchanged. 
+•  To  implement: 
+–  detect  changes  by moving  out  from  edge  cut  by  (cid:1)p 0p . 
+–  for  each  hull  edge  deleted,  must  update  cut-pointers  to  (cid:1) p iv 1  or  (cid:1) p i v 2 
+
+Runtime  analysis 
+•  deletion  cost  of  edges: 
+–  charge  to  creation  cost 
+–  2  edges  created  per  step 
+–  total  work O (n ) 
+•  pointer  update  cost 
+–  proportional  to  number  of  pointers  crossing  a  deleted  cut  edge 
+–  BACKWARDS  analysis 
+∗  run  backwards 
+∗  delete  random  point  of  S i  (not   conv(S i ))  to  get  S i−1 
+
+8 
+
+∗  same  number  of  pointers  updated 
+∗	 expected  number  O(n/i) 
+·  what  Pr[update  p]? 
+·  Pr[delete  cut  edge  of  p] 
+·  Pr[delete  endpoint  edge  of  p] 
+·  2/i 
+∗  deduce  O(n log n) runtime 
+•  3d  convex  hull  using  same  idea,  time  O(n log n), 
+
+4.1  Linear  Programming 
+•  deﬁne 
+•  assumptions: 
+–  nonempty,  bounded  polyhedron 
+–  minimizing  x1 
+–  unique  minimum,  at  a  vertex 
+–  exactly  d  constraints  per  vertex 
+•  deﬁnitions: 
+–  hyperplanes H
+
+– basis  B (H )
+
+–  optimum  O(H )
+
+•  Simplex 
+–  exhaustive  polytope  search: 
+–  walks  on  vertices 
+–  runs  in  O(nd/2 )  time  in  theory
+
+–  often  great  in  practice
+
+•  polytime  algorithms  exist,  but  bit-dependent! 
+•  OPEN:  strongly  polynomial  LP 
+•  goal  today:  polynomial  algorithms  for  small  d 
+Randomized  incremental  algorithm 
+T (n) ≤ T (n − 1, d) + 
+(O(dn) + T (n − 1, d − 1)) = O(d!n) 
+d 
+n 
+
+9 
+
+Trapezoidal decomposition: 
+Motivation: 
+•	 manipulate/analayze  a  collection  of  n  segments 
+•	 assume  no  degeneracy:  endpoints  distinct 
+•	 (simulate  touch  by  slight  crossover) 
+•	 e.g.  detect  segment  intersections 
+•	 e.g.,  point  location  data  structure 
+•	 Basic  idea: 
+–	 Draw  verticals  at  all  points  and  intersects 
+–	 Divides  space  into  slabs 
+–	 binary  search  on  x  coordinate  for  slab 
+–	 binary  search  on  y  coordinate  inside  slab  (feasible  since  lines  non-
+crossing) 
+–  problem:  Θ(n2 ) space 
+
+Deﬁnition. 
+•	 draw  altitudes  from  each  endpoints  and  intersection  till  hit  a  segment. 
+•	 trapezoid  graph  is  planar  (no  crossing  edges) 
+•	 each  trapezoid  is  a  face 
+•	 show  a  face. 
+•	 one  face  may  have  many  vertices  (from  altitudes  that  hit  the  outside  of 
+the  face) 
+•	 but  max  vertex  degree  is  6  (assuming  nondegeneracy) 
+•	 so  total  space O(n + k) for  k  intersections. 
+•	 number of faces also O(n + k) (at least one edge/face, at most 2 face/edge) 
+•	 (or  use  Euler’s  theorem:  nv  − ne  + nf  ≥ 2) 
+•  standard  clockwise  pointer  representation  lets  you  walk  around  a  face 
+Randomized  incremental  construction: 
+•	 to  insert  segment,  start  at  left  endpoint 
+•	 draw  altitudes  from  left  end  (splits  a  trapezoid) 
+•	 traverse  segment  to  right  endpoint,  adding  altitudes  whenever  intersect 
+
+10 
+
+•  traverse  again,  erasing  (half  of )  altitudes  cut  by  segment 
+Implementation 
+•	 clockwise  ordering  of  neighbors  allows  traversal  of  a  face  in  time  propor-
+tional  to  number  of  vertices 
+•	 for  each  face,  keep  a  (bidirectional)  pointer  to  all  not-yet-inserted  left-
+endpoints  in  face 
+•	 to  insert  line,  start  at  face  containing  left  endpoint 
+•	 traverse  face  to  see  where  leave  it 
+•	 create  intersection, 
+–	 update  face  (new  altitude  splits  in  half ) 
+–	 update  left-end  pointers 
+•	 segment  cuts  some  altititudes:  destroy  half 
+–	 removing  altitude  merges  faces 
+–	 update  left-end  pointers 
+–  (note  nonmonotonic  growth  of  data  structure) 
+
+Analysis: 
+•	 Overall,  update  left-end-pointers  in  faces  neighboring  new  line 
+•	 time  to  insert  s  is 
+�
+
+f ∈F (s) 
+
+(n(f ) + (cid:2)(f ))
+
+
+where 
+
+–	 F (s)  is  faces  s  bounds  after  insertion 
+–	 n(f )  is  number  of  vertices  on  face  f  boundary 
+–	 (cid:2)(f )  is  number  of  left-ends  inside  f . 
+•	 So  if  Si  is  ﬁrst  i  segments  inserted,  expected  work  of  insertion  i  is
+
+1  � �
+
+i  s∈Si  f ∈F (s) 
+•	 Note  each  f  appears  at  most  4  times  in  sum  since  at  most  4  lines  deﬁne 
+each  trapezoid. 
+�
+•	 so  O( 1 
+f (n(f ) + (cid:2)(f ))). 
+i 
+•	 Bound  endpoint  contribution: 
+
+(n(f ) + (cid:2)(f ))
+
+11 
+
+�
+
+f  (cid:2)(f ) = n − i 
+–  note 
+–  so  contributes  n/i 
+–  so  total O(n log n)  (tight  to  sorting  lower  bound) 
+•  Bound  intersection  contribution 
+� 
+n(f )  is  just  number  of  vertices  in  planar  graph 
+– 
+–  So  O(ki  + i) if  ki  intersections  between  segments  so  far 
+–  so  cost  is  E [ki ] 
+–  intersection  present  if  both  segments  in  ﬁrst  i  insertions 
+–  so  expected  cost  is  O((i2 /n2 )k) 
+–  so  cost  contribution  (i/n2)k 
+–  sum  over  i, get O(k)
+
+– note:  adding  to  RIC,  assumption  that  ﬁrst  i  items  are  random.
+
+•  Total:  O(n log n + k) 
+
+Search  structure 
+Starting  idea: 
+•  extend  all  vertical  lines  inﬁnitely 
+•  divides  space  into  slabs 
+•  binary  search  to  ﬁnd  place  in  slab 
+•  binary  search  in  slab  feasible  since  lines  in  slab  have  total  order 
+•  O(log n)  search  time 
+2
+Goal:  apply  binary  search  in  slabs,  without  n space 
+•  Idea:  trapezoidal  decom  is  “important”  part  of  vertical  lines 
+•  problem:  slab  search  no  longer well  deﬁned 
+•  but  we  show  ok 
+The  structure: 
+•  A  kind  of  search  tree 
+•  “x  nodes”  test  against  an  altitude 
+•  “y  nodes”  test  against  a  segment 
+•  leaves  are  trapezoids 
+•  each  node  has  two  children 
+
+12 
+
+•  But   may  have many  parents 
+Inserting  an  edge  contained  in  a  trapezoid 
+•	 update  trapezoids 
+•  build  a  4-node  subtree  to  replace  leaf 
+Inserting  an  edge  that  crosses  trapezoids 
+•	 sequence  of  traps ∆i 
+•	 Say  ∆0  has  left  endpoint,  replace  leaf  with  x-node  for  left  endpoint  and 
+y -node  for  new  segment 
+•	 Same  for  last ∆ 
+•	 middle  ∆: 
+–	 each  got  a  piece  cut  oﬀ 
+–	 cut  oﬀ  piece  got merged  to  adjacent  trapezoid 
+–	 Replace  each  leaf with  a  y  node  for  new  segment 
+–	 two  children  point  to  appropriate  traps 
+–  merged trap will have several parents—one from each premerge trap. 
+
+Search  time  analysis 
+•	 depth  increases  by  one  for  new  trapezoids 
+•	 RIC  argument  shows  depth  O(log n) 
+–	 Fix  search  point  q ,  build  data  structure 
+–	 Length  of  search  path  increased  on  insertion  only  if  trapezoid  con-
+taining  q  changes 
+–	 Odds  of  top  or  bottom  edge  vanishing  (backwards  analysis)  are  1/i 
+–	 Left side vanishes iﬀ  unique  segment deﬁnes that side and it vanishes 
+–	 So  prob.  1/i 
+–	 Total O(1/i) for  ith  insert,  so  O(log n)  overall. 
+
+13 
+
+
